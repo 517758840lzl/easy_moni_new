@@ -117,6 +117,102 @@ class $AssetsImagesGen {
   AssetGenImage get informationIcon =>
       const AssetGenImage('assets/images/information_icon.png');
 
+  /// File path: assets/images/loan_book.png
+  AssetGenImage get loanBook =>
+      const AssetGenImage('assets/images/loan_book.png');
+
+  /// File path: assets/images/loan_calender.png
+  AssetGenImage get loanCalender =>
+      const AssetGenImage('assets/images/loan_calender.png');
+
+  /// File path: assets/images/loan_card.png
+  AssetGenImage get loanCard =>
+      const AssetGenImage('assets/images/loan_card.png');
+
+  /// File path: assets/images/loan_check.png
+  AssetGenImage get loanCheck =>
+      const AssetGenImage('assets/images/loan_check.png');
+
+  /// File path: assets/images/loan_circle_check.png
+  AssetGenImage get loanCircleCheck =>
+      const AssetGenImage('assets/images/loan_circle_check.png');
+
+  /// File path: assets/images/loan_circle_green.png
+  AssetGenImage get loanCircleGreen =>
+      const AssetGenImage('assets/images/loan_circle_green.png');
+
+  /// File path: assets/images/loan_circle_suo.png
+  AssetGenImage get loanCircleSuo =>
+      const AssetGenImage('assets/images/loan_circle_suo.png');
+
+  /// File path: assets/images/loan_data.png
+  AssetGenImage get loanData =>
+      const AssetGenImage('assets/images/loan_data.png');
+
+  /// File path: assets/images/loan_discovery.png
+  AssetGenImage get loanDiscovery =>
+      const AssetGenImage('assets/images/loan_discovery.png');
+
+  /// File path: assets/images/loan_discovery_normal.png
+  AssetGenImage get loanDiscoveryNormal =>
+      const AssetGenImage('assets/images/loan_discovery_normal.png');
+
+  /// File path: assets/images/loan_ghs.png
+  AssetGenImage get loanGhs =>
+      const AssetGenImage('assets/images/loan_ghs.png');
+
+  /// File path: assets/images/loan_home.png
+  AssetGenImage get loanHome =>
+      const AssetGenImage('assets/images/loan_home.png');
+
+  /// File path: assets/images/loan_home_normal.png
+  AssetGenImage get loanHomeNormal =>
+      const AssetGenImage('assets/images/loan_home_normal.png');
+
+  /// File path: assets/images/loan_mine.png
+  AssetGenImage get loanMine =>
+      const AssetGenImage('assets/images/loan_mine.png');
+
+  /// File path: assets/images/loan_money.png
+  AssetGenImage get loanMoney =>
+      const AssetGenImage('assets/images/loan_money.png');
+
+  /// File path: assets/images/loan_normal.png
+  AssetGenImage get loanNormal =>
+      const AssetGenImage('assets/images/loan_normal.png');
+
+  /// File path: assets/images/loan_open.png
+  AssetGenImage get loanOpen =>
+      const AssetGenImage('assets/images/loan_open.png');
+
+  /// File path: assets/images/loan_security.png
+  AssetGenImage get loanSecurity =>
+      const AssetGenImage('assets/images/loan_security.png');
+
+  /// File path: assets/images/loan_select.png
+  AssetGenImage get loanSelect =>
+      const AssetGenImage('assets/images/loan_select.png');
+
+  /// File path: assets/images/loan_star.png
+  AssetGenImage get loanStar =>
+      const AssetGenImage('assets/images/loan_star.png');
+
+  /// File path: assets/images/loan_star_normal.png
+  AssetGenImage get loanStarNormal =>
+      const AssetGenImage('assets/images/loan_star_normal.png');
+
+  /// File path: assets/images/loan_vip.png
+  AssetGenImage get loanVip =>
+      const AssetGenImage('assets/images/loan_vip.png');
+
+  /// File path: assets/images/loan_wallect.png
+  AssetGenImage get loanWallect =>
+      const AssetGenImage('assets/images/loan_wallect.png');
+
+  /// File path: assets/images/loan_yellow_card.png
+  AssetGenImage get loanYellowCard =>
+      const AssetGenImage('assets/images/loan_yellow_card.png');
+
   /// File path: assets/images/location.png
   AssetGenImage get location =>
       const AssetGenImage('assets/images/location.png');
@@ -135,6 +231,53 @@ class $AssetsImagesGen {
 
   /// File path: assets/images/message.png
   AssetGenImage get message => const AssetGenImage('assets/images/message.png');
+
+  /// File path: assets/images/mine_anth_bg.png
+  AssetGenImage get mineAnthBg =>
+      const AssetGenImage('assets/images/mine_anth_bg.png');
+
+  /// File path: assets/images/mine_arrow.png
+  AssetGenImage get mineArrow =>
+      const AssetGenImage('assets/images/mine_arrow.png');
+
+  /// File path: assets/images/mine_bg.png
+  AssetGenImage get mineBg => const AssetGenImage('assets/images/mine_bg.png');
+
+  /// File path: assets/images/mine_bill_list.png
+  AssetGenImage get mineBillList =>
+      const AssetGenImage('assets/images/mine_bill_list.png');
+
+  /// File path: assets/images/mine_close.png
+  AssetGenImage get mineClose =>
+      const AssetGenImage('assets/images/mine_close.png');
+
+  /// File path: assets/images/mine_email.png
+  AssetGenImage get mineEmail =>
+      const AssetGenImage('assets/images/mine_email.png');
+
+  /// File path: assets/images/mine_file.png
+  AssetGenImage get mineFile =>
+      const AssetGenImage('assets/images/mine_file.png');
+
+  /// File path: assets/images/mine_login_line.png
+  AssetGenImage get mineLoginLine =>
+      const AssetGenImage('assets/images/mine_login_line.png');
+
+  /// File path: assets/images/mine_pencil.png
+  AssetGenImage get minePencil =>
+      const AssetGenImage('assets/images/mine_pencil.png');
+
+  /// File path: assets/images/mine_phone.png
+  AssetGenImage get minePhone =>
+      const AssetGenImage('assets/images/mine_phone.png');
+
+  /// File path: assets/images/mine_waiting.png
+  AssetGenImage get mineWaiting =>
+      const AssetGenImage('assets/images/mine_waiting.png');
+
+  /// File path: assets/images/mine_wallet.png
+  AssetGenImage get mineWallet =>
+      const AssetGenImage('assets/images/mine_wallet.png');
 
   /// File path: assets/images/moban.png
   AssetGenImage get moban => const AssetGenImage('assets/images/moban.png');
@@ -174,11 +317,47 @@ class $AssetsImagesGen {
     inforamtionWarn,
     informationBg,
     informationIcon,
+    loanBook,
+    loanCalender,
+    loanCard,
+    loanCheck,
+    loanCircleCheck,
+    loanCircleGreen,
+    loanCircleSuo,
+    loanData,
+    loanDiscovery,
+    loanDiscoveryNormal,
+    loanGhs,
+    loanHome,
+    loanHomeNormal,
+    loanMine,
+    loanMoney,
+    loanNormal,
+    loanOpen,
+    loanSecurity,
+    loanSelect,
+    loanStar,
+    loanStarNormal,
+    loanVip,
+    loanWallect,
+    loanYellowCard,
     location,
     loginBg,
     loginClose,
     loginSetting,
     message,
+    mineAnthBg,
+    mineArrow,
+    mineBg,
+    mineBillList,
+    mineClose,
+    mineEmail,
+    mineFile,
+    mineLoginLine,
+    minePencil,
+    minePhone,
+    mineWaiting,
+    mineWallet,
     moban,
     takepicture,
     testimg,
