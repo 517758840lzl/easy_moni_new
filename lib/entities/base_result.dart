@@ -5,7 +5,7 @@ class BaseResult<T> {
 
   const BaseResult({required this.code, this.message, this.data});
 
-  bool get isSuccess => code == 0;
+  bool get isSuccess => code == 0 || code == 200;
 
   factory BaseResult.fromJson(
     Map<String, dynamic> json,
@@ -13,7 +13,7 @@ class BaseResult<T> {
   ) {
     return BaseResult(
       code: json['code'] as int? ?? -1,
-      message: json['message'] as String?,
+      message: (json['message'] ?? json['msg']) as String?,
       data: json['data'] != null && fromJsonT != null
           ? fromJsonT(json['data'])
           : json['data'] as T?,

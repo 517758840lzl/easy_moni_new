@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
-import 'package:oktoast/oktoast.dart';
+import '../utils/widgets/toast.dart';
 
 abstract class BasePage extends ConsumerStatefulWidget {
   const BasePage({super.key});
@@ -80,7 +80,7 @@ class _BasePageState<T extends BasePage> extends ConsumerState<T>
     showToast(
       message,
       // position: ToastPosition.bottom,
-      backgroundColor: Colors.black.withOpacity(0.8),
+      backgroundColor: Colors.black.withValues(alpha: 0.8),
       radius: 8.0,
     );
   }
@@ -94,12 +94,14 @@ class _BasePageState<T extends BasePage> extends ConsumerState<T>
     super.build(context);
 
     if (!widget.showAppBar) {
-      return Scaffold(body: widget.buildBody(context, ref));
+      return Scaffold(
+        body: SafeArea(child: widget.buildBody(context, ref)),
+      );
     }
 
     return Scaffold(
       appBar: AppBar(title: Text(widget.title), centerTitle: true),
-      body: widget.buildBody(context, ref),
+      body: SafeArea(child: widget.buildBody(context, ref)),
     );
   }
 }

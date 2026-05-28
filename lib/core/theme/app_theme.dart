@@ -8,7 +8,7 @@ class AppColors {
   static const Color primary = Color(0xFF667EEA);
 
   /// 主色 - 深色
-  static const Color primaryDark = Color(0xFF5A67D8);
+  static const Color primaryDark = Color(0xFFF5F5F5);
 
   /// 主色 - 浅色
   static const Color primaryLight = Color(0xFFB794F4);
@@ -59,7 +59,7 @@ class AppColors {
   static const Color surfaceVariant = Color(0xFFEDF2F7);
 
   /// 分割线颜色
-  static const Color divider = Color(0xFFE2E8F0);
+  static const Color divider = Color(0xFFE5E5E5);
 
   /// 渐变起始色
   static const Color gradientStart = Color(0xFF667EEA);

@@ -10,4 +10,7 @@ class ApiConstants {
   static const String appVersion = '1.0.0';
 
   static const String platform = 'andriod';
+
+  // ==================== API Paths ====================
+  static const String bannerList = '/api/banner/list';
 }
