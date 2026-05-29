@@ -117,6 +117,8 @@ class ToastTheme extends InheritedWidget {
 // ---------- context map ----------
 final LinkedHashMap<_EasyToastState, BuildContext> _contextMap =
     LinkedHashMap<_EasyToastState, BuildContext>();
+final Map<_EasyToastState, GlobalKey<OverlayState>> _overlayKeyMap =
+    {};
 
 // ---------- EasyToast widget ----------
 
@@ -171,11 +173,13 @@ class _EasyToastState extends State<EasyToast> {
   void initState() {
     super.initState();
     _contextMap[this] = context;
+    _overlayKeyMap[this] = _overlayKey;
   }
 
   @override
   void dispose() {
     _contextMap.remove(this);
+    _overlayKeyMap.remove(this);
     super.dispose();
   }
 
@@ -419,7 +423,12 @@ class ToastFuture {
   }
 
   void _insertEntry(BuildContext context) {
-    final OverlayState? state = Overlay.of(context);
+    OverlayState? state;
+    for (final key in _overlayKeyMap.values) {
+      state = key.currentState;
+      if (state != null) break;
+    }
+    state ??= Overlay.of(context);
     _isEntryInserted = state != null;
     state?.insert(_entry);
   }

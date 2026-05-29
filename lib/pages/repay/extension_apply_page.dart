@@ -40,15 +40,7 @@ class _ExtensionApplyPageState extends ConsumerState<ExtensionApplyPage> {
                 // 状态栏和导航栏
                 _buildHeader(),
                 const SizedBox(height: 40),
-                const Text(
-                  'Extension Fee',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white70,
-                  ),
-                ),
-                const SizedBox(height: 8),
+
                 // 金额显示
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -72,6 +64,14 @@ class _ExtensionApplyPageState extends ConsumerState<ExtensionApplyPage> {
                       ),
                     ),
                   ],
+                ),
+                const Text(
+                  'Extension Fee',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white70,
+                  ),
                 ),
                 const SizedBox(height: 60),
               ],

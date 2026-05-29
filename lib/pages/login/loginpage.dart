@@ -6,6 +6,8 @@ import 'package:easy_moni/pages/home/homesell.dart';
 import 'package:easy_moni/pages/fillInforma/personal_info_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../utils/widgets/toast.dart';
+import 'providers/auth_provider.dart';
 
 import '../mine/order_detail_page.dart';
 import '../mine/order_history_page.dart';
@@ -22,13 +24,115 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final TextEditingController _codeController = TextEditingController();
   Timer? _countdownTimer;
   int _countdownSeconds = 0;
+  bool _isSendingCode = false;
+  bool _isAutoSendingCode = false; // 防止自动发送验证码时重复触发
+
+  @override
+  void initState() {
+    super.initState();
+    _phoneController.addListener(_onPhoneChanged);
+    _codeController.addListener(_onCodeChanged);
+  }
 
   @override
   void dispose() {
+    _phoneController.removeListener(_onPhoneChanged);
+    _codeController.removeListener(_onCodeChanged);
     _phoneController.dispose();
     _codeController.dispose();
     _countdownTimer?.cancel();
     super.dispose();
+  }
+
+  /// 手机号输入变化监听
+  void _onPhoneChanged() {
+    String text = _phoneController.text;
+    
+    // 过滤非数字字符
+    text = text.replaceAll(RegExp(r'[^0-9]'), '');
+    
+    if (text.length > 10) {
+      text = text.substring(0, 10);
+    }
+    
+    // 处理首位数字逻辑
+    if (text.isNotEmpty) {
+      // 如果首个数字不为0，则在前方补0
+      if (text[0] != '0') {
+        text = '0$text';
+        // 限制补0后最多10位
+        if (text.length > 10) {
+          text = text.substring(0, 10);
+        }
+      }
+    }
+    
+    // 更新文本（避免光标跳动）
+    if (_phoneController.text != text) {
+      final selection = TextSelection.collapsed(offset: text.length);
+      _phoneController.value = TextEditingValue(
+        text: text,
+        selection: selection,
+      );
+    }
+    
+    setState(() {});
+    
+    // 输入10位数字后自动发送验证码
+    if (text.length == 10 && !_isAutoSendingCode && _countdownSeconds == 0) {
+      _autoSendCode();
+    }
+  }
+
+  /// 验证码输入变化监听
+  void _onCodeChanged() {
+    String text = _codeController.text;
+    
+    // 过滤非数字字符
+    text = text.replaceAll(RegExp(r'[^0-9]'), '');
+    
+    if (text.length > 4) {
+      text = text.substring(0, 4);
+    }
+    
+    // 更新文本
+    if (_codeController.text != text) {
+      final selection = TextSelection.collapsed(offset: text.length);
+      _codeController.value = TextEditingValue(
+        text: text,
+        selection: selection,
+      );
+    }
+    
+    setState(() {});
+    
+    // 输入4位验证码后立即校验（自动登录）
+    if (text.length == 4 && _phoneController.text.length == 10) {
+      _onLogin();
+    }
+  }
+
+  Future<void> _autoSendCode() async {
+    _isAutoSendingCode = true;
+    final phone = _phoneController.text.trim();
+    
+    try {
+      final result = await ref.read(sendVerifyCodeProvider).call('233|$phone');
+      
+      if (!mounted) return;
+      if (result.isSuccess) {
+        showToast('验证码已发送');
+        _startCountdown();
+      } else {
+        showToast(result.message ?? '发送失败，请重试');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      showToast('发送失败，请重试');
+      debugPrint('发送验证码异常: $e');
+    } finally {
+      _isAutoSendingCode = false;
+    }
   }
 
   void _startCountdown() {
@@ -45,18 +149,68 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     });
   }
 
-  void _onGetCode() {
-    debugPrint('点击了获取验证码按钮');
-    _startCountdown();
+  Future<void> _onGetCode() async {
+    final phone = _phoneController.text.trim();
+    if (phone.isEmpty) {
+      showToast('请输入手机号');
+      return;
+    }
+    if (phone.length != 10) {
+      showToast('请输入10位手机号');
+      return;
+    }
+
+    try {
+      final result = await ref.read(sendVerifyCodeProvider).call('233|$phone');
+
+      if (!mounted) return;
+      if (result.isSuccess) {
+        showToast('验证码已发送');
+        _startCountdown();
+      } else {
+        showToast(result.message ?? '发送失败，请重试');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      showToast('发送失败，请重试');
+      debugPrint('发送验证码异常: $e');
+    }
   }
 
-  void _onLogin() {
-    final phone = _phoneController.text;
-    final code = _codeController.text;
-    debugPrint('点击了登录按钮 - 手机号: $phone, 验证码: $code');
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const HomeShell()),
-    );
+  Future<void> _onLogin() async {
+    final phone = _phoneController.text.trim();
+    final code = _codeController.text.trim();
+    if (phone.isEmpty) {
+      showToast('请输入手机号');
+      return;
+    }
+    if (code.isEmpty) {
+      showToast('请输入验证码');
+      return;
+    }
+
+    debugPrint('登录请求 - 手机号: 233|$phone, 验证码: $code');
+
+    try {
+      final result = await ref.read(loginApiProvider).call(
+        phone: '233|$phone',
+        code: code,
+      );
+
+      if (!mounted) return;
+      debugPrint('登录响应 - status: ${result.status}, message: ${result.message}');
+      if (result.isSuccess) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeShell()),
+        );
+      } else {
+        showToast(result.message ?? '登录失败，请重试');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      showToast('登录失败，请重试');
+      debugPrint('登录异常: $e');
+    }
   }
 
   @override
@@ -252,7 +406,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           ),
         ),
         GestureDetector(
-          onTap: _countdownSeconds > 0 ? null : _onGetCode,
+          onTap: (_countdownSeconds > 0) ? null : _onGetCode,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(

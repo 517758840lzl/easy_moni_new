@@ -37,6 +37,9 @@ class HttpProvider {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'acqChannel':'GHQU',
+          'acqChannelIndex': '0',
+          'disableEncBody': false,
         },
       ),
     );

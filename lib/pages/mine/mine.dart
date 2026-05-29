@@ -343,6 +343,7 @@ class _MinePageState extends ConsumerState<MinePage> {
               ),
             ),
           ),
+          ),
         ],
       ),
     );

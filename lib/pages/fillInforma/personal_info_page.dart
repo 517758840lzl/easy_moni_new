@@ -5,6 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../services/platform_service.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
+import '../../entities/acp_element_info_resp.dart';
+import '../../entities/provinces_cities_area_resp.dart';
+import 'providers/acp_element_info_provider.dart';
+import 'providers/provinces_cities_area_provider.dart';
 
 import '../../utils/widgets/linepaint.dart';
 
@@ -16,56 +20,100 @@ class PersonalInfoPage extends ConsumerStatefulWidget {
 }
 
 class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
-  String? _employmentStatus;
-  String? _monthlyIncome;
-  String? _education;
-  String? _maritalStatus;
-  String? _residence;
+  StepInfo? _stepInfo;
+  bool _isLoading = true;
+  final Map<String, int> _selectedIndices = {};
+  final Map<String, String?> _selectedValues = {};
+
+  // 省市数据（从后台获取）
+  List<AreaItem> _provinces = [];
+  List<AreaItem> _cities = [];
+  final List<Map<String, String>> _regionCityData = [];
+
+  int _selectedRegionIndex = 0;
   bool _isLoadingLocation = false;
 
-  final List<String> _employmentOptions = ['全职工作', '兼职工作', '自由职业', '学生', '失业'];
-  final List<String> _incomeOptions = [
-    '1000以下',
-    '1000-3000',
-    '3000-5000',
-    '5000-10000',
-    '10000以上',
-  ];
-  final List<String> _educationOptions = [
-    '初中及以下',
-    '高中/中专',
-    '大专',
-    '本科',
-    '硕士及以上',
-  ];
-  final List<String> _maritalOptions = ['未婚', '已婚', '离异', '丧偶'];
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
 
-  // 加纳地区和城市数据
-  final List<Map<String, String>> _regionCityData = [
-    {'region': 'Ashanti', 'city': 'Kumasi'},
-    {'region': 'Greater Accra', 'city': 'Accra'},
-    {'region': 'Central', 'city': 'Cape Coast'},
-    {'region': 'Eastern', 'city': 'Koforidua'},
-    {'region': 'Western', 'city': 'Takoradi'},
-    {'region': 'Northern', 'city': 'Tamale'},
-    {'region': 'Upper East', 'city': 'Bolgatanga'},
-    {'region': 'Upper West', 'city': 'Wa'},
-    {'region': 'Volta', 'city': 'Ho'},
-    {'region': 'Brong-Ahafo', 'city': 'Sunyani'},
-  ];
+  Future<void> _fetchData() async {
+    try {
+      // 并行获取表单数据和省市数据
+      final results = await Future.wait([
+        ref.read(acpElementInfoProvider).call(1),
+        ref.read(provincesCitiesAreaProvider).call(),
+      ]);
 
-  int _selectedEmploymentIndex = 0;
-  int _selectedIncomeIndex = 0;
-  int _selectedEducationIndex = 0;
-  int _selectedMaritalIndex = 0;
-  int _selectedRegionIndex = 0;
+      if (!mounted) return;
 
-  bool get _canContinue =>
-      _employmentStatus != null &&
-      _monthlyIncome != null &&
-      _education != null &&
-      _maritalStatus != null &&
-      _residence != null;
+      // 处理表单数据
+      final formResult = results[0] as dynamic;
+      if (formResult.isSuccess && formResult.data != null) {
+        final stepInfo = formResult.data!.stepInfoList.firstOrNull;
+        if (stepInfo != null) {
+          _stepInfo = stepInfo;
+          // 初始化选中索引和值
+          for (final entry in stepInfo.entries) {
+            _selectedIndices[entry.key] = 0;
+            _selectedValues[entry.key] = null;
+          }
+        }
+      }
+
+      // 处理省市数据
+      final areaResult = results[1] as dynamic;
+      if (areaResult.isSuccess && areaResult.data != null) {
+        _provinces = areaResult.data!.province;
+        _cities = areaResult.data!.city;
+        // 组装省市区数据
+        _buildRegionCityData();
+      }
+
+      setState(() => _isLoading = false);
+    } catch (e) {
+      debugPrint('获取数据失败: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  /// 组装省市区数据
+  void _buildRegionCityData() {
+    _regionCityData.clear();
+    for (final province in _provinces) {
+      // 查找该省下的所有城市
+      final provinceCities = _cities
+          .where((city) => city.parentId == province.id)
+          .toList();
+      
+      if (provinceCities.isNotEmpty) {
+        for (final city in provinceCities) {
+          _regionCityData.add({
+            'region': province.name,
+            'city': city.name,
+          });
+        }
+      } else {
+        // 如果该省没有城市，只添加省
+        _regionCityData.add({
+          'region': province.name,
+          'city': '',
+        });
+      }
+    }
+  }
+
+  bool get _canContinue {
+    if (_stepInfo == null) return false;
+    for (final entry in _stepInfo!.entries) {
+      if (entry.must == 1 && (_selectedValues[entry.key] == null || _selectedValues[entry.key]!.isEmpty)) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   Future<void> _checkAndGetLocation() async {
     setState(() => _isLoadingLocation = true);
@@ -112,10 +160,12 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
         _selectedRegionIndex = _regionCityData.indexWhere(
           (item) => item['region'] == matchedRegion,
         );
-        if (_selectedRegionIndex == -1) _selectedRegionIndex = 1;
+        if (_selectedRegionIndex == -1) _selectedRegionIndex = 0;
 
-        _residence =
-            '${_regionCityData[_selectedRegionIndex]['region']} - ${_regionCityData[_selectedRegionIndex]['city']}';
+        final selectedData = _regionCityData[_selectedRegionIndex];
+        _selectedValues['geo_location'] = selectedData['city']!.isNotEmpty
+            ? '${selectedData['region']} - ${selectedData['city']}'
+            : selectedData['region']!;
       });
     } catch (e) {
       debugPrint('获取位置失败: $e');
@@ -376,8 +426,10 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
                           onTap: () {
                             setState(() {
                               _selectedRegionIndex = tempRegionIndex;
-                              _residence =
-                                  '${_regionCityData[tempRegionIndex]['region']} - ${_regionCityData[tempRegionIndex]['city']}';
+                              final selectedData = _regionCityData[tempRegionIndex];
+                              _selectedValues['geo_location'] = selectedData['city']!.isNotEmpty
+                                  ? '${selectedData['region']} - ${selectedData['city']}'
+                                  : selectedData['region']!;
                             });
                             Navigator.pop(context);
                           },
@@ -408,7 +460,9 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
                           _regionCityData.length,
                           (index) => Center(
                             child: Text(
-                              '${_regionCityData[index]['region']} - ${_regionCityData[index]['city']}',
+                              _regionCityData[index]['city']!.isNotEmpty
+                                  ? '${_regionCityData[index]['region']} - ${_regionCityData[index]['city']}'
+                                  : _regionCityData[index]['region']!,
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: Color(0xFF1A1A1A),
@@ -430,7 +484,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
 
   void _showPicker({
     required String title,
-    required List<String> options,
+    required List<SelectOption> options,
     required int selectedIndex,
     required Function(int) onConfirm,
   }) {
@@ -508,7 +562,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
                             .map(
                               (item) => Center(
                                 child: Text(
-                                  item,
+                                  item.value,
                                   style: const TextStyle(
                                     fontSize: 16,
                                     color: Color(0xFF1A1A1A),
@@ -571,11 +625,11 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
                           ),
                           if (Navigator.of(context).canPop())
                             const SizedBox(width: 16),
-                          const Expanded(
+                          Expanded(
                             child: Text(
-                              '个人信息',
+                              _stepInfo?.pageTitle ?? '个人信息',
                               textAlign: TextAlign.center,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w500,
@@ -608,87 +662,42 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
                 color: Colors.white,
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      _buildFormItem(
-                        starTitle: '*',
-                        title: '就业状态',
-                        value: _employmentStatus,
-                        placeholder: '请选择您的就业状态',
-                        onTap: () => _showPicker(
-                          title: '就业状态',
-                          options: _employmentOptions,
-                          selectedIndex: _selectedEmploymentIndex,
-                          onConfirm: (index) {
-                            setState(() {
-                              _selectedEmploymentIndex = index;
-                              _employmentStatus = _employmentOptions[index];
-                            });
-                          },
+                  child: _isLoading
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 40),
+                            child: CircularProgressIndicator(),
+                          ),
+                        )
+                      : Column(
+                          children: _stepInfo?.entries.map((entry) {
+                            final key = entry.key;
+                            final selectedIndex = _selectedIndices[key] ?? 0;
+                            final selectedValue = _selectedValues[key];
+
+                            return _buildFormItem(
+                              starTitle: entry.must == 1 ? '*' : '',
+                              title: entry.showContent,
+                              value: selectedValue,
+                              placeholder: entry.defaultText,
+                              onTap: () {
+                                if (entry.selectList != null && entry.selectList!.isNotEmpty) {
+                                  _showPicker(
+                                    title: entry.showContent,
+                                    options: entry.selectList!,
+                                    selectedIndex: selectedIndex,
+                                    onConfirm: (index) {
+                                      setState(() {
+                                        _selectedIndices[key] = index;
+                                        _selectedValues[key] = entry.selectList![index].value;
+                                      });
+                                    },
+                                  );
+                                }
+                              },
+                            );
+                          }).toList() ?? [],
                         ),
-                      ),
-                      _buildFormItem(
-                        starTitle: '*',
-                        title: '月收入',
-                        value: _monthlyIncome,
-                        placeholder: '请选择您的月收入',
-                        onTap: () => _showPicker(
-                          title: '月收入',
-                          options: _incomeOptions,
-                          selectedIndex: _selectedIncomeIndex,
-                          onConfirm: (index) {
-                            setState(() {
-                              _selectedIncomeIndex = index;
-                              _monthlyIncome = _incomeOptions[index];
-                            });
-                          },
-                        ),
-                      ),
-                      _buildFormItem(
-                        starTitle: '*',
-                        title: '最高学历',
-                        value: _education,
-                        placeholder: '请选择您的教育水平',
-                        onTap: () => _showPicker(
-                          title: '最高学历',
-                          options: _educationOptions,
-                          selectedIndex: _selectedEducationIndex,
-                          onConfirm: (index) {
-                            setState(() {
-                              _selectedEducationIndex = index;
-                              _education = _educationOptions[index];
-                            });
-                          },
-                        ),
-                      ),
-                      _buildFormItem(
-                        starTitle: '*',
-                        title: '婚姻状况',
-                        value: _maritalStatus,
-                        placeholder: '请选择您的婚姻状况',
-                        onTap: () => _showPicker(
-                          title: '婚姻状况',
-                          options: _maritalOptions,
-                          selectedIndex: _selectedMaritalIndex,
-                          onConfirm: (index) {
-                            setState(() {
-                              _selectedMaritalIndex = index;
-                              _maritalStatus = _maritalOptions[index];
-                            });
-                          },
-                        ),
-                      ),
-                      _buildFormItem(
-                        starTitle: '*',
-                        title: '居住地区与城市',
-                        value: _residence,
-                        placeholder: '请选择您的居住地址',
-                        onTap: () => _checkAndGetLocation(),
-                        showDivider: false,
-                        isLoading: _isLoadingLocation,
-                      ),
-                    ],
-                  ),
                 ),
               ),
             ),
@@ -754,16 +763,17 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
                   height: 20,
                   child: Row(
                     children: [
-                      Text(
-                        "*",
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.red,
-                          letterSpacing: 0.4,
+                      if (starTitle.isNotEmpty)
+                        Text(
+                          starTitle,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.red,
+                            letterSpacing: 0.4,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
+                      if (starTitle.isNotEmpty) const SizedBox(width: 8),
                       Text(
                         title,
                         style: const TextStyle(
