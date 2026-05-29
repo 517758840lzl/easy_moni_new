@@ -1,9 +1,14 @@
+import 'dart:async';
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/fillInforma/contact_info_page.dart';
-import 'package:easy_moni/pages/mine/personal_info_page.dart';
+import 'package:easy_moni/pages/home/homesell.dart';
+import 'package:easy_moni/pages/fillInforma/personal_info_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../mine/order_detail_page.dart';
+import '../mine/order_history_page.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -15,16 +20,34 @@ class LoginPage extends ConsumerStatefulWidget {
 class _LoginPageState extends ConsumerState<LoginPage> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _codeController = TextEditingController();
+  Timer? _countdownTimer;
+  int _countdownSeconds = 0;
 
   @override
   void dispose() {
     _phoneController.dispose();
     _codeController.dispose();
+    _countdownTimer?.cancel();
     super.dispose();
+  }
+
+  void _startCountdown() {
+    _countdownSeconds = 60;
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        if (_countdownSeconds > 0) {
+          _countdownSeconds--;
+        } else {
+          timer.cancel();
+        }
+      });
+    });
   }
 
   void _onGetCode() {
     debugPrint('点击了获取验证码按钮');
+    _startCountdown();
   }
 
   void _onLogin() {
@@ -32,7 +55,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final code = _codeController.text;
     debugPrint('点击了登录按钮 - 手机号: $phone, 验证码: $code');
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const ContactInfoPage()),
+      MaterialPageRoute(builder: (context) => const HomeShell()),
     );
   }
 
@@ -46,7 +69,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
-                image: DecorationImage(image: Assets.images.loginBg.provider()),
+                image: DecorationImage(
+                  image: Assets.images.loginBg.provider(),
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           ),
@@ -165,8 +191,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 filled: true,
                 fillColor: Colors.transparent,
                 hintText: AppStrings.phoneStr,
-                hintStyle: TextStyle(color: Colors.white54, fontSize: 14),
+                hintStyle: TextStyle(color: Colors.white, fontSize: 14),
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
                 contentPadding: EdgeInsets.only(bottom: 8),
               ),
               onChanged: (value) {
@@ -216,13 +244,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 fillColor: Colors.transparent,
                 hintStyle: TextStyle(color: Colors.white, fontSize: 14),
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
                 contentPadding: const EdgeInsets.only(bottom: 8),
               ),
             ),
           ),
         ),
         GestureDetector(
-          onTap: _onGetCode,
+          onTap: _countdownSeconds > 0 ? null : _onGetCode,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
@@ -236,11 +266,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 ),
               ],
             ),
-            child: const Text(
-              AppStrings.gainCode,
+            child: Text(
+              _countdownSeconds > 0
+                  ? '${_countdownSeconds}s'
+                  : AppStrings.gainCode,
               style: TextStyle(
                 fontSize: 14,
-                color: Color(0xFF45F3A6),
+                color: const Color(0xFF45F3A6),
                 fontWeight: FontWeight.w500,
               ),
             ),

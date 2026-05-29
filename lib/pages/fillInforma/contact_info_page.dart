@@ -1,9 +1,12 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
+import 'package:easy_moni/pages/fillInforma/widgets/progressInformation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../gen/assets.gen.dart';
 import '../../services/platform_service.dart';
+import '../../utils/widgets/linepaint.dart';
 
 class ContactInfoPage extends ConsumerStatefulWidget {
   const ContactInfoPage({super.key});
@@ -13,7 +16,6 @@ class ContactInfoPage extends ConsumerStatefulWidget {
 }
 
 class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
-  // TODO: 以下模拟数据，启用真实通讯录功能
   String? _parentSpouseContact = '0241234567';
   String? _friendColleagueContact = '0249876543';
   String? _parentSpouseName = 'John Doe';
@@ -272,11 +274,10 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
       body: Column(
         children: [
           Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFF216A4A), Color(0xFF288470)],
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: Assets.images.inforamtionBgheader.provider(),
+                fit: BoxFit.cover,
               ),
             ),
             child: SafeArea(
@@ -319,7 +320,7 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildProgressIndicator(),
+                  buildProgressIndicator(isidActive: true),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -337,7 +338,7 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
                   children: [
                     const SizedBox(height: 16),
                     _buildContactItem(
-                      icon: Icons.contact_phone,
+                      icon: Assets.images.inforamtionF.image(),
                       title: AppStrings.chooseContactsPhone,
                       value: _parentSpouseContact != null
                           ? '$_parentSpouseName\n$_parentSpouseContact'
@@ -346,7 +347,7 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
                       onTap: () => _pickContact(isParentSpouse: true),
                     ),
                     _buildContactItem(
-                      icon: Icons.contact_phone,
+                      icon: Assets.images.inforamtionF.image(),
                       title: '朋友/同事联系电话',
                       value: _friendColleagueContact != null
                           ? '$_friendColleagueName\n$_friendColleagueContact'
@@ -398,77 +399,8 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
     );
   }
 
-  Widget _buildProgressIndicator() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildStepItem(
-          icon: Icons.person,
-          label: '个人信息',
-          isCompleted: true,
-          isActive: true,
-        ),
-        _buildConnector(),
-        _buildStepItem(
-          icon: Icons.badge_outlined,
-          label: '身份验证',
-          isCompleted: false,
-        ),
-        _buildConnector(),
-        _buildStepItem(icon: Icons.face, label: '人脸验证', isCompleted: false),
-      ],
-    );
-  }
-
-  Widget _buildStepItem({
-    required IconData icon,
-    required String label,
-    required bool isCompleted,
-    bool isActive = false,
-  }) {
-    // 如果是当前步骤但未完成，使用边框样式
-    final bool showBorder = !isCompleted;
-
-    return Column(
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            // 已完成：绿色填充
-            // 当前步骤但未完成：白色边框+白色图标
-            // 未完成：透明+白色边框+白色图标
-            color: isCompleted ? const Color(0xFF45F3A6) : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-            border: isCompleted
-                ? null
-                : Border.all(color: Colors.white, width: 1.5),
-          ),
-          child: Icon(icon, size: 20, color: Colors.white),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: isCompleted ? const Color(0xFF45F3A6) : Colors.white,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildConnector() {
-    return Container(
-      width: 32,
-      height: 0,
-      margin: const EdgeInsets.only(bottom: 30),
-      child: CustomPaint(painter: _LinePainter()),
-    );
-  }
-
   Widget _buildContactItem({
-    required IconData icon,
+    required Widget icon,
     required String title,
     required String? value,
     required String placeholder,
@@ -487,7 +419,7 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(icon, size: 12, color: Colors.black),
+                icon,
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -548,21 +480,4 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
       ],
     );
   }
-}
-
-class _LinePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.5)
-      ..strokeWidth = 1;
-    canvas.drawLine(
-      Offset(0, size.height / 2),
-      Offset(size.width, size.height / 2),
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

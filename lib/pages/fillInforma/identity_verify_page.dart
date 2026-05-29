@@ -1,10 +1,13 @@
 import 'dart:typed_data';
 import 'package:easy_moni/core/constants/app_strings.dart';
+import 'package:easy_moni/pages/fillInforma/widgets/progressInformation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../gen/assets.gen.dart';
 import '../../services/platform_service.dart';
+import '../../utils/widgets/linepaint.dart';
 
 class IdentityVerifyPage extends ConsumerStatefulWidget {
   const IdentityVerifyPage({super.key});
@@ -14,8 +17,6 @@ class IdentityVerifyPage extends ConsumerStatefulWidget {
 }
 
 class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
-  // TODO: 测试写死需要替换为真实图片路径
-
   Uint8List? _idCardFrontData;
   Uint8List? _idCardBackData;
 
@@ -318,15 +319,14 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8FB),
+      // backgroundColor: const Color(0xFFF8F8FB),
       body: Column(
         children: [
           Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFF216A4A), Color(0xFF278571)],
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: Assets.images.inforamtionBgheader.provider(),
+                fit: BoxFit.cover,
               ),
             ),
             child: SafeArea(
@@ -369,7 +369,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildProgressIndicator(),
+                  buildProgressIndicator(isMineActive: true),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -388,10 +388,13 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        Icon(
-                          Icons.person_outline,
-                          size: 12,
-                          color: Colors.black,
+                        const Text(
+                          '*',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.red,
+                          ),
                         ),
                         const SizedBox(width: 8),
                         const Text(
@@ -462,63 +465,6 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     );
   }
 
-  Widget _buildProgressIndicator() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildStepItem(icon: Icons.person, label: '个人信息', isCompleted: true),
-        _buildConnector(),
-        _buildStepItem(
-          icon: Icons.badge_outlined,
-          label: '身份验证',
-          isCompleted: true,
-        ),
-        _buildConnector(),
-        _buildStepItem(icon: Icons.face, label: '人脸验证', isCompleted: false),
-      ],
-    );
-  }
-
-  Widget _buildStepItem({
-    required IconData icon,
-    required String label,
-    required bool isCompleted,
-  }) {
-    return Column(
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: isCompleted ? const Color(0xFF45F3A6) : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-            border: isCompleted
-                ? null
-                : Border.all(color: Colors.white, width: 1.5),
-          ),
-          child: Icon(icon, size: 20, color: Colors.white),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: isCompleted ? const Color(0xFF45F3A6) : Colors.white,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildConnector() {
-    return Container(
-      width: 32,
-      height: 0,
-      margin: const EdgeInsets.only(bottom: 30),
-      child: CustomPaint(painter: _LinePainter()),
-    );
-  }
-
   Widget _buildIdCardItem({
     required String title,
     required bool isFilled,
@@ -528,13 +474,11 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 120,
+        height: 227,
         decoration: BoxDecoration(
-          color: const Color(0xFFF8F8FB),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isFilled ? const Color(0xFF45F3A6) : const Color(0xFFE0E0E0),
-            width: 1,
+          image: DecorationImage(
+            image: Assets.images.inforamtionIdo.provider(),
+            fit: BoxFit.cover,
           ),
         ),
         child: Stack(
@@ -555,18 +499,9 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
                         ),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Icon(
-                        Icons.qr_code_scanner,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '点击扫描',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.black.withValues(alpha: 0.5),
+                      child: Assets.images.inforamtionScan.image(
+                        width: 40,
+                        height: 40,
                       ),
                     ),
                   ],
@@ -620,21 +555,4 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
       ),
     );
   }
-}
-
-class _LinePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.5)
-      ..strokeWidth = 1;
-    canvas.drawLine(
-      Offset(0, size.height / 2),
-      Offset(size.width, size.height / 2),
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

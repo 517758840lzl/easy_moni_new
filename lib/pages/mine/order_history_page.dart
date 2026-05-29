@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../gen/assets.gen.dart';
 import 'order_detail_page.dart';
 
 // 订单状态枚举
@@ -101,7 +102,6 @@ class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
   }
 
   void _loadOrders() {
-    // TODO: 从API获取真实数据
     setState(() {
       if (_currentStatus == OrderStatus.all) {
         _orders = _mockOrders;
@@ -162,10 +162,11 @@ class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
                     child: Row(
                       children: [
-                        GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
-                        ),
+                        if (Navigator.of(context).canPop())
+                          GestureDetector(
+                            onTap: () => Navigator.of(context).pop(),
+                            child: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
+                          ),
                         const Expanded(
                           child: Text(
                             '历史订单',
@@ -177,7 +178,8 @@ class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 20),
+                        Assets.images.customer.image(width: 28, height: 28),
+                        // const SizedBox(width: 40),
                       ],
                     ),
                   ),

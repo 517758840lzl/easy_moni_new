@@ -54,6 +54,10 @@ class AppStrings {
   static const String takephotos = '拍摄照片';
   static const String idcardMessage = '为了让您上传加纳身份证，我们需要获取相机访问权限。';
   static const String idcardVer = '身份验证';
+  static const String homeTab = '首页';
+  static const String repayTab = '还款';
+  static const String mineTab = '我的';
+
   // ==================== 贷款详情 ====================
   static const String loanDetailTitle = '贷款详情';
   static const String loanItemIdPrefix = '贷款Item ID: ';

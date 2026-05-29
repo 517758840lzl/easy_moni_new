@@ -50,6 +50,14 @@ extension DoubleExtension on double {
   String toPercentage({int decimals = 1}) {
     return '${(this * 100).toStringAsFixed(decimals)}%';
   }
+
+  /// 格式化为千分位金额，如 57950.00 -> "57,950.00"
+  String formatAmount() {
+    return toStringAsFixed(2).replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]},',
+    );
+  }
 }
 
 extension ContextExtension on BuildContext {

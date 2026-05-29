@@ -28,14 +28,14 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
         Navigator.of(context).pop();
 
         // 调用你自己写的原生桥接方法
-        bool hasCamera = await CameraService.checkPermission();
+        // bool hasCamera = await CameraService.checkPermission();
 
-        if (hasCamera) {
-          debugPrint("原生桥接成功：拿到了相机权限，可以安全跳转登录页");
-          // Navigator.of(context).pushReplacement();
-        } else {
-          debugPrint("原生桥接提示：用户拒绝了权限");
-        }
+        // if (hasCamera) {
+        //   debugPrint("原生桥接成功：拿到了相机权限，可以安全跳转登录页");
+        //   // Navigator.of(context).pushReplacement();
+        // } else {
+        //   debugPrint("原生桥接提示：用户拒绝了权限");
+        // }
       },
       onDecline: () {
         SystemNavigator.pop(); // 拒绝就退出
@@ -51,7 +51,10 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
-                image: DecorationImage(image: Assets.images.loginBg.provider()),
+                image: DecorationImage(
+                  image: Assets.images.loginBg.provider(),
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           ),

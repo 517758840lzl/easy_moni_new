@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../gen/assets.gen.dart';
+
 class MinePage extends ConsumerStatefulWidget {
   const MinePage({super.key});
 
@@ -10,7 +12,6 @@ class MinePage extends ConsumerStatefulWidget {
 }
 
 class _MinePageState extends ConsumerState<MinePage> {
-  // TODO: 正式环境需要从用户状态管理获取
   final String _userName = 'Derrick Rose';
   final String _userPhone = '123432345676';
   final double _pendingAmount = 100.0;
@@ -42,8 +43,6 @@ class _MinePageState extends ConsumerState<MinePage> {
   }
 
   void _onLogoutTap() {
-    debugPrint('点击了退出登录');
-    // TODO: 退出登录逻辑
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -57,7 +56,7 @@ class _MinePageState extends ConsumerState<MinePage> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: 执行退出登录
+              // 执行退出登录
             },
             child: const Text('确定'),
           ),
@@ -69,51 +68,35 @@ class _MinePageState extends ConsumerState<MinePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
       body: Column(
         children: [
-          // 绿色背景区域
           Container(
-            decoration: const BoxDecoration(color: Color(0xFF216A4A)),
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: Assets.images.mineBg.provider(),
+                fit: BoxFit.cover,
+              ),
+            ),
             child: SafeArea(
               bottom: false,
               child: Column(
                 children: [
-                  // Header
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 16,
-                    ),
-                    child: Row(
-                      children: [
-                        const SizedBox(width: 24),
-                        const Expanded(child: SizedBox()),
-                        // More icon
-                        Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.more_horiz,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                        ),
-                      ],
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: SizedBox(
+                      height: 44,
+                      child: Row(
+                        children: [
+                          const Spacer(),
+                          Assets.images.customer.image(width: 28, height: 28),
+                        ],
+                      ),
                     ),
                   ),
                   // 用户头像
                   Container(
                     width: 91,
                     height: 91,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 3),
-                    ),
                     child: const CircleAvatar(
                       backgroundColor: Color(0xFF268470),
                       radius: 40,
@@ -138,28 +121,30 @@ class _MinePageState extends ConsumerState<MinePage> {
                       color: Colors.white.withValues(alpha: 0.8),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 26),
                 ],
               ),
             ),
           ),
           // 内容区域
           Expanded(
-            child: Container(
-              color: const Color(0xFFF5F5F5),
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+              child: Container(
+                color: Colors.white,
               child: SingleChildScrollView(
                 child: Column(
                   children: [
                     // 待还金额卡片
                     Container(
-                      margin: const EdgeInsets.fromLTRB(0, 18, 0, 0),
-                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                      margin: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                      padding: const EdgeInsets.fromLTRB(20, 22, 20, 12),
                       decoration: const BoxDecoration(
                         color: Color(0xFFFDF5EE),
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(10),
-                          topRight: Radius.circular(10),
-                        ),
+                        borderRadius: BorderRadius.all(Radius.circular(8)),
                       ),
                       child: Column(
                         children: [
@@ -173,23 +158,50 @@ class _MinePageState extends ConsumerState<MinePage> {
                                   color: Colors.grey[200],
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: const Icon(
-                                  Icons.account_balance_wallet,
-                                  color: Colors.grey,
-                                ),
+                                child: Assets.images.mineArrow.image(),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      'GHS ${_pendingAmount.toStringAsFixed(0)}',
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF1A1A1A),
-                                      ),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          'GHS ${_pendingAmount.toStringAsFixed(0)}',
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF1A1A1A),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 3,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            gradient: const LinearGradient(
+                                              colors: [
+                                                Color(0xFFFF5256),
+                                                Color(0xFFFF8463),
+                                              ],
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            '已逾期',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                     const SizedBox(height: 4),
                                     const Text(
@@ -208,44 +220,30 @@ class _MinePageState extends ConsumerState<MinePage> {
                                     horizontal: 8,
                                     vertical: 3,
                                   ),
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xFFFF5256),
-                                        Color(0xFFFF8463),
-                                      ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
+
                                   child: const Text(
                                     '已逾期',
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w500,
-                                      color: Colors.white,
+                                      color: Colors.grey,
                                     ),
                                   ),
                                 ),
-                              const SizedBox(width: 8),
+                              // const SizedBox(width: 8),
                               const Icon(
                                 Icons.chevron_right,
                                 color: Color(0xFF808080),
                                 size: 16,
                               ),
-                              const SizedBox(width: 60),
                             ],
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    // const SizedBox(height: 18),
                     // 功能列表
                     Container(
-                      margin: const EdgeInsets.fromLTRB(0, 18, 0, 0),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.all(Radius.circular(10)),
-                      ),
                       child: Column(
                         children: [
                           // 其他功能标题
@@ -264,25 +262,37 @@ class _MinePageState extends ConsumerState<MinePage> {
                             ),
                           ),
                           _buildMenuItem(
-                            icon: Icons.history,
+                            icon: Assets.images.mineFile.image(
+                              width: 18,
+                              height: 18,
+                            ),
                             title: '历史订单',
                             onTap: _onHistoryTap,
                             showDivider: true,
                           ),
                           _buildMenuItem(
-                            icon: Icons.support_agent,
+                            icon: Assets.images.minePencil.image(
+                              width: 18,
+                              height: 18,
+                            ),
                             title: '客服',
                             onTap: _onCustomerServiceTap,
                             showDivider: true,
                           ),
                           _buildMenuItem(
-                            icon: Icons.privacy_tip_outlined,
+                            icon: Assets.images.minePhone.image(
+                              width: 18,
+                              height: 18,
+                            ),
                             title: '隐私政策',
                             onTap: _onPrivacyPolicyTap,
                             showDivider: true,
                           ),
                           _buildMenuItem(
-                            icon: Icons.settings_outlined,
+                            icon: Assets.images.mineEmail.image(
+                              width: 18,
+                              height: 18,
+                            ),
                             title: '设置',
                             onTap: _onSettingsTap,
                             showDivider: false,
@@ -339,7 +349,7 @@ class _MinePageState extends ConsumerState<MinePage> {
   }
 
   Widget _buildMenuItem({
-    required IconData icon,
+    required Widget icon,
     required String title,
     required VoidCallback onTap,
     bool showDivider = true,
@@ -347,34 +357,36 @@ class _MinePageState extends ConsumerState<MinePage> {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: const Color(0xFF1A1A1A)),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF1A1A1A),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            child: Row(
+              children: [
+                icon,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF1A1A1A),
+                    ),
+                  ),
                 ),
-              ),
+                const Icon(Icons.chevron_right, size: 16, color: Color(0xFFACACAC)),
+              ],
             ),
-            const Icon(Icons.chevron_right, size: 16, color: Color(0xFFACACAC)),
-          ],
-        ),
+          ),
+          if (showDivider)
+            Container(
+              margin: const EdgeInsets.only(left: 52,right: 22),
+              height: 1,
+              color: const Color(0xFFF5F5F5),
+            ),
+        ],
       ),
-    );
-  }
-
-  Widget _buildDivider() {
-    return Container(
-      margin: const EdgeInsets.only(left: 52),
-      height: 1,
-      color: const Color(0xFFF5F5F5),
     );
   }
 }

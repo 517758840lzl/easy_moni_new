@@ -1,9 +1,11 @@
+import 'package:easy_moni/pages/fillInforma/widgets/progressInformation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../services/platform_service.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
+
 import '../../utils/widgets/linepaint.dart';
 
 class PersonalInfoPage extends ConsumerStatefulWidget {
@@ -537,7 +539,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
       body: Column(
         children: [
           Container(
@@ -586,7 +588,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildProgressIndicator(),
+                  buildProgressIndicator(isPersonActive: true),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -599,6 +601,10 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
                 topRight: Radius.circular(16),
               ),
               child: Container(
+                // decoration: const BoxDecoration(
+                //   color: Colors.white,
+                //   borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                // ),
                 color: Colors.white,
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
@@ -725,65 +731,6 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     );
   }
 
-  //动态数据 先写死
-  Widget _buildProgressIndicator() {
-    return Padding(
-      padding: const EdgeInsets.only(left: 36, right: 36),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _buildStepItem(
-            icon: Assets.images.inforamtionIdcard.image(),
-            label: '个人信息',
-            isCompleted: true,
-          ),
-          _buildConnector(),
-          _buildStepItem(
-            icon: Assets.images.inforamtionIdo.image(),
-            label: '身份验证',
-            isCompleted: false,
-          ),
-          _buildConnector(),
-          _buildStepItem(
-            icon: Assets.images.inforamtionIdtNormal.image(),
-            label: '人脸验证',
-            isCompleted: false,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStepItem({
-    required Widget icon,
-    required String label,
-    required bool isCompleted,
-  }) {
-    return Column(
-      children: [
-        Container(width: 36, height: 36, child: icon),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: isCompleted ? const Color(0xFF45F3A6) : Colors.white,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildConnector() {
-    return Expanded(
-      child: Container(
-        height: 1,
-        margin: const EdgeInsets.only(bottom: 30),
-        child: CustomPaint(painter: DashedLinePainter()),
-      ),
-    );
-  }
-
   Widget _buildFormItem({
     required String starTitle,
     required String title,
@@ -880,3 +827,4 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     );
   }
 }
+
