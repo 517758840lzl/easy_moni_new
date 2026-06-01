@@ -2,10 +2,11 @@ import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/login/widgets/permissionalert.dart';
-import 'package:easy_moni/services/platform_service.dart';
+import 'package:easy_moni/services/permission_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class PermissionPage extends ConsumerStatefulWidget {
   const PermissionPage({super.key});
@@ -15,15 +16,38 @@ class PermissionPage extends ConsumerStatefulWidget {
 }
 
 class _PermissionPageState extends ConsumerState<PermissionPage> {
-  void _onReject() {
-    debugPrint('点击了拒绝按钮');
-    SystemNavigator.pop();
+  bool _isAgreed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAgreedStatus();
   }
 
+  Future<void> _checkAgreedStatus() async {
+    final privacyAgreed = await PermissionStorage.isPrivacyAgreed();
+    final permissionsAccepted = await PermissionStorage.isPermissionsAccepted();
+    if (mounted && privacyAgreed && permissionsAccepted) {
+      // 用户已经同意了，直接跳转到登录页
+      if (mounted) {
+        context.pushReplacement('/login');
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _isAgreed = true;
+        });
+      }
+    }
+  }
   void _onAccept() {
     PrivacyPolicyDialog.show(
       context: context,
       onAgree: () async {
+        // 保存用户同意状态
+        await PermissionStorage.setPrivacyAgreed(true);
+        await PermissionStorage.setPermissionsAccepted(true);
+
         // 关掉隐私确认弹窗
         Navigator.of(context).pop();
 
@@ -36,6 +60,10 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
         // } else {
         //   debugPrint("原生桥接提示：用户拒绝了权限");
         // }
+        // 跳转到登录页
+        if (mounted) {
+          context.pushReplacement('/login');
+        }
       },
       onDecline: () {
         SystemNavigator.pop(); // 拒绝就退出
@@ -43,8 +71,22 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
     );
   }
 
+  void _onReject() {
+    debugPrint('点击了拒绝按钮');
+    SystemNavigator.pop();
+  }
+
   @override
   Widget build(BuildContext context) {
+    // 如果还没检查完同意状态，显示加载中
+    if (!_isAgreed) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       body: Stack(
         children: [

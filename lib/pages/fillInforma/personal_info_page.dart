@@ -3,14 +3,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/theme/app_theme.dart';
 import '../../services/platform_service.dart';
-import 'package:easy_moni/gen/assets.gen.dart';
 import '../../entities/acp_element_info_resp.dart';
 import '../../entities/provinces_cities_area_resp.dart';
+import '../../utils/widgets/informationBottomButton.dart';
 import 'providers/acp_element_info_provider.dart';
 import 'providers/provinces_cities_area_provider.dart';
-
-import '../../utils/widgets/linepaint.dart';
 
 class PersonalInfoPage extends ConsumerStatefulWidget {
   const PersonalInfoPage({super.key});
@@ -40,6 +39,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
   }
 
   Future<void> _fetchData() async {
+    debugPrint('_fetchData 开始...');
     try {
       // 并行获取表单数据和省市数据
       final results = await Future.wait([
@@ -51,20 +51,32 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
 
       // 处理表单数据
       final formResult = results[0] as dynamic;
+      debugPrint('formResult: $formResult');
+      debugPrint('formResult.isSuccess: ${formResult.isSuccess}');
+      debugPrint('formResult.data: ${formResult.data}');
+      
       if (formResult.isSuccess && formResult.data != null) {
-        final stepInfo = formResult.data!.stepInfoList.firstOrNull;
+        final stepInfoList = formResult.data!.stepInfoList;
+        debugPrint('stepInfoList: $stepInfoList, length: ${stepInfoList.length}');
+        final stepInfo = stepInfoList.isNotEmpty ? stepInfoList[0] : null;
+        debugPrint('stepInfo: $stepInfo');
         if (stepInfo != null) {
           _stepInfo = stepInfo;
+          debugPrint('设置 _stepInfo, entries 数量: ${stepInfo.entries.length}');
           // 初始化选中索引和值
           for (final entry in stepInfo.entries) {
             _selectedIndices[entry.key] = 0;
             _selectedValues[entry.key] = null;
+            debugPrint('entry: ${entry.key} - ${entry.showContent}');
           }
         }
+      } else {
+        debugPrint('表单数据获取失败: ${formResult.message}');
       }
 
       // 处理省市数据
       final areaResult = results[1] as dynamic;
+      debugPrint('areaResult.isSuccess: ${areaResult.isSuccess}');
       if (areaResult.isSuccess && areaResult.data != null) {
         _provinces = areaResult.data!.province;
         _cities = areaResult.data!.city;
@@ -72,9 +84,11 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
         _buildRegionCityData();
       }
 
+      debugPrint('_fetchData 完成, _isLoading 设置为 false');
       setState(() => _isLoading = false);
-    } catch (e) {
+    } catch (e, stack) {
       debugPrint('获取数据失败: $e');
+      debugPrint('堆栈: $stack');
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -593,60 +607,13 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.primaryDark,
       body: Column(
         children: [
-          Container(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: Assets.images.inforamtionBgheader.provider(),
-                fit: BoxFit.cover,
-              ),
-            ),
-            child: SafeArea(
-              bottom: false,
-              child: Column(
-                children: [
-                  const SizedBox(height: 14),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 30),
-                    child: SizedBox(
-                      height: 44,
-                      child: Row(
-                        children: [
-                          // if (Navigator.of(context).canPop())
-                          GestureDetector(
-                            onTap: () => Navigator.of(context).pop(),
-                            child: const Icon(
-                              Icons.arrow_back_ios,
-                              color: Colors.white,
-                              size: 22,
-                            ),
-                          ),
-                          if (Navigator.of(context).canPop())
-                            const SizedBox(width: 16),
-                          Expanded(
-                            child: Text(
-                              _stepInfo?.pageTitle ?? '个人信息',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 40),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  buildProgressIndicator(isPersonActive: true),
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
+          buildInformationHeader(
+            context: context,
+            title: _stepInfo?.pageTitle ?? '-',
+            activeStep: InformationStep.personal,
           ),
           Expanded(
             child: ClipRRect(
@@ -681,7 +648,10 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
                               value: selectedValue,
                               placeholder: entry.defaultText,
                               onTap: () {
-                                if (entry.selectList != null && entry.selectList!.isNotEmpty) {
+                                if (entry.key == 'geo_location') {
+                                  // 地区选择
+                                  _showRegionPicker();
+                                } else if (entry.selectList != null && entry.selectList!.isNotEmpty) {
                                   _showPicker(
                                     title: entry.showContent,
                                     options: entry.selectList!,
@@ -702,38 +672,9 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
               ),
             ),
           ),
-          Container(
-            height: 48,
-            color: Colors.white,
-            padding: EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 4,
-              bottom: MediaQuery.of(context).padding.bottom,
-            ),
-            child: GestureDetector(
-              onTap: _canContinue ? _onContinue : null,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: _canContinue
-                      ? const Color(0xFF45F3A6)
-                      : const Color(0xFFBDBDBD),
-                  borderRadius: BorderRadius.circular(100),
-                ),
-                child: Center(
-                  child: Text(
-                    '继续',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: _canContinue
-                          ? const Color(0xFF104440)
-                          : Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          BottomContinueButton(
+            isEnabled: _canContinue,
+            onTap: _onContinue,
           ),
         ],
       ),
@@ -837,4 +778,3 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     );
   }
 }
-

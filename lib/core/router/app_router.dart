@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_moni/pages/login/permissionpage.dart';
+import 'package:easy_moni/pages/login/loginpage.dart';
+import 'package:easy_moni/entities/user_repayment_resp.dart';
 
 import '../../pages/fillInforma/contact_info_page.dart';
+import '../../pages/fillInforma/face_verify_page.dart';
 import '../../pages/fillInforma/identity_verify_page.dart';
+import '../../pages/fillInforma/personal_info_page.dart' as fill_info;
 import '../../pages/mine/detailpage.dart';
 import '../../pages/mine/mine.dart';
 import '../../pages/mine/order_history_page.dart';
@@ -30,11 +34,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const PermissionPage(),
       ),
       GoRoute(
+        path: '/login',
+        name: 'login',
+        builder: (context, state) => const LoginPage(),
+      ),
+      GoRoute(
         path: '/order-detail',
         name: 'orderDetail',
         builder: (context, state) {
-          final orderData = state.extra as OrderData;
-          return OrderDetailPage(orderData: orderData);
+          final extra = state.extra as Map<String, dynamic>?;
+          if (extra != null && extra.containsKey('orders')) {
+            return OrderDetailPage(
+              orderData: extra['orderData'] as OrderData?,
+              orders: extra['orders'] as List<UserRepaymentResp>?,
+            );
+          }
+          return OrderDetailPage(orderData: state.extra as OrderData?);
         },
       ),
       GoRoute(
@@ -88,9 +103,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ContactInfoPage(),
       ),
       GoRoute(
+        path: '/personal-info',
+        name: 'personalInfo',
+        builder: (context, state) => const fill_info.PersonalInfoPage(),
+      ),
+      GoRoute(
         path: '/identity-verify',
         name: 'identityVerify',
         builder: (context, state) => const IdentityVerifyPage(),
+      ),
+      GoRoute(
+        path: '/face-verify',
+        name: 'faceVerify',
+        builder: (context, state) => const FaceVerifyPage(),
       ),
       GoRoute(
         path: '/mine',

@@ -20,24 +20,22 @@ class ApiConstants {
   static const String login = '/api/user/login';
   /*检数据是否过期接口*/
   static const String checkUploadDataValid = '/api/upload/data/checkUploadDataValid';
-  /*数据上传接口 post*/
-  static const String submitUserUploadData = '/api/upload/data/submitUserUploadData';
-  /*查询用户状态 GET*/
+  /*查询用户状态GET*/
   static const String queryAcquisitionProgress = '/api/user/acquisition/queryAcquisitionProgress';
   /*查询KYC步骤数据*/
   static const String queryAcpElementInfo = '/api/user/acquisition/acpElementInfo';
-  /*查询地区和城市接口 GET */
+  /*查询地区和城市接口 GET*/
   static const String queryProvincesCitiesArea = '/api/common/provincesCitiesArea';
 
   /*查询银行列表接口 GET*/
   static const String queryBankList = '/api/user/acquisition/queryBankList';
-  /*KYC步骤上次数据接口 POST*/
+  /*KYC步骤上传数据接口 POST*/
   static const String submitAcpElementInfo = '/api/upload/data/submitUserUploadData';
   /*身份证上传接口  POST*/
   static const String ocrVerification = '/api/user/acquisition/ocrVerification';
   // 首页数据接口 GET
   static const String home = '/api/v4/home';
-  //从首页进入贷款确认页 POST 
+  //从首页进入贷款确认页 POST
   static const String confirmUserApplyAmountInfo = '/api/order/loanOrder/confirmUserApplyAmountInfo';
   //获取优惠卷列表
   static const String customerCouponList = '/api/customer/coupon/v2/list';
@@ -47,7 +45,7 @@ class ApiConstants {
   static const String popconfig = '/api/common/pop/config?type=1';
   //获取待还款列表
   static const String userRepayment = '/api/order/loanOrder/userRepayment';
-  //获取用户要还款的订单详情 POST 
+  //获取用户要还款的订单详情 POST
   static const String billDetails = '/api/order/loanOrder/billDetails';
   //还款
   static const String generatesUrl = '/api/order/loanOrder/generatesUrl';

@@ -1,17 +1,19 @@
 import 'package:dio/dio.dart';
 
-enum HttpResultStatus {
-  success,
-  error,
-  networkError,
-  timeout,
-  cancel,
-  serverError,
-  unKnown,
+class HttpResultStatus {
+  static const int success = 0;
+  static const int error = 1;
+  static const int networkError = 2;
+  static const int timeout = 3;
+  static const int cancel = 4;
+  static const int serverError = 5;
+  static const int unKnown = 6;
+  
+  const HttpResultStatus._();
 }
 
 class HttpResult<T> {
-  final HttpResultStatus status;
+  final int status;
   final T? data;
   final String? message;
   final int? statusCode;
@@ -24,7 +26,9 @@ class HttpResult<T> {
     this.statusCode,
     this.cancelToken,
   });
+  
   bool get isSuccess => status == HttpResultStatus.success;
+  
   factory HttpResult.success(T data, {CancelToken? cancelToken}) {
     return HttpResult(
       status: HttpResultStatus.success,
@@ -34,7 +38,7 @@ class HttpResult<T> {
   }
 
   factory HttpResult.error(
-    HttpResultStatus status,
+    int status,
     String message, {
     int? statusCode,
     CancelToken? cancelToken,
@@ -54,7 +58,7 @@ class HttpResult<T> {
 }
 
 class HttpListResult<T> {
-  final HttpResultStatus status;
+  final int status;
   final List<T> data;
   final String? message;
   final int total;
@@ -93,7 +97,7 @@ class HttpListResult<T> {
   }
 
   factory HttpListResult.error(
-    HttpResultStatus status,
+    int status,
     String message, {
     int? statusCode,
     CancelToken? cancelToken,

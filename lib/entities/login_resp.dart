@@ -1,0 +1,58 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+
+class LoginResp {
+  final String? token;
+  final int? cacheData;
+  final int? isFirstRegister;
+  final int? userId;
+  final String? uuid;
+
+  const LoginResp({
+    this.token,
+    this.cacheData,
+    this.isFirstRegister,
+    this.userId,
+    this.uuid,
+  });
+
+  factory LoginResp.fromJson(dynamic json) {
+    try {
+      Map<String, dynamic> map;
+      if (json is Map<String, dynamic>) {
+        map = json;
+      } else if (json is Map) {
+        map = Map<String, dynamic>.from(json);
+      } else if (json is String) {
+        map = Map<String, dynamic>.from(jsonDecode(json) as Map);
+      } else {
+        debugPrint('LoginResp.fromJson: 未知类型 ${json.runtimeType}');
+        return const LoginResp();
+      }
+      
+      return LoginResp(
+        token: map['token'] as String?,
+        cacheData: _parseInt(map['cacheData']),
+        isFirstRegister: _parseInt(map['isFirstRegister']),
+        userId: _parseInt(map['userId']),
+        uuid: map['uuid'] as String?,
+      );
+    } catch (e, stack) {
+      debugPrint('LoginResp.fromJson 异常: $e\n$stack');
+      return const LoginResp();
+    }
+  }
+
+  static int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
+  @override
+  String toString() {
+    return 'LoginResp(token: $token, cacheData: $cacheData, isFirstRegister: $isFirstRegister)';
+  }
+}

@@ -1,13 +1,16 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:easy_moni/core/constants/app_strings.dart';
+import 'package:easy_moni/core/theme/app_theme.dart';
+import 'package:easy_moni/pages/fillInforma/providers/ocr_verification_provider.dart';
+import 'package:easy_moni/pages/fillInforma/providers/submit_acp_element_info_provider.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/progressInformation.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../gen/assets.gen.dart';
 import '../../services/platform_service.dart';
-import '../../utils/widgets/linepaint.dart';
+import '../../utils/widgets/informationBottomButton.dart';
 
 class IdentityVerifyPage extends ConsumerStatefulWidget {
   const IdentityVerifyPage({super.key});
@@ -23,7 +26,53 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   bool _isIdCardFrontFilled = false;
   bool _isIdCardBackFilled = false;
 
+  bool _isLoading = false;
+
   bool get _canContinue => _isIdCardFrontFilled && _isIdCardBackFilled;
+
+  Future<void> _onContinue() async {
+    if (!_canContinue || _isLoading) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final api = ref.read(submitAcpElementInfoProvider);
+      final result = await api.call(
+        processId: 36, // TODO: 从上一步获取实际 processId
+        step: 1,
+        data: {
+          'idCardFront': _idCardFrontData != null
+              ? {'base64': base64Encode(_idCardFrontData!)}
+              : null,
+          'idCardBack': _idCardBackData != null
+              ? {'base64': base64Encode(_idCardBackData!)}
+              : null,
+        },
+      );
+
+      if (result.isSuccess) {
+        if (mounted) {
+          context.push('/face-verify');
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(result.message ?? '提交失败')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('提交失败: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   void _showUploadOptions({required bool isFront}) {
     showModalBottomSheet(
@@ -36,7 +85,6 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Drag indicator
             Container(
               margin: const EdgeInsets.only(top: 8),
               width: 32,
@@ -164,7 +212,6 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   }
 
   Future<void> _takePhoto({required bool isFront}) async {
-    // 检查相机权限
     bool hasPermission = await CameraService.checkPermission();
 
     if (!hasPermission) {
@@ -193,7 +240,6 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Drag indicator
             Container(
               margin: const EdgeInsets.only(top: 8),
               width: 32,
@@ -288,7 +334,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     );
   }
 
-  void _onImageSelected(Uint8List imageData, {required bool isFront}) {
+  void _onImageSelected(Uint8List imageData, {required bool isFront}) async {
     setState(() {
       if (isFront) {
         _idCardFrontData = imageData;
@@ -299,6 +345,29 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
       }
     });
     debugPrint('选择的图片大小: ${imageData.length} bytes');
+
+    // 如果正面和背面都选择了，则调用 OCR 验证接口
+    if (_idCardFrontData != null && _idCardBackData != null) {
+      _callOcrVerification();
+    }
+  }
+
+  Future<void> _callOcrVerification() async {
+    try {
+      final api = ref.read(ocrVerificationProvider);
+      final result = await api.call(
+        idCardFront: _idCardFrontData,
+        idCardBack: _idCardBackData,
+      );
+
+      if (result.isSuccess) {
+        debugPrint('OCR验证成功: ${result.data}');
+      } else {
+        debugPrint('OCR验证失败: ${result.message}');
+      }
+    } catch (e) {
+      debugPrint('OCR验证异常: $e');
+    }
   }
 
   void _onScanIdCardFront() {
@@ -309,156 +378,75 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     _showUploadOptions(isFront: false);
   }
 
-  void _onContinue() {
-    if (_canContinue) {
-      debugPrint('身份证正面大小: ${_idCardFrontData?.length}');
-      debugPrint('身份证背面大小: ${_idCardBackData?.length}');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: const Color(0xFFF8F8FB),
+      backgroundColor: AppColors.primaryDark,
       body: Column(
         children: [
-          Container(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: Assets.images.inforamtionBgheader.provider(),
-                fit: BoxFit.cover,
+          buildInformationHeader(
+            context: context,
+            title: AppStrings.idcardVer,
+            activeStep: InformationStep.identity,
+          ),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
               ),
-            ),
-            child: SafeArea(
-              bottom: false,
-              child: Column(
-                children: [
-                  const SizedBox(height: 44),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: SizedBox(
-                      height: 44,
-                      child: Row(
+              child: Container(
+                color: Colors.white,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.only(left: 20, right: 20),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 16),
+                      Row(
                         children: [
-                          GestureDetector(
-                            onTap: () => Navigator.of(context).pop(),
-                            child: const Icon(
-                              Icons.arrow_back_ios,
-                              color: Colors.white,
-                              size: 22,
+                          const Text(
+                            '*',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.red,
                             ),
                           ),
-                          const Expanded(
-                            child: Text(
-                              AppStrings.idcardVer,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            '请仔细核对个人身份信息',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
+                              letterSpacing: 0.4,
                             ),
-                          ),
-                          const Icon(
-                            Icons.more_horiz,
-                            color: Colors.white,
-                            size: 22,
                           ),
                         ],
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  buildProgressIndicator(isMineActive: true),
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
-          ),
-          Expanded(
-            child: Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-              ),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        const Text(
-                          '*',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.red,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          '请仔细核对个人身份信息',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
-                            letterSpacing: 0.4,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    _buildIdCardItem(
-                      title: '身份证人像面',
-                      isFilled: _isIdCardFrontFilled,
-                      onTap: _onScanIdCardFront,
-                      imageData: _idCardFrontData,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildIdCardItem(
-                      title: '身份证国徽面',
-                      isFilled: _isIdCardBackFilled,
-                      onTap: _onScanIdCardBack,
-                      imageData: _idCardBackData,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Container(
-            height: 48,
-            color: Colors.white,
-            padding: EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 4,
-              bottom: MediaQuery.of(context).padding.bottom,
-            ),
-            child: GestureDetector(
-              onTap: _canContinue ? _onContinue : null,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: _canContinue
-                      ? const Color(0xFF45F3A6)
-                      : const Color(0xFFBDBDBD),
-                  borderRadius: BorderRadius.circular(100),
-                ),
-                child: Center(
-                  child: Text(
-                    '继续',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: _canContinue
-                          ? const Color(0xFF104440)
-                          : Colors.white,
-                    ),
+                      const SizedBox(height: 16),
+                      _buildIdCardItem(
+                        bgImage: Assets.images.inforamtionIdw,
+                        isFilled: _isIdCardFrontFilled,
+                        onTap: _onScanIdCardFront,
+                        imageData: _idCardFrontData,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildIdCardItem(
+                        bgImage: Assets.images.inforamtionIdo,
+                        isFilled: _isIdCardBackFilled,
+                        onTap: _onScanIdCardBack,
+                        imageData: _idCardBackData,
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
+          ),
+          BottomContinueButton(
+            isEnabled: (_canContinue && !_isLoading),
+            onTap: _onContinue,
           ),
         ],
       ),
@@ -466,7 +454,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   }
 
   Widget _buildIdCardItem({
-    required String title,
+    required AssetGenImage bgImage,
     required bool isFilled,
     required VoidCallback onTap,
     Uint8List? imageData,
@@ -474,10 +462,10 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 227,
+        height: (MediaQuery.of(context).size.width - 40)*683.0/1005.0,
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: Assets.images.inforamtionIdo.provider(),
+            image: bgImage.provider(),
             fit: BoxFit.cover,
           ),
         ),
@@ -489,16 +477,6 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [Color(0xFF0E3133), Color(0xFF268470)],
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
                       child: Assets.images.inforamtionScan.image(
                         width: 40,
                         height: 40,
@@ -535,21 +513,6 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
                   ],
                 ),
               ),
-            Positioned(
-              top: 8,
-              left: 12,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  title,
-                  style: const TextStyle(fontSize: 10, color: Colors.white),
-                ),
-              ),
-            ),
           ],
         ),
       ),

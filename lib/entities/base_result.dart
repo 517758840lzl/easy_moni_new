@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class BaseResult<T> {
   final int code;
   final String? message;
@@ -11,12 +13,28 @@ class BaseResult<T> {
     Map<String, dynamic> json,
     T Function(dynamic)? fromJsonT,
   ) {
+    final code = json['code'] as int? ?? -1;
+    final message = (json['message'] ?? json['msg']) as String?;
+    final data = json['data'];
+    
+    T? parsedData;
+    if (data != null && fromJsonT != null) {
+      try {
+        parsedData = fromJsonT(data);
+      } catch (e) {
+        debugPrint('BaseResult.fromJson callback error: $e');
+        parsedData = data as T?;
+      }
+    } else {
+      parsedData = data as T?;
+    }
+    
+    debugPrint('BaseResult: code=$code, message=$message, data=$data, parsedData=$parsedData');
+    
     return BaseResult(
-      code: json['code'] as int? ?? -1,
-      message: (json['message'] ?? json['msg']) as String?,
-      data: json['data'] != null && fromJsonT != null
-          ? fromJsonT(json['data'])
-          : json['data'] as T?,
+      code: code,
+      message: message,
+      data: parsedData,
     );
   }
 }

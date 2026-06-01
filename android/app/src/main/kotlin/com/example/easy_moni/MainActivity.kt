@@ -39,16 +39,16 @@ class MainActivity : FlutterActivity() {
             when (call.method) {
                 "checkLocationPermission" -> {
                     val hasPermission = ContextCompat.checkSelfPermission(
-                        this, Manifest.permission.ACCESS_FINE_LOCATION
+                        this, Manifest.permission.ACCESS_COARSE_LOCATION
                     ) == PackageManager.PERMISSION_GRANTED
                     result.success(hasPermission)
                 }
                 "requestLocationPermission" -> {
-                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                         pendingResult = result
                         ActivityCompat.requestPermissions(
                             this,
-                            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+                            arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION),
                             1001
                         )
                     } else {
@@ -72,60 +72,17 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CONTACTS_CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
                 "checkContactsPermission" -> {
-                    val hasPermission = ContextCompat.checkSelfPermission(
-                        this, Manifest.permission.READ_CONTACTS
-                    ) == PackageManager.PERMISSION_GRANTED
-                    result.success(hasPermission)
+//                    val hasPermission = ContextCompat.checkSelfPermission(
+//                        this, Manifest.permission.READ_CONTACTS
+//                    ) == PackageManager.PERMISSION_GRANTED
+//                    result.success(hasPermission)
+                    result.success(false)
                 }
                 "requestContactsPermission" -> {
-                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
-                        pendingContactsResult = result
-                        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_CONTACTS), 1002)
-                    } else {
-                        result.success(true)
-                    }
+                    result.success(false)
                 }
                 "getContacts" -> {
-                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
-                        result.error("PERMISSION_DENIED", "Contacts permission not granted", null)
-                        return@setMethodCallHandler
-                    }
-                    try {
-                        val contacts = mutableListOf<Map<String, String>>()
-                        val cursor = contentResolver.query(
-                            android.provider.ContactsContract.Contacts.CONTENT_URI,
-                            arrayOf(
-                                android.provider.ContactsContract.Contacts._ID,
-                                android.provider.ContactsContract.Contacts.DISPLAY_NAME_PRIMARY
-                            ),
-                            null, null,
-                            android.provider.ContactsContract.Contacts.DISPLAY_NAME_PRIMARY + " ASC"
-                        )
-                        cursor?.use {
-                            while (it.moveToNext()) {
-                                val contactId = it.getString(it.getColumnIndexOrThrow(android.provider.ContactsContract.Contacts._ID))
-                                val name = it.getString(it.getColumnIndexOrThrow(android.provider.ContactsContract.Contacts.DISPLAY_NAME_PRIMARY)) ?: continue
-                                val phoneCursor = contentResolver.query(
-                                    android.provider.ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                                    arrayOf(android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER),
-                                    android.provider.ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
-                                    arrayOf(contactId), null
-                                )
-                                var phone = ""
-                                phoneCursor?.use { pc ->
-                                    if (pc.moveToFirst()) {
-                                        phone = pc.getString(pc.getColumnIndexOrThrow(android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER)) ?: ""
-                                    }
-                                }
-                                if (phone.isNotEmpty()) {
-                                    contacts.add(mapOf("id" to contactId, "name" to name, "phone" to phone))
-                                }
-                            }
-                        }
-                        result.success(contacts)
-                    } catch (e: Exception) {
-                        result.error("CONTACTS_ERROR", e.message, null)
-                    }
+                    result.error("PERMISSION_DISABLED", "Contacts permission disabled on Android", null)
                 }
                 else -> result.notImplemented()
             }

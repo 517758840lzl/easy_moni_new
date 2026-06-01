@@ -2,87 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../gen/assets.gen.dart';
+import '../../entities/user_repayment_resp.dart';
 import 'order_detail_page.dart';
+import 'providers/user_repayment_provider.dart';
 
-// 订单状态枚举
-enum OrderStatus {
-  all,       // 全部
-  borrowing,  // 借款中
-  pending,   // 待还款
-  failed,    // 放款失败
+class OrderStatus {
+  static const int all = 0;       // 全部
+  static const int borrowing = 1;  // 借款中
+  static const int pending = 2;     // 待还款
+  static const int failed = 3;     // 放款失败
+  static const int repaided = 4;     // 还款中
+
+  const OrderStatus._();
 }
 
-// 订单状态标签
-enum StatusTag {
-  borrowing,   // 放款中 - 橙色
-  pending,     // 待还款 - 橙色
-  overdue,     // 已逾期 - 红色
-  failed,      // 放款失败 - 灰色
-  repaid,      // 已还款 - 绿色
+class StatusTag {
+  static const int borrowing = 1;   // 放款中 - 橙色
+  static const int pending = 2;      // 待还款 - 橙色
+  static const int overdue = 3;      // 已逾期 - 红色
+  static const int failed = 4;       // 放款失败 - 灰色 (Reembolso)
+  static const int repaid = 5;       // 已还款 - 绿色
+  
+  const StatusTag._();
 }
-
-// 订单数据模型
-class OrderItem {
-  final String id;
-  final String productName;
-  final double borrowAmount;
-  final double arrivalAmount;
-  final String borrowDate;
-  final StatusTag statusTag;
-
-  OrderItem({
-    required this.id,
-    required this.productName,
-    required this.borrowAmount,
-    required this.arrivalAmount,
-    required this.borrowDate,
-    required this.statusTag,
-  });
-}
-
-// 模拟数据
-final List<OrderItem> _mockOrders = [
-  OrderItem(
-    id: '1',
-    productName: 'Palm Loa',
-    borrowAmount: 100,
-    arrivalAmount: 110,
-    borrowDate: '25/05/2026',
-    statusTag: StatusTag.borrowing,
-  ),
-  OrderItem(
-    id: '2',
-    productName: 'Palm Loa',
-    borrowAmount: 100,
-    arrivalAmount: 110,
-    borrowDate: '25/05/2026',
-    statusTag: StatusTag.borrowing,
-  ),
-  OrderItem(
-    id: '3',
-    productName: 'Palm Loa',
-    borrowAmount: 100,
-    arrivalAmount: 110,
-    borrowDate: '25/05/2026',
-    statusTag: StatusTag.pending,
-  ),
-  OrderItem(
-    id: '4',
-    productName: 'Palm Loa',
-    borrowAmount: 100,
-    arrivalAmount: 110,
-    borrowDate: '25/05/2026',
-    statusTag: StatusTag.pending,
-  ),
-  OrderItem(
-    id: '5',
-    productName: 'Palm Loa',
-    borrowAmount: 100,
-    arrivalAmount: 110,
-    borrowDate: '25/05/2026',
-    statusTag: StatusTag.failed,
-  ),
-];
 
 class OrderHistoryPage extends ConsumerStatefulWidget {
   const OrderHistoryPage({super.key});
@@ -92,8 +34,9 @@ class OrderHistoryPage extends ConsumerStatefulWidget {
 }
 
 class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
-  OrderStatus _currentStatus = OrderStatus.all;
-  List<OrderItem> _orders = [];
+  int _currentStatus = OrderStatus.all;
+  List<UserRepaymentResp> _orders = [];
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -101,21 +44,34 @@ class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
     _loadOrders();
   }
 
-  void _loadOrders() {
-    setState(() {
-      if (_currentStatus == OrderStatus.all) {
-        _orders = _mockOrders;
-      } else if (_currentStatus == OrderStatus.borrowing) {
-        _orders = _mockOrders.where((o) => o.statusTag == StatusTag.borrowing).toList();
-      } else if (_currentStatus == OrderStatus.pending) {
-        _orders = _mockOrders.where((o) => o.statusTag == StatusTag.pending).toList();
-      } else if (_currentStatus == OrderStatus.failed) {
-        _orders = _mockOrders.where((o) => o.statusTag == StatusTag.failed).toList();
+  Future<void> _loadOrders() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final api = ref.read(userRepaymentProvider);
+      final result = await api.call(statusList: [_currentStatus]); //_currentStatus statusList: [4] = Reembolso
+      
+      if (mounted) {
+        setState(() {
+          if (result.isSuccess && result.data != null) {
+            _orders = result.data!;
+          } else {
+            _orders = [];
+          }
+          _isLoading = false;
+        });
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _orders = [];
+          _isLoading = false;
+        });
+      }
+    }
   }
 
-  void _onTabChanged(OrderStatus status) {
+  void _onTabChanged(int status) {
     if (_currentStatus != status) {
       setState(() {
         _currentStatus = status;
@@ -124,16 +80,19 @@ class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
     }
   }
 
-  DetailStatus _convertToDetailStatus(StatusTag tag) {
-    switch (tag) {
-      case StatusTag.borrowing:
+  int _convertToDetailStatus(int orderStatus) {
+    switch (orderStatus) {
+      case 1:
         return DetailStatus.borrowing;
-      case StatusTag.pending:
-      case StatusTag.overdue:
+      case 2:
+        return DetailStatus.pending;
+      case 3:
         return DetailStatus.overdue;
-      case StatusTag.failed:
-        return DetailStatus.waiting;
-      case StatusTag.repaid:
+      case 4:
+        return DetailStatus.repayment; // Reembolso
+      case 5:
+        return DetailStatus.repaid;
+      default:
         return DetailStatus.borrowing;
     }
   }
@@ -144,7 +103,6 @@ class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
       backgroundColor: const Color(0xFFF8F8FB),
       body: Column(
         children: [
-          // 顶部背景
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -157,7 +115,6 @@ class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
               bottom: false,
               child: Column(
                 children: [
-                  // Header
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
                     child: Row(
@@ -179,18 +136,15 @@ class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
                           ),
                         ),
                         Assets.images.customer.image(width: 28, height: 28),
-                        // const SizedBox(width: 40),
                       ],
                     ),
                   ),
-                  // Tab 标签
                   _buildTabBar(),
                   const SizedBox(height: 8),
                 ],
               ),
             ),
           ),
-          // 订单列表
           Expanded(
             child: Container(
               decoration: const BoxDecoration(
@@ -200,9 +154,11 @@ class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
                   topRight: Radius.circular(12),
                 ),
               ),
-              child: _orders.isEmpty
-                  ? _buildEmptyState()
-                  : _buildOrderList(),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _orders.isEmpty
+                      ? _buildEmptyState()
+                      : _buildOrderList(),
             ),
           ),
         ],
@@ -211,10 +167,12 @@ class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
   }
 
   Widget _buildTabBar() {
-    final allCount = _mockOrders.length;
-    final borrowingCount = _mockOrders.where((o) => o.statusTag == StatusTag.borrowing).length;
-    final pendingCount = _mockOrders.where((o) => o.statusTag == StatusTag.pending).length;
-    final failedCount = _mockOrders.where((o) => o.statusTag == StatusTag.failed).length;
+    // 计算各状态数量
+    int allCount = _orders.length;
+    int borrowingCount = _orders.where((o) => o.orderStatus == 1).length;
+    int pendingCount = _orders.where((o) => o.orderStatus == 2).length;
+    int overdueCount = _orders.where((o) => o.orderStatus == 3).length;
+    int failedCount = _orders.where((o) => o.orderStatus == 4).length;
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -227,13 +185,15 @@ class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
           const SizedBox(width: 17),
           _buildTabItem('待还款（$pendingCount）', OrderStatus.pending),
           const SizedBox(width: 17),
-          _buildTabItem('放款失败（$failedCount）', OrderStatus.failed),
+          _buildTabItem('已逾期（$overdueCount）', OrderStatus.failed),
+          const SizedBox(width: 17),
+          _buildTabItem('还款中（$failedCount）', OrderStatus.repaided),
         ],
       ),
     );
   }
 
-  Widget _buildTabItem(String label, OrderStatus status) {
+  Widget _buildTabItem(String label, int status) {
     final isSelected = _currentStatus == status;
     return GestureDetector(
       onTap: () => _onTabChanged(status),
@@ -295,24 +255,27 @@ class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
     );
   }
 
-  Widget _buildOrderCard(OrderItem order) {
+  Widget _buildOrderCard(UserRepaymentResp order) {
     return GestureDetector(
       onTap: () {
         final orderData = OrderData(
-          id: order.id,
+          id: order.appOrderId,
           productName: order.productName,
-          borrowAmount: order.borrowAmount,
-          arrivalAmount: order.arrivalAmount,
-          interest: order.borrowAmount * 0.1, // 模拟利息
-          repayAmount: order.borrowAmount * 1.1, // 模拟应还
-          borrowDays: 7,
-          borrowDate: order.borrowDate,
-          dueDate: order.borrowDate, // 模拟
-          momoAccount: '2345676543',
-          walletType: 'Vodafone Cash',
-          status: _convertToDetailStatus(order.statusTag),
+          borrowAmount: order.loanAmount,
+          arrivalAmount: order.receiptAmount,
+          interest: order.interest,
+          repayAmount: order.repayAmount,
+          borrowDays: order.term,
+          borrowDate: _formatDate(order.createTime),
+          dueDate: order.repayDateStr,
+          momoAccount: order.bankCardNo,
+          walletType: order.bankCardName,
+          status: _convertToDetailStatus(order.orderStatus),
         );
-        context.push('/order-detail', extra: orderData);
+        context.push('/order-detail', extra: {
+          'orderData': orderData,
+          'orders': _orders,
+        });
       },
       child: Container(
         padding: const EdgeInsets.fromLTRB(15, 10, 15, 10),
@@ -325,7 +288,6 @@ class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 产品名称
                 Row(
                   children: [
                     Container(
@@ -351,28 +313,37 @@ class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                // 金额信息
                 Row(
                   children: [
-                    _buildAmountItem('借款金额', 'GHS ${order.borrowAmount.toStringAsFixed(0)}'),
+                    _buildAmountItem('借款金额', 'GHS ${order.loanAmount.toStringAsFixed(2)}'),
                     const Spacer(),
-                    _buildAmountItem('到账金额', 'GHS ${order.arrivalAmount.toStringAsFixed(0)}'),
+                    _buildAmountItem('到账金额', 'GHS ${order.receiptAmount.toStringAsFixed(2)}'),
                     const Spacer(),
-                    _buildAmountItem('借款日期', order.borrowDate),
+                    _buildAmountItem('借款日期', _formatDate(order.createTime)),
                   ],
                 ),
               ],
             ),
-            // 状态标签
             Positioned(
               top: 12,
               right: 0,
-              child: _buildStatusTag(order.statusTag),
+              child: _buildStatusTag(order.orderStatus),
             ),
           ],
         ),
       ),
     );
+  }
+
+  String _formatDate(String dateStr) {
+    // 将 2026-04-29 19:13:01 转换为 29/04/2026
+    try {
+      final parts = dateStr.split(' ')[0].split('-');
+      if (parts.length == 3) {
+        return '${parts[2]}/${parts[1]}/${parts[0]}';
+      }
+    } catch (_) {}
+    return dateStr;
   }
 
   Widget _buildAmountItem(String label, String value, {bool isLast = false}) {
@@ -399,43 +370,47 @@ class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
     );
   }
 
-  Widget _buildStatusTag(StatusTag tag) {
+  Widget _buildStatusTag(int orderStatus) {
     String label;
     Color textColor;
-    List<Color>? gradientColors;
+    List<Color> gradientColors;
 
-    switch (tag) {
-      case StatusTag.borrowing:
+    switch (orderStatus) {
+      case 1:
         label = '放款中';
         gradientColors = [const Color(0xFFF9B072), const Color(0xFFFF8463)];
         textColor = Colors.white;
         break;
-      case StatusTag.pending:
+      case 2:
         label = '待还款';
         gradientColors = [const Color(0xFFF9B072), const Color(0xFFFF8463)];
         textColor = Colors.white;
         break;
-      case StatusTag.overdue:
+      case 3:
         label = '已逾期';
         gradientColors = [const Color(0xFFFF5256), const Color(0xFFFF8463)];
         textColor = Colors.white;
         break;
-      case StatusTag.failed:
-        label = '放款失败';
-        gradientColors = [const Color(0xFFACACAC), const Color(0xFF808080)];
+      case 4:
+        label = '还款中';
+        gradientColors = [const Color(0xFF45F3A6), const Color(0xFF268470)];
         textColor = Colors.white;
         break;
-      case StatusTag.repaid:
+      case 5:
         label = '已还款';
         gradientColors = [const Color(0xFF45F3A6), const Color(0xFF268470)];
         textColor = Colors.white;
         break;
+      default:
+        label = '未知';
+        gradientColors = [const Color(0xFFACACAC), const Color(0xFF808080)];
+        textColor = Colors.white;
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: gradientColors!),
+        gradient: LinearGradient(colors: gradientColors),
         borderRadius: BorderRadius.circular(5),
       ),
       child: Text(

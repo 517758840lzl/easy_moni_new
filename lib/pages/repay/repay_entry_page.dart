@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../utils/extensions.dart';
 
-enum BillStatus {
-  overdue,
-  normal,
+class BillStatus {
+  static const int overdue = 1;
+  static const int normal = 2;
+  
+  const BillStatus._();
 }
 
 class BillItem {
@@ -17,7 +19,7 @@ class BillItem {
   final int overdueDays;
   final double amount;
   final String dueDate;
-  final BillStatus status;
+  final int status;
 
   BillItem({
     required this.id,

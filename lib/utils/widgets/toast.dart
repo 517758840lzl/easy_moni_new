@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 class ToastPosition {
-  const ToastPosition({this.align = Alignment.center, this.offset = 0.0});
+  const ToastPosition({this.align = Alignment.center, this.offset = 10.0});
 
   final AlignmentGeometry align;
   final double offset;
@@ -54,6 +54,10 @@ Widget _defaultBuildAnimation(
 const Duration _defaultEasyDuration = Duration(milliseconds: 2300);
 const Duration _defaultAnimDuration = Duration(milliseconds: 250);
 const Color _defaultBackgroundColor = Color(0xDD000000);
+const EdgeInsets _defaultTextPadding = EdgeInsets.symmetric(
+  horizontal: 14,
+  vertical: 10,
+);
 
 const TextStyle _defaultTextStyle = TextStyle(
   fontSize: 15,
@@ -248,7 +252,7 @@ ToastFuture showToast(
   backgroundColor ??= theme.backgroundColor;
   radius ??= theme.radius;
   textDirection ??= theme.textDirection;
-  textPadding ??= theme.textPadding;
+  textPadding ??= theme.textPadding ?? _defaultTextPadding;
   textAlign ??= theme.textAlign;
   textStyle ??= theme.textStyle;
   textMaxLines ??= theme.textMaxLines;
@@ -553,8 +557,8 @@ class _ToastContainerState extends State<ToastContainer>
         alignment: pos.align,
         child: Padding(
           padding: EdgeInsets.only(
-            top: pos.align == Alignment.topCenter ? pos.offset : 0,
-            bottom: pos.align == Alignment.bottomCenter ? -pos.offset : 0,
+            top: pos.align == Alignment.topCenter ? pos.offset : 10,
+            bottom: pos.align == Alignment.bottomCenter ? -pos.offset : 10,
           ),
           child: widget.animationBuilder(
             context,

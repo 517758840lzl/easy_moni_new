@@ -4,8 +4,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/theme/app_theme.dart';
 import '../../gen/assets.gen.dart';
 import '../../services/platform_service.dart';
+import '../../utils/widgets/informationBottomButton.dart';
 import '../../utils/widgets/linepaint.dart';
 
 class ContactInfoPage extends ConsumerStatefulWidget {
@@ -270,61 +272,13 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8FB),
+      backgroundColor: AppColors.primaryDark,
       body: Column(
         children: [
-          Container(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: Assets.images.inforamtionBgheader.provider(),
-                fit: BoxFit.cover,
-              ),
-            ),
-            child: SafeArea(
-              bottom: false,
-              child: Column(
-                children: [
-                  const SizedBox(height: 44),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: SizedBox(
-                      height: 44,
-                      child: Row(
-                        children: [
-                          GestureDetector(
-                            onTap: () => Navigator.of(context).pop(),
-                            child: const Icon(
-                              Icons.arrow_back_ios,
-                              color: Colors.white,
-                              size: 22,
-                            ),
-                          ),
-                          const Expanded(
-                            child: Text(
-                              '联系人信息',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          const Icon(
-                            Icons.more_horiz,
-                            color: Colors.white,
-                            size: 22,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  buildProgressIndicator(isidActive: true),
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
+          buildInformationHeader(
+            context: context,
+            title: '联系人信息',
+            activeStep: InformationStep.personal,
           ),
           Expanded(
             child: Container(
@@ -338,7 +292,6 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
                   children: [
                     const SizedBox(height: 16),
                     _buildContactItem(
-                      icon: Assets.images.inforamtionF.image(),
                       title: AppStrings.chooseContactsPhone,
                       value: _parentSpouseContact != null
                           ? '$_parentSpouseName\n$_parentSpouseContact'
@@ -347,7 +300,6 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
                       onTap: () => _pickContact(isParentSpouse: true),
                     ),
                     _buildContactItem(
-                      icon: Assets.images.inforamtionF.image(),
                       title: '朋友/同事联系电话',
                       value: _friendColleagueContact != null
                           ? '$_friendColleagueName\n$_friendColleagueContact'
@@ -361,38 +313,9 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
               ),
             ),
           ),
-          Container(
-            height: 48,
-            color: Colors.white,
-            padding: EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 4,
-              bottom: MediaQuery.of(context).padding.bottom,
-            ),
-            child: GestureDetector(
-              onTap: _canContinue ? _onContinue : null,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: _canContinue
-                      ? const Color(0xFF45F3A6)
-                      : const Color(0xFFBDBDBD),
-                  borderRadius: BorderRadius.circular(100),
-                ),
-                child: Center(
-                  child: Text(
-                    '继续',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: _canContinue
-                          ? const Color(0xFF104440)
-                          : Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          BottomContinueButton(
+            isEnabled: _canContinue,
+            onTap: _onContinue,
           ),
         ],
       ),
@@ -400,7 +323,7 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
   }
 
   Widget _buildContactItem({
-    required Widget icon,
+
     required String title,
     required String? value,
     required String placeholder,
@@ -417,9 +340,18 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                icon,
+                Text(
+                  '*',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.red,
+                    letterSpacing: 0.4,
+                  ),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -450,28 +382,11 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
                                 ),
                               )
                               .toList(),
-                        )
-                      else
-                        Row(
-                          children: [
-                            Text(
-                              placeholder,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFFCCCCCC),
-                              ),
-                            ),
-                            const Spacer(),
-                            Icon(
-                              Icons.edit_note,
-                              size: 22,
-                              color: Colors.black.withValues(alpha: 0.3),
-                            ),
-                          ],
                         ),
                     ],
                   ),
                 ),
+                Assets.images.notebook.image(width: 22, height: 22),
               ],
             ),
           ),

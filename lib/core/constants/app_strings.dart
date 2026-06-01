@@ -57,6 +57,7 @@ class AppStrings {
   static const String homeTab = '首页';
   static const String repayTab = '还款';
   static const String mineTab = '我的';
+  static const String continueStr = '继续';
 
   // ==================== 贷款详情 ====================
   static const String loanDetailTitle = '贷款详情';

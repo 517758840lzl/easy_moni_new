@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:talker/talker.dart';
 import 'package:talker_riverpod_logger/talker_riverpod_logger.dart';
+import 'core/network/http_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_strings.dart';
@@ -11,6 +12,7 @@ import 'utils/widgets/toast.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   final takler = Talker();
+  HttpProvider.init(talker: takler);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,

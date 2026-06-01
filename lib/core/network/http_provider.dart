@@ -1,11 +1,8 @@
+import 'dart:convert';
 import 'package:easy_moni/core/network/interrepters/header_interrepter.dart';
 import 'package:easy_moni/core/network/interrepters/logging_interrepter.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:talker/talker.dart';
-import 'package:equatable/equatable.dart';
 import '../constants/api_constants.dart';
-import 'interrepters/logging_interrepter.dart';
-import 'interrepters/header_interrepter.dart';
 import 'http_result.dart';
 import '../../entities/base_result.dart';
 import 'package:dio/dio.dart';
@@ -40,6 +37,7 @@ class HttpProvider {
           'acqChannel':'GHQU',
           'acqChannelIndex': '0',
           'disableEncBody': false,
+          // 'token': 'eyJhbGciOiJIUzUxMiJ9.eyJhcHBfbG9naW5fdXNlcl90b2tlbl9rZXkiOiJHSFFVOjIzMzUwNDY4NDU2ODphY2EyY2JkZC03MTY5LTRkZjQtODExNC0wNmQ5N2FiOGYyMjQifQ.JUsSwNbEalJqQ4JSZsv1by6NGvg7e8ywATNNRKxzyepghHS4VzRqpLcbOlQjztKM52e-N1yBEWEfvkfc61K5Cg',
         },
       ),
     );
@@ -75,7 +73,8 @@ class HttpProvider {
     CancelToken? cancelToken,
   }) async {
     try {
-      final response = await _dio.get(
+      // 使用 dynamic 而不是 T，避免 Dio 自动转换失败
+      final response = await _dio.get<dynamic>(
         path,
         queryParameters: params,
         cancelToken: cancelToken,
@@ -89,11 +88,31 @@ class HttpProvider {
         );
       }
 
-      // Map
-      if (response.data is Map<String, dynamic>) {
-        final map = response.data as Map<String, dynamic>;
+      Map<String, dynamic>? map;
+      final dataType = response.data.runtimeType.toString();
+      _talker.debug('GET response.data type: $dataType');
+      
+      try {
+        final sourceMap = response.data as Map;
+        map = {};
+        for (final key in sourceMap.keys) {
+          map[key.toString()] = sourceMap[key];
+        }
+      } catch (e) {
+        _talker.error('Map conversion error: $e');
+        _talker.error('Map conversion stack: ${StackTrace.current}');
+        return HttpResult.error(
+          HttpResultStatus.unKnown,
+          'Map conversion error: $e',
+          cancelToken: cancelToken,
+        );
+      }
+
+      try {
         if (map.containsKey('code')) {
-          final result = BaseResult.fromJson(map, (data) => fromJson(data));
+          _talker.debug('调用 BaseResult.fromJson, map=$map');
+          final result = BaseResult.fromJson(map, fromJson);
+          _talker.debug('BaseResult 结果: code=${result.code}, isSuccess=${result.isSuccess}, data=${result.data}');
           if (result.isSuccess) {
             return HttpResult.success(
               result.data as T,
@@ -109,13 +128,19 @@ class HttpProvider {
           }
         }
         return HttpResult.success(fromJson(map), cancelToken: cancelToken);
+      } catch (e, stack) {
+        _talker.error('Parse error: $e\n$stack');
+        return HttpResult.error(
+          HttpResultStatus.unKnown,
+          'Parse error: $e',
+          cancelToken: cancelToken,
+        );
       }
-
-      return HttpResult.success(response.data as T, cancelToken: cancelToken);
     } on DioException catch (e) {
+      _talker.error('DioException: $e');
       return _handleDioException(e, cancelToken);
-    } catch (e) {
-      _talker.error('Unexpected error: $e');
+    } catch (e, stack) {
+      _talker.error('Unexpected error: $e\n$stack');
       return HttpResult.error(
         HttpResultStatus.unKnown,
         e.toString(),
@@ -132,7 +157,8 @@ class HttpProvider {
     CancelToken? cancelToken,
   }) async {
     try {
-      final response = await _dio.post<T>(
+      // 使用 dynamic 而不是 T，避免 Dio 自动转换失败
+      final response = await _dio.post<dynamic>(
         path,
         data: data,
         queryParameters: params,
@@ -147,10 +173,35 @@ class HttpProvider {
         );
       }
 
-      if (response.data is Map<String, dynamic>) {
-        final map = response.data as Map<String, dynamic>;
+      Map<String, dynamic>? map;
+      final dataType = response.data.runtimeType.toString();
+      _talker.debug('POST response.data type: $dataType');
+      
+      try {
+        // 使用 Map.from 来确保正确转换
+        _talker.debug('POST response.data before cast: ${response.data}');
+        _talker.debug('POST response.data type: ${response.data.runtimeType}');
+        final sourceMap = response.data as Map;
+        map = {};
+        for (final key in sourceMap.keys) {
+          map[key.toString()] = sourceMap[key];
+        }
+        _talker.debug('POST map after conversion: $map');
+      } catch (e) {
+        _talker.error('Map conversion error: $e');
+        _talker.error('Map conversion stack: ${StackTrace.current}');
+        return HttpResult.error(
+          HttpResultStatus.unKnown,
+          'Map conversion error: $e',
+          cancelToken: cancelToken,
+        );
+      }
+
+      try {
         if (map.containsKey('code')) {
-          final result = BaseResult.fromJson(map, (data) => fromJson(data));
+          _talker.debug('调用 BaseResult.fromJson, map=$map');
+          final result = BaseResult.fromJson(map, fromJson);
+          _talker.debug('BaseResult 结果: code=${result.code}, isSuccess=${result.isSuccess}, data=${result.data}');
           if (result.isSuccess) {
             return HttpResult.success(
               result.data as T,
@@ -166,13 +217,19 @@ class HttpProvider {
           }
         }
         return HttpResult.success(fromJson(map), cancelToken: cancelToken);
+      } catch (e, stack) {
+        _talker.error('Parse error: $e\n$stack');
+        return HttpResult.error(
+          HttpResultStatus.unKnown,
+          'Parse error: $e',
+          cancelToken: cancelToken,
+        );
       }
-
-      return HttpResult.success(response.data as T, cancelToken: cancelToken);
     } on DioException catch (e) {
+      _talker.error('DioException: $e');
       return _handleDioException(e, cancelToken);
-    } catch (e) {
-      _talker.error('Unexpected error: $e');
+    } catch (e, stack) {
+      _talker.error('Unexpected error: $e\n$stack');
       return HttpResult.error(
         HttpResultStatus.unKnown,
         e.toString(),

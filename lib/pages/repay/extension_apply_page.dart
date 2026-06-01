@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../entities/extension_resp.dart';
 import '../../../utils/extensions.dart';
+import 'providers/extension_provider.dart';
 
 class ExtensionApplyPage extends ConsumerStatefulWidget {
   final String billId;
@@ -13,11 +15,48 @@ class ExtensionApplyPage extends ConsumerStatefulWidget {
 }
 
 class _ExtensionApplyPageState extends ConsumerState<ExtensionApplyPage> {
-  // moke展期数据
-  static const _extensionDays = 7;
-  static const _newDueDate = '19/05/2026';
-  static const _extensionFee = 40.00;
-  static const _totalAmount = 57950.00;
+  ExtensionResp? _extensionData;
+  bool _isLoading = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExtensionDetails();
+  }
+
+  Future<void> _loadExtensionDetails() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final api = ref.read(extensionProvider);
+      final result = await api.call(
+        couponIds: [],
+        installmentId: int.tryParse(widget.billId) ?? 0,
+      );
+
+      if (mounted) {
+        setState(() {
+          if (result.isSuccess && result.data != null) {
+            _extensionData = result.data;
+          } else {
+            _error = result.message ?? '获取展期详情失败';
+          }
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +95,7 @@ class _ExtensionApplyPageState extends ConsumerState<ExtensionApplyPage> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      _totalAmount.formatAmount(),
+                      _extensionData?.extensionFee.formatAmount() ?? '0',
                       style: const TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.w800,
@@ -87,42 +126,50 @@ class _ExtensionApplyPageState extends ConsumerState<ExtensionApplyPage> {
                   topRight: Radius.circular(16),
                 ),
               ),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12),
-                      child: Text(
-                        '展期信息',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
-                          letterSpacing: 0.4,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // 提示信息
-                    _buildNoticeCard(),
-                    const SizedBox(height: 12),
-                    // 优惠券选择
-                    _buildCouponCard(),
-                    const SizedBox(height: 12),
-                    // 展期详情卡片
-                    _buildExtensionDetailCard(),
-                    const SizedBox(height: 100),
-                  ],
-                ),
-              ),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                      ? Center(child: Text(_error!, style: const TextStyle(color: Colors.red)))
+                      : _buildContent(),
             ),
           ),
         ],
       ),
       // 底部确认按钮
       bottomNavigationBar: _buildBottomBar(),
+    );
+  }
+
+  Widget _buildContent() {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 16),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12),
+            child: Text(
+              '展期信息',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // 提示信息
+          _buildNoticeCard(),
+          const SizedBox(height: 12),
+          // 优惠券选择
+          _buildCouponCard(),
+          const SizedBox(height: 12),
+          // 展期详情卡片
+          _buildExtensionDetailCard(),
+          const SizedBox(height: 100),
+        ],
+      ),
     );
   }
 
@@ -191,13 +238,13 @@ class _ExtensionApplyPageState extends ConsumerState<ExtensionApplyPage> {
             ),
           ),
           const SizedBox(width: 8),
-          const Expanded(
+          Expanded(
             child: Text(
               '延期成功后，还款金额将保持不变，不会产生更多费用。',
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w500,
-                color: Color(0xFFFFCC00),
+                color: Colors.black.withValues(alpha: 0.7),
               ),
             ),
           ),
@@ -281,11 +328,11 @@ class _ExtensionApplyPageState extends ConsumerState<ExtensionApplyPage> {
       ),
       child: Column(
         children: [
-          _buildDetailRow('延长天数：', '$_extensionDays天'),
+          _buildDetailRow('延长天数：', '${_extensionData?.remainingDay ?? 0}天'),
           const SizedBox(height: 16),
-          _buildDetailRow('新的到期日：', _newDueDate),
+          _buildDetailRow('新的到期日：', _extensionData?.newDueDate ?? ''),
           const SizedBox(height: 16),
-          _buildDetailRow('新到期日应还金额：', 'GHS $_extensionFee'),
+          _buildDetailRow('新到期日应还金额：', 'GHS ${_extensionData?.totalSureRepayAmounts.toStringAsFixed(2) ?? '0.00'}'),
         ],
       ),
     );
@@ -350,7 +397,7 @@ class _ExtensionApplyPageState extends ConsumerState<ExtensionApplyPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('确认展期'),
-        content: const Text('确认申请展期$_extensionDays天吗？'),
+        content: Text('确认申请展期${_extensionData?.remainingDay ?? 0}天吗？'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -371,5 +418,4 @@ class _ExtensionApplyPageState extends ConsumerState<ExtensionApplyPage> {
       ),
     );
   }
-
 }

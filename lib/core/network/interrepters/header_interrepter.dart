@@ -1,9 +1,8 @@
 import 'package:dio/dio.dart';
-import 'package:talker/talker.dart';
 import '../../constants/api_constants.dart';
 
 class HeaderInterrepter extends Interceptor {
-  static final HeaderInterrepter _instance = HeaderInterrepter();
+  static final HeaderInterrepter _instance = HeaderInterrepter._();
 
   factory HeaderInterrepter() => _instance;
 
@@ -25,8 +24,8 @@ class HeaderInterrepter extends Interceptor {
     'Accept': 'application/json',
     'X-App-Version': ApiConstants.appVersion,
     'X-Platform': ApiConstants.platform,
-    if (_deviceId != null) 'X-Device-Id': _deviceId!,
-    if (_token != null) 'Authorization': 'Bearer $_token',
+    if (_deviceId case final deviceId?) 'X-Device-Id': deviceId,
+    if (_token case final token?) 'token': token,
   };
 
   void clearAuth() {
