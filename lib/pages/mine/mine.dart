@@ -3,7 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/network/http_provider.dart';
 import '../../gen/assets.gen.dart';
+import '../login/loginpage.dart';
+import 'providers/user_info_provider.dart';
+import 'providers/sign_out_provider.dart';
+import '../../entities/user_info_resp.dart';
+import '../../utils/widgets/toast.dart';
 
 class MinePage extends ConsumerStatefulWidget {
   const MinePage({super.key});
@@ -13,10 +19,37 @@ class MinePage extends ConsumerStatefulWidget {
 }
 
 class _MinePageState extends ConsumerState<MinePage> {
-  final String _userName = 'Derrick Rose';
-  final String _userPhone = '123432345676';
+  String _userName = '';
+  String _userPhone = '';
   final double _pendingAmount = 100.0;
   final bool _isOverdue = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserInfo();
+  }
+
+  Future<void> _loadUserInfo() async {
+    try {
+      final result = await ref.read(userInfoProvider).call();
+      if (!mounted) return;
+
+      if (result.isSuccess && result.data != null) {
+        final userInfo = result.data!;
+        setState(() {
+          _userName = userInfo.nickName ?? userInfo.userName ?? '用户';
+          _userPhone = userInfo.phone?.toString() ?? '未绑定手机号';
+        });
+        debugPrint('用户信息加载成功: $userInfo');
+      } else {
+        debugPrint('获取用户信息失败: ${result.message}');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      debugPrint('获取用户信息异常: $e');
+    }
+  }
 
   void _onRepayTap() {
     debugPrint('点击了去还款');
@@ -43,7 +76,7 @@ class _MinePageState extends ConsumerState<MinePage> {
     // TODO: 跳转到设置页面
   }
 
-  void _onLogoutTap() {
+  Future<void> _onLogoutTap() async {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -55,15 +88,38 @@ class _MinePageState extends ConsumerState<MinePage> {
             child: const Text('取消'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              // 执行退出登录
+              await _executeLogout();
             },
             child: const Text('确定'),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _executeLogout() async {
+    try {
+      final result = await ref.read(signOutProvider).call();
+      if (!mounted) return;
+
+      if (result.isSuccess) {
+        HttpProvider.instance.clearAuth();
+        // HomeShell 由 MaterialPageRoute 压栈，需用 Navigator 清除后再跳转
+        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginPage()),
+          (route) => false,
+        );
+        showToast('已退出登录');
+      } else {
+        showToast(result.message ?? '退出失败，请重试');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      debugPrint('退出登录异常: $e');
+      showToast('退出失败，请重试');
+    }
   }
 
   @override

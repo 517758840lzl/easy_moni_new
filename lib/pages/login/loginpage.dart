@@ -5,7 +5,13 @@ import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../entities/acquisition_progress_resp.dart';
 import '../../utils/widgets/toast.dart';
+import '../fillInforma/contact_info_page.dart';
+import '../fillInforma/identity_verify_page.dart';
+import '../fillInforma/personal_info_page.dart';
+import '../fillInforma/providers/acquisition_progress_provider.dart';
+import '../home/homesell.dart';
 import 'providers/auth_provider.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -43,14 +49,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   /// 手机号输入变化监听
   void _onPhoneChanged() {
     String text = _phoneController.text;
-    
+
     // 过滤非数字字符
     text = text.replaceAll(RegExp(r'[^0-9]'), '');
-    
+
     if (text.length > 10) {
       text = text.substring(0, 10);
     }
-    
+
     // 处理首位数字逻辑
     if (text.isNotEmpty) {
       // 如果首个数字不为0，则在前方补0
@@ -62,7 +68,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         }
       }
     }
-    
+
     // 更新文本（避免光标跳动）
     if (_phoneController.text != text) {
       final selection = TextSelection.collapsed(offset: text.length);
@@ -73,9 +79,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       // 文本更新后会再次触发 listener，直接返回避免重复处理
       return;
     }
-    
+
     setState(() {});
-    
+
     // 输入10位数字后自动发送验证码
     if (text.length == 10 && !_isAutoSendingCode && _countdownSeconds == 0) {
       _autoSendCode();
@@ -85,14 +91,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   /// 验证码输入变化监听
   void _onCodeChanged() {
     String text = _codeController.text;
-    
+
     // 过滤非数字字符
     text = text.replaceAll(RegExp(r'[^0-9]'), '');
-    
+
     if (text.length > 4) {
       text = text.substring(0, 4);
     }
-    
+
     // 更新文本
     if (_codeController.text != text) {
       final selection = TextSelection.collapsed(offset: text.length);
@@ -103,9 +109,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       // 文本更新后会再次触发 listener，直接返回避免重复处理
       return;
     }
-    
+
     setState(() {});
-    
+
     // 输入4位验证码后立即校验（自动登录）
     if (text.length == 4 && _phoneController.text.length > 1) {
       _onLogin();
@@ -115,10 +121,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Future<void> _autoSendCode() async {
     _isAutoSendingCode = true;
     final phone = _phoneController.text.trim();
-    
+
     try {
-      final result = await ref.read(sendVerifyCodeProvider).call('233|504684568');
-      
+      final result = await ref
+          .read(sendVerifyCodeProvider)
+          .call('233|504684567');
+
       if (!mounted) return;
       if (result.isSuccess) {
         showToast('验证码已发送');
@@ -161,7 +169,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     }
 
     try {
-      final result = await ref.read(sendVerifyCodeProvider).call('233|504684568');
+      final result = await ref
+          .read(sendVerifyCodeProvider)
+          .call('233|504684567');
 
       if (!mounted) return;
       if (result.isSuccess) {
@@ -192,111 +202,144 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     debugPrint('登录请求 - 手机号: 233|$phone, 验证码: $code');
 
     try {
-      final result = await ref.read(loginApiProvider).call(
-        phone: '233|504684568',
-        code: code,
-      );
+      final result = await ref
+          .read(loginApiProvider)
+          .call(phone: '233|504684567', code: code);
 
       if (!mounted) return;
       debugPrint('登录响应 - status: ${result.status}, message: ${result.message}');
       debugPrint('登录响应数据: ${result.data}');
+      if (result.data?.isFirstRegister == 1) {
 
+      } else {
+
+      }
       if (result.isSuccess) {
         final loginData = result.data;
         debugPrint('loginData: $loginData');
         debugPrint('loginData.token: ${loginData?.token}');
-        
+
         if (loginData?.token != null) {
           HttpProvider.instance.setToken(loginData!.token);
           debugPrint('登录成功，Token: ${loginData.token}');
 
-          // 直接跳转到个人信息录入页面（暂时跳过进度查询接口）
-          if (mounted) {
-            context.push('/personal-info');
+          // 登录后请求 checkUploadDataValid 接口
+          try {
+            final checkDataResult = await ref
+                .read(checkUploadDataValidProvider)
+                .call();
+            if (!mounted) return;
+
+            if (checkDataResult.isSuccess) {
+              debugPrint('checkUploadDataValid 成功: ${checkDataResult.data}');
+            } else {
+              debugPrint('checkUploadDataValid 失败: ${checkDataResult.message}');
+            }
+          } catch (e) {
+            if (!mounted) return;
+            debugPrint('checkUploadDataValid 请求异常: $e');
           }
-          return;
+
+//查询检查必要数据是否过期，CheckUploadDataValidApi
+          final checkData = await ref.read(checkUploadDataValidProvider).call();
+          if(!mounted) return;
+          debugPrint('checkData: $checkData');
 
           // 进度查询接口暂时不用
-          // final progressResult = await ref.read(acquisitionProgressProvider).call();
-          // if (!mounted) return;
+          final progressResult = await ref
+              .read(acquisitionProgressProvider)
+              .call();
+          if (!mounted) return;
 
-          // debugPrint('进度查询响应: ${progressResult.data}');
-          // debugPrint('进度查询 isSuccess: ${progressResult.isSuccess}');
-          // if (progressResult.isSuccess && progressResult.data != null) {
-          //   final progressData = progressResult.data!;
-          //   final filledStep = progressData.filledStep ?? 0;
-          //   debugPrint('用户进度: filledStep=$filledStep, totalStep=${progressData.totalStep}');
-          //   debugPrint('hasCompletedKyc: ${progressData.hasCompletedKyc}');
-          //   debugPrint('processSteps: ${progressData.processSteps?.map((s) => 'step=${s.step}, pageType=${s.pageType}, pageTitle=${s.pageTitle}').join(', ')}');
+          debugPrint('进度查询响应: ${progressResult.data}');
+          debugPrint('进度查询 isSuccess: ${progressResult.isSuccess}');
+          if (progressResult.isSuccess && progressResult.data != null) {
+            final progressData = progressResult.data!;
+            final filledStep = progressData.filledStep ?? 0;
+            debugPrint(
+              '用户进度: filledStep=$filledStep, totalStep=${progressData.totalStep}',
+            );
+            debugPrint('hasCompletedKyc: ${progressData.hasCompletedKyc}');
+            debugPrint(
+              'processSteps: ${progressData.processSteps?.map((s) => 'step=${s.step}, pageType=${s.pageType}, pageTitle=${s.pageTitle}').join(', ')}',
+            );
 
-          //   // 如果已填完所有步骤，跳转到首页
-          //   if (progressData.hasCompletedKyc) {
-          //     debugPrint('KYC已完成，跳转到首页');
-          //     Navigator.of(context).pushReplacement(
-          //       MaterialPageRoute(builder: (context) => const HomeShell()),
-          //     );
-          //     return;
-          //   }
+            // 如果已填完所有步骤，跳转到首页
+            if (progressData.hasCompletedKyc) {
+              debugPrint('KYC已完成，跳转到首页');
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => const HomeShell()),
+              );
+              return;
+            }
 
-          //   // 根据当前进度获取下一个未完成的页面
-          //   final steps = progressData.processSteps ?? [];
-          //   if (steps.isEmpty) {
-          //     debugPrint('没有步骤数据，跳转到首页');
-          //     Navigator.of(context).pushReplacement(
-          //       MaterialPageRoute(builder: (context) => const HomeShell()),
-          //     );
-          //     return;
-          //   }
+            // 根据当前进度获取下一个未完成的页面
+            final steps = progressData.processSteps ?? [];
+            if (steps.isEmpty) {
+              debugPrint('没有步骤数据，跳转到首页');
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => const HomeShell()),
+              );
+              return;
+            }
 
-          //   // 找到第一个未完成的步骤
-          //   ProcessStep? nextStep;
-          //   for (final step in steps) {
-          //     if ((step.step ?? 0) > filledStep) {
-          //       nextStep = step;
-          //       break;
-          //     }
-          //   }
+            // 找到第一个未完成的步骤
+            ProcessStep? nextStep;
+            for (final step in steps) {
+              if ((step.step ?? 0) > filledStep) {
+                nextStep = step;
+                break;
+              }
+            }
 
-          //   // 如果没有找到下一个步骤，跳转到首页
-          //   if (nextStep == null) {
-          //     debugPrint('没有下一个步骤，跳转到首页');
-          //     Navigator.of(context).pushReplacement(
-          //       MaterialPageRoute(builder: (context) => const HomeShell()),
-          //     );
-          //     return;
-          //   }
+            // 如果没有找到下一个步骤，跳转到首页
+            if (nextStep == null) {
+              debugPrint('没有下一个步骤，跳转到首页');
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => const HomeShell()),
+              );
+              return;
+            }
 
-          //   debugPrint('跳转到: pageType=${nextStep.pageType}, pageTitle=${nextStep.pageTitle}');
+            debugPrint(
+              '跳转到: pageType=${nextStep.pageType}, pageTitle=${nextStep.pageTitle}',
+            );
 
-          //   // 根据 pageType 跳转到对应页面
-          //   switch (nextStep.pageType) {
-          //     case 1: // 个人信息
-          //       Navigator.of(context).pushReplacement(
-          //         MaterialPageRoute(builder: (context) => const PersonalInfoPage()),
-          //       );
-          //       break;
-          //     case 2: // 紧急联系人
-          //       Navigator.of(context).pushReplacement(
-          //         MaterialPageRoute(builder: (context) => const ContactInfoPage()),
-          //       );
-          //       break;
-          //     case 3: // 身份证认证
-          //       Navigator.of(context).pushReplacement(
-          //         MaterialPageRoute(builder: (context) => const IdentityVerifyPage()),
-          //       );
-          //       break;
-          //     default:
-          //       debugPrint('未知 pageType: ${nextStep.pageType}，跳转到首页');
-          //       Navigator.of(context).pushReplacement(
-          //         MaterialPageRoute(builder: (context) => const HomeShell()),
-          //       );
-          //   }
-          // } else {
-          //   debugPrint('进度查询失败，跳转首页');
-          //   Navigator.of(context).pushReplacement(
-          //     MaterialPageRoute(builder: (context) => const HomeShell()),
-          //   );
-          // }
+            // 根据 pageType 跳转到对应页面
+            switch (nextStep.pageType) {
+              case 1: // 个人信息
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) => const PersonalInfoPage(),
+                  ),
+                );
+                break;
+              case 2: // 紧急联系人
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) => const ContactInfoPage(),
+                  ),
+                );
+                break;
+              case 3: // 身份证认证
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) => const IdentityVerifyPage(),
+                  ),
+                );
+                break;
+              default:
+                debugPrint('未知 pageType: ${nextStep.pageType}，跳转到首页');
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const HomeShell()),
+                );
+            }
+          } else {
+            debugPrint('进度查询失败，跳转首页');
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => const HomeShell()),
+            );
+          }
         } else {
           debugPrint('Token为空!');
           showToast('登录失败，Token获取异常');
@@ -331,64 +374,66 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             ),
           ),
           // Main content
-          SafeArea(
-            child: Column(
-              children: [
-                // 顶部区域
-                _header(context),
+          Positioned.fill(
+            child: SafeArea(
+              child: Column(
+                children: [
+                  // 顶部区域
+                  _header(context),
 
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 100),
-                        // Logo
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(16),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 100),
+                          // Logo
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Icon(
+                              Icons.eco,
+                              color: Colors.white,
+                              size: 36,
+                            ),
                           ),
-                          child: const Icon(
-                            Icons.eco,
-                            color: Colors.white,
-                            size: 36,
+                          const SizedBox(height: 32),
+                          // Title
+                          const Text(
+                            AppStrings.wellcome,
+                            style: TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 32),
-                        // Title
-                        const Text(
-                          AppStrings.wellcome,
-                          style: TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                          const SizedBox(height: 16),
+                          // Subtitle
+                          const Text(
+                            AppStrings.wellcomedeailData,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white,
+                              height: 1.5,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        // Subtitle
-                        const Text(
-                          AppStrings.wellcomedeailData,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.white,
-                            height: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 50),
-                        _buildPhoneInput(),
-                        const SizedBox(height: 24),
-                        _buildCodeInput(),
-                        const SizedBox(height: 24),
-                        _buildLoginButton(),
-                      ],
+                          const SizedBox(height: 50),
+                          _buildPhoneInput(),
+                          const SizedBox(height: 24),
+                          _buildCodeInput(),
+                          const SizedBox(height: 24),
+                          _buildLoginButton(),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],

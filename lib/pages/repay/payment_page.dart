@@ -1,6 +1,9 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../utils/extensions.dart';
 
 class PaymentPage extends ConsumerStatefulWidget {
@@ -20,304 +23,498 @@ class PaymentPage extends ConsumerStatefulWidget {
 }
 
 class _PaymentPageState extends ConsumerState<PaymentPage> {
+  static const _repayDate = '25/05/2026';
+
+  List<_LoanDetailItem> get _loanDetails => [
+    _LoanDetailItem(
+      brand: 'Palm Loa',
+      amount: 981287,
+      termValue: 'GHS 110',
+      serviceFee: 'GHS 110',
+      interest: 'GHS 1',
+      repayDate: _repayDate,
+    ),
+    _LoanDetailItem(
+      brand: 'Palm Loa',
+      amount: 981287,
+      termValue: 'GHS 110',
+      serviceFee: 'GHS 110',
+      interest: 'GHS 1',
+      repayDate: _repayDate,
+    ),
+  ];
+
+  String get _amountText => 'GHS${widget.amount.formatAmount()}';
+  String get _phoneText =>
+      widget.phone?.trim().isNotEmpty == true ? widget.phone! : '2335*****1247';
+  String get _accountTypeText => widget.idNumber?.trim().isNotEmpty == true
+      ? widget.idNumber!
+      : 'MoMo收款账户';
+
   @override
   Widget build(BuildContext context) {
+    final topInset = MediaQuery.of(context).padding.top;
+    final heroHeight = 304.0 + topInset;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8FB),
+      backgroundColor: const Color(0xFFF6F6F6),
       body: Column(
         children: [
-          // 顶部绿色渐变背景区域
-          Container(
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFF216A4A), Color(0xFF216A4A)],
-              ),
-            ),
-            child: Column(
-              children: [
-                _buildHeader(),
-                // 金额显示
-                const SizedBox(height: 30),
-                const Text(
-                  'GHS',
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  widget.amount.formatAmount(),
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // 安全提示
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 20),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.shield_outlined,
-                          size: 18,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      const Text(
-                        '由 ',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const Text(
-                        'Easy moni ',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const Text(
-                        '提供安全保障',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 50),
-              ],
-            ),
-          ),
-          // 白色内容区域
+          _buildHero(heroHeight, topInset),
           Expanded(
-            child: Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFFF8F8FB),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
+            child: Transform.translate(
+              offset: const Offset(0, -20),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(26),
                 ),
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
-                    // 提示信息
-                    _buildNoticeCard(),
-                    const SizedBox(height: 16),
-                    // 用户信息标题
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12),
-                      child: Text(
-                        '用户信息',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
-                          letterSpacing: 0.4,
+                child: Container(
+                  width: double.infinity,
+                  color: const Color(0xFFF7F7F7),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(8, 10, 8, 126),
+                    child: Column(
+                      children: [
+                        _buildBankCard(),
+                        const SizedBox(height: 14),
+                        _buildCouponCard(),
+                        const SizedBox(height: 14),
+                        ...List.generate(
+                          _loanDetails.length,
+                          (index) => Padding(
+                            padding: EdgeInsets.only(
+                              bottom: index == _loanDetails.length - 1 ? 0 : 14,
+                            ),
+                            child: _buildLoanDetailCard(_loanDetails[index]),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                    const SizedBox(height: 14),
-                    // 用户信息卡片
-                    _buildUserInfoCard(),
-                    const SizedBox(height: 100),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
         ],
       ),
-      // 底部确认按钮
       bottomNavigationBar: _buildBottomBar(),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHero(double heroHeight, double topInset) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
+      height: heroHeight,
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(18, topInset + 8, 18, 20),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF287A59), Color(0xFF3ED29B)],
+        ),
+      ),
+      child: Stack(
         children: [
-          // 返回按钮
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Icon(
-                Icons.arrow_back_ios_new,
-                size: 12,
-                color: Colors.white,
-              ),
-            ),
+          Positioned(
+            left: -4,
+            top: 0,
+            child: Opacity(opacity: 0.12, child: _buildDotPattern()),
           ),
-          // 标题
-          const Expanded(
-            child: Text(
-              '支付金额',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
+          Column(
+            children: [
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => context.pop(),
+                    behavior: HitTestBehavior.opaque,
+                    child: const SizedBox(
+                      width: 34,
+                      height: 34,
+                      child: Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                  const Expanded(
+                    child: Text(
+                      '确认借款',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(21),
+                    ),
+                    child: const Icon(
+                      Icons.support_agent_rounded,
+                      color: Colors.white,
+                      size: 34,
+                    ),
+                  ),
+                ],
               ),
-            ),
+              const SizedBox(height: 26),
+              Text(
+                _amountText,
+                style: const TextStyle(
+                  fontSize: 34,
+                  height: 1,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: -1.2,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: const [
+                  Expanded(
+                    child: _MetricCard(
+                      icon: Icons.account_balance_wallet_outlined,
+                      value: 'GHS 338',
+                      label: '到账金额',
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: _MetricCard(
+                      icon: Icons.timelapse_rounded,
+                      value: 'GHS 338',
+                      label: '应还金额',
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: _MetricCard(
+                      icon: Icons.calendar_today_outlined,
+                      value: '20/05/2026',
+                      label: '还款日期',
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          // 占位
-          const SizedBox(width: 22),
         ],
       ),
     );
   }
 
-  Widget _buildNoticeCard() {
+  Widget _buildBankCard() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF4DF),
-        borderRadius: BorderRadius.circular(4),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x14000000),
+            blurRadius: 14,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFFFFE29A), Color(0xFFF1C063)],
+            ),
+            border: Border.all(color: const Color(0x40B47D1E)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x229A6316),
+                blurRadius: 10,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              _buildChipCard(),
+              const SizedBox(width: 18),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Vodafone Cash',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF4A2603),
+                            ),
+                          ),
+                        ),
+                        Text(
+                          _accountTypeText,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF5E360D),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      _phoneText,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF351B05),
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChipCard() {
+    return Container(
+      width: 64,
+      height: 68,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xAAAD8222)),
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFFFE78A), Color(0xFFE2BD52)],
+        ),
+      ),
+      child: CustomPaint(painter: _BankCardPainter()),
+    );
+  }
+
+  Widget _buildCouponCard() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7EFE8),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         children: [
           Container(
-            width: 14,
-            height: 14,
+            width: 50,
+            height: 50,
             decoration: BoxDecoration(
-              color: const Color(0xFFFFCC00).withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(3),
+              borderRadius: BorderRadius.circular(10),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFFFFEDD8), Color(0xFFFFC6B3)],
+              ),
             ),
-            child: const Icon(
-              Icons.warning_amber_rounded,
-              size: 12,
-              color: Color(0xFFFFCC00),
-            ),
-          ),
-          const SizedBox(width: 8),
-          const Expanded(
-            child: Text(
-              '请确认您的信息，确认无误后继续操作。',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFFFFCC00),
+            child: Center(
+              child: Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFFFFA7A1), Color(0xFFFF637C)],
+                  ),
+                ),
+                child: const Center(
+                  child: Text(
+                    'GHS!',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
+          const SizedBox(width: 14),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '优惠券',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF282522),
+                  ),
+                ),
+                SizedBox(height: 6),
+                Text(
+                  '提升额度或享受利息减免',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF55504A),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(
+            Icons.chevron_right_rounded,
+            color: Color(0xFFB9B4AE),
+            size: 28,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildUserInfoCard() {
+  Widget _buildLoanDetailCard(_LoanDetailItem item) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        color: const Color(0xFFF8EEE8),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         children: [
-          _buildUserInfoRow('电话', widget.phone ?? '234543234565432'),
-          Divider(height: 1, color: Colors.grey.withValues(alpha: 0.2)),
-          _buildUserInfoRow(
-            '智利税号/身份证号',
-            widget.idNumber ?? '34323432****09098',
+          Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF0F5C4B),
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: Text(
+                    'P',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                item.brand,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF222222),
+                ),
+              ),
+            ],
           ),
+          const SizedBox(height: 18),
+          _buildDetailRow('借款金额', 'GHS ${item.amount.formatAmount()}'),
+          const SizedBox(height: 22),
+          _buildDetailRow('借款期限', item.termValue),
+          const SizedBox(height: 22),
+          _buildDetailRow('服务费', item.serviceFee),
+          const SizedBox(height: 22),
+          _buildDetailRow('利息', item.interest),
+          const SizedBox(height: 22),
+          _buildDetailRow('还款日期', item.repayDate),
         ],
       ),
     );
   }
 
-  Widget _buildUserInfoRow(String label, String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
+  Widget _buildDetailRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Text(
             label,
-            style: const TextStyle(fontSize: 12, color: Colors.black),
-          ),
-          Text(
-            value,
             style: const TextStyle(
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: Color(0xFF1A1A1A),
+              color: Color(0xFF222222),
             ),
           ),
-        ],
-      ),
+        ),
+        Text(
+          value,
+          textAlign: TextAlign.right,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF111111),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildBottomBar() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(color: Colors.white),
+      color: const Color(0xFFF7F7F7),
+      padding: const EdgeInsets.fromLTRB(32, 8, 32, 14),
       child: SafeArea(
         top: false,
         child: GestureDetector(
-          onTap: () {
-            // 确认支付逻辑
-            _showConfirmDialog();
-          },
+          onTap: _showConfirmDialog,
           child: Container(
-            width: double.infinity,
-            height: 40,
+            height: 58,
             decoration: BoxDecoration(
-              color: const Color(0xFF268470),
-              borderRadius: BorderRadius.circular(100),
+              color: const Color(0xFF2E9479),
+              borderRadius: BorderRadius.circular(29),
             ),
             child: const Center(
               child: Text(
-                '确认',
+                '确认借款',
                 style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
                   color: Colors.white,
                 ),
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDotPattern() {
+    return SizedBox(
+      width: 108,
+      child: Wrap(
+        spacing: 5,
+        runSpacing: 5,
+        children: List.generate(
+          96,
+          (_) => Container(
+            width: 3,
+            height: 3,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(2),
             ),
           ),
         ),
@@ -329,8 +526,8 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('确认支付'),
-        content: Text('确认支付 GHS ${widget.amount.formatAmount()} 吗？'),
+        title: const Text('确认借款'),
+        content: Text('确认借款 ${widget.amount.formatAmount()} 吗？'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -339,10 +536,9 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              // 处理支付逻辑
               ScaffoldMessenger.of(
                 context,
-              ).showSnackBar(const SnackBar(content: Text('支付成功')));
+              ).showSnackBar(const SnackBar(content: Text('借款申请已提交')));
               context.go('/');
             },
             child: const Text('确认'),
@@ -351,5 +547,146 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
       ),
     );
   }
+}
 
+class _MetricCard extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+
+  const _MetricCard({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 118,
+      padding: const EdgeInsets.fromLTRB(14, 14, 12, 12),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            top: 4,
+            right: 0,
+            child: IgnorePointer(
+              child: Opacity(
+                opacity: 0.16,
+                child: CustomPaint(
+                  size: const Size(62, 42),
+                  painter: _MetricBurstPainter(),
+                ),
+              ),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, size: 22, color: Colors.white),
+              const Spacer(),
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.66),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoanDetailItem {
+  final String brand;
+  final double amount;
+  final String termValue;
+  final String serviceFee;
+  final String interest;
+  final String repayDate;
+
+  const _LoanDetailItem({
+    required this.brand,
+    required this.amount,
+    required this.termValue,
+    required this.serviceFee,
+    required this.interest,
+    required this.repayDate,
+  });
+}
+
+class _BankCardPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final stroke = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = const Color(0xB5957018);
+
+    final vertical1 = size.width * 0.28;
+    final vertical2 = size.width * 0.56;
+    final horizontal = size.height * 0.52;
+
+    canvas.drawLine(
+      Offset(vertical1, 0),
+      Offset(vertical1, size.height),
+      stroke,
+    );
+    canvas.drawLine(
+      Offset(vertical2, 0),
+      Offset(vertical2, size.height),
+      stroke,
+    );
+    canvas.drawLine(
+      Offset(0, horizontal),
+      Offset(size.width, horizontal),
+      stroke,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _MetricBurstPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = Colors.white.withValues(alpha: 0.22);
+
+    final origin = Offset(size.width * 0.15, size.height * 0.25);
+    for (var i = -2; i <= 6; i++) {
+      final angle = (-0.95 + i * 0.22);
+      final end = Offset(
+        origin.dx + math.cos(angle) * size.width,
+        origin.dy + math.sin(angle) * size.height * 1.4,
+      );
+      canvas.drawLine(origin, end, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

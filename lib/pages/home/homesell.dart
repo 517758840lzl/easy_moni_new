@@ -1,4 +1,6 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
+import 'package:easy_moni/pages/loan/loan_home_page.dart';
+import 'package:easy_moni/pages/repay/repay_entry_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_moni/pages/fillInforma/personal_info_page.dart';
@@ -20,18 +22,15 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = const [
-    ExtensionApplyPage(billId: '123'),
-    SurveyPage(),
+    LoanHomePage(),
+    RepayEntryPage(),
     MinePage(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -50,12 +49,26 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
+                _buildTabItem(
+                  0,
+                  AppStrings.homeTab,
+                  Assets.images.loanHomeNormal,
+                  Assets.images.loanHome,
+                ),
 
-                _buildTabItem(0, AppStrings.homeTab, Assets.images.loanHomeNormal, Assets.images.loanHome),
+                _buildTabItem(
+                  1,
+                  AppStrings.repayTab,
+                  Assets.images.loanDiscoveryNormal,
+                  Assets.images.loanDiscovery,
+                ),
 
-                _buildTabItem(1, AppStrings.repayTab, Assets.images.loanDiscoveryNormal, Assets.images.loanDiscovery),
-
-                _buildTabItem(2, AppStrings.mineTab, Assets.images.loanNormal, Assets.images.loanMine),
+                _buildTabItem(
+                  2,
+                  AppStrings.mineTab,
+                  Assets.images.loanNormal,
+                  Assets.images.loanMine,
+                ),
               ],
             ),
           ),
@@ -64,7 +77,12 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     );
   }
 
-  Widget _buildTabItem(int index, String label, AssetGenImage outlinedIcon, AssetGenImage filledIcon) {
+  Widget _buildTabItem(
+    int index,
+    String label,
+    AssetGenImage outlinedIcon,
+    AssetGenImage filledIcon,
+  ) {
     final isSelected = _currentIndex == index;
     final activeColor = const Color(0xFF268470);
     final inactiveColor = const Color(0xFFACACAC);

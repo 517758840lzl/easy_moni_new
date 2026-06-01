@@ -2,6 +2,8 @@ import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/login/widgets/permissionalert.dart';
+import 'package:easy_moni/pages/home/homesell.dart';
+import 'package:easy_moni/services/auth_storage.dart';
 import 'package:easy_moni/services/permission_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -27,17 +29,22 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
   Future<void> _checkAgreedStatus() async {
     final privacyAgreed = await PermissionStorage.isPrivacyAgreed();
     final permissionsAccepted = await PermissionStorage.isPermissionsAccepted();
-    if (mounted && privacyAgreed && permissionsAccepted) {
-      // 用户已经同意了，直接跳转到登录页
-      if (mounted) {
+    final token = await AuthStorage.getToken();
+
+    if (!mounted) return;
+
+    if (privacyAgreed && permissionsAccepted) {
+      if (token != null && token.isNotEmpty) {
+        Navigator.of(context, rootNavigator: true).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomeShell()),
+        );
+      } else {
         context.pushReplacement('/login');
       }
     } else {
-      if (mounted) {
-        setState(() {
-          _isAgreed = true;
-        });
-      }
+      setState(() {
+        _isAgreed = true;
+      });
     }
   }
   void _onAccept() {

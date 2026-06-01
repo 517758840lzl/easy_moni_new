@@ -22,8 +22,8 @@ class HeaderInterrepter extends Interceptor {
   Map<String, String> get _commonHeader => {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'X-App-Version': ApiConstants.appVersion,
-    'X-Platform': ApiConstants.platform,
+    // 'App-Version': ApiConstants.appVersion,
+    // 'clientType': ApiConstants.platform,
     if (_deviceId case final deviceId?) 'X-Device-Id': deviceId,
     if (_token case final token?) 'token': token,
   };

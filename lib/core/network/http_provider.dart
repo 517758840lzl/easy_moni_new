@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:easy_moni/core/network/interrepters/header_interrepter.dart';
 import 'package:easy_moni/core/network/interrepters/logging_interrepter.dart';
+import 'package:easy_moni/services/auth_storage.dart';
 import 'package:talker/talker.dart';
 import '../constants/api_constants.dart';
 import 'http_result.dart';
@@ -56,6 +57,9 @@ class HttpProvider {
 
   void setToken(String? token) {
     _headerInterceptor.setToken(token);
+    if (token != null && token.isNotEmpty) {
+      AuthStorage.saveToken(token);
+    }
   }
 
   void setDeviceId(String? deviceId) {
@@ -64,6 +68,7 @@ class HttpProvider {
 
   void clearAuth() {
     _headerInterceptor.clearAuth();
+    AuthStorage.clearToken();
   }
 
   Future<HttpResult<T>> get<T>(
@@ -203,6 +208,22 @@ class HttpProvider {
           final result = BaseResult.fromJson(map, fromJson);
           _talker.debug('BaseResult 结果: code=${result.code}, isSuccess=${result.isSuccess}, data=${result.data}');
           if (result.isSuccess) {
+            // 处理 data 为 null 的情况
+            if (result.data == null) {
+              // 如果 T 是可空的，返回 null
+              // 如果 T 是不可空的，尝试创建默认实例
+              try {
+                final nullValue = null as T;
+                return HttpResult.success(nullValue, cancelToken: cancelToken);
+              } catch (_) {
+                // T 不可空，返回错误
+                _talker.debug('POST data is null and T is not nullable');
+                return HttpResult.success(
+                  fromJson(null) as T,
+                  cancelToken: cancelToken,
+                );
+              }
+            }
             return HttpResult.success(
               result.data as T,
               cancelToken: cancelToken,

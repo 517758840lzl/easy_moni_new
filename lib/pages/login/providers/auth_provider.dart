@@ -4,6 +4,7 @@ import '../../../core/network/http_provider.dart';
 import '../../../core/network/http_result.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../entities/login_resp.dart';
+import '../../../entities/check_upload_data_valid_resp.dart';
 
 final sendVerifyCodeProvider = Provider<SendVerifyCodeApi>((ref) {
   return SendVerifyCodeApi();
@@ -11,6 +12,10 @@ final sendVerifyCodeProvider = Provider<SendVerifyCodeApi>((ref) {
 
 final loginApiProvider = Provider<LoginApi>((ref) {
   return LoginApi();
+});
+
+final checkUploadDataValidProvider = Provider<CheckUploadDataValidApi>((ref) {
+  return CheckUploadDataValidApi();
 });
 
 class SendVerifyCodeApi {
@@ -52,6 +57,21 @@ class LoginApi {
       },
     );
     debugPrint('LoginApi 返回: status=${result.status}, data=${result.data}, message=${result.message}');
+    return result;
+  }
+}
+
+class CheckUploadDataValidApi {
+  Future<HttpResult<CheckUploadDataValidResp>> call() async {
+    final result = await HttpProvider.instance.get<CheckUploadDataValidResp>(
+      ApiConstants.checkUploadDataValid,
+      fromJson: (json) {
+        debugPrint('CheckUploadDataValidApi fromJson 原始数据: $json');
+        debugPrint('数据类型: ${json.runtimeType}');
+        return CheckUploadDataValidResp.fromJson(json);
+      },
+    );
+    debugPrint('CheckUploadDataValidApi 返回: status=${result.status}, data=${result.data}, message=${result.message}');
     return result;
   }
 }

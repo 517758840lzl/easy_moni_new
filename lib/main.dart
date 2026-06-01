@@ -7,12 +7,19 @@ import 'core/network/http_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_strings.dart';
+import 'services/auth_storage.dart';
 import 'utils/widgets/toast.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final takler = Talker();
   HttpProvider.init(talker: takler);
+
+  final savedToken = await AuthStorage.getToken();
+  if (savedToken != null && savedToken.isNotEmpty) {
+    HttpProvider.instance.setToken(savedToken);
+  }
+
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,

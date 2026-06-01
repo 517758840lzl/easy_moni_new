@@ -71,15 +71,106 @@ class _SurveyPageState extends ConsumerState<SurveyPage> {
       _maxOverdueDays != null &&
       _creditYears != null;
 
-  void _showPicker({
+  static const _fieldCount = 7;
+
+  String? _getFieldValue(int index) {
+    switch (index) {
+      case 0:
+        return _loanAmount;
+      case 1:
+        return _loanPurpose;
+      case 2:
+        return _unpaidAmount;
+      case 3:
+        return _unpaidCount;
+      case 4:
+        return _hasOverdue;
+      case 5:
+        return _maxOverdueDays;
+      case 6:
+        return _creditYears;
+      default:
+        return null;
+    }
+  }
+
+  int _getFieldSelectedIndex(int index) {
+    switch (index) {
+      case 0:
+        return _selectedLoanAmountIndex;
+      case 1:
+        return _selectedLoanPurposeIndex;
+      case 2:
+        return _selectedUnpaidAmountIndex;
+      case 3:
+        return _selectedUnpaidCountIndex;
+      case 4:
+        return _selectedHasOverdueIndex;
+      case 5:
+        return _selectedMaxOverdueDaysIndex;
+      case 6:
+        return _selectedCreditYearsIndex;
+      default:
+        return 0;
+    }
+  }
+
+  void _setFieldValue(int index, int optionIndex) {
+    switch (index) {
+      case 0:
+        _selectedLoanAmountIndex = optionIndex;
+        _loanAmount = _loanAmountOptions[optionIndex];
+      case 1:
+        _selectedLoanPurposeIndex = optionIndex;
+        _loanPurpose = _loanPurposeOptions[optionIndex];
+      case 2:
+        _selectedUnpaidAmountIndex = optionIndex;
+        _unpaidAmount = _unpaidAmountOptions[optionIndex];
+      case 3:
+        _selectedUnpaidCountIndex = optionIndex;
+        _unpaidCount = _unpaidCountOptions[optionIndex];
+      case 4:
+        _selectedHasOverdueIndex = optionIndex;
+        _hasOverdue = _hasOverdueOptions[optionIndex];
+      case 5:
+        _selectedMaxOverdueDaysIndex = optionIndex;
+        _maxOverdueDays = _maxOverdueDaysOptions[optionIndex];
+      case 6:
+        _selectedCreditYearsIndex = optionIndex;
+        _creditYears = _creditYearsOptions[optionIndex];
+    }
+  }
+
+  ({String title, List<String> options}) _getFieldMeta(int index) {
+    switch (index) {
+      case 0:
+        return (title: '期望借款金额', options: _loanAmountOptions);
+      case 1:
+        return (title: '借款用途', options: _loanPurposeOptions);
+      case 2:
+        return (title: '未还款总金额', options: _unpaidAmountOptions);
+      case 3:
+        return (title: '未还贷款笔数', options: _unpaidCountOptions);
+      case 4:
+        return (title: '近6个月是否有逾期', options: _hasOverdueOptions);
+      case 5:
+        return (title: '最长逾期时长（近6个月）', options: _maxOverdueDaysOptions);
+      case 6:
+        return (title: '使用信贷服务年限', options: _creditYearsOptions);
+      default:
+        return (title: '', options: const []);
+    }
+  }
+
+  Future<bool> _showPicker({
     required String title,
     required List<String> options,
     required int selectedIndex,
-    required Function(int) onConfirm,
-  }) {
+    required void Function(int) onConfirm,
+  }) async {
     int tempSelectedIndex = selectedIndex;
 
-    showModalBottomSheet(
+    final result = await showModalBottomSheet<bool>(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
@@ -104,7 +195,7 @@ class _SurveyPageState extends ConsumerState<SurveyPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         GestureDetector(
-                          onTap: () => Navigator.pop(context),
+                          onTap: () => Navigator.pop(context, false),
                           child: const Icon(
                             Icons.close,
                             size: 20,
@@ -122,7 +213,7 @@ class _SurveyPageState extends ConsumerState<SurveyPage> {
                         GestureDetector(
                           onTap: () {
                             onConfirm(tempSelectedIndex);
-                            Navigator.pop(context);
+                            Navigator.pop(context, true);
                           },
                           child: const Text(
                             '确定',
@@ -170,6 +261,30 @@ class _SurveyPageState extends ConsumerState<SurveyPage> {
         );
       },
     );
+    return result ?? false;
+  }
+
+  Future<bool> _showPickerForField(int index) async {
+    final meta = _getFieldMeta(index);
+    return _showPicker(
+      title: meta.title,
+      options: meta.options,
+      selectedIndex: _getFieldSelectedIndex(index),
+      onConfirm: (optionIndex) {
+        setState(() => _setFieldValue(index, optionIndex));
+      },
+    );
+  }
+
+  Future<void> _onFieldTap(int index) async {
+    final confirmed = await _showPickerForField(index);
+    if (!confirmed || !mounted) return;
+
+    for (var i = index + 1; i < _fieldCount; i++) {
+      if (_getFieldValue(i) != null) continue;
+      final nextConfirmed = await _showPickerForField(i);
+      if (!nextConfirmed || !mounted) break;
+    }
   }
 
   void _onSubmit() {
@@ -194,7 +309,7 @@ class _SurveyPageState extends ConsumerState<SurveyPage> {
             child: Container(
               decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: Assets.images.loginBg.provider(),
+                  image: Assets.images.loanBg.provider(),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -260,141 +375,71 @@ class _SurveyPageState extends ConsumerState<SurveyPage> {
                   ),
                 ),
                 const SizedBox(height: 80),
+                // 表单内容区域
+                Expanded(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                      ),
+                    ),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 16),
+                          _buildFormItem(
+                            title: '期望借款金额',
+                            value: _loanAmount,
+                            placeholder: '请选择',
+                            onTap: () => _onFieldTap(0),
+                          ),
+                          _buildFormItem(
+                            title: '借款用途',
+                            value: _loanPurpose,
+                            placeholder: '请选择',
+                            onTap: () => _onFieldTap(1),
+                          ),
+                          _buildFormItem(
+                            title: '未还款总金额',
+                            value: _unpaidAmount,
+                            placeholder: '请选择',
+                            onTap: () => _onFieldTap(2),
+                          ),
+                          _buildFormItem(
+                            title: '未还贷款笔数',
+                            value: _unpaidCount,
+                            placeholder: '请选择',
+                            onTap: () => _onFieldTap(3),
+                          ),
+                          _buildFormItem(
+                            title: '近6个月是否有逾期',
+                            value: _hasOverdue,
+                            placeholder: '请选择',
+                            onTap: () => _onFieldTap(4),
+                          ),
+                          _buildFormItem(
+                            title: '最长逾期时长（近6个月）',
+                            value: _maxOverdueDays,
+                            placeholder: '请选择',
+                            onTap: () => _onFieldTap(5),
+                          ),
+                          _buildFormItem(
+                            title: '使用信贷服务年限',
+                            value: _creditYears,
+                            placeholder: '请选择',
+                            onTap: () => _onFieldTap(6),
+                            showDivider: false,
+                          ),
+                          const SizedBox(height: 100),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ],
-            ),
-          ),
-          // 表单内容区域
-          Expanded(
-            child: Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
-                ),
-              ),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 16),
-                    _buildFormItem(
-                      title: '期望借款金额',
-                      value: _loanAmount,
-                      placeholder: '请选择',
-                      onTap: () => _showPicker(
-                        title: '期望借款金额',
-                        options: _loanAmountOptions,
-                        selectedIndex: _selectedLoanAmountIndex,
-                        onConfirm: (index) {
-                          setState(() {
-                            _selectedLoanAmountIndex = index;
-                            _loanAmount = _loanAmountOptions[index];
-                          });
-                        },
-                      ),
-                    ),
-                    _buildFormItem(
-                      title: '借款用途',
-                      value: _loanPurpose,
-                      placeholder: '请选择',
-                      onTap: () => _showPicker(
-                        title: '借款用途',
-                        options: _loanPurposeOptions,
-                        selectedIndex: _selectedLoanPurposeIndex,
-                        onConfirm: (index) {
-                          setState(() {
-                            _selectedLoanPurposeIndex = index;
-                            _loanPurpose = _loanPurposeOptions[index];
-                          });
-                        },
-                      ),
-                    ),
-                    _buildFormItem(
-                      title: '未还款总金额',
-                      value: _unpaidAmount,
-                      placeholder: '请选择',
-                      onTap: () => _showPicker(
-                        title: '未还款总金额',
-                        options: _unpaidAmountOptions,
-                        selectedIndex: _selectedUnpaidAmountIndex,
-                        onConfirm: (index) {
-                          setState(() {
-                            _selectedUnpaidAmountIndex = index;
-                            _unpaidAmount = _unpaidAmountOptions[index];
-                          });
-                        },
-                      ),
-                    ),
-                    _buildFormItem(
-                      title: '未还贷款笔数',
-                      value: _unpaidCount,
-                      placeholder: '请选择',
-                      onTap: () => _showPicker(
-                        title: '未还贷款笔数',
-                        options: _unpaidCountOptions,
-                        selectedIndex: _selectedUnpaidCountIndex,
-                        onConfirm: (index) {
-                          setState(() {
-                            _selectedUnpaidCountIndex = index;
-                            _unpaidCount = _unpaidCountOptions[index];
-                          });
-                        },
-                      ),
-                    ),
-                    _buildFormItem(
-                      title: '近6个月是否有逾期',
-                      value: _hasOverdue,
-                      placeholder: '请选择',
-                      onTap: () => _showPicker(
-                        title: '近6个月是否有逾期',
-                        options: _hasOverdueOptions,
-                        selectedIndex: _selectedHasOverdueIndex,
-                        onConfirm: (index) {
-                          setState(() {
-                            _selectedHasOverdueIndex = index;
-                            _hasOverdue = _hasOverdueOptions[index];
-                          });
-                        },
-                      ),
-                    ),
-                    _buildFormItem(
-                      title: '最长逾期时长（近6个月）',
-                      value: _maxOverdueDays,
-                      placeholder: '请选择',
-                      onTap: () => _showPicker(
-                        title: '最长逾期时长（近6个月）',
-                        options: _maxOverdueDaysOptions,
-                        selectedIndex: _selectedMaxOverdueDaysIndex,
-                        onConfirm: (index) {
-                          setState(() {
-                            _selectedMaxOverdueDaysIndex = index;
-                            _maxOverdueDays = _maxOverdueDaysOptions[index];
-                          });
-                        },
-                      ),
-                    ),
-                    _buildFormItem(
-                      title: '使用信贷服务年限',
-                      value: _creditYears,
-                      placeholder: '请选择',
-                      onTap: () => _showPicker(
-                        title: '使用信贷服务年限',
-                        options: _creditYearsOptions,
-                        selectedIndex: _selectedCreditYearsIndex,
-                        onConfirm: (index) {
-                          setState(() {
-                            _selectedCreditYearsIndex = index;
-                            _creditYears = _creditYearsOptions[index];
-                          });
-                        },
-                      ),
-                      showDivider: false,
-                    ),
-                    const SizedBox(height: 100),
-                  ],
-                ),
-              ),
             ),
           ),
         ],
