@@ -846,10 +846,6 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
                 topRight: Radius.circular(16),
               ),
               child: Container(
-                // decoration: const BoxDecoration(
-                //   color: Colors.white,
-                //   borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-                // ),
                 color: Colors.white,
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
@@ -942,6 +938,8 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
                   controller: controller,
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.transparent,
                     hintText: entry.defaultText,
                     hintStyle: const TextStyle(
                       fontSize: 14,
@@ -950,6 +948,8 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(vertical: 8),
                     border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
                   ),
                   style: const TextStyle(fontSize: 14, color: Colors.black),
                   onChanged: (value) {

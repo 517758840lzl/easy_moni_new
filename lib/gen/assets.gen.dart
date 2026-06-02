@@ -14,6 +14,9 @@ import 'package:flutter/widgets.dart';
 class $AssetsImagesGen {
   const $AssetsImagesGen();
 
+  /// File path: assets/images/CameraM.png
+  AssetGenImage get cameraM => const AssetGenImage('assets/images/CameraM.png');
+
   /// File path: assets/images/DangerCircle.png
   AssetGenImage get dangerCircle =>
       const AssetGenImage('assets/images/DangerCircle.png');
@@ -21,6 +24,10 @@ class $AssetsImagesGen {
   /// File path: assets/images/DangerCircle_normal.png
   AssetGenImage get dangerCircleNormal =>
       const AssetGenImage('assets/images/DangerCircle_normal.png');
+
+  /// File path: assets/images/GallerySend.png
+  AssetGenImage get gallerySend =>
+      const AssetGenImage('assets/images/GallerySend.png');
 
   /// File path: assets/images/Notebook.png
   AssetGenImage get notebook =>
@@ -285,6 +292,10 @@ class $AssetsImagesGen {
   /// File path: assets/images/moban.png
   AssetGenImage get moban => const AssetGenImage('assets/images/moban.png');
 
+  /// File path: assets/images/star_icon.png
+  AssetGenImage get starIcon =>
+      const AssetGenImage('assets/images/star_icon.png');
+
   /// File path: assets/images/takepicture.png
   AssetGenImage get takepicture =>
       const AssetGenImage('assets/images/takepicture.png');
@@ -294,8 +305,10 @@ class $AssetsImagesGen {
 
   /// List of all assets
   List<dynamic> get values => [
+    cameraM,
     dangerCircle,
     dangerCircleNormal,
+    gallerySend,
     notebook,
     biaoqian,
     customer,
@@ -363,6 +376,7 @@ class $AssetsImagesGen {
     mineWaiting,
     mineWallet,
     moban,
+    starIcon,
     takepicture,
     testimg,
   ];

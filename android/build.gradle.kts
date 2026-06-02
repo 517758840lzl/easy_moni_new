@@ -1,3 +1,15 @@
+buildscript {
+    repositories {
+        maven { url = uri("https://maven.aliyun.com/repository/google") }
+        maven { url = uri("https://maven.aliyun.com/repository/central") }
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.8.1")
+    }
+}
+
 allprojects {
     repositories {
         maven { url = uri("https://storage.googleapis.com/download.flutter.io") }
@@ -5,6 +17,16 @@ allprojects {
         maven { url = uri("https://maven.aliyun.com/repository/central") }
         google()
         mavenCentral()
+    }
+}
+
+subprojects {
+    project.buildscript {
+        configurations.all {
+            resolutionStrategy {
+                force("com.android.tools.build:gradle:8.8.1")
+            }
+        }
     }
 }
 

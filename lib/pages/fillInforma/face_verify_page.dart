@@ -1,15 +1,18 @@
 import 'dart:typed_data';
 
+import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:easy_moni/entities/acp_element_info_resp.dart';
 import 'package:easy_moni/pages/fillInforma/providers/acp_element_info_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/submit_acp_element_info_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/upload_file_provider.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/progressInformation.dart';
+import 'package:easy_moni/pages/mine/providers/user_info_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../gen/assets.gen.dart';
 import '../../services/platform_service.dart';
 import '../../utils/widgets/informationBottomButton.dart';
 
@@ -160,17 +163,9 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
                           GestureDetector(
                             onTap: _pickFaceImage,
                             child: Container(
-                              width: 200,
-                              height: 200,
+                              // width: 200,
+                              // height: 200,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF5F5F5),
-                                borderRadius: BorderRadius.circular(100),
-                                border: Border.all(
-                                  color: _canContinue
-                                      ? const Color(0xFF45F3A6)
-                                      : const Color(0xFF268470),
-                                  width: 3,
-                                ),
                                 image: _faceImage != null
                                     ? DecorationImage(
                                         image: MemoryImage(_faceImage!),
@@ -182,21 +177,16 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
                                   ? Column(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
-                                        Icon(
-                                          Icons.face,
-                                          size: 60,
-                                          color: Colors.black.withValues(
-                                            alpha: 0.3,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
+                                        Assets.images.informationIcon.image(width: 202,height: 202),
+                                        const SizedBox(height: 13),
                                         Text(
-                                          '点击上传人脸图片',
+                                          AppStrings.confirmOwnerData,
                                           style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.black.withValues(
-                                              alpha: 0.5,
-                                            ),
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: _canContinue
+                                                ? const Color(0xFF45F3A6)
+                                                : const Color(0xFF3F4950),
                                           ),
                                         ),
                                       ],
@@ -204,19 +194,18 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
                                   : null,
                             ),
                           ),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 13),
                           if (_isUploading)
                             const CircularProgressIndicator()
                           else
                             Text(
-                              _canContinue ? '图片上传成功' : '请选择一张清晰的人脸照片',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: _canContinue
-                                    ? const Color(0xFF45F3A6)
-                                    : const Color(0xFF3F4950),
+                              _canContinue ? '图片上传成功' : AppStrings.continueOcr,
+                              style:TextStyle(
+                              fontSize: 12,
+                              color: Colors.black.withValues(
+                                alpha: 0.5,
                               ),
+                            ),
                             ),
                         ],
                       ),

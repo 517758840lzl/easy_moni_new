@@ -376,29 +376,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 children: [
                   // 顶部区域
                   _header(context),
-
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: Column(
                         children: [
                           const SizedBox(height: 100),
-                          // Logo
-                          Container(
-                            width: 64,
-                            height: 64,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: const Icon(
-                              Icons.eco,
-                              color: Colors.white,
-                              size: 36,
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                          // Title
+                          Assets.images.starIcon.image(width: 83,height: 83),
+                          const SizedBox(height: 30),
                           const Text(
                             AppStrings.wellcome,
                             style: TextStyle(
@@ -408,7 +393,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          // Subtitle
                           const Text(
                             AppStrings.wellcomedeailData,
                             textAlign: TextAlign.center,

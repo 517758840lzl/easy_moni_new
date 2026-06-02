@@ -107,12 +107,14 @@ class CameraService {
   }
 
   /// 拍照，返回 Base64 编码的图片数据
-  static Future<Uint8List?> takePhoto() async {
+  static Future<Uint8List?> takePhoto({bool isFront = true}) async {
     if (kIsWeb) {
       return pickFromGallery();
     }
     try {
-      final String? base64 = await _channel.invokeMethod('takePhoto');
+      final String? base64 = await _channel.invokeMethod('takePhoto', {
+        'isFront': isFront,
+      });
       if (base64 == null || base64.isEmpty) {
         return null;
       }

@@ -9,7 +9,11 @@ class ApiConstants {
 
   static const String appVersion = '1';
 
-  static const String platform = 'andriod';
+  static const String clientType = 'android';
+
+  static const String deviceId = '7da8118f936659a7';
+
+  static const String advId = 'be1089a1-dc4b-4684-9882-2d670a214784';
 
   //服务器任一接口返回 401，表示token过期或用户未登录 ==================== API Paths ====================
   static const String bannerList = '/api/banner/list';

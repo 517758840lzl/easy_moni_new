@@ -1,3 +1,4 @@
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +11,7 @@ import 'package:easy_moni/entities/user_repayment_resp.dart';
 
 import '../../pages/fillInforma/contact_info_page.dart';
 import '../../pages/fillInforma/face_verify_page.dart';
+import '../../pages/fillInforma/id_camera_page.dart';
 import '../../pages/fillInforma/identity_verify_page.dart';
 import '../../pages/fillInforma/personal_info_page.dart' as fill_info;
 import '../../pages/mine/detailpage.dart';
@@ -26,6 +28,7 @@ import '../../pages/repay/survey_page.dart';
 final globalNavigationKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
 final appRouterProvider = Provider<GoRouter>((ref) {
+
   return GoRouter(
     navigatorKey: globalNavigationKey,
     initialLocation: '/',
@@ -41,6 +44,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'login',
         builder: (context, state) => const LoginPage(),
       ),
+      GoRoute(
+        path: '/idcamera',
+        name: 'idcamera',
+        builder: (context, state) => const IdCameraScreen(),
+      ),
+
       GoRoute(
         path: '/order-detail',
         name: 'orderDetail',

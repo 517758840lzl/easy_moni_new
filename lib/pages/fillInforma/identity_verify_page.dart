@@ -4,6 +4,7 @@ import 'package:easy_moni/entities/acp_element_info_resp.dart';
 import 'package:easy_moni/pages/fillInforma/providers/acp_element_info_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/ocr_verification_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/submit_acp_element_info_provider.dart';
+import 'package:easy_moni/pages/fillInforma/providers/upload_file_provider.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/progressInformation.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +28,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   Uint8List? _idCardFrontData;
   Uint8List? _idCardBackData;
   OcrVerificationResp? _frontOcr;
-  OcrVerificationResp? _backOcr;
+  String? _backImageUrl;
   bool _isLoading = true;
   bool _isSubmitting = false;
   bool _isOcrLoading = false;
@@ -36,7 +37,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
       _idCardFrontData != null &&
       _idCardBackData != null &&
       _frontOcr?.url != null &&
-      (_backOcr?.url != null || _backOcr?.backUrl != null);
+      _backImageUrl != null;
 
   bool get _hasRecognizedIdentityInfo =>
       (_frontOcr?.idCardNumber?.isNotEmpty ?? false) ||
@@ -79,6 +80,17 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
         _processId == null) {
       return;
     }
+
+    await _showConfirmIdNumberSheet();
+  }
+
+  Future<void> _submitIdentityInfo() async {
+    if (!_canContinue ||
+        _isSubmitting ||
+        _stepInfo == null ||
+        _processId == null) {
+      return;
+    }
     setState(() => _isSubmitting = true);
 
     try {
@@ -104,7 +116,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
       }
 
       addIfFound(['front'], _frontOcr?.url);
-      addIfFound(['back'], _backOcr?.url ?? _backOcr?.backUrl);
+      addIfFound(['back'], _backImageUrl);
       addIfFound(['national id', 'id number'], _frontOcr?.idCardNumber);
       addIfFound(['last name', 'surname', 'name'], _frontOcr?.lastName);
       addIfFound(['first name', 'father'], _frontOcr?.firstNames);
@@ -121,7 +133,8 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
 
       if (!mounted) return;
       if (result.isSuccess) {
-        context.push('/face-verify');
+        // context.push('/face-verify');
+        context.push('/idcamera');
       } else {
         ScaffoldMessenger.of(
           context,
@@ -137,6 +150,120 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
         setState(() => _isSubmitting = false);
       }
     }
+  }
+
+  Future<void> _showConfirmIdNumberSheet() async {
+    final idNumber = _frontOcr?.idCardNumber?.trim();
+    if (idNumber == null || idNumber.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('请先确认身份证号码')));
+      return;
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 88,
+                  height: 88,
+                  decoration: BoxDecoration(
+                    color: const Color(0x1A27D3C3),
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                  child: const Icon(
+                    Icons.priority_high_rounded,
+                    size: 52,
+                    color: Color(0xFF27B7A7),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  idNumber,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF101314),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  '请再次核对您的身份证号码',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, color: Color(0xFF5B646B)),
+                ),
+                const SizedBox(height: 28),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 48,
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFF268470)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(28),
+                            ),
+                          ),
+                          child: const Text(
+                            'Edit',
+                            style: TextStyle(
+                              color: Color(0xFF268470),
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: SizedBox(
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            Navigator.pop(context);
+                            await _submitIdentityInfo();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF268470),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(28),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'Confirm',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   String _displayGender(String? value) {
@@ -171,8 +298,8 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
       ),
       builder: (context) {
-        final galleryText = kIsWeb ? '选择图片' : AppStrings.selectFormPhotos;
-        final cameraText = kIsWeb ? '重新选择图片' : AppStrings.takephotos;
+        final galleryText = AppStrings.selectFormPhotos;
+        final cameraText = AppStrings.takephotos;
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -217,7 +344,11 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
                             _pickFromGallery(isFront: isFront);
                           },
                           child: _buildUploadOption(
-                            icon: Icons.photo_library_outlined,
+                            icon: Assets.images.cameraM.image(
+                              width: 20,
+                              height: 20,
+                              fit: BoxFit.contain,
+                            ),
                             text: galleryText,
                           ),
                         ),
@@ -230,7 +361,26 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
                             _takePhoto(isFront: isFront);
                           },
                           child: _buildUploadOption(
-                            icon: Icons.camera_alt_outlined,
+                            icon: Stack(
+                              clipBehavior: Clip.none,
+                              alignment: Alignment.center,
+                              children: [
+                                Assets.images.gallerySend.image(
+                                  width: 20,
+                                  height: 20,
+                                  fit: BoxFit.contain,
+                                ),
+                                Positioned(
+                                  top: -11,
+                                  right: -11,
+                                  child: Assets.images.inforamtionStar.image(
+                                    width: 22,
+                                    height: 22,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                              ],
+                            ),
                             text: cameraText,
                           ),
                         ),
@@ -247,7 +397,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     );
   }
 
-  Widget _buildUploadOption({required IconData icon, required String text}) {
+  Widget _buildUploadOption({required Widget icon, required String text}) {
     return Container(
       height: 72,
       decoration: BoxDecoration(
@@ -257,7 +407,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 30, color: Colors.black.withValues(alpha: 0.7)),
+          icon,
           const SizedBox(height: 4),
           Text(
             text,
@@ -308,7 +458,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     Uint8List imageData, {
     required bool isFront,
   }) async {
-    debugPrint('准备调用 OCR 接口, isFront=$isFront, bytes=${imageData.length}');
+    debugPrint('准备处理身份证图片, isFront=$isFront, bytes=${imageData.length}');
     setState(() {
       if (isFront) {
         _idCardFrontData = imageData;
@@ -319,17 +469,46 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     });
 
     if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('开始识别证件信息...')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isFront
+                ? AppStrings.continueIdentifyStr
+                : AppStrings.continueUploadPicture,
+          ),
+        ),
+      );
+    }
+
+    if (!isFront) {
+      final uploadResult = await ref
+          .read(uploadFileProvider)
+          .call(bytes: imageData, filename: 'id_card_back.jpg');
+
+      if (!mounted) return;
+
+      setState(() {
+        if (uploadResult.isSuccess) {
+          _backImageUrl = uploadResult.data;
+        }
+        _isOcrLoading = false;
+      });
+
+      if (uploadResult.isSuccess) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('证件背面上传成功')));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(uploadResult.message ?? '图片上传失败')),
+        );
+      }
+      return;
     }
 
     final result = await ref
         .read(ocrVerificationProvider)
-        .call(
-          bytes: imageData,
-          filename: isFront ? 'id_card_front.jpg' : 'id_card_back.jpg',
-        );
+        .call(bytes: imageData, filename: 'id_card_front.jpg');
 
     debugPrint(
       'OCR 接口返回: isSuccess=${result.isSuccess}, message=${result.message}, data=${result.data}',
@@ -339,11 +518,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
 
     setState(() {
       if (result.isSuccess) {
-        if (isFront) {
-          _frontOcr = result.data;
-        } else {
-          _backOcr = result.data;
-        }
+        _frontOcr = result.data;
       }
       _isOcrLoading = false;
     });

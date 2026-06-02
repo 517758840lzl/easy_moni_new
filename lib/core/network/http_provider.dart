@@ -1,7 +1,10 @@
 import 'package:easy_moni/core/network/interrepters/header_interrepter.dart';
+import 'package:easy_moni/core/router/app_router.dart';
 import 'package:easy_moni/core/network/interrepters/logging_interrepter.dart';
 import 'package:easy_moni/services/auth_storage.dart';
+import 'package:flutter/widgets.dart';
 import 'package:talker/talker.dart';
+import 'package:go_router/go_router.dart';
 import '../constants/api_constants.dart';
 import 'http_result.dart';
 import '../../entities/base_result.dart';
@@ -11,6 +14,7 @@ class HttpProvider {
   final Dio _dio;
   final Talker _talker;
   final HeaderInterrepter _headerInterceptor;
+  bool _isRedirectingToLogin = false;
 
   HttpProvider._({
     required Dio dio,
@@ -33,8 +37,11 @@ class HttpProvider {
           'Accept': 'application/json',
           'acqChannel': 'GHQU',
           'acqChannelIndex': '0',
-          'disableEncBody': false,
-          // 'token': 'eyJhbGciOiJIUzUxMiJ9.eyJhcHBfbG9naW5fdXNlcl90b2tlbl9rZXkiOiJHSFFVOjIzMzUwNDY4NDU2ODphY2EyY2JkZC03MTY5LTRkZjQtODExNC0wNmQ5N2FiOGYyMjQifQ.JUsSwNbEalJqQ4JSZsv1by6NGvg7e8ywATNNRKxzyepghHS4VzRqpLcbOlQjztKM52e-N1yBEWEfvkfc61K5Cg',
+          'disableEncBody': 'false',
+          'appVersion': ApiConstants.appVersion,
+          'clientType': ApiConstants.clientType,
+          'advId': ApiConstants.advId,
+          'deviceId': ApiConstants.deviceId,
         },
       ),
     );
@@ -69,6 +76,76 @@ class HttpProvider {
   void clearAuth() {
     _headerInterceptor.clearAuth();
     AuthStorage.clearToken();
+  }
+
+  void _redirectToLoginIfNeeded() {
+    if (_isRedirectingToLogin) return;
+    _isRedirectingToLogin = true;
+    clearAuth();
+    final context = globalNavigationKey.currentContext;
+    if (context != null) {
+      final currentUri = GoRouter.of(context).routeInformationProvider.value.uri;
+      if (currentUri.toString() != '/login') {
+        context.go('/login');
+      }
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _isRedirectingToLogin = false;
+    });
+  }
+
+  bool _isAuthFailure({
+    int? bizCode,
+    int? statusCode,
+    String? message,
+  }) {
+    if (bizCode == 401 || statusCode == 401) {
+      return true;
+    }
+    final normalizedMessage = message?.toLowerCase() ?? '';
+    return normalizedMessage.contains('authentication failed') ||
+        normalizedMessage.contains('unable to access system resources');
+  }
+
+  HttpResult<T> _serverErrorResult<T>(
+    String message, {
+    int? bizCode,
+    int? statusCode,
+    CancelToken? cancelToken,
+  }) {
+    if (_isAuthFailure(
+      bizCode: bizCode,
+      statusCode: statusCode,
+      message: message,
+    )) {
+      _redirectToLoginIfNeeded();
+    }
+    return HttpResult.error(
+      HttpResultStatus.serverError,
+      message,
+      statusCode: statusCode,
+      cancelToken: cancelToken,
+    );
+  }
+
+  HttpListResult<T> _serverListErrorResult<T>(
+    String message, {
+    int? bizCode,
+    int? statusCode,
+    CancelToken? cancelToken,
+  }) {
+    if (_isAuthFailure(
+      bizCode: bizCode,
+      statusCode: statusCode,
+      message: message,
+    )) {
+      _redirectToLoginIfNeeded();
+    }
+    return HttpListResult.error(
+      HttpResultStatus.serverError,
+      message,
+      cancelToken: cancelToken,
+    );
   }
 
   Future<HttpResult<T>> get<T>(
@@ -128,9 +205,9 @@ class HttpProvider {
               cancelToken: cancelToken,
             );
           } else {
-            return HttpResult.error(
-              HttpResultStatus.serverError,
+            return _serverErrorResult(
               result.message ?? 'Server error',
+              bizCode: result.code,
               statusCode: response.statusCode,
               cancelToken: cancelToken,
             );
@@ -237,9 +314,9 @@ class HttpProvider {
               cancelToken: cancelToken,
             );
           } else {
-            return HttpResult.error(
-              HttpResultStatus.serverError,
+            return _serverErrorResult(
               result.message ?? 'Server error',
+              bizCode: result.code,
               statusCode: response.statusCode,
               cancelToken: cancelToken,
             );
@@ -314,9 +391,9 @@ class HttpProvider {
           cancelToken: cancelToken,
         );
       } else {
-        return HttpListResult.error(
-          HttpResultStatus.serverError,
+        return _serverListErrorResult(
           result.message ?? 'Server error',
+          bizCode: result.code,
           statusCode: response.statusCode,
           cancelToken: cancelToken,
         );
@@ -360,9 +437,13 @@ class HttpProvider {
           cancelToken: cancelToken,
         );
       case DioExceptionType.badResponse:
+        final respData = e.response?.data;
+        final serverMsg = (respData is Map)
+            ? (respData['message'] ?? respData['msg'] ?? 'Server error')
+            : 'Server error';
         return HttpResult.error(
           HttpResultStatus.serverError,
-          e.response?.data?['message'] ?? 'Server error',
+          serverMsg as String,
           statusCode: e.response?.statusCode,
           cancelToken: cancelToken,
         );
@@ -402,9 +483,13 @@ class HttpProvider {
           cancelToken: cancelToken,
         );
       case DioExceptionType.badResponse:
+        final respData = e.response?.data;
+        final serverMsg = (respData is Map)
+            ? (respData['message'] ?? respData['msg'] ?? 'Server error')
+            : 'Server error';
         return HttpListResult.error(
           HttpResultStatus.serverError,
-          e.response?.data?['message'] ?? 'Server error',
+          serverMsg as String,
           statusCode: e.response?.statusCode,
           cancelToken: cancelToken,
         );

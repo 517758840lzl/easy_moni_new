@@ -58,7 +58,10 @@ class AppStrings {
   static const String repayTab = '还款';
   static const String mineTab = '我的';
   static const String continueStr = '继续';
-
+  static const String continueIdentifyStr = '开始识别证件信息...';
+  static const String continueUploadPicture = '开始上传证件图片...';
+  static const String continueOcr = '请根据指引完成人脸验证';
+  static const String confirmOwnerData = '请确认本人操作';
   // ==================== 贷款详情 ====================
   static const String loanDetailTitle = '贷款详情';
   static const String loanItemIdPrefix = '贷款Item ID: ';

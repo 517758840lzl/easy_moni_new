@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../../constants/api_constants.dart';
 
 class HeaderInterrepter extends Interceptor {
   static final HeaderInterrepter _instance = HeaderInterrepter._();
@@ -24,7 +25,13 @@ class HeaderInterrepter extends Interceptor {
   Map<String, String> get _commonHeader => {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    if (_deviceId case final deviceId?) 'X-Device-Id': deviceId,
+    'acqChannel': 'GHQU',
+    'acqChannelIndex': '0',
+    'disableEncBody': 'false',
+    'appVersion': ApiConstants.appVersion,
+    'clientType': ApiConstants.clientType,
+    'advId': ApiConstants.advId,
+    'deviceId': _deviceId ?? ApiConstants.deviceId,
     if (_token case final token?) 'token': token,
   };
 
