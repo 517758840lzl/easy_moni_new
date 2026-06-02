@@ -1,4 +1,5 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
+import 'package:easy_moni/pages/fillInforma/id_camera_page.dart';
 import 'package:easy_moni/pages/loan/loan_home_page.dart';
 import 'package:easy_moni/pages/repay/repay_entry_page.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +23,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = const [
-    LoanHomePage(),
+    IdCameraScreen(),
     RepayEntryPage(),
     MinePage(),
   ];

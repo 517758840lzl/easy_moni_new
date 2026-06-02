@@ -5,6 +5,7 @@ import '../../../core/network/http_result.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../entities/login_resp.dart';
 import '../../../entities/check_upload_data_valid_resp.dart';
+import '../../../entities/startup_config_resp.dart';
 
 final sendVerifyCodeProvider = Provider<SendVerifyCodeApi>((ref) {
   return SendVerifyCodeApi();
@@ -16,6 +17,10 @@ final loginApiProvider = Provider<LoginApi>((ref) {
 
 final checkUploadDataValidProvider = Provider<CheckUploadDataValidApi>((ref) {
   return CheckUploadDataValidApi();
+});
+
+final startupConfigProvider = Provider<StartupConfigApi>((ref) {
+  return StartupConfigApi();
 });
 
 class SendVerifyCodeApi {
@@ -78,6 +83,23 @@ class CheckUploadDataValidApi {
     );
     debugPrint(
       'CheckUploadDataValidApi 返回: status=${result.status}, data=${result.data}, message=${result.message}',
+    );
+    return result;
+  }
+}
+
+class StartupConfigApi {
+  Future<HttpResult<StartupConfigResp>> call() async {
+    final result = await HttpProvider.instance.post<StartupConfigResp>(
+      ApiConstants.startupConfig,
+      fromJson: (json) {
+        debugPrint('StartupConfigApi fromJson 原始数据: $json');
+        debugPrint('数据类型: ${json.runtimeType}');
+        return StartupConfigResp.fromJson(json);
+      },
+    );
+    debugPrint(
+      'StartupConfigApi 返回: status=${result.status}, data=${result.data}, message=${result.message}',
     );
     return result;
   }

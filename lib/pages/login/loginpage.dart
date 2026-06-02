@@ -219,6 +219,23 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           HttpProvider.instance.setToken(loginData!.token);
           debugPrint('登录成功，Token: ${loginData.token}');
 
+          // 登录后请求 startup/config 接口
+          try {
+            final configResult = await ref
+                .read(startupConfigProvider)
+                .call();
+            if (!mounted) return;
+
+            if (configResult.isSuccess) {
+              debugPrint('startupConfig 成功: ${configResult.data}');
+            } else {
+              debugPrint('startupConfig 失败: ${configResult.message}');
+            }
+          } catch (e) {
+            if (!mounted) return;
+            debugPrint('startupConfig 请求异常: $e');
+          }
+
           // 登录后请求 checkUploadDataValid 接口
           try {
             final checkDataResult = await ref

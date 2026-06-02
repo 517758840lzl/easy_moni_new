@@ -62,6 +62,12 @@ class AppStrings {
   static const String continueUploadPicture = '开始上传证件图片...';
   static const String continueOcr = '请根据指引完成人脸验证';
   static const String confirmOwnerData = '请确认本人操作';
+  static const String standard = 'Standard shooting';
+  static const String toolBright = 'Too bright';
+  static const String incompletePhoto = 'Incomplete photo';
+  static const String blueryPhoto = 'Blurry/Faded photo';
+  static const String takeOcrPictures =
+      'Please use landscape mode and place all four corners of your Ghana Card inside the frame.';
   // ==================== 贷款详情 ====================
   static const String loanDetailTitle = '贷款详情';
   static const String loanItemIdPrefix = '贷款Item ID: ';

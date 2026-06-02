@@ -4,18 +4,19 @@ class CardMaskPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.black.withOpacity(0.7) // 半透明遮罩颜色
+      ..color = Colors.black
+          .withOpacity(0.7) // 半透明遮罩颜色
       ..style = PaintingStyle.fill;
 
-
-    final backgroundPath = Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+    final backgroundPath = Path()
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
 
     // 证件框的路径 (根据 UI 比例调整大小和位置)
     // 假设在横屏下，证件框位于左侧，腾出右侧给按钮
-    final cardWidth = size.width * 0.55;
-    final cardHeight = size.height * 0.65;
+    final cardWidth = size.width * 0.5;
+    final cardHeight = cardWidth * 218 / 339.0;
     final cardLeft = size.width * 0.08;
-    final cardTop = (size.height - cardHeight) / 2;
+    final cardTop = (size.height - cardHeight) / 3 * 2;
 
     final cardRect = RRect.fromRectAndRadius(
       Rect.fromLTWH(cardLeft, cardTop, cardWidth, cardHeight),
