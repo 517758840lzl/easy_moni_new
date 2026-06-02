@@ -7,18 +7,14 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import android.os.Build
 import android.provider.MediaStore
 import android.util.Base64
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.IOException
 
 class MainActivity : FlutterActivity() {
     private val LOCATION_CHANNEL = "com.easy_moni/location"
@@ -28,8 +24,6 @@ class MainActivity : FlutterActivity() {
     private var pendingResult: MethodChannel.Result? = null
     private var pendingContactsResult: MethodChannel.Result? = null
     private var pendingCameraResult: MethodChannel.Result? = null
-    private var currentPhotoPath: String? = null
-    private var isFrontCamera: Boolean = false
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -92,58 +86,13 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CAMERA_CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
                 "pickFromGallery" -> {
-                    isFrontCamera = false
                     val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
                     intent.type = "image/*"
                     pendingCameraResult = result
                     startActivityForResult(intent, 2001)
                 }
-                "takePhoto" -> {
-                    isFrontCamera = false
-                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                        pendingCameraResult = result
-                        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 1003)
-                    } else {
-                        openCamera(result)
-                    }
-                }
-                "checkCameraPermission" -> {
-                    val hasPermission = ContextCompat.checkSelfPermission(
-                        this, Manifest.permission.CAMERA
-                    ) == PackageManager.PERMISSION_GRANTED
-                    result.success(hasPermission)
-                }
                 else -> result.notImplemented()
             }
-        }
-    }
-
-    private fun openCamera(result: MethodChannel.Result) {
-        val photoFile: File? = try {
-            createImageFile()
-        } catch (ex: IOException) {
-            result.error("ERROR", "Could not create image file", null)
-            return
-        }
-        photoFile?.also {
-            val photoURI: Uri = FileProvider.getUriForFile(
-                this,
-                "${packageName}.fileprovider",
-                it
-            )
-            val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
-            pendingCameraResult = result
-            startActivityForResult(takePictureIntent, 2002)
-        }
-    }
-
-    private fun createImageFile(): File {
-        val timeStamp = System.currentTimeMillis()
-        val imageFileName = "JPEG_${timeStamp}_"
-        val storageDir = getExternalFilesDir(null)
-        return File.createTempFile(imageFileName, ".jpg", storageDir).also {
-            currentPhotoPath = it.absolutePath
         }
     }
 
@@ -172,27 +121,6 @@ class MainActivity : FlutterActivity() {
                     pendingCameraResult?.success(null)
                 }
                 pendingCameraResult = null
-            }
-            2002 -> { // Camera
-                if (resultCode == Activity.RESULT_OK) {
-                    currentPhotoPath?.let { path ->
-                        try {
-                            val bitmap = BitmapFactory.decodeFile(path)
-                            val base64 = bitmapToBase64(bitmap)
-                            // 删除临时文件
-                            File(path).delete()
-                            pendingCameraResult?.success(base64)
-                        } catch (e: Exception) {
-                            pendingCameraResult?.error("ERROR", e.message, null)
-                        }
-                    } ?: pendingCameraResult?.error("ERROR", "No photo path", null)
-                } else {
-                    // 删除临时文件
-                    currentPhotoPath?.let { File(it).delete() }
-                    pendingCameraResult?.success(null)
-                }
-                pendingCameraResult = null
-                currentPhotoPath = null
             }
         }
     }
@@ -233,14 +161,6 @@ class MainActivity : FlutterActivity() {
                     pendingContactsResult?.success(false)
                 }
                 pendingContactsResult = null
-            }
-            1003 -> { // Camera permission
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    openCamera(pendingCameraResult!!)
-                } else {
-                    pendingCameraResult?.error("PERMISSION_DENIED", "Camera permission denied", null)
-                }
-                pendingCameraResult = null
             }
         }
     }

@@ -1,16 +1,11 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
-import 'package:easy_moni/pages/fillInforma/id_camera_page.dart';
 import 'package:easy_moni/pages/loan/loan_home_page.dart';
 import 'package:easy_moni/pages/repay/repay_entry_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:easy_moni/pages/fillInforma/personal_info_page.dart';
-import 'package:easy_moni/pages/mine/order_history_page.dart';
 import 'package:easy_moni/pages/mine/mine.dart';
 
 import '../../gen/assets.gen.dart';
-import '../repay/extension_apply_page.dart';
-import '../repay/survey_page.dart';
 
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
@@ -23,7 +18,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = const [
-    IdCameraScreen(),
+    LoanHomePage(),
     RepayEntryPage(),
     MinePage(),
   ];

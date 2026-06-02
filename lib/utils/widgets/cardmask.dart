@@ -42,16 +42,16 @@ class CardMaskPainter extends CustomPainter {
       ..strokeWidth = 2.0;
     canvas.drawRRect(cardRect, borderPaint);
 
-    // 如果需要绘制内部的绿色引导线框
-    final innerRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(cardLeft + 8, cardTop + 8, cardWidth - 16, cardHeight - 16),
-      const Radius.circular(12),
-    );
-    final innerBorderPaint = Paint()
-      ..color = const Color(0xFF28503C).withOpacity(0.5)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4.0;
-    canvas.drawRRect(innerRect, innerBorderPaint);
+    // // 如果需要绘制内部的绿色引导线框
+    // final innerRect = RRect.fromRectAndRadius(
+    //   Rect.fromLTWH(cardLeft + 8, cardTop + 8, cardWidth - 16, cardHeight - 16),
+    //   const Radius.circular(12),
+    // );
+    // final innerBorderPaint = Paint()
+    //   ..color = const Color(0xFF28503C).withOpacity(0.5)
+    //   ..style = PaintingStyle.stroke
+    //   ..strokeWidth = 4.0;
+    // canvas.drawRRect(innerRect, innerBorderPaint);
   }
 
   @override

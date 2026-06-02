@@ -47,7 +47,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/idcamera',
         name: 'idcamera',
-        builder: (context, state) => const IdCameraScreen(),
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          final isFront = extra?['isFront'] as bool? ?? true;
+          return IdCameraScreen(isFront: isFront);
+        },
       ),
 
       GoRoute(

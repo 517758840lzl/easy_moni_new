@@ -2,6 +2,7 @@ import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:easy_moni/entities/acp_element_info_resp.dart';
 import 'package:easy_moni/pages/fillInforma/providers/acp_element_info_provider.dart';
+import 'package:easy_moni/pages/fillInforma/id_camera_page.dart';
 import 'package:easy_moni/pages/fillInforma/providers/ocr_verification_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/submit_acp_element_info_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/upload_file_provider.dart';
@@ -14,6 +15,7 @@ import 'package:go_router/go_router.dart';
 import '../../gen/assets.gen.dart';
 import '../../services/platform_service.dart';
 import '../../utils/widgets/informationBottomButton.dart';
+import '../../utils/widgets/limit_toast.dart';
 
 class IdentityVerifyPage extends ConsumerStatefulWidget {
   const IdentityVerifyPage({super.key});
@@ -38,6 +40,8 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
       _idCardBackData != null &&
       _frontOcr?.url != null &&
       _backImageUrl != null;
+
+  bool get _allowContinueForFaceTest => true;
 
   bool get _hasRecognizedIdentityInfo =>
       (_frontOcr?.idCardNumber?.isNotEmpty ?? false) ||
@@ -74,10 +78,19 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   }
 
   Future<void> _onContinue() async {
-    if (!_canContinue ||
-        _isSubmitting ||
-        _stepInfo == null ||
-        _processId == null) {
+    if (_isSubmitting || _isOcrLoading) {
+      return;
+    }
+
+    if (!_canContinue) {
+      if (!_allowContinueForFaceTest) {
+        return;
+      }
+      context.push('/face-verify');
+      return;
+    }
+
+    if (_stepInfo == null || _processId == null) {
       return;
     }
 
@@ -133,8 +146,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
 
       if (!mounted) return;
       if (result.isSuccess) {
-        // context.push('/face-verify');
-        context.push('/idcamera');
+        context.push('/face-verify');
       } else {
         ScaffoldMessenger.of(
           context,
@@ -438,12 +450,9 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   }
 
   Future<void> _takePhoto({required bool isFront}) async {
-    final hasPermission = await CameraService.checkPermission();
-    if (!hasPermission && !kIsWeb) {
-      _showCameraPermissionDialog();
-      return;
-    }
-    final imageData = await CameraService.takePhoto();
+    final imageData = await Navigator.of(context).push<Uint8List>(
+      MaterialPageRoute(builder: (context) => IdCameraScreen(isFront: isFront)),
+    );
     if (!mounted) return;
     if (imageData != null) {
       await _onImageSelected(imageData, isFront: isFront);
@@ -573,6 +582,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
             context: context,
             title: AppStrings.idcardVer,
             activeStep: InformationStep.identity,
+            onBack: () => FundingLimitDialog.showRetainDialog(context),
           ),
           Expanded(
             child: ClipRRect(
@@ -664,7 +674,10 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
             ),
           ),
           BottomContinueButton(
-            isEnabled: _canContinue && !_isSubmitting && !_isOcrLoading,
+            isEnabled:
+                (_canContinue || _allowContinueForFaceTest) &&
+                !_isSubmitting &&
+                !_isOcrLoading,
             onTap: _onContinue,
             text: _isSubmitting ? '保存中...' : '继续',
           ),

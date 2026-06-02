@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
@@ -103,37 +102,6 @@ class CameraService {
       return base64Decode(base64);
     } on PlatformException {
       return null;
-    }
-  }
-
-  /// 拍照，返回 Base64 编码的图片数据
-  static Future<Uint8List?> takePhoto({bool isFront = true}) async {
-    if (kIsWeb) {
-      return pickFromGallery();
-    }
-    try {
-      final String? base64 = await _channel.invokeMethod('takePhoto', {
-        'isFront': isFront,
-      });
-      if (base64 == null || base64.isEmpty) {
-        return null;
-      }
-      return base64Decode(base64);
-    } on PlatformException {
-      return null;
-    }
-  }
-
-  /// 检查相机权限
-  static Future<bool> checkPermission() async {
-    if (kIsWeb) {
-      return true;
-    }
-    try {
-      final bool result = await _channel.invokeMethod('checkCameraPermission');
-      return result;
-    } on PlatformException {
-      return false;
     }
   }
 }

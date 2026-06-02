@@ -124,6 +124,10 @@ class $AssetsImagesGen {
   AssetGenImage get informationIcon =>
       const AssetGenImage('assets/images/information_icon.png');
 
+  /// File path: assets/images/information_icon_limit.png
+  AssetGenImage get informationIconLimit =>
+      const AssetGenImage('assets/images/information_icon_limit.png');
+
   /// File path: assets/images/loan_bg.png
   AssetGenImage get loanBg => const AssetGenImage('assets/images/loan_bg.png');
 
@@ -333,6 +337,7 @@ class $AssetsImagesGen {
     inforamtionWarn,
     informationBg,
     informationIcon,
+    informationIconLimit,
     loanBg,
     loanBook,
     loanCalender,

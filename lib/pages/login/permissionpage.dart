@@ -2,8 +2,6 @@ import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/login/widgets/permissionalert.dart';
-import 'package:easy_moni/pages/home/homesell.dart';
-import 'package:easy_moni/services/auth_storage.dart';
 import 'package:easy_moni/services/permission_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -29,18 +27,13 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
   Future<void> _checkAgreedStatus() async {
     final privacyAgreed = await PermissionStorage.isPrivacyAgreed();
     final permissionsAccepted = await PermissionStorage.isPermissionsAccepted();
-    final token = await AuthStorage.getToken();
 
     if (!mounted) return;
 
     if (privacyAgreed && permissionsAccepted) {
-      if (token != null && token.isNotEmpty) {
-        Navigator.of(context, rootNavigator: true).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomeShell()),
-        );
-      } else {
-        context.pushReplacement('/login');
-      }
+      // 临时关闭“本地有 token 就直接进首页”的启动跳转逻辑，
+      // 统一进入登录页，由登录后的进度查询决定后续页面。
+      context.pushReplacement('/login');
     } else {
       setState(() {
         _isAgreed = true;

@@ -8,6 +8,7 @@ import '../../gen/assets.gen.dart';
 import '../../services/platform_service.dart';
 import '../../entities/acp_element_info_resp.dart';
 import '../../utils/widgets/informationBottomButton.dart';
+import '../../utils/widgets/limit_toast.dart';
 import 'providers/acp_element_info_provider.dart';
 import 'providers/submit_acp_element_info_provider.dart';
 
@@ -74,9 +75,9 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
           }
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result.message ?? '联系人信息加载失败')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(result.message ?? '联系人信息加载失败')));
       }
     } catch (e) {
       if (!mounted) return;
@@ -323,7 +324,10 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
   }
 
   Future<void> _onContinue() async {
-    if (!_canContinue || _isSubmitting || _stepInfo == null || _processId == null) {
+    if (!_canContinue ||
+        _isSubmitting ||
+        _stepInfo == null ||
+        _processId == null) {
       return;
     }
 
@@ -373,19 +377,21 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
         });
       }
 
-      final result = await ref.read(submitAcpElementInfoProvider).call(
-        processId: _processId!,
-        step: _stepInfo!.step,
-        jsonParam: jsonParam,
-      );
+      final result = await ref
+          .read(submitAcpElementInfoProvider)
+          .call(
+            processId: _processId!,
+            step: _stepInfo!.step,
+            jsonParam: jsonParam,
+          );
 
       if (!mounted) return;
       if (result.isSuccess) {
         context.push('/identity-verify');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result.message ?? '保存失败')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(result.message ?? '保存失败')));
       }
     } catch (e) {
       if (!mounted) return;
@@ -409,6 +415,7 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
             context: context,
             title: '联系人信息',
             activeStep: InformationStep.personal,
+            onBack: () => FundingLimitDialog.showRetainDialog(context),
           ),
           Expanded(
             child: Container(
@@ -461,7 +468,6 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
   }
 
   Widget _buildContactItem({
-
     required String title,
     required String? value,
     required String placeholder,

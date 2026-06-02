@@ -66,6 +66,8 @@ class AppStrings {
   static const String toolBright = 'Too bright';
   static const String incompletePhoto = 'Incomplete photo';
   static const String blueryPhoto = 'Blurry/Faded photo';
+  static const String continueSallery = "继续获取资金";
+  static const String looseSallery = "放弃本次机会";
   static const String takeOcrPictures =
       'Please use landscape mode and place all four corners of your Ghana Card inside the frame.';
   // ==================== 贷款详情 ====================

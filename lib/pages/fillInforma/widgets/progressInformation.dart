@@ -13,6 +13,7 @@ Widget buildInformationHeader({
   required BuildContext context,
   required String title,
   required InformationStep activeStep,
+  VoidCallback? onBack,
 }) {
   return Container(
     decoration: BoxDecoration(
@@ -33,7 +34,7 @@ Widget buildInformationHeader({
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
+                    onTap: onBack ?? () => Navigator.of(context).pop(),
                     child: const Icon(
                       Icons.arrow_back_ios,
                       color: Colors.white,

@@ -11,6 +11,7 @@ import '../../utils/widgets/informationBottomButton.dart';
 import 'providers/acp_element_info_provider.dart';
 import 'providers/provinces_cities_area_provider.dart';
 import 'providers/submit_acp_element_info_provider.dart';
+import 'package:easy_moni/utils/widgets/limit_toast.dart';
 
 class PersonalInfoPage extends ConsumerStatefulWidget {
   const PersonalInfoPage({super.key});
@@ -838,6 +839,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
             context: context,
             title: _stepInfo?.pageTitle ?? '-',
             activeStep: InformationStep.personal,
+            onBack: () => FundingLimitDialog.showRetainDialog(context),
           ),
           Expanded(
             child: ClipRRect(
