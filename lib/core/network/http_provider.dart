@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:easy_moni/core/network/interrepters/header_interrepter.dart';
 import 'package:easy_moni/core/network/interrepters/logging_interrepter.dart';
 import 'package:easy_moni/services/auth_storage.dart';
@@ -22,11 +21,8 @@ class HttpProvider {
        _headerInterceptor = headerInterceptor;
 
   static late HttpProvider instance;
-  static late Talker _talkerInstance;
 
   static void init({required Talker talker}) {
-    _talkerInstance = talker;
-
     final dio = Dio(
       BaseOptions(
         baseUrl: ApiConstants.baseUrl,
@@ -35,7 +31,7 @@ class HttpProvider {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'acqChannel':'GHQU',
+          'acqChannel': 'GHQU',
           'acqChannelIndex': '0',
           'disableEncBody': false,
           // 'token': 'eyJhbGciOiJIUzUxMiJ9.eyJhcHBfbG9naW5fdXNlcl90b2tlbl9rZXkiOiJHSFFVOjIzMzUwNDY4NDU2ODphY2EyY2JkZC03MTY5LTRkZjQtODExNC0wNmQ5N2FiOGYyMjQifQ.JUsSwNbEalJqQ4JSZsv1by6NGvg7e8ywATNNRKxzyepghHS4VzRqpLcbOlQjztKM52e-N1yBEWEfvkfc61K5Cg',
@@ -62,9 +58,13 @@ class HttpProvider {
     }
   }
 
+  String? get token => _headerInterceptor.token;
+
   void setDeviceId(String? deviceId) {
     _headerInterceptor.setDeviceId(deviceId);
   }
+
+  String? get deviceId => _headerInterceptor.deviceId;
 
   void clearAuth() {
     _headerInterceptor.clearAuth();
@@ -76,6 +76,7 @@ class HttpProvider {
     Map<String, dynamic>? params,
     required T Function(dynamic) fromJson,
     CancelToken? cancelToken,
+    bool includeToken = true,
   }) async {
     try {
       // 使用 dynamic 而不是 T，避免 Dio 自动转换失败
@@ -83,6 +84,7 @@ class HttpProvider {
         path,
         queryParameters: params,
         cancelToken: cancelToken,
+        options: Options(extra: {'skipToken': !includeToken}),
       );
 
       if (response.data == null) {
@@ -96,7 +98,7 @@ class HttpProvider {
       Map<String, dynamic>? map;
       final dataType = response.data.runtimeType.toString();
       _talker.debug('GET response.data type: $dataType');
-      
+
       try {
         final sourceMap = response.data as Map;
         map = {};
@@ -117,7 +119,9 @@ class HttpProvider {
         if (map.containsKey('code')) {
           _talker.debug('调用 BaseResult.fromJson, map=$map');
           final result = BaseResult.fromJson(map, fromJson);
-          _talker.debug('BaseResult 结果: code=${result.code}, isSuccess=${result.isSuccess}, data=${result.data}');
+          _talker.debug(
+            'BaseResult 结果: code=${result.code}, isSuccess=${result.isSuccess}, data=${result.data}',
+          );
           if (result.isSuccess) {
             return HttpResult.success(
               result.data as T,
@@ -160,6 +164,7 @@ class HttpProvider {
     Map<String, dynamic>? params,
     required T Function(dynamic) fromJson,
     CancelToken? cancelToken,
+    bool includeToken = true,
   }) async {
     try {
       // 使用 dynamic 而不是 T，避免 Dio 自动转换失败
@@ -168,6 +173,7 @@ class HttpProvider {
         data: data,
         queryParameters: params,
         cancelToken: cancelToken,
+        options: Options(extra: {'skipToken': !includeToken}),
       );
 
       if (response.data == null) {
@@ -181,7 +187,7 @@ class HttpProvider {
       Map<String, dynamic>? map;
       final dataType = response.data.runtimeType.toString();
       _talker.debug('POST response.data type: $dataType');
-      
+
       try {
         // 使用 Map.from 来确保正确转换
         _talker.debug('POST response.data before cast: ${response.data}');
@@ -206,7 +212,9 @@ class HttpProvider {
         if (map.containsKey('code')) {
           _talker.debug('调用 BaseResult.fromJson, map=$map');
           final result = BaseResult.fromJson(map, fromJson);
-          _talker.debug('BaseResult 结果: code=${result.code}, isSuccess=${result.isSuccess}, data=${result.data}');
+          _talker.debug(
+            'BaseResult 结果: code=${result.code}, isSuccess=${result.isSuccess}, data=${result.data}',
+          );
           if (result.isSuccess) {
             // 处理 data 为 null 的情况
             if (result.data == null) {
@@ -219,7 +227,7 @@ class HttpProvider {
                 // T 不可空，返回错误
                 _talker.debug('POST data is null and T is not nullable');
                 return HttpResult.success(
-                  fromJson(null) as T,
+                  fromJson(null),
                   cancelToken: cancelToken,
                 );
               }

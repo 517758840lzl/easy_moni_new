@@ -9,17 +9,32 @@ final submitAcpElementInfoProvider = Provider<SubmitAcpElementInfoApi>((ref) {
 
 class SubmitAcpElementInfoApi {
   /// 提交KYC步骤数据
-  ///  流程ID
-  ///  步骤
-  ///  提交的表单数据
+  /// [processId] 流程ID
+  /// [step] 步骤
+  /// [jsonParam] 按文档格式提交的字段列表
   Future<HttpResult<dynamic>> call({
     required int processId,
     required int step,
-    required Map<String, dynamic> data,
+    List<Map<String, dynamic>>? jsonParam,
+    Map<String, dynamic>? data,
+    int isUpdate = 0,
   }) async {
+    final requestBody = jsonParam != null
+        ? {
+            'isUpdate': isUpdate,
+            'jsonParam': jsonParam,
+            'processId': processId,
+            'step': step,
+          }
+        : {
+            'processId': processId,
+            'step': step,
+            'data': data ?? <String, dynamic>{},
+          };
+
     final result = await HttpProvider.instance.post<dynamic>(
       ApiConstants.submitAcpElementInfo,
-      data: {'processId': processId, 'step': step, 'data': data},
+      data: requestBody,
       fromJson: (json) => json,
     );
     return result;

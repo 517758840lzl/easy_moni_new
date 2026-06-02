@@ -10,6 +10,7 @@ import '../../entities/provinces_cities_area_resp.dart';
 import '../../utils/widgets/informationBottomButton.dart';
 import 'providers/acp_element_info_provider.dart';
 import 'providers/provinces_cities_area_provider.dart';
+import 'providers/submit_acp_element_info_provider.dart';
 
 class PersonalInfoPage extends ConsumerStatefulWidget {
   const PersonalInfoPage({super.key});
@@ -19,10 +20,17 @@ class PersonalInfoPage extends ConsumerStatefulWidget {
 }
 
 class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
+  static const String _codeEmail = '10003';
+  static const String _codeRegionCity = '10004';
+
   StepInfo? _stepInfo;
   bool _isLoading = true;
+  bool _isSubmitting = false;
+  int? _processId;
+  final Map<String, TextEditingController> _textControllers = {};
   final Map<String, int> _selectedIndices = {};
   final Map<String, String?> _selectedValues = {};
+  final Map<String, String?> _selectedSubmitValues = {};
 
   // 省市数据（从后台获取）
   List<AreaItem> _provinces = [];
@@ -32,10 +40,116 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
   int _selectedRegionIndex = 0;
   bool _isLoadingLocation = false;
 
+  bool _isRegionEntry(FormEntry entry) {
+    return entry.code == _codeRegionCity;
+  }
+
+  bool _isEmailEntry(FormEntry entry) {
+    return entry.code == _codeEmail;
+  }
+
+  bool _isPickerEntry(FormEntry entry) {
+    if (_isEmailEntry(entry) || entry.type == 1) {
+      return false;
+    }
+    if (_isRegionEntry(entry)) {
+      return true;
+    }
+    return entry.selectList != null && entry.selectList!.isNotEmpty;
+  }
+
+  bool _isEntryFilled(FormEntry entry) {
+    final value = _selectedValues[entry.key];
+    return value != null && value.trim().isNotEmpty;
+  }
+
+  FormEntry? _findNextUnfilledPickerEntry(FormEntry currentEntry) {
+    final entries = _stepInfo?.entries;
+    if (entries == null || entries.isEmpty) return null;
+
+    final currentIndex = entries.indexWhere(
+      (entry) => entry.key == currentEntry.key,
+    );
+    if (currentIndex < 0) return null;
+
+    for (var i = currentIndex + 1; i < entries.length; i++) {
+      final nextEntry = entries[i];
+      if (!_isPickerEntry(nextEntry)) {
+        continue;
+      }
+      if (!_isEntryFilled(nextEntry)) {
+        return nextEntry;
+      }
+    }
+    return null;
+  }
+
+  void _openPickerForEntry(FormEntry entry) {
+    final key = entry.key;
+    if (_isRegionEntry(entry)) {
+      _showRegionPicker(entry: entry);
+      return;
+    }
+
+    final options = entry.selectList;
+    if (options == null || options.isEmpty) {
+      return;
+    }
+
+    _showPicker(
+      entry: entry,
+      title: entry.showContent,
+      options: options,
+      selectedIndex: _selectedIndices[key] ?? 0,
+      onConfirm: (index) {
+        setState(() {
+          _selectedIndices[key] = index;
+          _selectedValues[key] = options[index].value;
+          _selectedSubmitValues[key] = options[index].key;
+        });
+      },
+    );
+  }
+
+  void _scheduleNextUnfilledPicker(FormEntry currentEntry) {
+    final nextEntry = _findNextUnfilledPickerEntry(currentEntry);
+    if (nextEntry == null) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Future.delayed(const Duration(milliseconds: 200), () {
+        if (!mounted) return;
+        _openPickerForEntry(nextEntry);
+      });
+    });
+  }
+
+  void _setRegionValueForEntry(
+    String entryKey, {
+    required String province,
+    required String city,
+  }) {
+    _selectedValues[entryKey] = city.isNotEmpty
+        ? '$province - $city'
+        : province;
+    _selectedSubmitValues[entryKey] = _buildGeoLocationSubmitValue(
+      province,
+      city,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
     _fetchData();
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _textControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
   }
 
   Future<void> _fetchData() async {
@@ -54,20 +168,60 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
       debugPrint('formResult: $formResult');
       debugPrint('formResult.isSuccess: ${formResult.isSuccess}');
       debugPrint('formResult.data: ${formResult.data}');
-      
+
       if (formResult.isSuccess && formResult.data != null) {
         final stepInfoList = formResult.data!.stepInfoList;
-        debugPrint('stepInfoList: $stepInfoList, length: ${stepInfoList.length}');
+        debugPrint(
+          'stepInfoList: $stepInfoList, length: ${stepInfoList.length}',
+        );
         final stepInfo = stepInfoList.isNotEmpty ? stepInfoList[0] : null;
         debugPrint('stepInfo: $stepInfo');
         if (stepInfo != null) {
           _stepInfo = stepInfo;
+          _processId = formResult.data!.processId;
           debugPrint('设置 _stepInfo, entries 数量: ${stepInfo.entries.length}');
           // 初始化选中索引和值
           for (final entry in stepInfo.entries) {
             _selectedIndices[entry.key] = 0;
-            _selectedValues[entry.key] = null;
+            _selectedValues[entry.key] = entry.submitValue;
+            _selectedSubmitValues[entry.key] = entry.submitValue;
             debugPrint('entry: ${entry.key} - ${entry.showContent}');
+
+            if (_isEmailEntry(entry) || entry.type == 1) {
+              _textControllers[entry.key] = TextEditingController(
+                text: entry.submitValue ?? '',
+              );
+            }
+
+            if (entry.submitValue != null && entry.submitValue!.isNotEmpty) {
+              if (_isRegionEntry(entry)) {
+                final regionData = _parseGeoLocationSubmitValue(
+                  entry.submitValue!,
+                );
+                _setRegionValueForEntry(
+                  entry.key,
+                  province: regionData.$1,
+                  city: regionData.$2,
+                );
+                final matchedRegionIndex = _regionCityData.indexWhere(
+                  (item) =>
+                      item['region'] == regionData.$1 &&
+                      item['city'] == regionData.$2,
+                );
+                if (matchedRegionIndex >= 0) {
+                  _selectedRegionIndex = matchedRegionIndex;
+                }
+                continue;
+              }
+              final matchedIndex = entry.selectList?.indexWhere(
+                (option) => option.key == entry.submitValue,
+              );
+              if (matchedIndex != null && matchedIndex >= 0) {
+                _selectedIndices[entry.key] = matchedIndex;
+                _selectedValues[entry.key] =
+                    entry.selectList![matchedIndex].value;
+              }
+            }
           }
         }
       } else {
@@ -93,6 +247,14 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     }
   }
 
+  (String, String) _parseGeoLocationSubmitValue(String rawValue) {
+    final provinceMatch = RegExp(
+      r'"homeProvince":"([^"]*)"',
+    ).firstMatch(rawValue);
+    final cityMatch = RegExp(r'"homeCity":"([^"]*)"').firstMatch(rawValue);
+    return (provinceMatch?.group(1) ?? '', cityMatch?.group(1) ?? '');
+  }
+
   /// 组装省市区数据
   void _buildRegionCityData() {
     _regionCityData.clear();
@@ -101,20 +263,14 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
       final provinceCities = _cities
           .where((city) => city.parentId == province.id)
           .toList();
-      
+
       if (provinceCities.isNotEmpty) {
         for (final city in provinceCities) {
-          _regionCityData.add({
-            'region': province.name,
-            'city': city.name,
-          });
+          _regionCityData.add({'region': province.name, 'city': city.name});
         }
       } else {
         // 如果该省没有城市，只添加省
-        _regionCityData.add({
-          'region': province.name,
-          'city': '',
-        });
+        _regionCityData.add({'region': province.name, 'city': ''});
       }
     }
   }
@@ -122,7 +278,9 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
   bool get _canContinue {
     if (_stepInfo == null) return false;
     for (final entry in _stepInfo!.entries) {
-      if (entry.must == 1 && (_selectedValues[entry.key] == null || _selectedValues[entry.key]!.isEmpty)) {
+      if (entry.must == 1 &&
+          (_selectedValues[entry.key] == null ||
+              _selectedValues[entry.key]!.isEmpty)) {
         return false;
       }
     }
@@ -177,9 +335,17 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
         if (_selectedRegionIndex == -1) _selectedRegionIndex = 0;
 
         final selectedData = _regionCityData[_selectedRegionIndex];
-        _selectedValues['geo_location'] = selectedData['city']!.isNotEmpty
-            ? '${selectedData['region']} - ${selectedData['city']}'
-            : selectedData['region']!;
+        final regionEntry = _stepInfo?.entries
+            .where(_isRegionEntry)
+            .cast<FormEntry?>()
+            .firstOrNull;
+        if (regionEntry != null) {
+          _setRegionValueForEntry(
+            regionEntry.key,
+            province: selectedData['region']!,
+            city: selectedData['city']!,
+          );
+        }
       });
     } catch (e) {
       debugPrint('获取位置失败: $e');
@@ -393,7 +559,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     );
   }
 
-  void _showRegionPicker() {
+  void _showRegionPicker({FormEntry? entry}) {
     int tempRegionIndex = _selectedRegionIndex;
 
     showModalBottomSheet(
@@ -440,10 +606,22 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
                           onTap: () {
                             setState(() {
                               _selectedRegionIndex = tempRegionIndex;
-                              final selectedData = _regionCityData[tempRegionIndex];
-                              _selectedValues['geo_location'] = selectedData['city']!.isNotEmpty
-                                  ? '${selectedData['region']} - ${selectedData['city']}'
-                                  : selectedData['region']!;
+                              final selectedData =
+                                  _regionCityData[tempRegionIndex];
+                              final regionEntry =
+                                  entry ??
+                                  _stepInfo?.entries
+                                      .where(_isRegionEntry)
+                                      .cast<FormEntry?>()
+                                      .firstOrNull;
+                              if (regionEntry != null) {
+                                _setRegionValueForEntry(
+                                  regionEntry.key,
+                                  province: selectedData['region']!,
+                                  city: selectedData['city']!,
+                                );
+                                _scheduleNextUnfilledPicker(regionEntry);
+                              }
                             });
                             Navigator.pop(context);
                           },
@@ -497,6 +675,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
   }
 
   void _showPicker({
+    required FormEntry entry,
     required String title,
     required List<SelectOption> options,
     required int selectedIndex,
@@ -547,6 +726,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
                         GestureDetector(
                           onTap: () {
                             onConfirm(tempSelectedIndex);
+                            _scheduleNextUnfilledPicker(entry);
                             Navigator.pop(context);
                           },
                           child: const Text(
@@ -597,10 +777,54 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     );
   }
 
-  void _onContinue() {
-    if (_canContinue) {
-      debugPrint('点击了继续按钮');
-      context.push('/contact-info');
+  String _buildGeoLocationSubmitValue(String province, String city) {
+    return '{"homeCity":"$city","homeProvince":"$province"}';
+  }
+
+  Future<void> _onContinue() async {
+    if (!_canContinue ||
+        _isSubmitting ||
+        _stepInfo == null ||
+        _processId == null) {
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final jsonParam = _stepInfo!.entries.map((entry) {
+        return {
+          'key': entry.key,
+          'value': _selectedSubmitValues[entry.key] ?? '',
+        };
+      }).toList();
+
+      final result = await ref
+          .read(submitAcpElementInfoProvider)
+          .call(
+            processId: _processId!,
+            step: _stepInfo!.step,
+            jsonParam: jsonParam,
+          );
+
+      if (!mounted) return;
+
+      if (result.isSuccess) {
+        context.push('/contact-info');
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(result.message ?? '保存失败')));
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('保存失败: $e')));
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
 
@@ -637,47 +861,110 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
                           ),
                         )
                       : Column(
-                          children: _stepInfo?.entries.map((entry) {
-                            final key = entry.key;
-                            final selectedIndex = _selectedIndices[key] ?? 0;
-                            final selectedValue = _selectedValues[key];
+                          children:
+                              _stepInfo?.entries.map((entry) {
+                                final key = entry.key;
+                                final selectedValue = _selectedValues[key];
 
-                            return _buildFormItem(
-                              starTitle: entry.must == 1 ? '*' : '',
-                              title: entry.showContent,
-                              value: selectedValue,
-                              placeholder: entry.defaultText,
-                              onTap: () {
-                                if (entry.key == 'geo_location') {
-                                  // 地区选择
-                                  _showRegionPicker();
-                                } else if (entry.selectList != null && entry.selectList!.isNotEmpty) {
-                                  _showPicker(
-                                    title: entry.showContent,
-                                    options: entry.selectList!,
-                                    selectedIndex: selectedIndex,
-                                    onConfirm: (index) {
-                                      setState(() {
-                                        _selectedIndices[key] = index;
-                                        _selectedValues[key] = entry.selectList![index].value;
-                                      });
-                                    },
-                                  );
+                                if (_isEmailEntry(entry) || entry.type == 1) {
+                                  return _buildTextInputItem(entry: entry);
                                 }
-                              },
-                            );
-                          }).toList() ?? [],
+
+                                return _buildFormItem(
+                                  starTitle: entry.must == 1 ? '*' : '',
+                                  title: entry.showContent,
+                                  value: selectedValue,
+                                  placeholder: entry.defaultText,
+                                  onTap: () {
+                                    _openPickerForEntry(entry);
+                                  },
+                                );
+                              }).toList() ??
+                              [],
                         ),
                 ),
               ),
             ),
           ),
           BottomContinueButton(
-            isEnabled: _canContinue,
-            onTap: _onContinue,
+            isEnabled: _canContinue && !_isSubmitting,
+            onTap: () => _onContinue(),
+            text: _isSubmitting ? '保存中...' : '继续',
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTextInputItem({required FormEntry entry}) {
+    final controller = _textControllers[entry.key] ??= TextEditingController(
+      text: _selectedValues[entry.key] ?? '',
+    );
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: 20,
+                child: Row(
+                  children: [
+                    if (entry.must == 1)
+                      const Text(
+                        '*',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.red,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    if (entry.must == 1) const SizedBox(width: 8),
+                    Text(
+                      entry.showContent,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.only(left: 20),
+                child: TextField(
+                  controller: controller,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    hintText: entry.defaultText,
+                    hintStyle: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFFCCCCCC),
+                    ),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                    border: InputBorder.none,
+                  ),
+                  style: const TextStyle(fontSize: 14, color: Colors.black),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedValues[entry.key] = value.trim();
+                      _selectedSubmitValues[entry.key] = value.trim();
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1, color: Color(0xFFE7E7E7)),
+      ],
     );
   }
 

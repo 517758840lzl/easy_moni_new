@@ -1,7 +1,17 @@
+import 'dart:typed_data';
+
+import 'package:easy_moni/core/theme/app_theme.dart';
+import 'package:easy_moni/entities/acp_element_info_resp.dart';
+import 'package:easy_moni/pages/fillInforma/providers/acp_element_info_provider.dart';
+import 'package:easy_moni/pages/fillInforma/providers/submit_acp_element_info_provider.dart';
+import 'package:easy_moni/pages/fillInforma/providers/upload_file_provider.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/progressInformation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../services/platform_service.dart';
+import '../../utils/widgets/informationBottomButton.dart';
 
 class FaceVerifyPage extends ConsumerStatefulWidget {
   const FaceVerifyPage({super.key});
@@ -11,29 +21,31 @@ class FaceVerifyPage extends ConsumerStatefulWidget {
 }
 
 class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
-  bool _isLoading = false;
-  bool _isVerified = false;
+  StepInfo? _stepInfo;
+  int? _processId;
+  Uint8List? _faceImage;
+  String? _faceImageUrl;
+  bool _isLoading = true;
+  bool _isUploading = false;
+  bool _isSubmitting = false;
 
-  bool get _canContinue => _isVerified;
+  bool get _canContinue => _faceImageUrl != null && _faceImageUrl!.isNotEmpty;
 
-  Future<void> _onContinue() async {
-    if (!_canContinue || _isLoading) return;
+  @override
+  void initState() {
+    super.initState();
+    _fetchStepInfo();
+  }
 
-    setState(() => _isLoading = true);
-
+  Future<void> _fetchStepInfo() async {
     try {
-      // TODO: 调用人脸验证接口
-      await Future.delayed(const Duration(seconds: 1));
-
-      if (mounted) {
-        // 验证成功，跳转到首页
-        context.pushReplacement('/');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('验证失败: $e')),
-        );
+      final result = await ref.read(acpElementInfoProvider).call(5);
+      if (!mounted) return;
+      if (result.isSuccess && result.data != null) {
+        _processId = result.data!.processId;
+        _stepInfo = result.data!.stepInfoList.isNotEmpty
+            ? result.data!.stepInfoList.first
+            : null;
       }
     } finally {
       if (mounted) {
@@ -42,16 +54,90 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     }
   }
 
-  void _startFaceVerification() {
-    // TODO: 调用原生人脸验证 SDK
+  Future<void> _pickFaceImage() async {
+    final imageBytes = await CameraService.pickFromGallery();
+    if (imageBytes == null) return;
+
     setState(() {
-      _isVerified = true;
+      _isUploading = true;
+      _faceImage = imageBytes;
     });
+
+    final result = await ref.read(uploadFileProvider).call(
+      bytes: imageBytes,
+      filename: 'face_verify.jpg',
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _isUploading = false;
+      if (result.isSuccess) {
+        _faceImageUrl = result.data;
+      }
+    });
+
+    if (!result.isSuccess) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.message ?? '上传失败')));
+    }
+  }
+
+  Future<void> _onContinue() async {
+    if (!_canContinue || _isSubmitting || _stepInfo == null || _processId == null) {
+      return;
+    }
+    setState(() => _isSubmitting = true);
+
+    try {
+      String? key;
+      for (final entry in _stepInfo!.entries) {
+        final text = '${entry.showContent} ${entry.defaultText}'.toLowerCase();
+        if (text.contains('face')) {
+          key = entry.key;
+          break;
+        }
+      }
+      key ??= _stepInfo!.entries.isNotEmpty ? _stepInfo!.entries.first.key : null;
+      if (key == null) {
+        throw Exception('face verify field missing');
+      }
+
+      final result = await ref.read(submitAcpElementInfoProvider).call(
+        processId: _processId!,
+        step: _stepInfo!.step,
+        jsonParam: [
+          {
+            'key': key,
+            'value': '["$_faceImageUrl"]',
+          },
+        ],
+      );
+
+      if (!mounted) return;
+      if (result.isSuccess) {
+        context.go('/');
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(result.message ?? '提交失败')));
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('提交失败: $e')));
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.primaryDark,
       body: Column(
         children: [
           buildInformationHeader(
@@ -66,127 +152,81 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
                 borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
               ),
               child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 200,
-                      height: 200,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF5F5F5),
-                        borderRadius: BorderRadius.circular(100),
-                        border: Border.all(
-                          color: _isVerified
-                              ? const Color(0xFF45F3A6)
-                              : const Color(0xFF268470),
-                          width: 3,
-                        ),
-                      ),
-                      child: _isVerified
-                          ? const Icon(
-                              Icons.check,
-                              size: 80,
-                              color: Color(0xFF45F3A6),
-                            )
-                          : Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.face,
-                                  size: 60,
-                                  color: Colors.black.withValues(alpha: 0.3),
+                child: _isLoading
+                    ? const CircularProgressIndicator()
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          GestureDetector(
+                            onTap: _pickFaceImage,
+                            child: Container(
+                              width: 200,
+                              height: 200,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF5F5F5),
+                                borderRadius: BorderRadius.circular(100),
+                                border: Border.all(
+                                  color: _canContinue
+                                      ? const Color(0xFF45F3A6)
+                                      : const Color(0xFF268470),
+                                  width: 3,
                                 ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  '点击开始验证',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.black.withValues(alpha: 0.5),
-                                  ),
-                                ),
-                              ],
+                                image: _faceImage != null
+                                    ? DecorationImage(
+                                        image: MemoryImage(_faceImage!),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : null,
+                              ),
+                              child: _faceImage == null
+                                  ? Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.face,
+                                          size: 60,
+                                          color: Colors.black.withValues(
+                                            alpha: 0.3,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          '点击上传人脸图片',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.black.withValues(
+                                              alpha: 0.5,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : null,
                             ),
-                    ),
-                    const SizedBox(height: 40),
-                    if (!_isVerified)
-                      ElevatedButton(
-                        onPressed: _startFaceVerification,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF268470),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 40,
-                            vertical: 12,
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                        ),
-                        child: const Text(
-                          '开始人脸验证',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                          const SizedBox(height: 32),
+                          if (_isUploading)
+                            const CircularProgressIndicator()
+                          else
+                            Text(
+                              _canContinue ? '图片上传成功' : '请选择一张清晰的人脸照片',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: _canContinue
+                                    ? const Color(0xFF45F3A6)
+                                    : const Color(0xFF3F4950),
+                              ),
+                            ),
+                        ],
                       ),
-                    if (_isVerified)
-                      const Text(
-                        '验证成功',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF45F3A6),
-                        ),
-                      ),
-                  ],
-                ),
               ),
             ),
           ),
-          Container(
-            height: 48,
-            color: Colors.white,
-            padding: EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 4,
-              bottom: MediaQuery.of(context).padding.bottom,
-            ),
-            child: GestureDetector(
-              onTap: _canContinue && !_isLoading ? _onContinue : null,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: _canContinue && !_isLoading
-                      ? const Color(0xFF45F3A6)
-                      : const Color(0xFFBDBDBD),
-                  borderRadius: BorderRadius.circular(100),
-                ),
-                child: Center(
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Color(0xFF104440),
-                            ),
-                          ),
-                        )
-                      : Text(
-                          '继续',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: _canContinue
-                                ? const Color(0xFF104440)
-                                : Colors.white,
-                          ),
-                        ),
-                ),
-              ),
-            ),
+          BottomContinueButton(
+            isEnabled: _canContinue && !_isSubmitting && !_isUploading,
+            onTap: _onContinue,
+            text: _isSubmitting ? '保存中...' : '继续',
           ),
         ],
       ),

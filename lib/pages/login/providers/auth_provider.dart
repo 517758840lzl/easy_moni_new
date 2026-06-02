@@ -23,10 +23,8 @@ class SendVerifyCodeApi {
   Future<HttpResult<dynamic>> call(String phone) async {
     final result = await HttpProvider.instance.post<dynamic>(
       ApiConstants.sendVerifyCode,
-      data: {
-        'phone': phone,
-        'type': 'phone',
-      },
+      data: {'phone': phone, 'type': 'phone'},
+      includeToken: false,
       fromJson: (json) => json,
     );
     return result;
@@ -43,12 +41,17 @@ class LoginApi {
       data: {
         'phone': phone,
         'authCode': code,
-        "afid":"1779953073476-180350146959368781",
-        "mediaSource":"",
-        "appVersion":'1.0',
-        "deviceId":"7da8118f936659a7",
-        "utm_source":"google-play",
+        'afid': '1779953073476-180350146959368781',
+        'appVersion': '1',
+        'clientType': 'android',
+        'deviceId': '7da8118f936659a7',
+        'gaid': 'be1089a1-dc4b-4684-9882-2d670a214784',
+        'mediaSource': '',
+        'onlyLogin': 0,
+        'referrer': 'utm_source=google-play&utm_medium=organic',
+        'userAgent': 'SM-A136U',
       },
+      includeToken: false,
       fromJson: (json) {
         // 调试：打印原始数据
         debugPrint('LoginApi fromJson 原始数据: $json');
@@ -56,7 +59,9 @@ class LoginApi {
         return LoginResp.fromJson(json);
       },
     );
-    debugPrint('LoginApi 返回: status=${result.status}, data=${result.data}, message=${result.message}');
+    debugPrint(
+      'LoginApi 返回: status=${result.status}, data=${result.data}, message=${result.message}',
+    );
     return result;
   }
 }
@@ -71,7 +76,9 @@ class CheckUploadDataValidApi {
         return CheckUploadDataValidResp.fromJson(json);
       },
     );
-    debugPrint('CheckUploadDataValidApi 返回: status=${result.status}, data=${result.data}, message=${result.message}');
+    debugPrint(
+      'CheckUploadDataValidApi 返回: status=${result.status}, data=${result.data}, message=${result.message}',
+    );
     return result;
   }
 }

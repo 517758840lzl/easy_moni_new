@@ -4,7 +4,6 @@ import 'package:easy_moni/core/network/http_provider.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../entities/acquisition_progress_resp.dart';
 import '../../utils/widgets/toast.dart';
 import '../fillInforma/contact_info_page.dart';
@@ -22,16 +21,20 @@ class LoginPage extends ConsumerStatefulWidget {
 }
 
 class _LoginPageState extends ConsumerState<LoginPage> {
+  static const String _defaultPhone = '504684567';
+  static const String _defaultCode = '1234';
+
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _codeController = TextEditingController();
   Timer? _countdownTimer;
   int _countdownSeconds = 0;
-  bool _isSendingCode = false;
   bool _isAutoSendingCode = false; // 防止自动发送验证码时重复触发
 
   @override
   void initState() {
     super.initState();
+    _phoneController.text = _defaultPhone;
+    _codeController.text = _defaultCode;
     _phoneController.addListener(_onPhoneChanged);
     _codeController.addListener(_onCodeChanged);
   }
@@ -46,6 +49,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     super.dispose();
   }
 
+  String _normalizedPhone() {
+    final digits = _phoneController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.startsWith('0')) {
+      return digits.substring(1);
+    }
+    return digits;
+  }
+
   /// 手机号输入变化监听
   void _onPhoneChanged() {
     String text = _phoneController.text;
@@ -53,20 +64,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     // 过滤非数字字符
     text = text.replaceAll(RegExp(r'[^0-9]'), '');
 
-    if (text.length > 10) {
-      text = text.substring(0, 10);
+    if (text.startsWith('0')) {
+      text = text.substring(1);
     }
 
-    // 处理首位数字逻辑
-    if (text.isNotEmpty) {
-      // 如果首个数字不为0，则在前方补0
-      if (text[0] != '0') {
-        text = '$text';
-        // 限制补0后最多10位
-        if (text.length > 10) {
-          text = text.substring(0, 10);
-        }
-      }
+    if (text.length > 9) {
+      text = text.substring(0, 9);
     }
 
     // 更新文本（避免光标跳动）
@@ -82,8 +85,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     setState(() {});
 
-    // 输入10位数字后自动发送验证码
-    if (text.length == 10 && !_isAutoSendingCode && _countdownSeconds == 0) {
+    // 输入9位数字后自动发送验证码
+    if (text.length == 9 && !_isAutoSendingCode && _countdownSeconds == 0) {
       _autoSendCode();
     }
   }
@@ -120,12 +123,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   Future<void> _autoSendCode() async {
     _isAutoSendingCode = true;
-    final phone = _phoneController.text.trim();
+    final phone = _normalizedPhone();
 
     try {
-      final result = await ref
-          .read(sendVerifyCodeProvider)
-          .call('233|504684567');
+      final result = await ref.read(sendVerifyCodeProvider).call('233|$phone');
 
       if (!mounted) return;
       if (result.isSuccess) {
@@ -158,20 +159,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Future<void> _onGetCode() async {
-    final phone = _phoneController.text.trim();
+    final phone = _normalizedPhone();
     if (phone.isEmpty) {
       showToast('请输入手机号');
       return;
     }
-    if (phone.length != 10) {
-      showToast('请输入10位手机号');
-      return;
-    }
+    // if (phone.length != 9) {
+    //   showToast('请输入9位手机号');
+    //   return;
+    // }
 
     try {
-      final result = await ref
-          .read(sendVerifyCodeProvider)
-          .call('233|504684567');
+      final result = await ref.read(sendVerifyCodeProvider).call('233|$phone');
 
       if (!mounted) return;
       if (result.isSuccess) {
@@ -188,7 +187,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Future<void> _onLogin() async {
-    final phone = _phoneController.text.trim();
+    final phone = _normalizedPhone();
     final code = _codeController.text.trim();
     if (phone.isEmpty) {
       showToast('请输入手机号');
@@ -204,16 +203,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     try {
       final result = await ref
           .read(loginApiProvider)
-          .call(phone: '233|504684567', code: code);
+          .call(phone: '233|$phone', code: code);
 
       if (!mounted) return;
       debugPrint('登录响应 - status: ${result.status}, message: ${result.message}');
       debugPrint('登录响应数据: ${result.data}');
       if (result.data?.isFirstRegister == 1) {
-
-      } else {
-
-      }
+      } else {}
       if (result.isSuccess) {
         final loginData = result.data;
         debugPrint('loginData: $loginData');
@@ -240,9 +236,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             debugPrint('checkUploadDataValid 请求异常: $e');
           }
 
-//查询检查必要数据是否过期，CheckUploadDataValidApi
+          //查询检查必要数据是否过期，CheckUploadDataValidApi
           final checkData = await ref.read(checkUploadDataValidProvider).call();
-          if(!mounted) return;
+          if (!mounted) return;
           debugPrint('checkData: $checkData');
 
           // 进度查询接口暂时不用
@@ -506,7 +502,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               Align(
                 alignment: Alignment.centerRight,
                 child: Text(
-                  '${_phoneController.text.length}/10',
+                  '${_phoneController.text.length}/9',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.white.withValues(alpha: 0.7),

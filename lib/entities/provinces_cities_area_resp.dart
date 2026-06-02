@@ -8,13 +8,15 @@ class ProvincesCitiesAreaResp {
   });
 
   factory ProvincesCitiesAreaResp.fromJson(Map<String, dynamic> json) {
-    final data = json['data'] as Map<String, dynamic>?;
+    final source = (json['data'] is Map<String, dynamic>)
+        ? json['data'] as Map<String, dynamic>
+        : json;
     return ProvincesCitiesAreaResp(
-      province: (data?['province'] as List<dynamic>?)
+      province: (source['province'] as List<dynamic>?)
               ?.map((e) => AreaItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      city: (data?['city'] as List<dynamic>?)
+      city: (source['city'] as List<dynamic>?)
               ?.map((e) => AreaItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],

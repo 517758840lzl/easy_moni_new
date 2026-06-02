@@ -1,6 +1,10 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+
+import 'web_image_picker_stub.dart'
+    if (dart.library.html) 'web_image_picker_web.dart';
 
 class LocationService {
   static const MethodChannel _channel = MethodChannel('com.easy_moni/location');
@@ -88,6 +92,9 @@ class CameraService {
 
   /// 从相册选择图片，返回 Base64 编码的图片数据
   static Future<Uint8List?> pickFromGallery() async {
+    if (kIsWeb) {
+      return pickImageBytesForWeb();
+    }
     try {
       final String? base64 = await _channel.invokeMethod('pickFromGallery');
       if (base64 == null || base64.isEmpty) {
@@ -101,6 +108,9 @@ class CameraService {
 
   /// 拍照，返回 Base64 编码的图片数据
   static Future<Uint8List?> takePhoto() async {
+    if (kIsWeb) {
+      return pickFromGallery();
+    }
     try {
       final String? base64 = await _channel.invokeMethod('takePhoto');
       if (base64 == null || base64.isEmpty) {
@@ -114,6 +124,9 @@ class CameraService {
 
   /// 检查相机权限
   static Future<bool> checkPermission() async {
+    if (kIsWeb) {
+      return true;
+    }
     try {
       final bool result = await _channel.invokeMethod('checkCameraPermission');
       return result;

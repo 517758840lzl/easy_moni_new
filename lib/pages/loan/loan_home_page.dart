@@ -7,7 +7,11 @@ import '../../entities/home_resp.dart';
 import '../../gen/assets.gen.dart';
 import '../../utils/extensions.dart';
 
-enum LoanProductState { available, locked, rejected }
+class LoanProductState {
+  static const String available = 'available';
+  static const String locked = 'locked';
+  static const String rejected = 'rejected';
+}
 
 class LoanHomePage extends ConsumerStatefulWidget {
   const LoanHomePage({super.key});
@@ -402,11 +406,17 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
         ? const Color(0xFFE0E3E7)
         : const Color(0xFFE7EAEE);
 
-    final statusText = switch (product.state) {
-      LoanProductState.available => '可借款',
-      LoanProductState.locked => '不可借',
-      LoanProductState.rejected => '拒绝',
-    };
+    final String statusText;
+    switch (product.state) {
+      case LoanProductState.available:
+        statusText = '可借款';
+        break;
+      case LoanProductState.locked:
+        statusText = '不可借';
+        break;
+      default:
+        statusText = '拒绝';
+    }
 
     const labels = ['可借金额', '日利率', '期限'];
 
@@ -645,7 +655,7 @@ class _LoanProduct {
   final double amount;
   final String interestLabel;
   final String termLabel;
-  final LoanProductState state;
+  final String state;
   final Color accentColor;
   final String? logoUrl;
 
@@ -678,7 +688,7 @@ class _LoanProduct {
     );
   }
 
-  static LoanProductState _stateFromItem(HomeProductItem item) {
+  static String _stateFromItem(HomeProductItem item) {
     switch (item.productStatus) {
       case 1:
         return LoanProductState.available;
@@ -689,11 +699,14 @@ class _LoanProduct {
     }
   }
 
-  static Color _accentForState(LoanProductState state) {
-    return switch (state) {
-      LoanProductState.available => const Color(0xFF2E9A79),
-      LoanProductState.locked => const Color(0xFFC8CDD2),
-      LoanProductState.rejected => const Color(0xFFD9D9D9),
-    };
+  static Color _accentForState(String state) {
+    switch (state) {
+      case LoanProductState.available:
+        return const Color(0xFF2E9A79);
+      case LoanProductState.locked:
+        return const Color(0xFFC8CDD2);
+      default:
+        return const Color(0xFFD9D9D9);
+    }
   }
 }

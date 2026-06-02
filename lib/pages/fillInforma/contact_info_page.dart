@@ -1,14 +1,15 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/progressInformation.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../gen/assets.gen.dart';
 import '../../services/platform_service.dart';
+import '../../entities/acp_element_info_resp.dart';
 import '../../utils/widgets/informationBottomButton.dart';
-import '../../utils/widgets/linepaint.dart';
+import 'providers/acp_element_info_provider.dart';
+import 'providers/submit_acp_element_info_provider.dart';
 
 class ContactInfoPage extends ConsumerStatefulWidget {
   const ContactInfoPage({super.key});
@@ -18,16 +19,76 @@ class ContactInfoPage extends ConsumerStatefulWidget {
 }
 
 class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
+  static const String _codePrimaryRelation = '30051';
+  static const String _codePrimaryName = '30053';
+  static const String _codeSecondaryRelation = '30061';
+  static const String _codeSecondaryName = '30063';
+
+  StepInfo? _stepInfo;
+  int? _processId;
+  bool _isLoading = true;
+  bool _isSubmitting = false;
+
   String? _parentSpouseContact = '0241234567';
   String? _friendColleagueContact = '0249876543';
   String? _parentSpouseName = 'John Doe';
   String? _friendColleagueName = 'Jane Smith';
 
+  @override
+  void initState() {
+    super.initState();
+    _fetchStepInfo();
+  }
+
   bool get _canContinue =>
+      !_isLoading &&
       _parentSpouseContact != null &&
       _parentSpouseContact!.isNotEmpty &&
       _friendColleagueContact != null &&
       _friendColleagueContact!.isNotEmpty;
+
+  Future<void> _fetchStepInfo() async {
+    try {
+      final result = await ref.read(acpElementInfoProvider).call(2);
+      if (!mounted) return;
+
+      if (result.isSuccess && result.data != null) {
+        final stepInfo = result.data!.stepInfoList.isNotEmpty
+            ? result.data!.stepInfoList.first
+            : null;
+        _stepInfo = stepInfo;
+        _processId = result.data!.processId;
+
+        if (stepInfo != null) {
+          for (final entry in stepInfo.entries) {
+            if (entry.code == _codePrimaryName &&
+                entry.submitValue != null &&
+                entry.submitValue!.isNotEmpty) {
+              _parentSpouseName = entry.submitValue;
+            }
+            if (entry.code == _codeSecondaryName &&
+                entry.submitValue != null &&
+                entry.submitValue!.isNotEmpty) {
+              _friendColleagueName = entry.submitValue;
+            }
+          }
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.message ?? '联系人信息加载失败')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('联系人信息加载失败: $e')));
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   Future<void> _pickContact({required bool isParentSpouse}) async {
     // 请求通讯录权限
@@ -261,11 +322,80 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  void _onContinue() {
-    if (_canContinue) {
-      debugPrint('父母/配偶: $_parentSpouseName - $_parentSpouseContact');
-      debugPrint('朋友/同事: $_friendColleagueName - $_friendColleagueContact');
-      context.push('/identity-verify');
+  Future<void> _onContinue() async {
+    if (!_canContinue || _isSubmitting || _stepInfo == null || _processId == null) {
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final relationPrimary = _stepInfo!.entries
+          .where((entry) => entry.code == _codePrimaryRelation)
+          .cast<FormEntry?>()
+          .firstOrNull;
+      final namePrimary = _stepInfo!.entries
+          .where((entry) => entry.code == _codePrimaryName)
+          .cast<FormEntry?>()
+          .firstOrNull;
+      final relationSecondary = _stepInfo!.entries
+          .where((entry) => entry.code == _codeSecondaryRelation)
+          .cast<FormEntry?>()
+          .firstOrNull;
+      final nameSecondary = _stepInfo!.entries
+          .where((entry) => entry.code == _codeSecondaryName)
+          .cast<FormEntry?>()
+          .firstOrNull;
+
+      final jsonParam = <Map<String, dynamic>>[];
+      if (relationPrimary != null) {
+        jsonParam.add({
+          'key': relationPrimary.key,
+          'value': relationPrimary.submitValue ?? '1',
+        });
+      }
+      if (namePrimary != null) {
+        jsonParam.add({
+          'key': namePrimary.key,
+          'value': _parentSpouseName ?? '',
+        });
+      }
+      if (relationSecondary != null) {
+        jsonParam.add({
+          'key': relationSecondary.key,
+          'value': relationSecondary.submitValue ?? '2',
+        });
+      }
+      if (nameSecondary != null) {
+        jsonParam.add({
+          'key': nameSecondary.key,
+          'value': _friendColleagueName ?? '',
+        });
+      }
+
+      final result = await ref.read(submitAcpElementInfoProvider).call(
+        processId: _processId!,
+        step: _stepInfo!.step,
+        jsonParam: jsonParam,
+      );
+
+      if (!mounted) return;
+      if (result.isSuccess) {
+        context.push('/identity-verify');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.message ?? '保存失败')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('保存失败: $e')));
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
 
@@ -288,34 +418,42 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
               ),
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 16),
-                    _buildContactItem(
-                      title: AppStrings.chooseContactsPhone,
-                      value: _parentSpouseContact != null
-                          ? '$_parentSpouseName\n$_parentSpouseContact'
-                          : null,
-                      placeholder: '从通讯录中选择',
-                      onTap: () => _pickContact(isParentSpouse: true),
-                    ),
-                    _buildContactItem(
-                      title: '朋友/同事联系电话',
-                      value: _friendColleagueContact != null
-                          ? '$_friendColleagueName\n$_friendColleagueContact'
-                          : null,
-                      placeholder: '从通讯录中选择',
-                      onTap: () => _pickContact(isParentSpouse: false),
-                      showDivider: false,
-                    ),
-                  ],
-                ),
+                child: _isLoading
+                    ? const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 40),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    : Column(
+                        children: [
+                          const SizedBox(height: 16),
+                          _buildContactItem(
+                            title: AppStrings.chooseContactsPhone,
+                            value: _parentSpouseContact != null
+                                ? '$_parentSpouseName\n$_parentSpouseContact'
+                                : null,
+                            placeholder: '从通讯录中选择',
+                            onTap: () => _pickContact(isParentSpouse: true),
+                          ),
+                          _buildContactItem(
+                            title: '朋友/同事联系电话',
+                            value: _friendColleagueContact != null
+                                ? '$_friendColleagueName\n$_friendColleagueContact'
+                                : null,
+                            placeholder: '从通讯录中选择',
+                            onTap: () => _pickContact(isParentSpouse: false),
+                            showDivider: false,
+                          ),
+                        ],
+                      ),
               ),
             ),
           ),
           BottomContinueButton(
-            isEnabled: _canContinue,
-            onTap: _onContinue,
+            isEnabled: _canContinue && !_isSubmitting,
+            onTap: () => _onContinue(),
+            text: _isSubmitting ? '保存中...' : '继续',
           ),
         ],
       ),

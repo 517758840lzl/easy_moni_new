@@ -1,7 +1,7 @@
-import 'dart:convert';
-import 'dart:typed_data';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/http_provider.dart';
 import '../../../core/network/http_result.dart';
@@ -11,123 +11,112 @@ final ocrVerificationProvider = Provider<OcrVerificationApi>((ref) {
 });
 
 class OcrVerificationApi {
-  /// 上传身份证图片并进行OCR验证
-  /// [idCardFront] 身份证正面图片二进制数据
-  /// [idCardBack] 身份证背面图片二进制数据
   Future<HttpResult<OcrVerificationResp>> call({
-    Uint8List? idCardFront,
-    Uint8List? idCardBack,
+    required Uint8List bytes,
+    required String filename,
   }) async {
+    final token = HttpProvider.instance.token;
+    if (token == null || token.isEmpty) {
+      return HttpResult.error(HttpResultStatus.serverError, 'token missing');
+    }
+
+    final requestUrl = Uri.parse(
+      ApiConstants.baseUrl,
+    ).resolve(ApiConstants.ocrVerification).toString();
+
+    debugPrint(
+      '开始调用 OCR 接口: url=$requestUrl, filename=$filename, bytes=${bytes.length}',
+    );
+
     try {
       final dio = Dio();
-      
-      // 构建 formData
-      final formData = FormData();
-      
-      if (idCardFront != null) {
-        formData.files.add(MapEntry(
-          'file',
-          MultipartFile.fromBytes(
-            idCardFront,
-            filename: 'id_card_front.jpg',
-          ),
-        ));
-      }
-      
-      if (idCardBack != null) {
-        formData.files.add(MapEntry(
-          'file',
-          MultipartFile.fromBytes(
-            idCardBack,
-            filename: 'id_card_back.jpg',
-          ),
-        ));
-      }
+      final formData = FormData.fromMap({
+        'multipartFile': MultipartFile.fromBytes(bytes, filename: filename),
+      });
 
-      final response = await dio.post(
-        '${ApiConstants.baseUrl}${ApiConstants.ocrVerification}',
+      final response = await dio.post<dynamic>(
+        requestUrl,
         data: formData,
         options: Options(
           headers: {
-            'Content-Type': 'multipart/form-data',
+            'Accept': 'application/json',
             'acqChannel': 'GHQU',
             'acqChannelIndex': '0',
-            'token': 'eyJhbGciOiJIUzUxMiJ9.eyJhcHBfbG9naW5fdXNlcl90b2tlbl9rZXkiOiJHSFFVOjIzMzUwNDY4NDU2ODphY2EyY2JkZC03MTY5LTRkZjQtODExNC0wNmQ5N2FiOGYyMjQifQ.JUsSwNbEalJqQ4JSZsv1by6NGvg7e8ywATNNRKxzyepghHS4VzRqpLcbOlQjztKM52e-N1yBEWEfvkfc61K5Cg',
+            'disableEncBody': 'false',
+            'token': token,
           },
         ),
       );
 
-      if (response.data == null) {
-        return HttpResult.error(
-          HttpResultStatus.error,
-          'Response data is null',
+      debugPrint(
+        'OCR 原始响应: status=${response.statusCode}, data=${response.data}',
+      );
+
+      final map = Map<String, dynamic>.from(response.data as Map);
+      if ((map['code'] == 200 || map['code'] == 0) && map['data'] is Map) {
+        return HttpResult.success(
+          OcrVerificationResp.fromJson(
+            Map<String, dynamic>.from(map['data'] as Map),
+          ),
         );
       }
 
-      final data = response.data as Map<String, dynamic>;
-      
-      if (data.containsKey('code')) {
-        if (data['code'] == 0 || data['code'] == '0') {
-          return HttpResult.success(
-            OcrVerificationResp.fromJson(data['data'] ?? {}),
-          );
-        } else {
-          return HttpResult.error(
-            HttpResultStatus.serverError,
-            data['msg'] ?? data['message'] ?? 'OCR验证失败',
-          );
-        }
-      }
-      
-      return HttpResult.success(OcrVerificationResp.fromJson(data));
-    } on DioException catch (e) {
       return HttpResult.error(
         HttpResultStatus.serverError,
-        e.message ?? '网络请求失败',
+        (map['msg'] ?? map['message'] ?? 'ocr failed').toString(),
+      );
+    } on DioException catch (e) {
+      debugPrint(
+        'OCR DioException: type=${e.type}, message=${e.message}, status=${e.response?.statusCode}, data=${e.response?.data}',
+      );
+      return HttpResult.error(
+        HttpResultStatus.serverError,
+        e.message ?? 'ocr failed',
       );
     } catch (e) {
-      return HttpResult.error(
-        HttpResultStatus.unKnown,
-        e.toString(),
-      );
+      debugPrint('OCR Exception: $e');
+      return HttpResult.error(HttpResultStatus.unKnown, e.toString());
     }
   }
 }
 
 class OcrVerificationResp {
+  final String? type;
   final String? name;
   final String? idCardNumber;
-  final String? address;
-  final String? birthDate;
+  final String? firstNames;
+  final String? lastName;
+  final String? birthday;
   final String? gender;
-  final String? ethnicity;
-  final String? frontImageUrl;
-  final String? backImageUrl;
-  final bool? isValid;
+  final String? url;
+  final String? backUrl;
+  final int? isSuccess;
 
   OcrVerificationResp({
+    this.type,
     this.name,
     this.idCardNumber,
-    this.address,
-    this.birthDate,
+    this.firstNames,
+    this.lastName,
+    this.birthday,
     this.gender,
-    this.ethnicity,
-    this.frontImageUrl,
-    this.backImageUrl,
-    this.isValid,
+    this.url,
+    this.backUrl,
+    this.isSuccess,
   });
 
   factory OcrVerificationResp.fromJson(Map<String, dynamic> json) {
     return OcrVerificationResp(
+      type: json['type']?.toString(),
       name: json['name']?.toString(),
       idCardNumber: json['idCardNumber']?.toString(),
-      address: json['address']?.toString(),
-      birthDate: json['birthDate']?.toString(),
+      firstNames: json['fatherName']?.toString(),
+      lastName: json['name']?.toString(),
+      birthday: json['birthday']?.toString(),
       gender: json['gender']?.toString(),
-      ethnicity: json['ethnicity']?.toString(),
-      frontImageUrl: json['frontImageUrl']?.toString(),
-      backImageUrl: json['backImageUrl']?.toString(),
-      isValid: json['isValid'] as bool?,
+      url: json['url']?.toString(),
+      backUrl: json['backUrl']?.toString(),
+      isSuccess: json['isSuccess'] as int?,
     );
   }
 }
