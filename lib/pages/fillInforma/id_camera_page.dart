@@ -189,12 +189,11 @@ class _IdCameraScreenState extends ConsumerState<IdCameraScreen> {
             bottom: 10,
             width:
                 MediaQuery.of(context).size.width /
-                3.0, // 💡 因为增加了文字，稍微加宽到 280 让排版更舒适
+                3.0,
             child: Container(
-              color: Colors.black.withOpacity(0.2),
               child: Row(
                 children: [
-                  // 1. 左侧：图文区域，占据整体宽度的 3分之2 (Expanded flex: 2)
+                  // 图文区域，占据整体宽度的 3分之2 (Expanded flex: 2)
                   Expanded(
                     flex: 2,
                     child: Padding(
@@ -255,7 +254,7 @@ class _IdCameraScreenState extends ConsumerState<IdCameraScreen> {
                     ),
                   ),
 
-                  // 2. 右侧：拍照按钮，固定占据整体宽度的 3分之1 (Expanded flex: 1)
+                  // 拍照按钮，固定占据整体宽度的 3分之1 (Expanded flex: 1)
                   Expanded(
                     flex: 1,
                     child: Center(

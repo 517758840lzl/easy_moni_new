@@ -84,6 +84,14 @@ class ContactsService {
       return null;
     }
   }
+
+  static Future<void> openAppSettings() async {
+    try {
+      await _channel.invokeMethod('openAppSettings');
+    } on PlatformException {
+      return;
+    }
+  }
 }
 
 class CameraService {

@@ -14,6 +14,7 @@ class OcrVerificationApi {
   Future<HttpResult<OcrVerificationResp>> call({
     required Uint8List bytes,
     required String filename,
+    required String type,
   }) async {
     final token = HttpProvider.instance.token;
     if (token == null || token.isEmpty) {
@@ -25,7 +26,7 @@ class OcrVerificationApi {
     ).resolve(ApiConstants.ocrVerification).toString();
 
     debugPrint(
-      '开始调用 OCR 接口: url=$requestUrl, filename=$filename, bytes=${bytes.length}',
+      '开始调用 OCR 接口: url=$requestUrl, filename=$filename, bytes=${bytes.length}, type=$type',
     );
 
     try {
@@ -37,12 +38,19 @@ class OcrVerificationApi {
       final response = await dio.post<dynamic>(
         requestUrl,
         data: formData,
+        queryParameters: {
+          'type': type,
+        },
         options: Options(
           headers: {
             'Accept': 'application/json',
             'acqChannel': 'GHQU',
             'acqChannelIndex': '0',
             'disableEncBody': 'false',
+            'appVersion': ApiConstants.appVersion,
+            'clientType': ApiConstants.clientType,
+            'advId': ApiConstants.advId,
+            'deviceId': ApiConstants.deviceId,
             'token': token,
           },
         ),

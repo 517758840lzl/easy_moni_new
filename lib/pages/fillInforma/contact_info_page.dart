@@ -279,12 +279,13 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
                         ),
                       ),
                     ),
+
                     const SizedBox(width: 14),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           Navigator.pop(context);
-                          // openAppSettings();
+                          await ContactsService.openAppSettings();
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF268470),

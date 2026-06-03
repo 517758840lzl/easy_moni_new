@@ -4,6 +4,7 @@ import 'package:easy_moni/core/network/http_provider.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../entities/acquisition_progress_resp.dart';
 import '../../utils/widgets/toast.dart';
 import '../fillInforma/contact_info_page.dart';
@@ -55,6 +56,60 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       return digits.substring(1);
     }
     return digits;
+  }
+
+  void _navigateByProgress(AcquisitionProgressResp progressData) {
+    final steps = progressData.processSteps ?? const [];
+    final filledStep = progressData.filledStep ?? 0;
+
+    if (progressData.hasCompletedKyc) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const HomeShell()),
+      );
+      return;
+    }
+
+    if (steps.isEmpty) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const PersonalInfoPage()),
+      );
+      return;
+    }
+
+    ProcessStep? nextStep;
+    for (final step in steps) {
+      if ((step.step ?? 0) > filledStep) {
+        nextStep = step;
+        break;
+      }
+    }
+
+    nextStep ??= steps.isNotEmpty ? steps.first : null;
+
+    switch (nextStep?.pageType) {
+      case 1:
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const PersonalInfoPage()),
+        );
+        return;
+      case 2:
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const ContactInfoPage()),
+        );
+        return;
+      case 3:
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const IdentityVerifyPage()),
+        );
+        return;
+      case 4:
+        context.go('/face-verify');
+        return;
+      default:
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const PersonalInfoPage()),
+        );
+    }
   }
 
   /// 手机号输入变化监听
@@ -258,7 +313,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           if (!mounted) return;
           debugPrint('checkData: $checkData');
 
-          // 进度查询接口暂时不用
           final progressResult = await ref
               .read(acquisitionProgressProvider)
               .call();
@@ -276,81 +330,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             debugPrint(
               'processSteps: ${progressData.processSteps?.map((s) => 'step=${s.step}, pageType=${s.pageType}, pageTitle=${s.pageTitle}').join(', ')}',
             );
-
-            // 如果已填完所有步骤，跳转到首页
-            if (progressData.hasCompletedKyc) {
-              debugPrint('KYC已完成，跳转到首页');
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => const HomeShell()),
-              );
-              return;
-            }
-
-            // 根据当前进度获取下一个未完成的页面
-            final steps = progressData.processSteps ?? [];
-            if (steps.isEmpty) {
-              debugPrint('没有步骤数据，跳转到首页');
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => const HomeShell()),
-              );
-              return;
-            }
-
-            // 找到第一个未完成的步骤
-            ProcessStep? nextStep;
-            for (final step in steps) {
-              if ((step.step ?? 0) > filledStep) {
-                nextStep = step;
-                break;
-              }
-            }
-
-            // 如果没有找到下一个步骤，跳转到首页
-            if (nextStep == null) {
-              debugPrint('没有下一个步骤，跳转到首页');
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => const HomeShell()),
-              );
-              return;
-            }
-
-            debugPrint(
-              '跳转到: pageType=${nextStep.pageType}, pageTitle=${nextStep.pageTitle}',
-            );
-
-            // 根据 pageType 跳转到对应页面
-            switch (nextStep.pageType) {
-              case 1: // 个人信息
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => const PersonalInfoPage(),
-                  ),
-                );
-                break;
-              case 2: // 紧急联系人
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => const ContactInfoPage(),
-                  ),
-                );
-                break;
-              case 3: // 身份证认证
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => const IdentityVerifyPage(),
-                  ),
-                );
-                break;
-              default:
-                debugPrint('未知 pageType: ${nextStep.pageType}，跳转到首页');
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => const HomeShell()),
-                );
-            }
+            debugPrint('根据后端进度决定跳转页面');
+            _navigateByProgress(progressData);
           } else {
-            debugPrint('进度查询失败，跳转首页');
+            debugPrint('进度查询失败，默认跳转个人信息');
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const HomeShell()),
+              MaterialPageRoute(builder: (context) => const PersonalInfoPage()),
             );
           }
         } else {

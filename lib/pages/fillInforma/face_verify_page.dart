@@ -9,18 +9,14 @@ import 'package:easy_moni/pages/fillInforma/providers/acp_element_info_provider.
 import 'package:easy_moni/pages/fillInforma/providers/submit_acp_element_info_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/upload_file_provider.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/progressInformation.dart';
+import 'package:easy_moni/pages/home/homesell.dart';
 import 'package:easy_moni/pages/login/providers/auth_provider.dart';
 import 'package:easy_moni/utils/widgets/informationBottomButton.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../gen/assets.gen.dart';
-import '../../services/platform_service.dart';
-import '../../utils/widgets/informationBottomButton.dart';
-import '../../utils/widgets/limit_toast.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
 class FaceVerifyPage extends ConsumerStatefulWidget {
@@ -126,21 +122,21 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
 
   List<_FaceLivenessStep> _buildLivenessSteps(StartupConfigResp? config) {
     final stepsFromConfig = config?.faceStep
-            ?.map((step) => _FaceLivenessStep.fromBackend(
-                  key: step.key,
-                  description: step.description,
-                ))
-            .whereType<_FaceLivenessStep>()
-            .toList() ??
+        ?.map((step) => _FaceLivenessStep.fromBackend(
+      key: step.key,
+      description: step.description,
+    ))
+        .whereType<_FaceLivenessStep>()
+        .toList() ??
         <_FaceLivenessStep>[];
     if (stepsFromConfig.isNotEmpty) {
       return stepsFromConfig;
     }
 
     final stepsFromKeys = config?.faceLiveStep
-            ?.map((key) => _FaceLivenessStep.fromBackend(key: key))
-            .whereType<_FaceLivenessStep>()
-            .toList() ??
+        ?.map((key) => _FaceLivenessStep.fromBackend(key: key))
+        .whereType<_FaceLivenessStep>()
+        .toList() ??
         <_FaceLivenessStep>[];
     if (stepsFromKeys.isNotEmpty) {
       return stepsFromKeys;
@@ -175,8 +171,8 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     final cameras = await availableCameras();
     final frontCamera = cameras.cast<CameraDescription?>().firstWhere(
           (camera) => camera?.lensDirection == CameraLensDirection.front,
-          orElse: () => null,
-        );
+      orElse: () => null,
+    );
     final targetCamera = frontCamera ?? (cameras.isNotEmpty ? cameras.first : null);
     if (targetCamera == null) {
       _cameraError = '未找到可用相机';
@@ -184,7 +180,7 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     }
 
     final imageFormatGroup =
-        Platform.isIOS ? ImageFormatGroup.bgra8888 : ImageFormatGroup.nv21;
+    Platform.isIOS ? ImageFormatGroup.bgra8888 : ImageFormatGroup.nv21;
 
     final controller = CameraController(
       targetCamera,
@@ -352,9 +348,9 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
       });
 
       final uploadResult = await ref.read(uploadFileProvider).call(
-            bytes: bytes,
-            filename: 'face_verify.jpg',
-          );
+        bytes: bytes,
+        filename: 'face_verify.jpg',
+      );
       if (!mounted) return;
 
       if (uploadResult.isSuccess) {
@@ -477,7 +473,10 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
 
       if (!mounted) return;
       if (result.isSuccess) {
-        context.go('/');
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const HomeShell()),
+              (route) => false,
+        );
       } else {
         ScaffoldMessenger.of(
           context,
@@ -515,17 +514,17 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-                      child: Column(
-                        children: [
-                          _buildStatusCard(),
-                          const SizedBox(height: 18),
-                          Expanded(child: _buildCameraArea()),
-                          const SizedBox(height: 18),
-                          _buildStepList(),
-                        ],
-                      ),
-                    ),
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                child: Column(
+                  children: [
+                    _buildStatusCard(),
+                    const SizedBox(height: 18),
+                    Expanded(child: _buildCameraArea()),
+                    const SizedBox(height: 18),
+                    _buildStepList(),
+                  ],
+                ),
+              ),
             ),
           ),
           BottomContinueButton(
@@ -573,76 +572,123 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
   }
 
   Widget _buildCameraArea() {
-    if (_cameraError != null) {
-      return Center(
-        child: Text(
-          _cameraError!,
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: Color(0xFFB42318)),
-        ),
-      );
-    }
-
-    if (_faceImage != null) {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          AspectRatio(
-            aspectRatio: 3 / 4,
-            child: Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F7FA),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFCCE7DE), width: 2),
-                image: DecorationImage(
-                  image: MemoryImage(_faceImage!),
-                  fit: BoxFit.cover,
-                ),
-              ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (_cameraError != null) {
+          return Center(
+            child: Text(
+              _cameraError!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Color(0xFFB42318)),
             ),
-          ),
-          const SizedBox(height: 14),
-          TextButton(
-            onPressed: _isUploading ? null : _retakeFace,
-            child: const Text('重新拍摄'),
-          ),
-        ],
-      );
-    }
+          );
+        }
 
-    final controller = _cameraController;
-    if (!_isCameraReady || controller == null || !controller.value.isInitialized) {
-      return const Center(child: CircularProgressIndicator());
-    }
+        final maxPreviewWidth = constraints.maxWidth.clamp(0.0, 320.0);
+        final maxPreviewHeight = constraints.maxHeight;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          CameraPreview(controller),
-          Container(color: Colors.black.withValues(alpha: 0.08)),
-          Center(
-            child: Container(
-              width: 240,
-              height: 320,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: Colors.white, width: 3),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.16),
-                    blurRadius: 20,
-                    spreadRadius: 12,
+        if (_faceImage != null) {
+          const actionAreaHeight = 54.0;
+          const spacing = 14.0;
+          final availableImageHeight = (maxPreviewHeight - actionAreaHeight - spacing)
+              .clamp(120.0, maxPreviewHeight);
+          final previewWidth = (availableImageHeight * 3 / 4)
+              .clamp(0.0, maxPreviewWidth);
+
+          return Center(
+            child: SizedBox(
+              width: previewWidth,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AspectRatio(
+                    aspectRatio: 3 / 4,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5F7FA),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: const Color(0xFFCCE7DE),
+                          width: 2,
+                        ),
+                        image: DecorationImage(
+                          image: MemoryImage(_faceImage!),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  TextButton(
+                    onPressed: _isUploading ? null : _retakeFace,
+                    child: const Text('重新拍摄'),
                   ),
                 ],
               ),
             ),
+          );
+        }
+
+        final controller = _cameraController;
+        if (!_isCameraReady ||
+            controller == null ||
+            !controller.value.isInitialized) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final previewSize = controller.value.previewSize;
+        final previewWidth = (maxPreviewHeight * 3 / 4).clamp(0.0, maxPreviewWidth);
+
+        return Center(
+          child: SizedBox(
+            width: previewWidth,
+            child: AspectRatio(
+              aspectRatio: 3 / 4,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (previewSize != null)
+                      FittedBox(
+                        fit: BoxFit.cover,
+                        child: SizedBox(
+                          width: previewSize.height,
+                          height: previewSize.width,
+                          child: CameraPreview(controller),
+                        ),
+                      )
+                    else
+                      CameraPreview(controller),
+                    Container(color: Colors.black.withValues(alpha: 0.08)),
+                    Center(
+                      child: Container(
+                        width: previewWidth * 0.72,
+                        height: previewWidth * 0.72,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: Colors.white, width: 3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.16),
+                              blurRadius: 20,
+                              spreadRadius: 12,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (_isUploading)
+                      const Center(
+                        child: CircularProgressIndicator(color: Colors.white),
+                      ),
+                  ],
+                ),
+              ),
+            ),
           ),
-          if (_isUploading)
-            const Center(child: CircularProgressIndicator(color: Colors.white)),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -665,23 +711,23 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
                     color: index < _currentStepIndex
                         ? const Color(0xFF0E8C6F)
                         : index == _currentStepIndex
-                            ? const Color(0xFFDBF5EC)
-                            : const Color(0xFFF1F5F9),
+                        ? const Color(0xFFDBF5EC)
+                        : const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(11),
                   ),
                   child: Center(
                     child: index < _currentStepIndex
                         ? const Icon(Icons.check, size: 14, color: Colors.white)
                         : Text(
-                            '${index + 1}',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: index == _currentStepIndex
-                                  ? const Color(0xFF0E8C6F)
-                                  : const Color(0xFF94A3B8),
-                            ),
-                          ),
+                      '${index + 1}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: index == _currentStepIndex
+                            ? const Color(0xFF0E8C6F)
+                            : const Color(0xFF94A3B8),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),

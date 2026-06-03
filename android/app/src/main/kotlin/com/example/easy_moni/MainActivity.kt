@@ -4,9 +4,10 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
+import android.database.Cursor
 import android.net.Uri
+import android.provider.ContactsContract
+import android.provider.Settings
 import android.provider.MediaStore
 import android.util.Base64
 import androidx.core.app.ActivityCompat
@@ -14,7 +15,6 @@ import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
-import java.io.ByteArrayOutputStream
 
 class MainActivity : FlutterActivity() {
     private val LOCATION_CHANNEL = "com.easy_moni/location"
@@ -66,17 +66,45 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CONTACTS_CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
                 "checkContactsPermission" -> {
-//                    val hasPermission = ContextCompat.checkSelfPermission(
-//                        this, Manifest.permission.READ_CONTACTS
-//                    ) == PackageManager.PERMISSION_GRANTED
-//                    result.success(hasPermission)
-                    result.success(false)
+                    val hasPermission = ContextCompat.checkSelfPermission(
+                        this, Manifest.permission.READ_CONTACTS
+                    ) == PackageManager.PERMISSION_GRANTED
+                    result.success(hasPermission)
                 }
                 "requestContactsPermission" -> {
-                    result.success(false)
+                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+                        pendingContactsResult = result
+                        ActivityCompat.requestPermissions(
+                            this,
+                            arrayOf(Manifest.permission.READ_CONTACTS),
+                            1002
+                        )
+                    } else {
+                        result.success(true)
+                    }
                 }
                 "getContacts" -> {
-                    result.error("PERMISSION_DISABLED", "Contacts permission disabled on Android", null)
+                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+                        result.error("PERMISSION_DENIED", "Contacts permission denied", null)
+                    } else {
+                        try {
+                            result.success(getContacts())
+                        } catch (e: Exception) {
+                            result.error("GET_CONTACTS_FAILED", e.message, null)
+                        }
+                    }
+                }
+                "openAppSettings" -> {
+                    try {
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.parse("package:$packageName")
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        startActivity(intent)
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error("OPEN_SETTINGS_FAILED", e.message, null)
+                    }
                 }
                 else -> result.notImplemented()
             }
@@ -128,19 +156,53 @@ class MainActivity : FlutterActivity() {
     private fun getBase64FromUri(uri: Uri): String? {
         return try {
             val inputStream = contentResolver.openInputStream(uri)
-            val bitmap = BitmapFactory.decodeStream(inputStream)
-            inputStream?.close()
-            bitmapToBase64(bitmap)
+            val bytes = inputStream?.use { it.readBytes() }
+            if (bytes == null || bytes.isEmpty()) null else Base64.encodeToString(bytes, Base64.NO_WRAP)
         } catch (e: Exception) {
             null
         }
     }
 
-    private fun bitmapToBase64(bitmap: Bitmap): String {
-        val outputStream = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
-        val byteArray = outputStream.toByteArray()
-        return Base64.encodeToString(byteArray, Base64.NO_WRAP)
+    private fun getContacts(): List<Map<String, String>> {
+        val contacts = mutableListOf<Map<String, String>>()
+        val seenContacts = mutableSetOf<String>()
+        val cursor: Cursor? = contentResolver.query(
+            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+            arrayOf(
+                ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
+                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                ContactsContract.CommonDataKinds.Phone.NUMBER
+            ),
+            null,
+            null,
+            ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC"
+        )
+
+        cursor?.use {
+            val idIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID)
+            val nameIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
+            val phoneIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+
+            while (it.moveToNext()) {
+                val id = if (idIndex >= 0) it.getString(idIndex) ?: "" else ""
+                val name = if (nameIndex >= 0) it.getString(nameIndex) ?: "" else ""
+                val phone = if (phoneIndex >= 0) it.getString(phoneIndex)?.replace("\\s".toRegex(), "") ?: "" else ""
+                if (phone.isEmpty()) continue
+
+                val key = "$name-$phone"
+                if (!seenContacts.add(key)) continue
+
+                contacts.add(
+                    mapOf(
+                        "id" to id,
+                        "name" to name,
+                        "phone" to phone
+                    )
+                )
+            }
+        }
+
+        return contacts
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {

@@ -31,6 +31,11 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   Uint8List? _idCardBackData;
   OcrVerificationResp? _frontOcr;
   String? _backImageUrl;
+  final TextEditingController _idNumberController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _firstNamesController = TextEditingController();
+  final TextEditingController _genderController = TextEditingController();
+  final TextEditingController _birthdayController = TextEditingController();
   bool _isLoading = true;
   bool _isSubmitting = false;
   bool _isOcrLoading = false;
@@ -54,6 +59,16 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   void initState() {
     super.initState();
     _fetchStepInfo();
+  }
+
+  @override
+  void dispose() {
+    _idNumberController.dispose();
+    _lastNameController.dispose();
+    _firstNamesController.dispose();
+    _genderController.dispose();
+    _birthdayController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchStepInfo() async {
@@ -130,11 +145,11 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
 
       addIfFound(['front'], _frontOcr?.url);
       addIfFound(['back'], _backImageUrl);
-      addIfFound(['national id', 'id number'], _frontOcr?.idCardNumber);
-      addIfFound(['last name', 'surname', 'name'], _frontOcr?.lastName);
-      addIfFound(['first name', 'father'], _frontOcr?.firstNames);
-      addIfFound(['gender'], _frontOcr?.gender);
-      addIfFound(['birth'], _frontOcr?.birthday);
+      addIfFound(['national id', 'id number'], _idNumberController.text.trim());
+      addIfFound(['last name', 'surname', 'name'], _lastNameController.text.trim());
+      addIfFound(['first name', 'father'], _firstNamesController.text.trim());
+      addIfFound(['gender'], _genderController.text.trim());
+      addIfFound(['birth'], _birthdayController.text.trim());
 
       final result = await ref
           .read(submitAcpElementInfoProvider)
@@ -165,8 +180,8 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   }
 
   Future<void> _showConfirmIdNumberSheet() async {
-    final idNumber = _frontOcr?.idCardNumber?.trim();
-    if (idNumber == null || idNumber.isEmpty) {
+    final idNumber = _idNumberController.text.trim();
+    if (idNumber.isEmpty) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('请先确认身份证号码')));
@@ -300,6 +315,14 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
       return '${parts[2]}-${parts[1]}-${parts[0]}';
     }
     return value;
+  }
+
+  void _fillEditableFields(OcrVerificationResp? data) {
+    _idNumberController.text = data?.idCardNumber ?? '';
+    _lastNameController.text = data?.lastName ?? '';
+    _firstNamesController.text = data?.firstNames ?? '';
+    _genderController.text = _displayGender(data?.gender);
+    _birthdayController.text = _displayBirthday(data?.birthday);
   }
 
   void _showUploadOptions({required bool isFront}) {
@@ -517,7 +540,11 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
 
     final result = await ref
         .read(ocrVerificationProvider)
-        .call(bytes: imageData, filename: 'id_card_front.jpg');
+        .call(
+          bytes: imageData,
+          filename: 'id_card_front.jpg',
+          type: 'FRONT',
+        );
 
     debugPrint(
       'OCR 接口返回: isSuccess=${result.isSuccess}, message=${result.message}, data=${result.data}',
@@ -528,6 +555,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     setState(() {
       if (result.isSuccess) {
         _frontOcr = result.data;
+        _fillEditableFields(result.data);
       }
       _isOcrLoading = false;
     });
@@ -541,35 +569,6 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
         context,
       ).showSnackBar(SnackBar(content: Text(result.message ?? 'OCR失败')));
     }
-  }
-
-  void _showCameraPermissionDialog() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFFFDFEFF),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: const [
-              Icon(
-                Icons.camera_alt_outlined,
-                size: 64,
-                color: Color(0xFF268470),
-              ),
-              SizedBox(height: 16),
-              Text('需要相机权限'),
-              SizedBox(height: 8),
-              Text(AppStrings.idcardMessage, textAlign: TextAlign.center),
-            ],
-          ),
-        );
-      },
-    );
   }
 
   @override
@@ -646,23 +645,23 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
                               const SizedBox(height: 8),
                               _buildInfoItem(
                                 title: '加纳身份证号码',
-                                value: _frontOcr?.idCardNumber ?? '',
+                                controller: _idNumberController,
                               ),
                               _buildInfoItem(
                                 title: '姓氏',
-                                value: _frontOcr?.lastName ?? '',
+                                controller: _lastNameController,
                               ),
                               _buildInfoItem(
                                 title: '名字',
-                                value: _frontOcr?.firstNames ?? '',
+                                controller: _firstNamesController,
                               ),
                               _buildInfoItem(
                                 title: '性别',
-                                value: _displayGender(_frontOcr?.gender),
+                                controller: _genderController,
                               ),
                               _buildInfoItem(
                                 title: '生日',
-                                value: _displayBirthday(_frontOcr?.birthday),
+                                controller: _birthdayController,
                                 showDivider: false,
                               ),
                             ],
@@ -759,7 +758,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
 
   Widget _buildInfoItem({
     required String title,
-    required String value,
+    required TextEditingController controller,
     bool showDivider = true,
   }) {
     return Column(
@@ -791,23 +790,19 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
                       ),
                     ),
                     const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            value,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF222222),
-                            ),
-                          ),
-                        ),
-                        const Icon(
-                          Icons.chevron_right,
-                          color: Color(0xFFB8B8B8),
-                          size: 22,
-                        ),
-                      ],
+                    TextField(
+                      controller: controller,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF222222),
+                      ),
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                      ),
                     ),
                   ],
                 ),
