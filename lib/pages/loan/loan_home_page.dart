@@ -1,3 +1,4 @@
+import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/pages/loan/providers/home_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -162,7 +163,7 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
                     child: _products.isEmpty
                         ? const Center(
                             child: Text(
-                              '暂无可借产品',
+                              AppStrings.noLoanProducts,
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Color(0xFF909399),
@@ -175,7 +176,7 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const Text(
-                                  '请选择你想借的产品：',
+                                  AppStrings.selectProucts,
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w700,
@@ -231,8 +232,8 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
                       '/payment',
                       extra: {
                         'amount': selectedProduct?.amount ?? 0,
-                        'phone': '2335*****1247',
-                        'idNumber': 'MoMo Account',
+                        'phone': '',
+                        'idNumber': '',
                       },
                     )
                   : null,

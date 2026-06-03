@@ -19,6 +19,8 @@ import 'package:flutter/services.dart';
 
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
+import '../../utils/widgets/limit_toast.dart';
+
 class FaceVerifyPage extends ConsumerStatefulWidget {
   const FaceVerifyPage({super.key});
 
@@ -504,6 +506,7 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
             context: context,
             title: '人脸验证',
             activeStep: InformationStep.face,
+            onBack: () => FundingLimitDialog.showRetainDialog(context),
           ),
           Expanded(
             child: Container(

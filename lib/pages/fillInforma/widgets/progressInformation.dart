@@ -26,7 +26,7 @@ Widget buildInformationHeader({
       bottom: false,
       child: Column(
         children: [
-          const SizedBox(height: 44),
+          const SizedBox(height: 24),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: SizedBox(

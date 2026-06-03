@@ -7,7 +7,7 @@ class ApiConstants {
 
   static const Duration receiveTimeOut = Duration(seconds: 30);
 
-  static const String appVersion = '1';
+  static const String appVersion = '10';
 
   static const String clientType = 'android';
 
