@@ -7,11 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../entities/acquisition_progress_resp.dart';
 import '../../utils/widgets/toast.dart';
-import '../fillInforma/contact_info_page.dart';
-import '../fillInforma/identity_verify_page.dart';
-import '../fillInforma/personal_info_page.dart';
 import '../fillInforma/providers/acquisition_progress_provider.dart';
-import '../home/homesell.dart';
 import 'providers/auth_provider.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -29,6 +25,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final TextEditingController _codeController = TextEditingController();
   Timer? _countdownTimer;
   int _countdownSeconds = 0;
+  bool _isLoggingIn = false;
   bool _isAutoSendingCode = false; // 防止自动发送验证码时重复触发
 
   @override
@@ -58,22 +55,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     return digits;
   }
 
-  void _navigateByProgress(AcquisitionProgressResp progressData) {
+  String _routeByProgress(AcquisitionProgressResp progressData) {
     final steps = progressData.processSteps ?? const [];
     final filledStep = progressData.filledStep ?? 0;
 
     if (progressData.hasCompletedKyc) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeShell()),
-      );
-      return;
+      return '/home';
     }
 
     if (steps.isEmpty) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const PersonalInfoPage()),
-      );
-      return;
+      return '/personal-info';
     }
 
     ProcessStep? nextStep;
@@ -86,30 +77,24 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     nextStep ??= steps.isNotEmpty ? steps.first : null;
 
-    switch (nextStep?.pageType) {
+    switch (filledStep + 1) {
       case 1:
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const PersonalInfoPage()),
-        );
-        return;
+        return '/personal-info';
       case 2:
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const ContactInfoPage()),
-        );
-        return;
-      case 3:
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const IdentityVerifyPage()),
-        );
-        return;
+        return '/contact-info';
       case 4:
-        context.go('/face-verify');
-        return;
+        return '/identity-verify';
+      case 5:
+        return '/face-verify';
       default:
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const PersonalInfoPage()),
-        );
+        return '/personal-info';
     }
+  }
+
+  void _navigateByProgress(AcquisitionProgressResp progressData) {
+    final route = _routeByProgress(progressData);
+    debugPrint('登录后跳转目标: $route');
+    context.go(route);
   }
 
   /// 手机号输入变化监听
@@ -242,6 +227,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Future<void> _onLogin() async {
+    if (_isLoggingIn) {
+      return;
+    }
+
     final phone = _normalizedPhone();
     final code = _codeController.text.trim();
     if (phone.isEmpty) {
@@ -256,6 +245,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     debugPrint('登录请求 - 手机号: 233|$phone, 验证码: $code');
 
     try {
+      setState(() => _isLoggingIn = true);
+
       final result = await ref
           .read(loginApiProvider)
           .call(phone: '233|$phone', code: code);
@@ -334,9 +325,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             _navigateByProgress(progressData);
           } else {
             debugPrint('进度查询失败，默认跳转个人信息');
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const PersonalInfoPage()),
-            );
+            context.go('/personal-info');
           }
         } else {
           debugPrint('Token为空!');
@@ -351,6 +340,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       showToast('登录失败，请重试');
       debugPrint('登录异常: $e');
       debugPrint('堆栈: $stackTrace');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoggingIn = false);
+      }
     }
   }
 
@@ -565,7 +558,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   Widget _buildLoginButton() {
     return GestureDetector(
-      onTap: _onLogin,
+      onTap: _isLoggingIn ? null : _onLogin,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 10),
@@ -573,14 +566,25 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           color: const Color(0xFF45F3A6),
           borderRadius: BorderRadius.circular(30),
         ),
-        child: const Text(
-          AppStrings.login_in,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 14,
-            color: Color(0xFF104440),
-            fontWeight: FontWeight.w500,
-          ),
+        child: Center(
+          child: _isLoggingIn
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Color(0xFF104440),
+                  ),
+                )
+              : const Text(
+                  AppStrings.login_in,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF104440),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
         ),
       ),
     );

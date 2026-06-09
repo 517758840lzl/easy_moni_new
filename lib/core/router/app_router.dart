@@ -1,4 +1,3 @@
-import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,8 +5,6 @@ import 'package:easy_moni/pages/login/permissionpage.dart';
 import 'package:easy_moni/pages/login/loginpage.dart';
 import 'package:easy_moni/entities/user_repayment_resp.dart';
 import 'package:easy_moni/pages/home/homesell.dart';
-import 'package:easy_moni/pages/login/loginpage.dart';
-import 'package:easy_moni/entities/user_repayment_resp.dart';
 
 import '../../pages/fillInforma/contact_info_page.dart';
 import '../../pages/fillInforma/face_verify_page.dart';
@@ -43,6 +40,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/login',
         name: 'login',
         builder: (context, state) => const LoginPage(),
+      ),
+      GoRoute(
+        path: '/home',
+        name: 'homeShell',
+        builder: (context, state) => const HomeShell(),
       ),
       GoRoute(
         path: '/idcamera',

@@ -35,7 +35,7 @@ class HttpProvider {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'acqChannel': 'GHQU',
+          'acqChannel': 'GHPM',
           'acqChannelIndex': '0',
           'disableEncBody': 'false',
           'appVersion': ApiConstants.appVersion,

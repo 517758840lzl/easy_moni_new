@@ -27,7 +27,7 @@ class UploadFileApi {
       ).resolve(ApiConstants.uploadFile).toString();
       final headers = <String, dynamic>{
         'Accept': 'application/json',
-        'acqChannel': 'GHQU',
+        'acqChannel': 'GHPM',
         'acqChannelIndex': '0',
         'disableEncBody': 'false',
         'token': token,

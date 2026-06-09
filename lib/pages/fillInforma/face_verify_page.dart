@@ -472,7 +472,7 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
         jsonParam: [
           {
             'key': key,
-            'value': '["$_faceImageUrl"]',
+            'value': _faceImageUrl!,
           },
         ],
       );

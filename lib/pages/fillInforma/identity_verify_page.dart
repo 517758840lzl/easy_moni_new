@@ -36,6 +36,8 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   final TextEditingController _firstNamesController = TextEditingController();
   final TextEditingController _genderController = TextEditingController();
   final TextEditingController _birthdayController = TextEditingController();
+  String? _genderSubmitValue;
+  String? _birthdaySubmitValue;
   bool _isLoading = true;
   bool _isSubmitting = false;
   bool _isOcrLoading = false;
@@ -122,34 +124,14 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     setState(() => _isSubmitting = true);
 
     try {
-      final entries = _stepInfo!.entries;
       final jsonParam = <Map<String, dynamic>>[];
 
-      String? findKey(List<String> patterns) {
-        for (final entry in entries) {
-          final text = '${entry.showContent} ${entry.defaultText}'
-              .toLowerCase();
-          if (patterns.any((pattern) => text.contains(pattern))) {
-            return entry.key;
-          }
-        }
-        return null;
-      }
-
-      void addIfFound(List<String> patterns, String? value) {
-        final key = findKey(patterns);
-        if (key != null && value != null && value.isNotEmpty) {
-          jsonParam.add({'key': key, 'value': value});
+      for (final entry in _stepInfo!.entries) {
+        final value = _identitySubmitValueForEntry(entry);
+        if (value != null && value.isNotEmpty) {
+          jsonParam.add({'key': entry.key, 'value': value});
         }
       }
-
-      addIfFound(['front'], _frontOcr?.url);
-      addIfFound(['back'], _backImageUrl);
-      addIfFound(['national id', 'id number'], _idNumberController.text.trim());
-      addIfFound(['last name', 'surname', 'name'], _lastNameController.text.trim());
-      addIfFound(['first name', 'father'], _firstNamesController.text.trim());
-      addIfFound(['gender'], _genderController.text.trim());
-      addIfFound(['birth'], _birthdayController.text.trim());
 
       final result = await ref
           .read(submitAcpElementInfoProvider)
@@ -177,6 +159,63 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
         setState(() => _isSubmitting = false);
       }
     }
+  }
+
+  String _entryIdentityText(FormEntry entry) {
+    return '${entry.key} ${entry.code} ${entry.showContent} ${entry.defaultText}'
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_');
+  }
+
+  bool _hasIdentityToken(String text, String token) {
+    return text == token ||
+        text.startsWith('${token}_') ||
+        text.endsWith('_$token') ||
+        text.contains('_${token}_');
+  }
+
+  String? _identitySubmitValueForEntry(FormEntry entry) {
+    final text = _entryIdentityText(entry);
+    final keyText = entry.key.toLowerCase();
+
+    if (text.contains('id_card_front') ||
+        (text.contains('front') &&
+            (text.contains('image') || text.contains('photo')))) {
+      return _frontOcr?.url;
+    }
+    if (text.contains('id_card_back') ||
+        (text.contains('back') &&
+            (text.contains('image') || text.contains('photo')))) {
+      return _backImageUrl;
+    }
+    if (text.contains('national_id') ||
+        text.contains('id_number') ||
+        text.contains('id_card_number')) {
+      return _idNumberController.text.trim();
+    }
+    if (keyText == 'first_names' ||
+        keyText == 'first_name' ||
+        text.contains('first_name') ||
+        text.contains('given_name') ||
+        text.contains('forename') ||
+        text.contains('father')) {
+      return _firstNamesController.text.trim();
+    }
+    if (keyText == 'last_name' ||
+        text.contains('last_name') ||
+        text.contains('surname') ||
+        text.contains('family_name')) {
+      return _lastNameController.text.trim();
+    }
+    if (_hasIdentityToken(text, 'gender') || _hasIdentityToken(text, 'sex')) {
+      return (_genderSubmitValue ?? _genderController.text).trim();
+    }
+    if (text.contains('date_of_birth') ||
+        text.contains('birthday') ||
+        _hasIdentityToken(text, 'birth')) {
+      return (_birthdaySubmitValue ?? _birthdayController.text).trim();
+    }
+    return null;
   }
 
   Future<void> _showConfirmIdNumberSheet() async {
@@ -321,6 +360,8 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     _idNumberController.text = data?.idCardNumber ?? '';
     _lastNameController.text = data?.lastName ?? '';
     _firstNamesController.text = data?.firstNames ?? '';
+    _genderSubmitValue = data?.gender;
+    _birthdaySubmitValue = data?.birthday;
     _genderController.text = _displayGender(data?.gender);
     _birthdayController.text = _displayBirthday(data?.birthday);
   }
@@ -540,11 +581,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
 
     final result = await ref
         .read(ocrVerificationProvider)
-        .call(
-          bytes: imageData,
-          filename: 'id_card_front.jpg',
-          type: 'FRONT',
-        );
+        .call(bytes: imageData, filename: 'id_card_front.jpg', type: 'FRONT');
 
     debugPrint(
       'OCR 接口返回: isSuccess=${result.isSuccess}, message=${result.message}, data=${result.data}',

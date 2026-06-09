@@ -44,7 +44,7 @@ class OcrVerificationApi {
         options: Options(
           headers: {
             'Accept': 'application/json',
-            'acqChannel': 'GHQU',
+            'acqChannel': 'GHPM',
             'acqChannelIndex': '0',
             'disableEncBody': 'false',
             'appVersion': ApiConstants.appVersion,
