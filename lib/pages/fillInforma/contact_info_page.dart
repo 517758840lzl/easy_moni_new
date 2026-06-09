@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/progressInformation.dart';
 import 'package:flutter/material.dart';
@@ -21,9 +23,11 @@ class ContactInfoPage extends ConsumerStatefulWidget {
 
 class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
   static const String _codePrimaryRelation = '30051';
-  static const String _codePrimaryName = '30053';
+  static const String _codePrimaryName = '30052';
+  static const String _codePrimaryPhone = '30053';
   static const String _codeSecondaryRelation = '30061';
-  static const String _codeSecondaryName = '30063';
+  static const String _codeSecondaryName = '30062';
+  static const String _codeSecondaryPhone = '30063';
 
   StepInfo? _stepInfo;
   int? _processId;
@@ -67,23 +71,33 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
                 entry.submitValue!.isNotEmpty) {
               _parentSpouseName = entry.submitValue;
             }
+            if (entry.code == _codePrimaryPhone &&
+                entry.submitValue != null &&
+                entry.submitValue!.isNotEmpty) {
+              _parentSpouseContact = _decodeContactPhone(entry.submitValue!);
+            }
             if (entry.code == _codeSecondaryName &&
                 entry.submitValue != null &&
                 entry.submitValue!.isNotEmpty) {
               _friendColleagueName = entry.submitValue;
             }
+            if (entry.code == _codeSecondaryPhone &&
+                entry.submitValue != null &&
+                entry.submitValue!.isNotEmpty) {
+              _friendColleagueContact = _decodeContactPhone(entry.submitValue!);
+            }
           }
         }
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(result.message ?? '联系人信息加载失败')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.message ?? 'Failed to load contacts')),
+        );
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('联系人信息加载失败: $e')));
+      ).showSnackBar(SnackBar(content: Text('Failed to load contacts: $e')));
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -92,236 +106,56 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
   }
 
   Future<void> _pickContact({required bool isParentSpouse}) async {
-    // 请求通讯录权限
-    bool hasPermission = await ContactsService.checkPermission();
-
-    if (!hasPermission) {
-      hasPermission = await ContactsService.requestPermission();
-      if (!hasPermission) {
-        _showPermissionDeniedDialog();
-        return;
-      }
-    }
-
-    // 获取通讯录联系人
     try {
-      List<Map<String, String>>? contacts = await ContactsService.getContacts();
+      final contact = await ContactsService.pickContact();
 
-      if (contacts == null || contacts.isEmpty) {
-        _showNoContactsDialog();
+      if (contact == null) {
         return;
       }
 
-      _showContactPicker(contacts: contacts, isParentSpouse: isParentSpouse);
+      final displayName = contact['name'] ?? '';
+      final phone = contact['phone'] ?? '';
+
+      if (phone.isEmpty) {
+        _showErrorDialog('No phone number found for this contact');
+        return;
+      }
+
+      setState(() {
+        if (isParentSpouse) {
+          _parentSpouseName = displayName;
+          _parentSpouseContact = phone;
+        } else {
+          _friendColleagueName = displayName;
+          _friendColleagueContact = phone;
+        }
+      });
     } catch (e) {
-      debugPrint('获取通讯录失败: $e');
-      _showErrorDialog('获取通讯录失败，请重试');
+      debugPrint('Failed to open contacts: $e');
+      _showErrorDialog('Failed to open contacts. Please try again.');
     }
-  }
-
-  void _showContactPicker({
-    required List<Map<String, String>> contacts,
-    required bool isParentSpouse,
-  }) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
-      ),
-      builder: (context) {
-        return Column(
-          children: [
-            Container(
-              height: 50,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Icon(
-                      Icons.close,
-                      size: 20,
-                      color: Color(0xFF1A1A1A),
-                    ),
-                  ),
-                  Text(
-                    isParentSpouse
-                        ? AppStrings.chooseContacts
-                        : AppStrings.chooseFriends,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1A1A1A),
-                    ),
-                  ),
-                  const SizedBox(width: 40),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: contacts.length,
-                itemBuilder: (context, index) {
-                  final contact = contacts[index];
-                  final displayName = contact['name'] ?? 'Unknown';
-                  final phone = contact['phone'] ?? '';
-
-                  return ListTile(
-                    onTap: () {
-                      setState(() {
-                        if (isParentSpouse) {
-                          _parentSpouseName = displayName;
-                          _parentSpouseContact = phone;
-                        } else {
-                          _friendColleagueName = displayName;
-                          _friendColleagueContact = phone;
-                        }
-                      });
-                      Navigator.pop(context);
-                    },
-                    leading: CircleAvatar(
-                      backgroundColor: const Color(
-                        0xFF268470,
-                      ).withValues(alpha: 0.1),
-                      child: Text(
-                        displayName.isNotEmpty
-                            ? displayName[0].toUpperCase()
-                            : '?',
-                        style: const TextStyle(
-                          color: Color(0xFF268470),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    title: Text(
-                      displayName,
-                      style: const TextStyle(fontSize: 14, color: Colors.black),
-                    ),
-                    subtitle: Text(
-                      phone,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF999999),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showPermissionDeniedDialog() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
-      ),
-      builder: (context) {
-        return SizedBox(
-          height: 320,
-          child: Column(
-            children: [
-              const SizedBox(height: 32),
-              const Icon(Icons.contacts, size: 64, color: Color(0xFF268470)),
-              const SizedBox(height: 24),
-              const Text(
-                AppStrings.needsContacts,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF101314),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24),
-                child: Text(
-                  '请允许访问通讯录以选择联系人。',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF3F4950),
-                    height: 1.5,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFF268470)),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        child: const Text(
-                          AppStrings.cancel,
-                          style: TextStyle(
-                            color: Color(0xFF268470),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          Navigator.pop(context);
-                          await ContactsService.openAppSettings();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF268470),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        child: const Text(
-                          AppStrings.goSettings,
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _showNoContactsDialog() {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text(AppStrings.contactsEmpty)));
   }
 
   void _showErrorDialog(String message) {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  String _encodeContactPhone(String phoneNumber) {
+    return jsonEncode({'contactPhoneNumber': phoneNumber});
+  }
+
+  String _decodeContactPhone(String submitValue) {
+    try {
+      final decoded = jsonDecode(submitValue);
+      if (decoded is Map<String, dynamic>) {
+        return decoded['contactPhoneNumber'] as String? ?? submitValue;
+      }
+    } catch (_) {
+      return submitValue;
+    }
+    return submitValue;
   }
 
   Future<void> _onContinue() async {
@@ -343,6 +177,10 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
           .where((entry) => entry.code == _codePrimaryName)
           .cast<FormEntry?>()
           .firstOrNull;
+      final phonePrimary = _stepInfo!.entries
+          .where((entry) => entry.code == _codePrimaryPhone)
+          .cast<FormEntry?>()
+          .firstOrNull;
       final relationSecondary = _stepInfo!.entries
           .where((entry) => entry.code == _codeSecondaryRelation)
           .cast<FormEntry?>()
@@ -351,7 +189,10 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
           .where((entry) => entry.code == _codeSecondaryName)
           .cast<FormEntry?>()
           .firstOrNull;
-
+      final phoneSecondary = _stepInfo!.entries
+          .where((entry) => entry.code == _codeSecondaryPhone)
+          .cast<FormEntry?>()
+          .firstOrNull;
       final jsonParam = <Map<String, dynamic>>[];
       if (relationPrimary != null) {
         jsonParam.add({
@@ -363,6 +204,12 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
         jsonParam.add({
           'key': namePrimary.key,
           'value': _parentSpouseName ?? '',
+        });
+      }
+      if (phonePrimary != null) {
+        jsonParam.add({
+          'key': phonePrimary.key,
+          'value': _encodeContactPhone(_parentSpouseContact ?? ''),
         });
       }
       if (relationSecondary != null) {
@@ -377,7 +224,12 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
           'value': _friendColleagueName ?? '',
         });
       }
-
+      if (phoneSecondary != null) {
+        jsonParam.add({
+          'key': phoneSecondary.key,
+          'value': _encodeContactPhone(_friendColleagueContact ?? ''),
+        });
+      }
       final result = await ref
           .read(submitAcpElementInfoProvider)
           .call(
@@ -390,15 +242,15 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
       if (result.isSuccess) {
         context.push('/identity-verify');
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(result.message ?? '保存失败')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.message ?? 'Save failed')),
+        );
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('保存失败: $e')));
+      ).showSnackBar(SnackBar(content: Text('Save failed: $e')));
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
@@ -414,7 +266,7 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
         children: [
           buildInformationHeader(
             context: context,
-            title: '联系人信息',
+            title: 'Contact information',
             activeStep: InformationStep.personal,
             onBack: () => FundingLimitDialog.showRetainDialog(context),
           ),
@@ -441,15 +293,15 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
                             value: _parentSpouseContact != null
                                 ? '$_parentSpouseName\n$_parentSpouseContact'
                                 : null,
-                            placeholder: '从通讯录中选择',
+                            placeholder: 'Choose from contacts',
                             onTap: () => _pickContact(isParentSpouse: true),
                           ),
                           _buildContactItem(
-                            title: '朋友/同事联系电话',
+                            title: 'Friend/colleague phone number',
                             value: _friendColleagueContact != null
                                 ? '$_friendColleagueName\n$_friendColleagueContact'
                                 : null,
-                            placeholder: '从通讯录中选择',
+                            placeholder: 'Choose from contacts',
                             onTap: () => _pickContact(isParentSpouse: false),
                             showDivider: false,
                           ),
@@ -461,7 +313,7 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
           BottomContinueButton(
             isEnabled: _canContinue && !_isSubmitting,
             onTap: () => _onContinue(),
-            text: _isSubmitting ? '保存中...' : '继续',
+            text: _isSubmitting ? 'Saving...' : 'Continue',
           ),
         ],
       ),

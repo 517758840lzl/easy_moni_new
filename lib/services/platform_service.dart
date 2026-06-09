@@ -85,6 +85,22 @@ class ContactsService {
     }
   }
 
+  static Future<Map<String, String>?> pickContact() async {
+    try {
+      final Map<dynamic, dynamic>? result = await _channel.invokeMethod(
+        'pickContact',
+      );
+      if (result == null) return null;
+      return {
+        'id': result['id'] as String? ?? '',
+        'name': result['name'] as String? ?? '',
+        'phone': result['phone'] as String? ?? '',
+      };
+    } on PlatformException {
+      return null;
+    }
+  }
+
   static Future<void> openAppSettings() async {
     try {
       await _channel.invokeMethod('openAppSettings');

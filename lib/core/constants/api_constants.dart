@@ -44,7 +44,7 @@ class ApiConstants {
   static const String queryBankList = '/api/user/acquisition/queryBankList';
   /*KYC步骤上传数据接口 POST*/
   static const String submitAcpElementInfo =
-      '/api/upload/data/submitUserUploadData';
+      '/api/user/acquisition/submitAcpInfo';
   /*身份证上传接口  POST*/
   static const String ocrVerification = '/api/user/acquisition/ocrVerification';
   // 首页数据接口 GET

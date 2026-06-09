@@ -23,6 +23,7 @@ class MainActivity : FlutterActivity() {
     
     private var pendingResult: MethodChannel.Result? = null
     private var pendingContactsResult: MethodChannel.Result? = null
+    private var pendingPickContactResult: MethodChannel.Result? = null
     private var pendingCameraResult: MethodChannel.Result? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -94,6 +95,18 @@ class MainActivity : FlutterActivity() {
                         }
                     }
                 }
+                "pickContact" -> {
+                    try {
+                        val intent = Intent(
+                            Intent.ACTION_PICK,
+                            ContactsContract.CommonDataKinds.Phone.CONTENT_URI
+                        )
+                        pendingPickContactResult = result
+                        startActivityForResult(intent, 2002)
+                    } catch (e: Exception) {
+                        result.error("PICK_CONTACT_FAILED", e.message, null)
+                    }
+                }
                 "openAppSettings" -> {
                     try {
                         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
@@ -128,6 +141,18 @@ class MainActivity : FlutterActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         
         when (requestCode) {
+            2002 -> { // Contact picker
+                if (resultCode == Activity.RESULT_OK && data?.data != null) {
+                    try {
+                        pendingPickContactResult?.success(getContactFromUri(data.data!!))
+                    } catch (e: Exception) {
+                        pendingPickContactResult?.error("PICK_CONTACT_FAILED", e.message, null)
+                    }
+                } else {
+                    pendingPickContactResult?.success(null)
+                }
+                pendingPickContactResult = null
+            }
             2001 -> { // Gallery
                 if (resultCode == Activity.RESULT_OK && data != null) {
                     val selectedImageUri = data.data
@@ -151,6 +176,40 @@ class MainActivity : FlutterActivity() {
                 pendingCameraResult = null
             }
         }
+    }
+
+    private fun getContactFromUri(uri: Uri): Map<String, String>? {
+        val cursor: Cursor? = contentResolver.query(
+            uri,
+            arrayOf(
+                ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
+                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                ContactsContract.CommonDataKinds.Phone.NUMBER
+            ),
+            null,
+            null,
+            null
+        )
+
+        cursor?.use {
+            if (!it.moveToFirst()) return null
+
+            val idIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID)
+            val nameIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
+            val phoneIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+
+            val id = if (idIndex >= 0) it.getString(idIndex) ?: "" else ""
+            val name = if (nameIndex >= 0) it.getString(nameIndex) ?: "" else ""
+            val phone = if (phoneIndex >= 0) it.getString(phoneIndex)?.replace("\\s".toRegex(), "") ?: "" else ""
+
+            return mapOf(
+                "id" to id,
+                "name" to name,
+                "phone" to phone
+            )
+        }
+
+        return null
     }
 
     private fun getBase64FromUri(uri: Uri): String? {

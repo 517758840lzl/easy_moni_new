@@ -105,6 +105,10 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
 
       if (configResult.isSuccess && configResult.data != null) {
         _startupConfig = configResult.data as StartupConfigResp;
+        debugPrint(
+          'Face config from backend: faceStep=${_startupConfig?.faceStep}, '
+          'faceLiveStep=${_startupConfig?.faceLiveStep}',
+        );
       }
 
       _livenessSteps = _buildLivenessSteps(_startupConfig);
@@ -303,7 +307,7 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
         }
         return false;
       case _FaceAction.smile:
-        return (face.smilingProbability ?? 0) > 0.7;
+        return (face.smilingProbability ?? 0) > 0.2;
     }
   }
 

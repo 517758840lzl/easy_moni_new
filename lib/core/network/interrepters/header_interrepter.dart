@@ -25,7 +25,7 @@ class HeaderInterrepter extends Interceptor {
   Map<String, String> get _commonHeader => {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'acqChannel': 'GHQU',
+    'acqChannel': 'GHPM',
     'acqChannelIndex': '0',
     'disableEncBody': 'false',
     'appVersion': ApiConstants.appVersion,
