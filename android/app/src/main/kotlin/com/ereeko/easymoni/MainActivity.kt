@@ -1,4 +1,4 @@
-package com.example.easy_moni
+package com.ereeko.easymoni
 
 import android.Manifest
 import android.app.Activity
