@@ -304,11 +304,8 @@ class $AssetsImagesGen {
   AssetGenImage get takepicture =>
       const AssetGenImage('assets/images/takepicture.png');
 
-  /// File path: assets/images/testimg.svg
-  String get testimg => 'assets/images/testimg.svg';
-
   /// List of all assets
-  List<dynamic> get values => [
+  List<AssetGenImage> get values => [
     cameraM,
     dangerCircle,
     dangerCircleNormal,
@@ -383,7 +380,6 @@ class $AssetsImagesGen {
     moban,
     starIcon,
     takepicture,
-    testimg,
   ];
 }
 

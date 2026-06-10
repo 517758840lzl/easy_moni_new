@@ -225,9 +225,9 @@ class HomeProductItem {
     final to = daysPerTermTo ?? term;
     if (from == null && to == null) return '-';
     if (from != null && to != null && from != to) {
-      return '$from-$to天';
+      return '$from-$to days';
     }
-    return '${from ?? to}天';
+    return '${from ?? to} days';
   }
 
   static String _formatRate(double rate) {

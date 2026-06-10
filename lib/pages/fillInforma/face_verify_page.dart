@@ -808,6 +808,7 @@ class _FaceLivenessStep {
           action: _FaceAction.smile,
           description: description ?? 'Please smile',
         );
+        // todo: 上下点头，左右摇头，眨眼，正面，张嘴
     }
 
     debugPrint('Unknown face liveness key from backend: $normalizedKey');
