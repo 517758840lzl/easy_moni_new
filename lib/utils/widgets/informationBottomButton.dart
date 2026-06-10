@@ -19,13 +19,12 @@ class BottomContinueButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: Colors.white,
-      // 使用 SafeArea 自动适配 Android 底部操作栏和 iOS 的小黑条
       child: SafeArea(
-        top: false, // 顶部的安全区域不需要管
+        top: false,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           child: SizedBox(
-            height: 48, // 保持按钮本身的高度
+            height: 48,
             width: double.infinity,
             child: TextButton(
               onPressed: isEnabled ? onTap : null,

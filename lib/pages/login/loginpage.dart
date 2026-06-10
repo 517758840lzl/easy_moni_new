@@ -86,8 +86,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         return '/identity-verify';
       case 5:
         return '/face-verify';
+      case 6:
+        return '/questionnaire';
       default:
-        return '/personal-info';
+        return '/home';
     }
   }
 
@@ -262,7 +264,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         debugPrint('loginData.token: ${loginData?.token}');
 
         if (loginData?.token != null) {
-          HttpProvider.instance.setToken(loginData!.token);
+          await HttpProvider.instance.setToken(loginData!.token);
           debugPrint('登录成功，Token: ${loginData.token}');
 
           // 登录后请求 startup/config 接口

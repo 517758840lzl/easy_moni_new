@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_moni/core/network/interrepters/header_interrepter.dart';
 import 'package:easy_moni/core/router/app_router.dart';
 import 'package:easy_moni/core/network/interrepters/logging_interrepter.dart';
@@ -58,10 +60,10 @@ class HttpProvider {
     );
   }
 
-  void setToken(String? token) {
+  Future<void> setToken(String? token) async {
     _headerInterceptor.setToken(token);
     if (token != null && token.isNotEmpty) {
-      AuthStorage.saveToken(token);
+      await AuthStorage.saveToken(token);
     }
   }
 
@@ -73,15 +75,15 @@ class HttpProvider {
 
   String? get deviceId => _headerInterceptor.deviceId;
 
-  void clearAuth() {
+  Future<void> clearAuth() async {
     _headerInterceptor.clearAuth();
-    AuthStorage.clearToken();
+    await AuthStorage.clearToken();
   }
 
   void _redirectToLoginIfNeeded() {
     if (_isRedirectingToLogin) return;
     _isRedirectingToLogin = true;
-    clearAuth();
+    unawaited(clearAuth());
     final context = globalNavigationKey.currentContext;
     if (context != null) {
       final currentUri = GoRouter.of(context).routeInformationProvider.value.uri;

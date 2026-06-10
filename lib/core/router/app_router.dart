@@ -11,6 +11,7 @@ import '../../pages/fillInforma/face_verify_page.dart';
 import '../../pages/fillInforma/id_camera_page.dart';
 import '../../pages/fillInforma/identity_verify_page.dart';
 import '../../pages/fillInforma/personal_info_page.dart' as fill_info;
+import '../../pages/fillInforma/questionnaire_page.dart';
 import '../../pages/mine/detailpage.dart';
 import '../../pages/mine/mine.dart';
 import '../../pages/mine/order_history_page.dart';
@@ -20,12 +21,10 @@ import '../../pages/repay/payment_page.dart';
 import '../../pages/repay/repay_detail_page.dart';
 import '../../pages/repay/repay_entry_page.dart';
 import '../../pages/repay/repay_multi_detail_page.dart';
-import '../../pages/repay/survey_page.dart';
 
 final globalNavigationKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
 final appRouterProvider = Provider<GoRouter>((ref) {
-
   return GoRouter(
     navigatorKey: globalNavigationKey,
     initialLocation: '/',
@@ -111,11 +110,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/survey',
-        name: 'survey',
-        builder: (context, state) => const SurveyPage(),
-      ),
-      GoRoute(
         path: '/contact-info',
         name: 'contactInfo',
         builder: (context, state) => const ContactInfoPage(),
@@ -134,6 +128,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/face-verify',
         name: 'faceVerify',
         builder: (context, state) => const FaceVerifyPage(),
+      ),
+      GoRoute(
+        path: '/questionnaire',
+        name: 'questionnaire',
+        builder: (context, state) => const QuestionnairePage(),
       ),
       GoRoute(
         path: '/mine',

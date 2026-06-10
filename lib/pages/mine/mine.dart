@@ -8,7 +8,6 @@ import '../../gen/assets.gen.dart';
 import '../login/loginpage.dart';
 import 'providers/user_info_provider.dart';
 import 'providers/sign_out_provider.dart';
-import '../../entities/user_info_resp.dart';
 import '../../utils/widgets/toast.dart';
 
 class MinePage extends ConsumerStatefulWidget {
@@ -105,7 +104,8 @@ class _MinePageState extends ConsumerState<MinePage> {
       if (!mounted) return;
 
       if (result.isSuccess) {
-        HttpProvider.instance.clearAuth();
+        await HttpProvider.instance.clearAuth();
+        if (!mounted) return;
         // HomeShell 由 MaterialPageRoute 压栈，需用 Navigator 清除后再跳转
         Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const LoginPage()),

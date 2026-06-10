@@ -1,7 +1,11 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
+import 'package:easy_moni/core/network/http_provider.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
+import 'package:easy_moni/entities/acquisition_progress_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
+import 'package:easy_moni/pages/fillInforma/providers/acquisition_progress_provider.dart';
 import 'package:easy_moni/pages/login/widgets/permissionalert.dart';
+import 'package:easy_moni/services/auth_storage.dart';
 import 'package:easy_moni/services/permission_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -31,15 +35,67 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
     if (!mounted) return;
 
     if (privacyAgreed && permissionsAccepted) {
-      // 临时关闭“本地有 token 就直接进首页”的启动跳转逻辑，
-      // 统一进入登录页，由登录后的进度查询决定后续页面。
-      context.pushReplacement('/login');
+      // Permissions are already accepted, so route by saved token state.
+      await _routeAfterPermissionsAccepted();
     } else {
       setState(() {
         _isAgreed = true;
       });
     }
   }
+
+  String _routeByProgress(AcquisitionProgressResp progressData) {
+    final steps = progressData.processSteps ?? const [];
+    final filledStep = progressData.filledStep ?? 0;
+
+    if (progressData.hasCompletedKyc) {
+      return '/home';
+    }
+
+    if (steps.isEmpty) {
+      return '/personal-info';
+    }
+
+    switch (filledStep + 1) {
+      case 1:
+        return '/personal-info';
+      case 2:
+        return '/contact-info';
+      case 4:
+        return '/identity-verify';
+      case 5:
+        return '/face-verify';
+      case 6:
+        return '/questionnaire';
+      default:
+        return '/home';
+    }
+  }
+
+  Future<void> _routeAfterPermissionsAccepted() async {
+    final savedToken = await AuthStorage.getToken();
+    if (!mounted) return;
+
+    if (savedToken == null || savedToken.isEmpty) {
+      context.go('/login');
+      return;
+    }
+
+    await HttpProvider.instance.setToken(savedToken);
+    if (!mounted) return;
+
+    final progressResult = await ref.read(acquisitionProgressProvider).call();
+    if (!mounted) return;
+
+    if (progressResult.isSuccess && progressResult.data != null) {
+      context.go(_routeByProgress(progressResult.data!));
+    } else {
+      await HttpProvider.instance.clearAuth();
+      if (!mounted) return;
+      context.go('/login');
+    }
+  }
+
   void _onAccept() {
     PrivacyPolicyDialog.show(
       context: context,
@@ -47,6 +103,7 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
         // 保存用户同意状态
         await PermissionStorage.setPrivacyAgreed(true);
         await PermissionStorage.setPermissionsAccepted(true);
+        if (!mounted) return;
 
         // 关掉隐私确认弹窗
         Navigator.of(context).pop();
@@ -62,7 +119,7 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
         // }
         // 跳转到登录页
         if (mounted) {
-          context.pushReplacement('/login');
+          await _routeAfterPermissionsAccepted();
         }
       },
       onDecline: () {

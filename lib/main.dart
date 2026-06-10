@@ -17,7 +17,7 @@ void main() async {
 
   final savedToken = await AuthStorage.getToken();
   if (savedToken != null && savedToken.isNotEmpty) {
-    HttpProvider.instance.setToken(savedToken);
+    await HttpProvider.instance.setToken(savedToken);
   }
 
   SystemChrome.setSystemUIOverlayStyle(
