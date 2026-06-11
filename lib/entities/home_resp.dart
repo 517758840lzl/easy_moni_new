@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 
+import '../utils/extensions.dart';
+
 class HomeResp {
   final HomeConfirmData? confirmData;
   final String? couponsTitle;
@@ -209,6 +211,27 @@ class HomeProductItem {
   }
 
   double get displayAmount => loanLimitTo ?? loanAmount ?? 0;
+
+  double get availableAmount {
+    if (productStatus == 0) {
+      return productAccount?.toDouble() ?? 0;
+    }
+    return displayAmount;
+  }
+
+  String get availableAmountLabel {
+    if (productStatus == 0) {
+      return 'GHS ${availableAmount.formatAmount().trimZeroDecimal()}';
+    }
+
+    final from = loanLimitFrom;
+    final to = loanLimitTo;
+    if (from != null && to != null) {
+      // 数字格式化
+      return 'GHS ${from.formatAmount().trimZeroDecimal()} - ${to.formatAmount().trimZeroDecimal()}';
+    }
+    return 'GHS ${availableAmount.formatAmount()}';
+  }
 
   String get interestLabel {
     final from = dailyInterestRateFrom;

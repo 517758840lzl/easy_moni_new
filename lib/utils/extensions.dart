@@ -7,6 +7,18 @@ extension StringExtension on String {
     return '${this[0].toUpperCase()}${substring(1)}';
   }
 
+  /// 小数部分全为 0 时去掉小数部分，如 "57,950.00" -> "57,950"。
+  String trimZeroDecimal() {
+    final decimalIndex = lastIndexOf('.');
+    if (decimalIndex == -1) return this;
+
+    final decimalPart = substring(decimalIndex + 1);
+    if (decimalPart.isEmpty) return substring(0, decimalIndex);
+
+    return RegExp(r'^0+$').hasMatch(decimalPart)
+        ? substring(0, decimalIndex)
+        : this;
+  }
 }
 
 extension DateTimeExtension on DateTime {

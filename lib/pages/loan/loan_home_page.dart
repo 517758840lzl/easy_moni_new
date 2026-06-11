@@ -1,6 +1,7 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/pages/loan/components/loan_order_card.dart';
 import 'package:easy_moni/pages/loan/components/loan_product_card.dart';
+import 'package:easy_moni/pages/loan/models/loan_confirm_request_product.dart';
 import 'package:easy_moni/pages/loan/providers/home_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -172,15 +173,24 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
     return topInset + 154;
   }
 
+  // 跳转确认借款页面
   void _handleApply(double selectedLoanAmount) {
-    context.push(
-      '/payment',
-      extra: {
-        'amount': selectedLoanAmount,
-        'phone': '',
-        'idNumber': '',
-      },
-    );
+    final selectedConfirmProducts = _selectedProductIndexes
+        .where((index) => index >= 0 && index < _products.length)
+        .map((index) => _products[index].apiItem)
+        .whereType<HomeProductItem>()
+        .map((item) {
+          return LoanConfirmRequestProduct(
+            appOrderId: item.appOrderId ?? 0,
+            feeId: '',
+            loanAmount: item.productAccount ?? 0,
+            productCode: item.productCode ?? '',
+          );
+        })
+        .where((item) => item.productCode.isNotEmpty)
+        .toList();
+
+    context.push('/loan-confirm', extra: {'products': selectedConfirmProducts});
   }
 
   Widget _buildWhiteContentPanel({
@@ -267,19 +277,47 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
   }
 
   Widget _buildProductSection(List<_LoanProduct> productItems) {
+    final canSelectMultiple =
+        productItems.where((p) => p.state.canConfirm).length > 1;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          AppStrings.selectProucts,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-            letterSpacing: 0.41,
-          ),
+        // 可选提示
+        Row(
+          children: [
+            const Text(
+              AppStrings.selectProucts,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+                letterSpacing: 0.41,
+              ),
+            ),
+            if (canSelectMultiple) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE9F6EF),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  '可多选',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF216A4A),
+                    height: 14 / 11,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
         const SizedBox(height: 12),
+        // 产品列表
         ...List.generate(productItems.length, (index) {
           final product = productItems[index];
           final productIndex = _products.indexOf(product);
@@ -291,7 +329,7 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
             child: LoanProductCard(
               brand: product.brand,
               level: product.level,
-              amount: product.amount,
+              amountLabel: product.amountLabel,
               interestLabel: '${product.interestLabel} per day',
               termLabel: product.termLabel,
               state: product.state,
@@ -318,7 +356,7 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          '\u6211\u7684\u501F\u6B3E',
+          '我的借款',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -365,8 +403,8 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
   Widget _buildTopHero() {
     final selectedLoanAmount = _selectedLoanAmount;
     final amountText = selectedLoanAmount > 0
-        ? 'GHS${selectedLoanAmount.formatAmount()}'
-        : 'GHS0.00';
+        ? selectedLoanAmount.formatAmount()
+        : '0.00';
     final topInset = MediaQuery.of(context).padding.top;
     final heroHeight = topInset + 172 < 216 ? 216.0 : topInset + 172;
 
@@ -407,8 +445,19 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
               top: topInset + 63,
               left: 20,
               right: 20,
-              child: Text(
-                amountText,
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    const TextSpan(
+                      text: 'GHS',
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    TextSpan(text: amountText),
+                  ],
+                ),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 32,
@@ -477,6 +526,7 @@ class _LoanProduct {
   final String brand;
   final String level;
   final double amount;
+  final String amountLabel;
   final String interestLabel;
   final String termLabel;
   final LoanProductCardState state;
@@ -487,6 +537,7 @@ class _LoanProduct {
     required this.brand,
     required this.level,
     required this.amount,
+    required this.amountLabel,
     required this.interestLabel,
     required this.termLabel,
     required this.state,
@@ -501,7 +552,8 @@ class _LoanProduct {
           ? item.productName!
           : 'product${index + 1}',
       level: 'Lv.${item.productLevel ?? 1}',
-      amount: item.displayAmount,
+      amount: item.availableAmount,
+      amountLabel: item.availableAmountLabel,
       interestLabel: item.interestLabel,
       termLabel: item.termLabel,
       state: state,
@@ -513,10 +565,6 @@ class _LoanProduct {
     switch (item.productStatus) {
       case 0:
         return LoanProductCardState.available;
-      case 1:
-        return LoanProductCardState.repayment;
-      case 2:
-        return LoanProductCardState.applying;
       case 3:
         return LoanProductCardState.unavailable;
       case 4:
@@ -529,17 +577,6 @@ class _LoanProduct {
   bool get shouldUseOrderCard {
     final item = apiItem;
     if (item == null) return false;
-    final hasOrderId =
-        item.appOrderId != null || (item.appOrderIdStr?.isNotEmpty ?? false);
-    final hasOrderAmount =
-        item.loanAmount != null ||
-        item.receiptAmount != null ||
-        item.repayAmount != null;
-
-    return !state.canConfirm &&
-        (hasOrderId ||
-            hasOrderAmount ||
-            state == LoanProductCardState.repayment ||
-            state == LoanProductCardState.applying);
+    return item.appOrderStatus != null;
   }
 }

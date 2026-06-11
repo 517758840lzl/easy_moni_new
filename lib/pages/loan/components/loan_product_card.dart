@@ -1,36 +1,22 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../utils/extensions.dart';
 
-enum LoanProductCardState {
-  available,
-  repayment,
-  applying,
-  unavailable,
-  rejected,
-}
+enum LoanProductCardState { available, unavailable, rejected }
 
 extension LoanProductCardStateX on LoanProductCardState {
   bool get canConfirm => this == LoanProductCardState.available;
 
-  bool get isGreen =>
-      this == LoanProductCardState.available ||
-      this == LoanProductCardState.applying;
-
-  bool get isYellow => this == LoanProductCardState.repayment;
+  bool get isGreen => this == LoanProductCardState.available;
 
   String get label {
     switch (this) {
       case LoanProductCardState.available:
-        return 'available';
-      case LoanProductCardState.repayment:
-        return 'repayment';
-      case LoanProductCardState.applying:
-        return 'applying';
+        return '可借款';
       case LoanProductCardState.unavailable:
-        return 'unavailable';
+        return '不可借';
       case LoanProductCardState.rejected:
-        return 'rejected';
+        return '已拒绝';
     }
   }
 }
@@ -40,7 +26,7 @@ class LoanProductCard extends StatelessWidget {
     super.key,
     required this.brand,
     required this.level,
-    required this.amount,
+    required this.amountLabel,
     required this.interestLabel,
     required this.termLabel,
     required this.state,
@@ -53,7 +39,7 @@ class LoanProductCard extends StatelessWidget {
 
   final String brand;
   final String level;
-  final double amount;
+  final String amountLabel;
   final String interestLabel;
   final String termLabel;
   final LoanProductCardState state;
@@ -106,7 +92,7 @@ class LoanProductCard extends StatelessWidget {
                   children: [
                     _InfoRow(
                       label: 'Available Loan Amount',
-                      value: 'GHS ${amount.formatAmount()}',
+                      value: amountLabel,
                     ),
                     _InfoRow(
                       label: 'Daily Interest Rate',
@@ -123,64 +109,59 @@ class LoanProductCard extends StatelessWidget {
     );
   }
 
-  BoxBorder? get _border => state == LoanProductCardState.rejected
-      ? Border.all(color: const Color(0xFFFF0D0D), width: 1)
-      : null;
+  BoxBorder? get _border => null;
 
   Widget _buildHeader(_LoanProductCardColors colors) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxStateBadgeWidth = constraints.maxWidth * 0.45;
-
-        return SizedBox(
-          height: 21,
-          child: Row(
-            children: [
-              const SizedBox(width: 4),
-              // logo
-              _ProductLogo(
-                brand: brand,
-                logoUrl: logoUrl,
-                color: colors.logoText,
-              ),
-              const SizedBox(width: 6),
-              // product name + level
-              Expanded(
-                child: Row(
-                  children: [
-                    Text(
-                      brand,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
-                        height: 16 / 12,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    _LevelBadge(level: level),
-                  ],
+    return SizedBox(
+      height: 21,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(width: 4),
+                _ProductLogo(
+                  brand: brand,
+                  logoUrl: logoUrl,
+                  color: colors.logoText,
                 ),
-              ),
-              // status badge
-              const SizedBox(width: 6),
-              ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: maxStateBadgeWidth),
-                child: _StateBadge(state: state, colors: colors),
-              ),
+                const SizedBox(width: 4),
+                Flexible(
+                  fit: FlexFit.loose,
+                  child: Text(
+                    brand,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                      height: 16 / 12,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                _LevelBadge(level: level),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _StateBadge(state: state, colors: colors),
               const SizedBox(width: 7),
               _StateIcon(
                 state: state,
                 isConfirmed: isConfirmed,
                 onToggleConfirmed: onToggleConfirmed,
               ),
-              const SizedBox(width: 4),
             ],
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 }
@@ -208,26 +189,6 @@ class _LoanProductCardColors {
         badgeColor: Color(0xFF38B899),
         border: Color(0xFFD2EEE1),
         logoText: Color(0xFF24835D),
-      );
-    }
-
-    if (state.isYellow) {
-      return const _LoanProductCardColors(
-        cardGradient: [Color(0xFFF9B072), Color(0xFFFFE1C9)],
-        badgeGradient: [Color(0xFFF9B072), Color(0xFFFF843F)],
-        badgeColor: Color(0xFFFF843F),
-        border: Color(0xFFFFE1C9),
-        logoText: Color(0xFFFF843F),
-      );
-    }
-
-    if (state == LoanProductCardState.rejected) {
-      return const _LoanProductCardColors(
-        cardGradient: [Color(0xFFFF5265), Color(0xFFFFDFE3)],
-        badgeGradient: [Color(0xFFFF5265), Color(0xFFFF843F)],
-        badgeColor: Color(0xFFFF5265),
-        border: Color(0xFFFFDFE3),
-        logoText: Color(0xFFFF5265),
       );
     }
 
@@ -388,7 +349,11 @@ class _StateIcon extends StatelessWidget {
                 : Colors.white.withValues(alpha: 0.22),
           ),
           child: isConfirmed
-              ? const Icon(Icons.check_rounded, size: 13, color: Color(0xFF216A4A))
+              ? const Icon(
+                  Icons.check_rounded,
+                  size: 13,
+                  color: Color(0xFF216A4A),
+                )
               : const SizedBox.shrink(),
         ),
       );
@@ -404,10 +369,6 @@ class _StateIcon extends StatelessWidget {
       child: Icon(
         state == LoanProductCardState.rejected
             ? Icons.block_rounded
-            : state == LoanProductCardState.repayment
-            ? Icons.schedule_rounded
-            : state == LoanProductCardState.applying
-            ? Icons.hourglass_empty_rounded
             : Icons.lock_outline_rounded,
         size: 13,
         color: const Color(0xFF45537A),

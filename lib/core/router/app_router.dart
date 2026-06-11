@@ -12,6 +12,9 @@ import '../../pages/fillInforma/id_camera_page.dart';
 import '../../pages/fillInforma/identity_verify_page.dart';
 import '../../pages/fillInforma/personal_info_page.dart' as fill_info;
 import '../../pages/fillInforma/questionnaire_page.dart';
+import '../../pages/loan/loan_confirm_page.dart';
+import '../../pages/loan/loan_reviewing_page.dart';
+import '../../pages/loan/models/loan_confirm_request_product.dart';
 import '../../pages/mine/detailpage.dart';
 import '../../pages/mine/mine.dart';
 import '../../pages/mine/order_history_page.dart';
@@ -108,6 +111,23 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final idNumber = params?['idNumber'] as String?;
           return PaymentPage(amount: amount, phone: phone, idNumber: idNumber);
         },
+      ),
+      GoRoute(
+        path: '/loan-confirm',
+        name: 'loanConfirm',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          final rawProducts = extra?['products'];
+          final products = rawProducts is List<LoanConfirmRequestProduct>
+              ? rawProducts
+              : const <LoanConfirmRequestProduct>[];
+          return LoanConfirmPage(products: products);
+        },
+      ),
+      GoRoute(
+        path: '/loan-reviewing',
+        name: 'loanReviewing',
+        builder: (context, state) => const LoanReviewingPage(),
       ),
       GoRoute(
         path: '/contact-info',

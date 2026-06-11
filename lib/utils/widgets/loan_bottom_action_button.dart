@@ -10,7 +10,7 @@ class LoanBottomActionButton extends StatelessWidget {
     super.key,
     required this.enabled,
     required this.onPressed,
-    this.text = '\u6211\u8981\u501F\u6B3E',
+    this.text = '确认借款',
     this.mode = LoanBottomActionButtonMode.fixed,
   });
 
@@ -34,21 +34,7 @@ class LoanBottomActionButton extends StatelessWidget {
                 ? const Color(0xFF268470)
                 : const Color(0xFFC2C9CE),
             borderRadius: BorderRadius.circular(100),
-            boxShadow: enabled
-                ? const [
-                    BoxShadow(
-                      color: Color(0x332E8F75),
-                      blurRadius: 24,
-                      offset: Offset(0, 10),
-                    ),
-                  ]
-                : const [
-                    BoxShadow(
-                      color: Color(0x12000000),
-                      blurRadius: 16,
-                      offset: Offset(0, 6),
-                    ),
-                  ],
+
           ),
           child: Center(
             child: Text(

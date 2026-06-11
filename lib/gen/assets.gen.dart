@@ -199,6 +199,10 @@ class $AssetsImagesGen {
   AssetGenImage get loanOpen =>
       const AssetGenImage('assets/images/loan_open.png');
 
+  /// File path: assets/images/loan_reviewing.png
+  AssetGenImage get loanReviewing =>
+      const AssetGenImage('assets/images/loan_reviewing.png');
+
   /// File path: assets/images/loan_security.png
   AssetGenImage get loanSecurity =>
       const AssetGenImage('assets/images/loan_security.png');
@@ -296,6 +300,10 @@ class $AssetsImagesGen {
   /// File path: assets/images/moban.png
   AssetGenImage get moban => const AssetGenImage('assets/images/moban.png');
 
+  /// File path: assets/images/permission_camera_3d.png
+  AssetGenImage get permissionCamera3d =>
+      const AssetGenImage('assets/images/permission_camera_3d.png');
+
   /// File path: assets/images/star_icon.png
   AssetGenImage get starIcon =>
       const AssetGenImage('assets/images/star_icon.png');
@@ -353,6 +361,7 @@ class $AssetsImagesGen {
     loanMoney,
     loanNormal,
     loanOpen,
+    loanReviewing,
     loanSecurity,
     loanSelect,
     loanStar,
@@ -378,6 +387,7 @@ class $AssetsImagesGen {
     mineWaiting,
     mineWallet,
     moban,
+    permissionCamera3d,
     starIcon,
     takepicture,
   ];
