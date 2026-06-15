@@ -3,11 +3,7 @@ import 'package:easy_moni/gen/assets.gen.dart';
 
 import '../../../utils/widgets/linepaint.dart';
 
-enum InformationStep {
-  personal,
-  identity,
-  face,
-}
+enum InformationStep { personal, identity, face }
 
 Widget buildInformationHeader({
   required BuildContext context,
@@ -75,18 +71,28 @@ Widget buildProgressIndicator({required InformationStep activeStep}) {
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
       _buildStepItem(
-        icon: isPersonActive?Assets.images.inforamtionIdSelect.image():Assets.images.inforamtionIdNormal.image(),
+        icon: isPersonActive
+            ? Assets.images.inforamtionIdSelect.image()
+            : Assets.images.inforamtionIdNormal.image(),
         label: '个人信息',
         isCompleted: isPersonActive,
       ),
       _buildConnector(),
       _buildStepItem(
-        icon: isIdActive?Assets.images.inforamtionIdtSelect.image():Assets.images.inforamtionIdtNormal.image(),
+        icon: isIdActive
+            ? Assets.images.inforamtionIdtSelect.image()
+            : Assets.images.inforamtionIdtNormal.image(),
         label: '身份验证',
         isCompleted: isIdActive,
       ),
       _buildConnector(),
-      _buildStepItem(icon: isFaceActive?Assets.images.inforamtionIdthSelect.image():Assets.images.inforamtionIdthNormal.image(), label: '人脸验证', isCompleted: isFaceActive),
+      _buildStepItem(
+        icon: isFaceActive
+            ? Assets.images.inforamtionIdthSelect.image()
+            : Assets.images.inforamtionIdthNormal.image(),
+        label: '人脸验证',
+        isCompleted: isFaceActive,
+      ),
     ],
   );
 }

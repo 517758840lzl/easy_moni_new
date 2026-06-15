@@ -99,7 +99,9 @@ class InstallTracker {
     if (obtainResponse is! Map) return null;
 
     final obtainMap = Map<String, dynamic>.from(obtainResponse);
-    if (obtainMap.containsKey('status') && obtainMap['status'] == 'success' && obtainMap.containsKey('payload')) {
+    if (obtainMap.containsKey('status') &&
+        obtainMap['status'] == 'success' &&
+        obtainMap.containsKey('payload')) {
       return Map<String, dynamic>.from(obtainMap['payload'] ?? {});
     }
     return null;
@@ -136,7 +138,6 @@ class InstallTracker {
 
     return 'No-Organic';
   }
-
 
   /// 构建事件参数
   // static Map<String, dynamic> _buildEventParameters({

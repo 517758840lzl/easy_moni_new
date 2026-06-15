@@ -34,12 +34,7 @@ class ProcessStep {
   final int? pageType;
   final List<dynamic>? entries;
 
-  const ProcessStep({
-    this.step,
-    this.pageTitle,
-    this.pageType,
-    this.entries,
-  });
+  const ProcessStep({this.step, this.pageTitle, this.pageType, this.entries});
 
   factory ProcessStep.fromJson(dynamic json) {
     final Map<String, dynamic> map;

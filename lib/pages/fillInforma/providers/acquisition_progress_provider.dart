@@ -13,7 +13,8 @@ class AcquisitionProgressApi {
   Future<HttpResult<AcquisitionProgressResp>> call() async {
     final result = await HttpProvider.instance.get<AcquisitionProgressResp>(
       ApiConstants.queryAcquisitionProgress,
-      fromJson: (json) => AcquisitionProgressResp.fromJson(json as Map<String, dynamic>),
+      fromJson: (json) =>
+          AcquisitionProgressResp.fromJson(json as Map<String, dynamic>),
     );
     return result;
   }

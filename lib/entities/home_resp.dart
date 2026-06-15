@@ -1,6 +1,5 @@
 import 'dart:convert';
-
-import 'package:flutter/foundation.dart';
+import 'package:easy_moni/core/utils/app_logger.dart';
 
 import '../utils/extensions.dart';
 
@@ -26,7 +25,7 @@ class HomeResp {
         hasAvailableCoupons: _parseBool(map['hasAvailableCoupons']),
       );
     } catch (e, stack) {
-      debugPrint('HomeResp.fromJson 异常: $e\n$stack');
+      AppLogger.debug('HomeResp.fromJson 异常: $e\n$stack');
       return const HomeResp();
     }
   }

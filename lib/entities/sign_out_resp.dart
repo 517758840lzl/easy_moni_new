@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
+import 'package:easy_moni/core/utils/app_logger.dart';
 
 class SignOutResp {
   const SignOutResp();
@@ -14,13 +14,13 @@ class SignOutResp {
       } else if (json is String) {
         map = Map<String, dynamic>.from(jsonDecode(json) as Map);
       } else {
-        debugPrint('SignOutResp.fromJson: 未知类型 ${json.runtimeType}');
+        AppLogger.debug('SignOutResp.fromJson: 未知类型 ${json.runtimeType}');
         return const SignOutResp();
       }
 
       return const SignOutResp();
     } catch (e, stack) {
-      debugPrint('SignOutResp.fromJson 异常: $e\n$stack');
+      AppLogger.debug('SignOutResp.fromJson 异常: $e\n$stack');
       return const SignOutResp();
     }
   }

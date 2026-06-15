@@ -13,7 +13,8 @@ class CustomerServiceInfoApi {
   Future<HttpResult<CustomerServiceInfoResp>> call() async {
     final result = await HttpProvider.instance.get<CustomerServiceInfoResp>(
       ApiConstants.customerServiceInfo,
-      fromJson: (json) => CustomerServiceInfoResp.fromJson(json as Map<String, dynamic>),
+      fromJson: (json) =>
+          CustomerServiceInfoResp.fromJson(json as Map<String, dynamic>),
     );
     return result;
   }

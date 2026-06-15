@@ -1,0 +1,160 @@
+{
+  "code": 200,
+  "msg": "success",
+  "data": {
+    "processId": 36,
+    "stepInfoList": [
+      {
+        "step": 1,
+        "pageTitle": "Personal Information",
+        "pageType": 1,
+        "entries": [
+          {
+            "code": "20001",
+            "showContent": "Job Type",
+            "defaultText": "Please select",
+            "submitValue": null,
+            "rules": null,
+            "type": 2,
+            "selectList": [
+              {
+                "key": "1",
+                "value": "Full-time"
+              },
+              {
+                "key": "2",
+                "value": "Part-time"
+              },
+              {
+                "key": "3",
+                "value": "Freelance"
+              },
+              {
+                "key": "4",
+                "value": "Student"
+              },
+              {
+                "key": "5",
+                "value": "Unemployed"
+              },
+              {
+                "key": "6",
+                "value": "Other"
+              }
+            ],
+            "key": "employment_role",
+            "order": 1,
+            "must": 1
+          },
+          {
+            "code": "20002",
+            "showContent": "Monthly Income",
+            "defaultText": "Please select",
+            "submitValue": null,
+            "rules": null,
+            "type": 2,
+            "selectList": [
+              {
+                "key": "1",
+                "value": "Less than GHS 1,000"
+              },
+              {
+                "key": "2",
+                "value": "GHS 1,000 - GHS 2,499"
+              },
+              {
+                "key": "3",
+                "value": "GHS 2,500 - GHS 4,999"
+              },
+              {
+                "key": "4",
+                "value": "GHS 5,000 - GHS 9,999"
+              },
+              {
+                "key": "5",
+                "value": "Above GHS 10,000"
+              }
+            ],
+            "key": "income_estimate",
+            "order": 2,
+            "must": 1
+          },
+          {
+            "code": "10001",
+            "showContent": "Highest Education Level",
+            "defaultText": "Please select",
+            "submitValue": null,
+            "rules": null,
+            "type": 2,
+            "selectList": [
+              {
+                "key": "1",
+                "value": "Basic School"
+              },
+              {
+                "key": "2",
+                "value": "High School"
+              },
+              {
+                "key": "3",
+                "value": "Diploma"
+              },
+              {
+                "key": "4",
+                "value": "Bachelors Degree"
+              },
+              {
+                "key": "5",
+                "value": "Master's Degree and higher"
+              }
+            ],
+            "key": "education_attainment",
+            "order": 3,
+            "must": 1
+          },
+          {
+            "code": "10002",
+            "showContent": "Marital Status",
+            "defaultText": "Please select",
+            "submitValue": null,
+            "rules": null,
+            "type": 2,
+            "selectList": [
+              {
+                "key": "1",
+                "value": "Single"
+              },
+              {
+                "key": "2",
+                "value": "Married"
+              },
+              {
+                "key": "3",
+                "value": "Divorced"
+              },
+              {
+                "key": "4",
+                "value": "Widowed"
+              }
+            ],
+            "key": "marital_status",
+            "order": 4,
+            "must": 1
+          },
+          {
+            "code": "10004",
+            "showContent": "Region and City",
+            "defaultText": "Please select",
+            "submitValue": null,
+            "rules": null,
+            "type": 2,
+            "selectList": null,
+            "key": "geo_location",
+            "order": 5,
+            "must": 1
+          }
+        ]
+      }
+    ]
+  }
+}

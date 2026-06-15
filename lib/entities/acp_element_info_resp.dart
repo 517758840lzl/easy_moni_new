@@ -10,7 +10,8 @@ class AcpElementInfoResp {
   factory AcpElementInfoResp.fromJson(Map<String, dynamic> json) {
     return AcpElementInfoResp(
       processId: json['processId'] as int? ?? 0,
-      stepInfoList: (json['stepInfoList'] as List<dynamic>?)
+      stepInfoList:
+          (json['stepInfoList'] as List<dynamic>?)
               ?.map((e) => StepInfo.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -36,7 +37,8 @@ class StepInfo {
       step: json['step'] as int? ?? 0,
       pageTitle: json['pageTitle'] as String? ?? '',
       pageType: json['pageType'] as int? ?? 0,
-      entries: (json['entries'] as List<dynamic>?)
+      entries:
+          (json['entries'] as List<dynamic>?)
               ?.map((e) => FormEntry.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -88,10 +90,7 @@ class SelectOption {
   final String key;
   final String value;
 
-  const SelectOption({
-    required this.key,
-    required this.value,
-  });
+  const SelectOption({required this.key, required this.value});
 
   factory SelectOption.fromJson(Map<String, dynamic> json) {
     return SelectOption(

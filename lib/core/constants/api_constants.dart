@@ -1,21 +1,7 @@
 class ApiConstants {
   ApiConstants._();
 
-  static const String baseUrl = 'https://www.zzyd.click/';
-
-  static const Duration connectTimeOut = Duration(seconds: 30);
-
-  static const Duration receiveTimeOut = Duration(seconds: 30);
-
-  static const String appVersion = '10';
-
-  static const String clientType = 'android';
-
-  static const String deviceId = '7da8118f936659a7';
-
-  static const String advId = 'be1089a1-dc4b-4684-9882-2d670a214784';
-
-  //服务器任一接口返回 401，表示token过期或用户未登录 ==================== API Paths ====================
+  // 服务器任一接口返回 401，表示 token 过期或用户未登录。
   static const String bannerList = '/api/banner/list';
   static const String sendVerifyCode = '/api/user/sendVerifyCode';
   /*客服信息*/
@@ -26,6 +12,7 @@ class ApiConstants {
   /*检数据是否过期接口*/
   static const String checkUploadDataValid =
       '/api/upload/data/checkUploadDataValid';
+  static const String submitUserUploadData = '/api/upload/data/submitUserUploadData';
   /*查询用户状态GET*/
   static const String queryAcquisitionProgress =
       '/api/user/acquisition/queryAcquisitionProgress';

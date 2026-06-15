@@ -1,7 +1,9 @@
+import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:easy_moni/core/utils/app_logger.dart';
 
 import '../../gen/assets.gen.dart';
 
@@ -289,13 +291,13 @@ class _SurveyPageState extends ConsumerState<SurveyPage> {
 
   void _onSubmit() {
     if (_canSubmit) {
-      debugPrint(
+      AppLogger.debug(
         '提交问卷: $_loanAmount, $_loanPurpose, $_unpaidAmount, $_unpaidCount, $_hasOverdue, $_maxOverdueDays, $_creditYears',
       );
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('提交成功')));
-      context.go('/');
+      context.go(AppRoutePaths.root);
     }
   }
 

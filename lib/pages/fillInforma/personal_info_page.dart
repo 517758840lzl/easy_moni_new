@@ -1,4 +1,5 @@
 import 'package:easy_moni/pages/fillInforma/widgets/progressInformation.dart';
+import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +13,7 @@ import 'providers/acp_element_info_provider.dart';
 import 'providers/provinces_cities_area_provider.dart';
 import 'providers/submit_acp_element_info_provider.dart';
 import 'package:easy_moni/utils/widgets/limit_toast.dart';
+import 'package:easy_moni/core/utils/app_logger.dart';
 
 class PersonalInfoPage extends ConsumerStatefulWidget {
   const PersonalInfoPage({super.key});
@@ -154,7 +156,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
   }
 
   Future<void> _fetchData() async {
-    debugPrint('_fetchData 开始...');
+    AppLogger.debug('_fetchData 开始...');
     try {
       // 并行获取表单数据和省市数据
       final results = await Future.wait([
@@ -166,27 +168,29 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
 
       // 处理表单数据
       final formResult = results[0] as dynamic;
-      debugPrint('formResult: $formResult');
-      debugPrint('formResult.isSuccess: ${formResult.isSuccess}');
-      debugPrint('formResult.data: ${formResult.data}');
+      AppLogger.debug('formResult: $formResult');
+      AppLogger.debug('formResult.isSuccess: ${formResult.isSuccess}');
+      AppLogger.debug('formResult.data: ${formResult.data}');
 
       if (formResult.isSuccess && formResult.data != null) {
         final stepInfoList = formResult.data!.stepInfoList;
-        debugPrint(
+        AppLogger.debug(
           'stepInfoList: $stepInfoList, length: ${stepInfoList.length}',
         );
         final stepInfo = stepInfoList.isNotEmpty ? stepInfoList[0] : null;
-        debugPrint('stepInfo: $stepInfo');
+        AppLogger.debug('stepInfo: $stepInfo');
         if (stepInfo != null) {
           _stepInfo = stepInfo;
           _processId = formResult.data!.processId;
-          debugPrint('设置 _stepInfo, entries 数量: ${stepInfo.entries.length}');
+          AppLogger.debug(
+            '设置 _stepInfo, entries 数量: ${stepInfo.entries.length}',
+          );
           // 初始化选中索引和值
           for (final entry in stepInfo.entries) {
             _selectedIndices[entry.key] = 0;
             _selectedValues[entry.key] = entry.submitValue;
             _selectedSubmitValues[entry.key] = entry.submitValue;
-            debugPrint('entry: ${entry.key} - ${entry.showContent}');
+            AppLogger.debug('entry: ${entry.key} - ${entry.showContent}');
 
             if (_isEmailEntry(entry) || entry.type == 1) {
               _textControllers[entry.key] = TextEditingController(
@@ -226,12 +230,12 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
           }
         }
       } else {
-        debugPrint('表单数据获取失败: ${formResult.message}');
+        AppLogger.debug('表单数据获取失败: ${formResult.message}');
       }
 
       // 处理省市数据
       final areaResult = results[1] as dynamic;
-      debugPrint('areaResult.isSuccess: ${areaResult.isSuccess}');
+      AppLogger.debug('areaResult.isSuccess: ${areaResult.isSuccess}');
       if (areaResult.isSuccess && areaResult.data != null) {
         _provinces = areaResult.data!.province;
         _cities = areaResult.data!.city;
@@ -239,11 +243,11 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
         _buildRegionCityData();
       }
 
-      debugPrint('_fetchData 完成, _isLoading 设置为 false');
+      AppLogger.debug('_fetchData 完成, _isLoading 设置为 false');
       setState(() => _isLoading = false);
     } catch (e, stack) {
-      debugPrint('获取数据失败: $e');
-      debugPrint('堆栈: $stack');
+      AppLogger.debug('获取数据失败: $e');
+      AppLogger.debug('堆栈: $stack');
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -321,7 +325,9 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
         return;
       }
 
-      debugPrint('获取到位置: ${position['latitude']}, ${position['longitude']}');
+      AppLogger.debug(
+        '获取到位置: ${position['latitude']}, ${position['longitude']}',
+      );
 
       // 根据位置匹配最近的地区
       String matchedRegion = _matchRegionByCoordinates(
@@ -349,7 +355,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
         }
       });
     } catch (e) {
-      debugPrint('获取位置失败: $e');
+      AppLogger.debug('获取位置失败: $e');
       // 失败时弹出手动选择
       _showRegionPicker();
     } finally {
@@ -811,7 +817,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
       if (!mounted) return;
 
       if (result.isSuccess) {
-        context.push('/contact-info');
+        context.push(AppRoutePaths.contactInfo);
       } else {
         ScaffoldMessenger.of(
           context,

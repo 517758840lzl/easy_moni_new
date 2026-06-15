@@ -1,3 +1,4 @@
+import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../services/platform_service.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import '../../utils/widgets/linepaint.dart';
+import 'package:easy_moni/core/utils/app_logger.dart';
 
 class PersonalInfoPage extends ConsumerStatefulWidget {
   const PersonalInfoPage({super.key});
@@ -98,7 +100,9 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
         return;
       }
 
-      debugPrint('获取到位置: ${position['latitude']}, ${position['longitude']}');
+      AppLogger.debug(
+        '获取到位置: ${position['latitude']}, ${position['longitude']}',
+      );
 
       // 根据位置匹配最近的地区
       String matchedRegion = _matchRegionByCoordinates(
@@ -116,7 +120,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
             '${_regionCityData[_selectedRegionIndex]['region']} - ${_regionCityData[_selectedRegionIndex]['city']}';
       });
     } catch (e) {
-      debugPrint('获取位置失败: $e');
+      AppLogger.debug('获取位置失败: $e');
       // 失败时弹出手动选择
       _showRegionPicker();
     } finally {
@@ -529,8 +533,8 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
 
   void _onContinue() {
     if (_canContinue) {
-      debugPrint('点击了继续按钮');
-      context.push('/contact-info');
+      AppLogger.debug('点击了继续按钮');
+      context.push(AppRoutePaths.contactInfo);
     }
   }
 

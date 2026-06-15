@@ -24,9 +24,7 @@ class BillDetailsApi {
 
     final result = await HttpProvider.instance.post<Map<String, dynamic>>(
       ApiConstants.billDetails,
-      data: {
-        'appOrderIds': ids,
-      },
+      data: {'appOrderIds': ids},
       fromJson: (json) => json as Map<String, dynamic>,
     );
 

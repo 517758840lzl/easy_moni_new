@@ -1,3 +1,4 @@
+import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -124,7 +125,7 @@ class _RepayMultiDetailPageState extends ConsumerState<RepayMultiDetailPage> {
                               onTap: () {
                                 if (widget.bills.isNotEmpty) {
                                   context.push(
-                                    '/extension-apply',
+                                    AppRoutePaths.extensionApply,
                                     extra: widget.bills.first.id,
                                   );
                                 }
@@ -155,7 +156,7 @@ class _RepayMultiDetailPageState extends ConsumerState<RepayMultiDetailPage> {
                             child: GestureDetector(
                               onTap: () {
                                 context.push(
-                                  '/payment',
+                                  AppRoutePaths.payment,
                                   extra: {
                                     'amount': _totalAmount,
                                     'phone': '234543234565432',
@@ -303,5 +304,4 @@ class _RepayMultiDetailPageState extends ConsumerState<RepayMultiDetailPage> {
       ),
     );
   }
-
 }

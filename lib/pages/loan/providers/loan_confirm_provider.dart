@@ -26,9 +26,20 @@ class LoanConfirmApi {
     );
   }
 
-  Future<HttpResult<CouponResp>> fetchCoupons() {
-    return HttpProvider.instance.get<CouponResp>(
+  Future<HttpResult<CouponResp>> fetchCoupons({
+    required List<int> appOrderIds,
+    required List<String> productCodes,
+    String couponType = 'PRE',
+    int repaymentType = 1,
+  }) {
+    return HttpProvider.instance.post<CouponResp>(
       ApiConstants.customerCouponList,
+      data: {
+        'appOrderIds': appOrderIds,
+        'couponType': couponType,
+        'productCodes': productCodes,
+        'repaymentType': repaymentType,
+      },
       fromJson: (json) => _parseCouponResp(json),
     );
   }

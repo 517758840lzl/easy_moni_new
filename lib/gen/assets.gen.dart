@@ -33,9 +33,21 @@ class $AssetsImagesGen {
   AssetGenImage get notebook =>
       const AssetGenImage('assets/images/Notebook.png');
 
+  /// File path: assets/images/app_logo_512.png
+  AssetGenImage get appLogo512 =>
+      const AssetGenImage('assets/images/app_logo_512.png');
+
   /// File path: assets/images/biaoqian.png
   AssetGenImage get biaoqian =>
       const AssetGenImage('assets/images/biaoqian.png');
+
+  /// File path: assets/images/coupon_bg.png
+  AssetGenImage get couponBg =>
+      const AssetGenImage('assets/images/coupon_bg.png');
+
+  /// File path: assets/images/coupon_card_border.png
+  AssetGenImage get couponCardBorder =>
+      const AssetGenImage('assets/images/coupon_card_border.png');
 
   /// File path: assets/images/customer.png
   AssetGenImage get customer =>
@@ -304,6 +316,10 @@ class $AssetsImagesGen {
   AssetGenImage get permissionCamera3d =>
       const AssetGenImage('assets/images/permission_camera_3d.png');
 
+  /// File path: assets/images/permission_sms.png
+  AssetGenImage get permissionSms =>
+      const AssetGenImage('assets/images/permission_sms.png');
+
   /// File path: assets/images/star_icon.png
   AssetGenImage get starIcon =>
       const AssetGenImage('assets/images/star_icon.png');
@@ -319,7 +335,10 @@ class $AssetsImagesGen {
     dangerCircleNormal,
     gallerySend,
     notebook,
+    appLogo512,
     biaoqian,
+    couponBg,
+    couponCardBorder,
     customer,
     dotss,
     inforamtionBgheader,
@@ -388,6 +407,7 @@ class $AssetsImagesGen {
     mineWallet,
     moban,
     permissionCamera3d,
+    permissionSms,
     starIcon,
     takepicture,
   ];

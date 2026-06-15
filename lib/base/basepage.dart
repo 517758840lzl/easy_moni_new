@@ -94,9 +94,7 @@ class _BasePageState<T extends BasePage> extends ConsumerState<T>
     super.build(context);
 
     if (!widget.showAppBar) {
-      return Scaffold(
-        body: SafeArea(child: widget.buildBody(context, ref)),
-      );
+      return Scaffold(body: SafeArea(child: widget.buildBody(context, ref)));
     }
 
     return Scaffold(

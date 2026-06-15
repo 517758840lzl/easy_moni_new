@@ -20,7 +20,8 @@ class ExtensionResp {
       extensionFee: _parseDouble(json['extensionFee']),
       newExtensionFee: _parseDouble(json['newExtensionFee']),
       extensionWaivedAmount: _parseDouble(json['extensionWaivedAmount']),
-      extensionRepaymentDate: (json['extensionRepaymentDate'] as List<dynamic>?)
+      extensionRepaymentDate:
+          (json['extensionRepaymentDate'] as List<dynamic>?)
               ?.map((e) => e as int)
               .toList() ??
           [],

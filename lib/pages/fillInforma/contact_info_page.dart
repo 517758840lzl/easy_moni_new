@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'package:easy_moni/core/utils/app_logger.dart';
 
 import 'package:easy_moni/core/constants/app_strings.dart';
+import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/progressInformation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -131,7 +133,7 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
         }
       });
     } catch (e) {
-      debugPrint('Failed to open contacts: $e');
+      AppLogger.debug('Failed to open contacts: $e');
       _showErrorDialog('Failed to open contacts. Please try again.');
     }
   }
@@ -240,7 +242,7 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
 
       if (!mounted) return;
       if (result.isSuccess) {
-        context.push('/identity-verify');
+        context.push(AppRoutePaths.identityVerify);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(result.message ?? 'Save failed')),

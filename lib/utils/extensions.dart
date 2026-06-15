@@ -25,7 +25,8 @@ extension DateTimeExtension on DateTime {
   String get formatDate {
     return '${year.toString()}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
   }
-//输出完整的“年月日 时:分
+
+  //输出完整的“年月日 时:分
   String get formatDateTime {
     return '$formatDate ${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
   }

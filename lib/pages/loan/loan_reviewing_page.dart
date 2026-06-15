@@ -1,3 +1,5 @@
+import 'package:easy_moni/core/constants/app_strings.dart';
+import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -26,7 +28,7 @@ class LoanReviewingPage extends StatelessWidget {
       bottomNavigationBar: LoanBottomActionButton(
         enabled: true,
         text: '回到首页',
-        onPressed: () => context.go('/home'),
+        onPressed: () => context.go(AppRoutePaths.home),
       ),
     );
   }
@@ -50,7 +52,7 @@ class _ReviewingAppBar extends StatelessWidget {
             top: 4,
             left: 6,
             child: IconButton(
-              onPressed: () => context.go('/home'),
+              onPressed: () => context.go(AppRoutePaths.home),
               icon: const Icon(
                 Icons.arrow_back_ios_new_rounded,
                 color: Colors.white,
@@ -63,7 +65,7 @@ class _ReviewingAppBar extends StatelessWidget {
             left: 64,
             right: 64,
             child: Text(
-              '申请借款',
+              AppStrings.loanReviewAppBarTitle,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
@@ -133,17 +135,21 @@ class _ReviewingContentPanel extends StatelessWidget {
                         fit: BoxFit.contain,
                       ),
                     ),
-                    Text('审核中',style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16
-                    ),),
-                    const SizedBox(height: 8,),
-                    Text('您的借款申请正在审核中。\n通常会在几分钟内出结果。\n请耐心等待，结果将及时通知您。',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w400,
-                      fontSize: 14,
-                      height: 1.5
+                    Text(
+                      AppStrings.loanReviewTitle,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      AppStrings.loanReviewDesc,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w400,
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ],

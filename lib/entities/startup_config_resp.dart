@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
+import 'package:easy_moni/core/utils/app_logger.dart';
 
 /// /api/common/startup/config 响应实体
 class StartupConfigResp {
@@ -29,7 +29,7 @@ class StartupConfigResp {
       } else if (json is String) {
         map = Map<String, dynamic>.from(jsonDecode(json) as Map);
       } else {
-        debugPrint('StartupConfigResp.fromJson: 未知类型 ${json.runtimeType}');
+        AppLogger.debug('StartupConfigResp.fromJson: 未知类型 ${json.runtimeType}');
         return const StartupConfigResp();
       }
 
@@ -46,7 +46,7 @@ class StartupConfigResp {
             : null,
       );
     } catch (e, stack) {
-      debugPrint('StartupConfigResp.fromJson 异常: $e\n$stack');
+      AppLogger.debug('StartupConfigResp.fromJson 异常: $e\n$stack');
       return const StartupConfigResp();
     }
   }
@@ -100,7 +100,9 @@ class AppListConfig {
 
       List<String>? permList;
       if (map['permission'] is List) {
-        permList = (map['permission'] as List).map((e) => e.toString()).toList();
+        permList = (map['permission'] as List)
+            .map((e) => e.toString())
+            .toList();
       }
 
       return AppListConfig(
@@ -108,13 +110,14 @@ class AppListConfig {
         wayType: StartupConfigResp._parseInt(map['wayType']),
       );
     } catch (e) {
-      debugPrint('AppListConfig.fromJson 异常: $e');
+      AppLogger.debug('AppListConfig.fromJson 异常: $e');
       return const AppListConfig();
     }
   }
 
   @override
-  String toString() => 'AppListConfig(permission: $permission, wayType: $wayType)';
+  String toString() =>
+      'AppListConfig(permission: $permission, wayType: $wayType)';
 }
 
 class FaceStep {
@@ -139,7 +142,7 @@ class FaceStep {
         key: map['key']?.toString(),
       );
     } catch (e) {
-      debugPrint('FaceStep.fromJson 异常: $e');
+      AppLogger.debug('FaceStep.fromJson 异常: $e');
       return const FaceStep();
     }
   }
@@ -165,10 +168,12 @@ class Switches {
       }
 
       return Switches(
-        idConfirmationPopup: StartupConfigResp._parseInt(map['idConfirmationPopup']),
+        idConfirmationPopup: StartupConfigResp._parseInt(
+          map['idConfirmationPopup'],
+        ),
       );
     } catch (e) {
-      debugPrint('Switches.fromJson 异常: $e');
+      AppLogger.debug('Switches.fromJson 异常: $e');
       return const Switches();
     }
   }

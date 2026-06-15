@@ -1,64 +1,60 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
+import 'package:easy_moni/core/config/environment_config.dart';
+import 'package:easy_moni/core/network/http_result.dart';
 import 'package:easy_moni/core/network/interrepters/header_interrepter.dart';
-import 'package:easy_moni/core/router/app_router.dart';
 import 'package:easy_moni/core/network/interrepters/logging_interrepter.dart';
+import 'package:easy_moni/core/router/app_router.dart';
+import 'package:easy_moni/core/router/app_routes.dart';
+import 'package:easy_moni/entities/base_result.dart';
 import 'package:easy_moni/services/auth_storage.dart';
 import 'package:flutter/widgets.dart';
-import 'package:talker/talker.dart';
 import 'package:go_router/go_router.dart';
-import '../constants/api_constants.dart';
-import 'http_result.dart';
-import '../../entities/base_result.dart';
-import 'package:dio/dio.dart';
+import 'package:talker/talker.dart';
 
 class HttpProvider {
   final Dio _dio;
   final Talker _talker;
+  final EnvironmentConfig _config;
   final HeaderInterrepter _headerInterceptor;
   bool _isRedirectingToLogin = false;
 
   HttpProvider._({
-    required Dio dio,
-    required Talker talker,
-    required HeaderInterrepter headerInterceptor,
-  }) : _dio = dio,
-       _talker = talker,
-       _headerInterceptor = headerInterceptor;
+    required this._dio,
+    required this._talker,
+    required this._config,
+    required this._headerInterceptor,
+  });
 
   static late HttpProvider instance;
 
   static void init({required Talker talker}) {
+    final config = EnvironmentConfig.current;
     final dio = Dio(
       BaseOptions(
-        baseUrl: ApiConstants.baseUrl,
-        connectTimeout: ApiConstants.connectTimeOut,
-        receiveTimeout: ApiConstants.receiveTimeOut,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'acqChannel': 'GHPM',
-          'acqChannelIndex': '0',
-          'disableEncBody': 'false',
-          'appVersion': ApiConstants.appVersion,
-          'clientType': ApiConstants.clientType,
-          'advId': ApiConstants.advId,
-          'deviceId': ApiConstants.deviceId,
-        },
+        baseUrl: config.baseUrl,
+        connectTimeout: config.connectTimeout,
+        receiveTimeout: config.receiveTimeout,
       ),
     );
 
-    final headerInterceptor = HeaderInterrepter();
-    final loggingInterceptor = LoggingInterrepter(takler: talker);
+    final headerInterceptor = HeaderInterrepter(config);
 
-    dio.interceptors.addAll([headerInterceptor, loggingInterceptor]);
+    dio.interceptors.add(headerInterceptor);
+    if (config.enableNetworkLog) {
+      dio.interceptors.add(LoggingInterrepter(takler: talker));
+    }
 
     instance = HttpProvider._(
       dio: dio,
       talker: talker,
+      config: config,
       headerInterceptor: headerInterceptor,
     );
   }
+
+  EnvironmentConfig get config => _config;
 
   Future<void> setToken(String? token) async {
     _headerInterceptor.setToken(token);
@@ -86,9 +82,11 @@ class HttpProvider {
     unawaited(clearAuth());
     final context = globalNavigationKey.currentContext;
     if (context != null) {
-      final currentUri = GoRouter.of(context).routeInformationProvider.value.uri;
-      if (currentUri.toString() != '/login') {
-        context.go('/login');
+      final currentUri = GoRouter.of(
+        context,
+      ).routeInformationProvider.value.uri;
+      if (currentUri.toString() != AppRoutePaths.login) {
+        context.go(AppRoutePaths.login);
       }
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -96,11 +94,7 @@ class HttpProvider {
     });
   }
 
-  bool _isAuthFailure({
-    int? bizCode,
-    int? statusCode,
-    String? message,
-  }) {
+  bool _isAuthFailure({int? bizCode, int? statusCode, String? message}) {
     if (bizCode == 401 || statusCode == 401) {
       return true;
     }

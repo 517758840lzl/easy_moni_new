@@ -74,7 +74,9 @@ class CommonBottomSheet<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
-    final maxHeight = MediaQuery.sizeOf(context).height * 0.9;
+    final maxHeight = MediaQuery.sizeOf(context).height * 0.5;
+    final hasTextContent =
+        title.trim().isNotEmpty || description.trim().isNotEmpty;
 
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: maxHeight),
@@ -101,14 +103,14 @@ class CommonBottomSheet<T> extends StatelessWidget {
                               image!,
                               const SizedBox(height: 24),
                             ],
-                            _BottomSheetTextContent(
-                              title: title,
-                              description: description,
-                            ),
-                            if (content != null) ...[
+                            if (hasTextContent)
+                              _BottomSheetTextContent(
+                                title: title,
+                                description: description,
+                              ),
+                            if (content != null && hasTextContent)
                               const SizedBox(height: 24),
-                              content!,
-                            ],
+                            ?content,
                           ],
                         ),
                       ),
@@ -193,9 +195,13 @@ class _BottomSheetActions<T> extends StatelessWidget {
           ? _BottomSheetActionButton<T>(action: actions.first)
           : Row(
               children: [
-                Expanded(child: _BottomSheetActionButton<T>(action: actions[0])),
+                Expanded(
+                  child: _BottomSheetActionButton<T>(action: actions[0]),
+                ),
                 const SizedBox(width: 14),
-                Expanded(child: _BottomSheetActionButton<T>(action: actions[1])),
+                Expanded(
+                  child: _BottomSheetActionButton<T>(action: actions[1]),
+                ),
               ],
             ),
     );
@@ -243,11 +249,7 @@ class _BottomSheetActionButton<T> extends StatelessWidget {
             fontWeight: isPrimary ? FontWeight.w600 : FontWeight.w400,
           ),
         ),
-        child: Text(
-          action.text,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        child: Text(action.text, maxLines: 1, overflow: TextOverflow.ellipsis),
       ),
     );
   }

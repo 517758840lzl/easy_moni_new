@@ -18,10 +18,7 @@ class ExtensionApi {
   }) async {
     final result = await HttpProvider.instance.post<Map<String, dynamic>>(
       ApiConstants.extension,
-      data: {
-        'couponIds': couponIds,
-        'installmentId': installmentId,
-      },
+      data: {'couponIds': couponIds, 'installmentId': installmentId},
       fromJson: (json) => json as Map<String, dynamic>,
     );
 

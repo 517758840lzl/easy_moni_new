@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:easy_moni/core/utils/app_logger.dart';
 
 class BaseResult<T> {
   final int code;
@@ -16,26 +16,24 @@ class BaseResult<T> {
     final code = json['code'] as int? ?? -1;
     final message = (json['message'] ?? json['msg']) as String?;
     final data = json['data'];
-    
+
     T? parsedData;
     if (data != null && fromJsonT != null) {
       try {
         parsedData = fromJsonT(data);
       } catch (e) {
-        debugPrint('BaseResult.fromJson callback error: $e');
+        AppLogger.debug('BaseResult.fromJson callback error: $e');
         parsedData = data as T?;
       }
     } else {
       parsedData = data as T?;
     }
-    
-    debugPrint('BaseResult: code=$code, message=$message, data=$data, parsedData=$parsedData');
-    
-    return BaseResult(
-      code: code,
-      message: message,
-      data: parsedData,
+
+    AppLogger.debug(
+      'BaseResult: code=$code, message=$message, data=$data, parsedData=$parsedData',
     );
+
+    return BaseResult(code: code, message: message, data: parsedData);
   }
 }
 

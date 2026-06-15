@@ -1,4 +1,5 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
+import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/pages/loan/components/loan_order_card.dart';
 import 'package:easy_moni/pages/loan/components/loan_product_card.dart';
 import 'package:easy_moni/pages/loan/models/loan_confirm_request_product.dart';
@@ -6,6 +7,7 @@ import 'package:easy_moni/pages/loan/providers/home_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:easy_moni/core/utils/app_logger.dart';
 
 import '../../entities/home_resp.dart';
 import '../../gen/assets.gen.dart';
@@ -88,7 +90,7 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
         ..addAll(defaultSelectedIndexes);
     });
 
-    debugPrint('首页加载成功: ${products.length} 个产品，可借 $availableCount 个');
+    AppLogger.debug('首页加载成功: ${products.length} 个产品，可借 $availableCount 个');
   }
 
   int get _availableProductCount =>
@@ -190,7 +192,10 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
         .where((item) => item.productCode.isNotEmpty)
         .toList();
 
-    context.push('/loan-confirm', extra: {'products': selectedConfirmProducts});
+    context.push(
+      AppRoutePaths.loanConfirm,
+      extra: {'products': selectedConfirmProducts},
+    );
   }
 
   Widget _buildWhiteContentPanel({

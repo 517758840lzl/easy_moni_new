@@ -1,8 +1,8 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
-import 'package:easy_moni/pages/login/loginpage.dart';
+import 'package:easy_moni/gen/assets.gen.dart';
+import 'package:easy_moni/utils/widgets/permission_action_buttons.dart';
 import 'package:flutter/material.dart';
-
-import '../../../gen/assets.gen.dart';
+import 'package:easy_moni/core/utils/app_logger.dart';
 
 class PrivacyPolicyDialog extends StatefulWidget {
   final VoidCallback? onAgree;
@@ -41,16 +41,17 @@ class _PrivacyPolicyDialogState extends State<PrivacyPolicyDialog> {
   final String _privacyText = AppStrings.grantedData;
 
   void _handleAgree() {
-    debugPrint('点击了 Agree & Continue 按钮');
-    widget.onAgree?.call();
-    // 跳转并销毁当前页面（用户登录后无法再返回到上一个页面）
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const LoginPage()),
-    );
+    AppLogger.debug('点击了 Agree & Continue 按钮');
+    if (widget.onAgree != null) {
+      widget.onAgree!.call();
+      return;
+    }
+
+    Navigator.of(context).pop();
   }
 
   void _handleDecline() {
-    debugPrint('点击了 Decline 按钮');
+    AppLogger.debug('点击了 Decline 按钮');
     widget.onDecline?.call();
     Navigator.of(context).pop();
   }
@@ -62,7 +63,7 @@ class _PrivacyPolicyDialogState extends State<PrivacyPolicyDialog> {
         margin: const EdgeInsets.symmetric(horizontal: 20),
         constraints: BoxConstraints(
           // 限制弹窗最高只能占屏幕高度的 60%
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
+          maxHeight: MediaQuery.of(context).size.height * 0.7,
         ),
         decoration: BoxDecoration(
           color: const Color(0xFFF7F8F9),
@@ -120,53 +121,14 @@ class _PrivacyPolicyDialogState extends State<PrivacyPolicyDialog> {
                   ),
                 ),
               ),
-              // Bottom buttons
               Padding(
-                padding: const EdgeInsets.fromLTRB(19, 0, 19, 19),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: _handleDecline,
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFF268470)),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        child: const Text(
-                          AppStrings.declineBtn,
-                          style: TextStyle(
-                            color: Color(0xFF268470),
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _handleAgree,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF268470),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(26),
-                          ),
-                        ),
-                        child: const Text(
-                          AppStrings.agreeandContinue,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                padding: const EdgeInsets.only(bottom: 9),
+                child: PermissionActionButtons(
+                  secondaryText: AppStrings.declineBtn,
+                  primaryText: AppStrings.agreeandContinue,
+                  onSecondaryPressed: _handleDecline,
+                  onPrimaryPressed: _handleAgree,
+                  padding: const EdgeInsets.fromLTRB(19, 10, 19, 10),
                 ),
               ),
             ],

@@ -17,7 +17,7 @@ class LoanOrderCard extends StatelessWidget {
     this.productLogo,
     this.statusText,
     this.statusCode,
-    this.remainingDays,
+    this.totalServiceDays,
     this.serviceFee,
     this.interest,
     this.mode = LoanOrderCardMode.repaymentStatus,
@@ -47,7 +47,7 @@ class LoanOrderCard extends StatelessWidget {
       repayAmount: item.repayAmount ?? 0,
       dueDate: dueDate,
       statusCode: item.appOrderStatus,
-      remainingDays: item.remainingDays,
+      totalServiceDays: item.totalServiceDays,
       onTap: onTap,
     );
   }
@@ -73,8 +73,8 @@ class LoanOrderCard extends StatelessWidget {
       receiptAmount: (item.actualToAccount ?? item.receiptAmount ?? 0)
           .toDouble(),
       repayAmount: (item.repayAmount ?? 0).toDouble(),
-      dueDate: dueDate,
-      remainingDays: item.remainingDays,
+      dueDate: item.dueDate,
+      totalServiceDays: item.totalServiceDays,
       serviceFee: (item.serviceFee ?? 0).toDouble(),
       interest: (item.interest ?? 0).toDouble(),
       mode: LoanOrderCardMode.loanConfirm,
@@ -87,10 +87,10 @@ class LoanOrderCard extends StatelessWidget {
   final double loanAmount;
   final double receiptAmount;
   final double repayAmount;
-  final String dueDate;
+  final String? dueDate;
   final String? statusText;
   final int? statusCode;
-  final int? remainingDays;
+  final int? totalServiceDays;
   final double? serviceFee;
   final double? interest;
   final LoanOrderCardMode mode;
@@ -101,7 +101,7 @@ class LoanOrderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final statusVisual = _LoanOrderStatusVisual.forStatus(
       statusCode,
-      remainingDays: remainingDays,
+      totalServiceDays: totalServiceDays,
     );
     final effectiveStatusText = statusText ?? statusVisual.label;
     final effectiveFooterText = footerText ?? statusVisual.footerText;
@@ -141,9 +141,9 @@ class LoanOrderCard extends StatelessWidget {
                   if (isLoanConfirm) ...[
                     _OrderInfoRow(
                       label: '借款期限',
-                      value: remainingDays == null
+                      value: totalServiceDays == null
                           ? '-'
-                          : '$remainingDays days',
+                          : '$totalServiceDays days',
                     ),
                     const SizedBox(height: 12),
                     _OrderInfoRow(
@@ -156,7 +156,7 @@ class LoanOrderCard extends StatelessWidget {
                       value: _formatAmount(interest ?? 0),
                     ),
                     const SizedBox(height: 12),
-                    _OrderInfoRow(label: '还款日期', value: dueDate),
+                    _OrderInfoRow(label: '还款日期', value: dueDate ?? ''),
                   ] else ...[
                     _OrderInfoRow(
                       label: '到账金额',
@@ -168,7 +168,7 @@ class LoanOrderCard extends StatelessWidget {
                       value: _formatAmount(repayAmount),
                     ),
                     const SizedBox(height: 12),
-                    _OrderInfoRow(label: '到期日', value: dueDate),
+                    _OrderInfoRow(label: '到期日', value: dueDate ?? ''),
                     const SizedBox(height: 12),
                     const Divider(
                       height: 1,
@@ -222,9 +222,9 @@ class _LoanOrderStatusVisual {
 
   factory _LoanOrderStatusVisual.forStatus(
     int? statusCode, {
-    int? remainingDays,
+    int? totalServiceDays,
   }) {
-    if (statusCode == 4 && remainingDays != null && remainingDays < 0) {
+    if (statusCode == 4 && totalServiceDays != null && totalServiceDays < 0) {
       return const _LoanOrderStatusVisual(
         label: '已逾期',
         gradient: [Color(0xFFFF5265), Color(0xFFFF843F)],
@@ -392,6 +392,7 @@ class _OrderInfoRow extends StatelessWidget {
     return SizedBox(
       height: 20,
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
             child: Text(

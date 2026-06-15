@@ -1,13 +1,10 @@
 import 'package:dio/dio.dart';
-import '../../constants/api_constants.dart';
+import 'package:easy_moni/core/config/environment_config.dart';
 
 class HeaderInterrepter extends Interceptor {
-  static final HeaderInterrepter _instance = HeaderInterrepter._();
+  HeaderInterrepter(this._config);
 
-  factory HeaderInterrepter() => _instance;
-
-  HeaderInterrepter._();
-
+  final EnvironmentConfig _config;
   String? _token;
   String? _deviceId;
 
@@ -22,18 +19,8 @@ class HeaderInterrepter extends Interceptor {
     _deviceId = deviceId;
   }
 
-  Map<String, String> get _commonHeader => {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-    'acqChannel': 'GHPM',
-    'acqChannelIndex': '0',
-    'disableEncBody': 'false',
-    'appVersion': ApiConstants.appVersion,
-    'clientType': ApiConstants.clientType,
-    'advId': ApiConstants.advId,
-    'deviceId': _deviceId ?? ApiConstants.deviceId,
-    if (_token case final token?) 'token': token,
-  };
+  Map<String, String> get _commonHeader =>
+      _config.commonHeaders(token: _token, deviceId: _deviceId);
 
   void clearAuth() {
     _token = null;

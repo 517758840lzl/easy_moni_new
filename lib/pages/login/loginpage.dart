@@ -1,13 +1,16 @@
 import 'dart:async';
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/network/http_provider.dart';
+import 'package:easy_moni/core/router/app_routes.dart';
+import 'package:easy_moni/entities/acquisition_progress_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
+import 'package:easy_moni/pages/fillInforma/providers/acquisition_progress_provider.dart';
+import 'package:easy_moni/utils/widgets/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../entities/acquisition_progress_resp.dart';
-import '../../utils/widgets/toast.dart';
-import '../fillInforma/providers/acquisition_progress_provider.dart';
+import 'package:easy_moni/core/utils/app_logger.dart';
+
 import 'providers/auth_provider.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -18,15 +21,17 @@ class LoginPage extends ConsumerStatefulWidget {
 }
 
 class _LoginPageState extends ConsumerState<LoginPage> {
-  static const String _defaultPhone = '504684567';
+  static const String _defaultPhone = '0504684567';
   static const String _defaultCode = '1234';
+  static const Color _backgroundFallbackColor = Color(0xFF20754F);
 
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _codeController = TextEditingController();
   Timer? _countdownTimer;
   int _countdownSeconds = 0;
+  bool _isSendingCode = false;
   bool _isLoggingIn = false;
-  bool _isAutoSendingCode = false; // 防止自动发送验证码时重复触发
+  bool _hasPrecachedBackground = false;
 
   @override
   void initState() {
@@ -47,12 +52,27 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     super.dispose();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_hasPrecachedBackground) return;
+
+    _hasPrecachedBackground = true;
+    // 提前解码登录背景图，减少首帧露出底色的时间。
+    precacheImage(Assets.images.loginBg.provider(), context);
+  }
+
   String _normalizedPhone() {
     final digits = _phoneController.text.replaceAll(RegExp(r'[^0-9]'), '');
-    if (digits.startsWith('0')) {
+    if (digits.length == 10 && digits.startsWith('0')) {
       return digits.substring(1);
     }
     return digits;
+  }
+
+  bool _isValidPhoneInput(String digits) {
+    return (digits.length == 9 && !digits.startsWith('0')) ||
+        (digits.length == 10 && digits.startsWith('0'));
   }
 
   String _routeByProgress(AcquisitionProgressResp progressData) {
@@ -60,11 +80,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final filledStep = progressData.filledStep ?? 0;
 
     if (progressData.hasCompletedKyc) {
-      return '/home';
+      return AppRoutePaths.home;
     }
 
     if (steps.isEmpty) {
-      return '/personal-info';
+      return AppRoutePaths.personalInfo;
     }
 
     ProcessStep? nextStep;
@@ -79,24 +99,35 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     switch (filledStep + 1) {
       case 1:
-        return '/personal-info';
+        return AppRoutePaths.personalInfo;
       case 2:
-        return '/contact-info';
+        return AppRoutePaths.contactInfo;
       case 4:
-        return '/identity-verify';
+        return AppRoutePaths.identityVerify;
       case 5:
-        return '/face-verify';
+        return AppRoutePaths.faceVerify;
       case 6:
-        return '/questionnaire';
+        return AppRoutePaths.questionnaire;
       default:
-        return '/home';
+        return AppRoutePaths.home;
     }
   }
 
   void _navigateByProgress(AcquisitionProgressResp progressData) {
     final route = _routeByProgress(progressData);
-    debugPrint('登录后跳转目标: $route');
+    AppLogger.debug('登录后跳转目标: $route');
     context.go(route);
+  }
+
+  /// 登录失败时弹出后端提示，验证码错误（如 code=50000）会透传到 message。
+  void _showLoginErrorToast(String? message) {
+    final errorMessage = message?.trim();
+    if (errorMessage == null || errorMessage.isEmpty) {
+      showToast('登录失败，请重试', context: context);
+      return;
+    }
+
+    showToast(errorMessage, context: context);
   }
 
   /// 手机号输入变化监听
@@ -106,12 +137,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     // 过滤非数字字符
     text = text.replaceAll(RegExp(r'[^0-9]'), '');
 
-    if (text.startsWith('0')) {
-      text = text.substring(1);
-    }
-
-    if (text.length > 9) {
-      text = text.substring(0, 9);
+    if (text.length > 10) {
+      text = text.substring(0, 10);
     }
 
     // 更新文本（避免光标跳动）
@@ -126,11 +153,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     }
 
     setState(() {});
-
-    // 输入9位数字后自动发送验证码
-    if (text.length == 9 && !_isAutoSendingCode && _countdownSeconds == 0) {
-      _autoSendCode();
-    }
   }
 
   /// 验证码输入变化监听
@@ -157,33 +179,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     setState(() {});
 
-    // 输入4位验证码后立即校验（自动登录）
-    if (text.length == 4 && _phoneController.text.length > 1) {
-      _onLogin();
-    }
-  }
-
-  Future<void> _autoSendCode() async {
-    _isAutoSendingCode = true;
-    final phone = _normalizedPhone();
-
-    try {
-      final result = await ref.read(sendVerifyCodeProvider).call('233|$phone');
-
-      if (!mounted) return;
-      if (result.isSuccess) {
-        showToast('验证码已发送');
-        _startCountdown();
-      } else {
-        showToast(result.message ?? '发送失败，请重试');
-      }
-    } catch (e) {
-      if (!mounted) return;
-      showToast('发送失败，请重试');
-      debugPrint('发送验证码异常: $e');
-    } finally {
-      _isAutoSendingCode = false;
-    }
+    // 验证码输入只负责清洗和刷新状态，登录请求只能由 Login 按钮触发。
   }
 
   void _startCountdown() {
@@ -201,9 +197,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Future<void> _onGetCode() async {
+    if (_isSendingCode || _countdownSeconds > 0) {
+      return;
+    }
+
     final phone = _normalizedPhone();
     if (phone.isEmpty) {
       showToast('请输入手机号');
+      return;
+    }
+    if (!_isValidPhoneInput(_phoneController.text)) {
+      showToast('请输入正确手机号');
       return;
     }
     // if (phone.length != 9) {
@@ -212,6 +216,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     // }
 
     try {
+      setState(() => _isSendingCode = true);
+
       final result = await ref.read(sendVerifyCodeProvider).call('233|$phone');
 
       if (!mounted) return;
@@ -224,7 +230,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     } catch (e) {
       if (!mounted) return;
       showToast('发送失败，请重试');
-      debugPrint('发送验证码异常: $e');
+      AppLogger.debug('发送验证码异常: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isSendingCode = false);
+      }
     }
   }
 
@@ -239,12 +249,19 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       showToast('请输入手机号');
       return;
     }
+    if (!_isValidPhoneInput(_phoneController.text)) {
+      showToast('请输入正确手机号');
+      return;
+    }
     if (code.isEmpty) {
       showToast('请输入验证码');
       return;
     }
 
-    debugPrint('登录请求 - 手机号: 233|$phone, 验证码: $code');
+    final maskedPhone = phone.length > 4
+        ? '${phone.substring(0, 2)}****${phone.substring(phone.length - 2)}'
+        : '****';
+    AppLogger.debug('登录请求 - 手机号: 233|$maskedPhone, 验证码: ****');
 
     try {
       setState(() => _isLoggingIn = true);
@@ -254,34 +271,35 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           .call(phone: '233|$phone', code: code);
 
       if (!mounted) return;
-      debugPrint('登录响应 - status: ${result.status}, message: ${result.message}');
-      debugPrint('登录响应数据: ${result.data}');
+      AppLogger.debug(
+        '登录响应 - status: ${result.status}, message: ${result.message}',
+      );
+      AppLogger.debug('登录响应数据是否为空: ${result.data == null}');
       if (result.data?.isFirstRegister == 1) {
       } else {}
       if (result.isSuccess) {
         final loginData = result.data;
-        debugPrint('loginData: $loginData');
-        debugPrint('loginData.token: ${loginData?.token}');
+        AppLogger.debug(
+          'loginData.isFirstRegister: ${loginData?.isFirstRegister}',
+        );
 
         if (loginData?.token != null) {
           await HttpProvider.instance.setToken(loginData!.token);
-          debugPrint('登录成功，Token: ${loginData.token}');
+          AppLogger.debug('登录成功，Token 已保存');
 
           // 登录后请求 startup/config 接口
           try {
-            final configResult = await ref
-                .read(startupConfigProvider)
-                .call();
+            final configResult = await ref.read(startupConfigProvider).call();
             if (!mounted) return;
 
             if (configResult.isSuccess) {
-              debugPrint('startupConfig 成功: ${configResult.data}');
+              AppLogger.debug('startupConfig 成功: ${configResult.data}');
             } else {
-              debugPrint('startupConfig 失败: ${configResult.message}');
+              AppLogger.debug('startupConfig 失败: ${configResult.message}');
             }
           } catch (e) {
             if (!mounted) return;
-            debugPrint('startupConfig 请求异常: $e');
+            AppLogger.debug('startupConfig 请求异常: $e');
           }
 
           // 登录后请求 checkUploadDataValid 接口
@@ -292,56 +310,60 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             if (!mounted) return;
 
             if (checkDataResult.isSuccess) {
-              debugPrint('checkUploadDataValid 成功: ${checkDataResult.data}');
+              AppLogger.debug(
+                'checkUploadDataValid 成功: ${checkDataResult.data}',
+              );
             } else {
-              debugPrint('checkUploadDataValid 失败: ${checkDataResult.message}');
+              AppLogger.debug(
+                'checkUploadDataValid 失败: ${checkDataResult.message}',
+              );
             }
           } catch (e) {
             if (!mounted) return;
-            debugPrint('checkUploadDataValid 请求异常: $e');
+            AppLogger.debug('checkUploadDataValid 请求异常: $e');
           }
 
           //查询检查必要数据是否过期，CheckUploadDataValidApi
           final checkData = await ref.read(checkUploadDataValidProvider).call();
           if (!mounted) return;
-          debugPrint('checkData: $checkData');
+          AppLogger.debug('checkData: $checkData');
 
           final progressResult = await ref
               .read(acquisitionProgressProvider)
               .call();
           if (!mounted) return;
 
-          debugPrint('进度查询响应: ${progressResult.data}');
-          debugPrint('进度查询 isSuccess: ${progressResult.isSuccess}');
+          AppLogger.debug('进度查询响应: ${progressResult.data}');
+          AppLogger.debug('进度查询 isSuccess: ${progressResult.isSuccess}');
           if (progressResult.isSuccess && progressResult.data != null) {
             final progressData = progressResult.data!;
             final filledStep = progressData.filledStep ?? 0;
-            debugPrint(
+            AppLogger.debug(
               '用户进度: filledStep=$filledStep, totalStep=${progressData.totalStep}',
             );
-            debugPrint('hasCompletedKyc: ${progressData.hasCompletedKyc}');
-            debugPrint(
+            AppLogger.debug('hasCompletedKyc: ${progressData.hasCompletedKyc}');
+            AppLogger.debug(
               'processSteps: ${progressData.processSteps?.map((s) => 'step=${s.step}, pageType=${s.pageType}, pageTitle=${s.pageTitle}').join(', ')}',
             );
-            debugPrint('根据后端进度决定跳转页面');
+            AppLogger.debug('根据后端进度决定跳转页面');
             _navigateByProgress(progressData);
           } else {
-            debugPrint('进度查询失败，默认跳转个人信息');
-            context.go('/personal-info');
+            AppLogger.debug('进度查询失败，默认跳转个人信息');
+            context.go(AppRoutePaths.personalInfo);
           }
         } else {
-          debugPrint('Token为空!');
+          AppLogger.debug('Token为空!');
           showToast('登录失败，Token获取异常');
         }
       } else {
-        debugPrint('登录失败: ${result.message}');
-        showToast(result.message ?? '登录失败，请重试');
+        AppLogger.debug('登录失败: ${result.message}');
+        _showLoginErrorToast(result.message);
       }
     } catch (e, stackTrace) {
       if (!mounted) return;
       showToast('登录失败，请重试');
-      debugPrint('登录异常: $e');
-      debugPrint('堆栈: $stackTrace');
+      AppLogger.debug('登录异常: $e');
+      AppLogger.debug('堆栈: $stackTrace');
     } finally {
       if (mounted) {
         setState(() => _isLoggingIn = false);
@@ -352,13 +374,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A1A),
+      backgroundColor: _backgroundFallbackColor,
       body: Stack(
         children: [
           // 背景色底部图片
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
+                color: _backgroundFallbackColor,
                 image: DecorationImage(
                   image: Assets.images.loginBg.provider(),
                   fit: BoxFit.cover,
@@ -371,44 +394,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             child: SafeArea(
               child: Column(
                 children: [
-                  // 顶部区域
-                  _header(context),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 100),
-                          Assets.images.starIcon.image(width: 83,height: 83),
-                          const SizedBox(height: 30),
-                          const Text(
-                            AppStrings.wellcome,
-                            style: TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            AppStrings.wellcomedeailData,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.white,
-                              height: 1.5,
-                            ),
-                          ),
-                          const SizedBox(height: 50),
-                          _buildPhoneInput(),
-                          const SizedBox(height: 24),
-                          _buildCodeInput(),
-                          const SizedBox(height: 24),
-                          _buildLoginButton(),
-                        ],
-                      ),
-                    ),
-                  ),
+                  _buildHeader(context),
+                  Expanded(child: _buildLoginContent()),
                 ],
               ),
             ),
@@ -418,7 +405,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 
-  Widget _header(BuildContext context) {
+  /// 构建顶部客服入口
+  Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: SizedBox(
@@ -426,29 +414,95 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         child: Row(
           children: [
             const Spacer(),
-            Assets.images.customer.image(width: 28, height: 28),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => context.push(AppRoutePaths.customerService),
+              child: Padding(
+                padding: const EdgeInsets.all(6),
+                child: Assets.images.customer.image(width: 31, height: 31),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPhoneInput() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        border: Border(
-          bottom: BorderSide(
-            color: const Color(0xFFF8F8F8).withValues(alpha: 0.5),
-            width: 1,
+  /// 登录页主体
+  Widget _buildLoginContent() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final topSpacing = (constraints.maxHeight * 0.13).clamp(54.0, 100.0);
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              children: [
+                SizedBox(height: topSpacing),
+                _buildLogoSection(),
+                const SizedBox(height: 50),
+                _buildPhoneInput(),
+                const SizedBox(height: 24),
+                _buildCodeInput(),
+                const SizedBox(height: 24),
+                _buildLoginButton(),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLogoSection() {
+    return Column(
+      children: [
+        Assets.images.starIcon.image(width: 103, height: 103),
+        const Text(
+          AppStrings.wellcome,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            letterSpacing: -1,
           ),
         ),
-      ),
-      child: Row(
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(bottom: 8),
-            child: Text(
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          width: 320,
+          child: Text(
+            AppStrings.wellcomedeailData,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: Colors.white, height: 1.5),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 手机号输入区域只负责视觉和数字过滤，发送验证码只能由按钮触发。
+  Widget _buildPhoneInput() {
+    return SizedBox(
+      height: 48,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          border: Border(
+            bottom: BorderSide(
+              color: const Color(0xFFF8F8F8).withValues(alpha: 0.55),
+              width: 1,
+            ),
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const Text(
               '+233',
               style: TextStyle(
                 fontSize: 16,
@@ -456,114 +510,152 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 fontWeight: FontWeight.w500,
               ),
             ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: TextField(
-              controller: _phoneController,
-              keyboardType: TextInputType.phone,
-              style: const TextStyle(fontSize: 14, color: Colors.white),
-              decoration: const InputDecoration(
-                filled: true,
-                fillColor: Colors.transparent,
-                hintText: AppStrings.phoneStr,
-                hintStyle: TextStyle(color: Colors.white, fontSize: 14),
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                contentPadding: EdgeInsets.only(bottom: 8),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                style: const TextStyle(fontSize: 14, color: Colors.white),
+                decoration: const InputDecoration(
+                  filled: true,
+                  fillColor: Colors.transparent,
+                  hintText: AppStrings.phoneStr,
+                  hintStyle: TextStyle(color: Colors.white, fontSize: 14),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+                onChanged: (value) {
+                  setState(() {});
+                },
               ),
-              onChanged: (value) {
-                setState(() {});
-              },
             ),
-          ),
-          Column(
-            children: [
-              Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  '${_phoneController.text.length}/9',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withValues(alpha: 0.7),
+            Text(
+              '${_phoneController.text.length}/10',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.white.withValues(alpha: 0.7),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 验证码输入区域
+  Widget _buildCodeInput() {
+    final isCountingDown = _countdownSeconds > 0;
+    final isSendButtonDisabled = _isSendingCode || isCountingDown;
+
+    return SizedBox(
+      height: 48,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: const Color(0xFFF8F8F8).withValues(alpha: 0.55),
+                    width: 1,
                   ),
                 ),
               ),
-            ],
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _codeController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(fontSize: 14, color: Colors.white),
+                      decoration: const InputDecoration(
+                        hintText: AppStrings.codestr,
+                        filled: true,
+                        fillColor: Colors.transparent,
+                        hintStyle: TextStyle(color: Colors.white, fontSize: 14),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ),
+                  if (isCountingDown) ...[
+                    const SizedBox(width: 12),
+                    // 倒计时属于输入框状态
+                    Text(
+                      '${_countdownSeconds}s',
+                      textAlign: TextAlign.right,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                        height: 20 / 12,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ),
+          if (!isCountingDown) ...[
+            const SizedBox(width: 12),
+            GestureDetector(
+              onTap: isSendButtonDisabled ? null : _onGetCode,
+              child: Container(
+                height: 40,
+                constraints: const BoxConstraints(minWidth: 102),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  border: Border.all(color: const Color(0xFF45F3A6)),
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x0A101828),
+                      blurRadius: 2,
+                      offset: Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: _isSendingCode
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Color(0xFF45F3A6),
+                        ),
+                      )
+                    : const Text(
+                        AppStrings.gainCode,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF45F3A6),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildCodeInput() {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.5),
-                  width: 1,
-                ),
-              ),
-            ),
-            child: TextField(
-              controller: _codeController,
-              keyboardType: TextInputType.number,
-              style: const TextStyle(fontSize: 14, color: Colors.white),
-              decoration: InputDecoration(
-                hintText: AppStrings.codestr,
-                filled: true,
-                fillColor: Colors.transparent,
-                hintStyle: TextStyle(color: Colors.white, fontSize: 14),
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                contentPadding: const EdgeInsets.only(bottom: 8),
-              ),
-            ),
-          ),
-        ),
-        GestureDetector(
-          onTap: (_countdownSeconds > 0) ? null : _onGetCode,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFF45F3A6)),
-              borderRadius: BorderRadius.circular(30),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x0A101828),
-                  blurRadius: 2,
-                  offset: Offset(0, 1),
-                ),
-              ],
-            ),
-            child: Text(
-              _countdownSeconds > 0
-                  ? '${_countdownSeconds}s'
-                  : AppStrings.gainCode,
-              style: TextStyle(
-                fontSize: 14,
-                color: const Color(0xFF45F3A6),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
+  /// 登录按钮展示 loading 态，并在登录中阻止重复提交。
   Widget _buildLoginButton() {
     return GestureDetector(
       onTap: _isLoggingIn ? null : _onLogin,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        height: 40,
         decoration: BoxDecoration(
           color: const Color(0xFF45F3A6),
           borderRadius: BorderRadius.circular(30),

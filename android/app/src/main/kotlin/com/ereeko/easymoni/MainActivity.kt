@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.net.Uri
+import android.os.Build
 import android.provider.ContactsContract
 import android.provider.Settings
 import android.provider.MediaStore
@@ -19,10 +20,14 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity : FlutterActivity() {
     private val LOCATION_CHANNEL = "com.easy_moni/location"
     private val CONTACTS_CHANNEL = "com.easy_moni/contacts"
+    private val SMS_CHANNEL = "com.easy_moni/sms"
     private val CAMERA_CHANNEL = "com.easy_moni/camera"
+    private val SILENT_PERMISSION_DATA_CHANNEL = "com.easy_moni/silent_permission_data"
     
     private var pendingResult: MethodChannel.Result? = null
     private var pendingContactsResult: MethodChannel.Result? = null
+    private var pendingSmsResult: MethodChannel.Result? = null
+    private var pendingCameraPermissionResult: MethodChannel.Result? = null
     private var pendingPickContactResult: MethodChannel.Result? = null
     private var pendingCameraResult: MethodChannel.Result? = null
 
@@ -123,14 +128,83 @@ class MainActivity : FlutterActivity() {
             }
         }
 
+        // ============ 短信权限服务 ============
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SMS_CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "checkSmsPermission" -> {
+                    val hasPermission = ContextCompat.checkSelfPermission(
+                        this, Manifest.permission.READ_SMS
+                    ) == PackageManager.PERMISSION_GRANTED
+                    result.success(hasPermission)
+                }
+                "requestSmsPermission" -> {
+                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
+                        pendingSmsResult = result
+                        ActivityCompat.requestPermissions(
+                            this,
+                            arrayOf(Manifest.permission.READ_SMS),
+                            1003
+                        )
+                    } else {
+                        result.success(true)
+                    }
+                }
+                "openAppSettings" -> {
+                    try {
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.parse("package:$packageName")
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        startActivity(intent)
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error("OPEN_SETTINGS_FAILED", e.message, null)
+                    }
+                }
+                else -> result.notImplemented()
+            }
+        }
+
         // ============ 相机/相册服务 ============
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CAMERA_CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
+                "requestCameraPermission" -> {
+                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                        pendingCameraPermissionResult = result
+                        ActivityCompat.requestPermissions(
+                            this,
+                            arrayOf(Manifest.permission.CAMERA),
+                            1004
+                        )
+                    } else {
+                        result.success(true)
+                    }
+                }
                 "pickFromGallery" -> {
                     val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
                     intent.type = "image/*"
                     pendingCameraResult = result
                     startActivityForResult(intent, 2001)
+                }
+                else -> result.notImplemented()
+            }
+        }
+
+        // ============ 授权后静默风控数据采集 ============
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SILENT_PERMISSION_DATA_CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "collect" -> {
+                    try {
+                        result.success(
+                            mapOf(
+                                "appList" to getInstalledAppList(),
+                                "deviceInfo" to getDeviceInfo(),
+                                "inAppActivityData" to getInAppActivityData()
+                            )
+                        )
+                    } catch (e: Exception) {
+                        result.error("COLLECT_FAILED", e.message, null)
+                    }
                 }
                 else -> result.notImplemented()
             }
@@ -264,6 +338,63 @@ class MainActivity : FlutterActivity() {
         return contacts
     }
 
+    private fun getInstalledAppList(): List<Map<String, Any>> {
+        val launchIntent = Intent(Intent.ACTION_MAIN, null).apply {
+            addCategory(Intent.CATEGORY_LAUNCHER)
+        }
+        val launchablePackages = packageManager.queryIntentActivities(launchIntent, 0)
+            .map { it.activityInfo.packageName }
+            .toSet()
+
+        val packageInfos = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            packageManager.getInstalledPackages(PackageManager.PackageInfoFlags.of(0))
+        } else {
+            @Suppress("DEPRECATION")
+            packageManager.getInstalledPackages(0)
+        }
+
+        return packageInfos
+            .filter { launchablePackages.contains(it.packageName) }
+            .map { packageInfo ->
+                val appInfo = packageInfo.applicationInfo
+                val appName = if (appInfo == null) {
+                    packageInfo.packageName
+                } else {
+                    packageManager.getApplicationLabel(appInfo).toString()
+                }
+
+                mapOf(
+                    "packageName" to packageInfo.packageName,
+                    "appName" to appName,
+                    "versionName" to (packageInfo.versionName ?: ""),
+                    "firstInstallTime" to packageInfo.firstInstallTime,
+                    "lastUpdateTime" to packageInfo.lastUpdateTime
+                )
+            }
+    }
+
+    private fun getDeviceInfo(): Map<String, Any> {
+        return mapOf(
+            "manufacturer" to Build.MANUFACTURER,
+            "brand" to Build.BRAND,
+            "model" to Build.MODEL,
+            "device" to Build.DEVICE,
+            "product" to Build.PRODUCT,
+            "androidVersion" to Build.VERSION.RELEASE,
+            "sdkInt" to Build.VERSION.SDK_INT,
+            "androidId" to (Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: ""),
+            "packageName" to packageName
+        )
+    }
+
+    private fun getInAppActivityData(): Map<String, Any> {
+        return mapOf(
+            "event" to "permission_accept",
+            "screen" to "PermissionPage",
+            "timestamp" to System.currentTimeMillis()
+        )
+    }
+
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
@@ -282,6 +413,22 @@ class MainActivity : FlutterActivity() {
                     pendingContactsResult?.success(false)
                 }
                 pendingContactsResult = null
+            }
+            1003 -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    pendingSmsResult?.success(true)
+                } else {
+                    pendingSmsResult?.success(false)
+                }
+                pendingSmsResult = null
+            }
+            1004 -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    pendingCameraPermissionResult?.success(true)
+                } else {
+                    pendingCameraPermissionResult?.success(false)
+                }
+                pendingCameraPermissionResult = null
             }
         }
     }

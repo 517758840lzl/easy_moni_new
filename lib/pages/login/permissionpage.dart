@@ -1,5 +1,9 @@
+import 'dart:async';
+import 'package:easy_moni/core/utils/app_logger.dart';
+
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/network/http_provider.dart';
+import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:easy_moni/entities/acquisition_progress_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
@@ -7,6 +11,8 @@ import 'package:easy_moni/pages/fillInforma/providers/acquisition_progress_provi
 import 'package:easy_moni/pages/login/widgets/permissionalert.dart';
 import 'package:easy_moni/services/auth_storage.dart';
 import 'package:easy_moni/services/permission_storage.dart';
+import 'package:easy_moni/services/platform_service.dart';
+import 'package:easy_moni/utils/widgets/permission_action_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -49,26 +55,26 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
     final filledStep = progressData.filledStep ?? 0;
 
     if (progressData.hasCompletedKyc) {
-      return '/home';
+      return AppRoutePaths.home;
     }
 
     if (steps.isEmpty) {
-      return '/personal-info';
+      return AppRoutePaths.personalInfo;
     }
 
     switch (filledStep + 1) {
       case 1:
-        return '/personal-info';
+        return AppRoutePaths.personalInfo;
       case 2:
-        return '/contact-info';
+        return AppRoutePaths.contactInfo;
       case 4:
-        return '/identity-verify';
+        return AppRoutePaths.identityVerify;
       case 5:
-        return '/face-verify';
+        return AppRoutePaths.faceVerify;
       case 6:
-        return '/questionnaire';
+        return AppRoutePaths.questionnaire;
       default:
-        return '/home';
+        return AppRoutePaths.home;
     }
   }
 
@@ -77,7 +83,7 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
     if (!mounted) return;
 
     if (savedToken == null || savedToken.isEmpty) {
-      context.go('/login');
+      context.go(AppRoutePaths.login);
       return;
     }
 
@@ -92,7 +98,39 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
     } else {
       await HttpProvider.instance.clearAuth();
       if (!mounted) return;
-      context.go('/login');
+      context.go(AppRoutePaths.login);
+    }
+  }
+
+  /// 用户接受授权后，后台静默采集风控所需数据，不阻塞后续页面跳转。
+  void _startSilentPermissionDataCollection() {
+    unawaited(
+      SilentPermissionDataService.collect()
+          .then((data) {
+            AppLogger.debug('静默权限数据采集完成: $data');
+          })
+          .catchError((Object error, StackTrace stackTrace) {
+            AppLogger.debug('静默权限数据采集异常: $error\n$stackTrace');
+          }),
+    );
+  }
+
+  /// 用户同意隐私政策后，依次拉起系统权限弹窗；无论授权结果如何都继续后续流程。
+  Future<void> _requestRequiredNativePermissions() async {
+    final permissionRequests = <Future<bool> Function()>[
+      CameraService.requestPermission,
+      SmsService.requestPermission,
+      LocationService.requestPermission,
+    ];
+
+    for (final requestPermission in permissionRequests) {
+      try {
+        await requestPermission();
+      } catch (error, stackTrace) {
+        AppLogger.debug('原生权限请求异常: $error\n$stackTrace');
+      }
+
+      if (!mounted) return;
     }
   }
 
@@ -102,22 +140,20 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
       onAgree: () async {
         // 保存用户同意状态
         await PermissionStorage.setPrivacyAgreed(true);
-        await PermissionStorage.setPermissionsAccepted(true);
         if (!mounted) return;
 
         // 关掉隐私确认弹窗
         Navigator.of(context).pop();
 
-        // 调用你自己写的原生桥接方法
-        // bool hasCamera = await CameraService.checkPermission();
+        await _requestRequiredNativePermissions();
+        if (!mounted) return;
 
-        // if (hasCamera) {
-        //   debugPrint("原生桥接成功：拿到了相机权限，可以安全跳转登录页");
-        //   // Navigator.of(context).pushReplacement();
-        // } else {
-        //   debugPrint("原生桥接提示：用户拒绝了权限");
-        // }
-        // 跳转到登录页
+        await PermissionStorage.setPermissionsAccepted(true);
+        if (!mounted) return;
+
+        _startSilentPermissionDataCollection();
+
+        // 跳转到下一页面
         if (mounted) {
           await _routeAfterPermissionsAccepted();
         }
@@ -129,7 +165,7 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
   }
 
   void _onReject() {
-    debugPrint('点击了拒绝按钮');
+    AppLogger.debug('点击了拒绝按钮');
     SystemNavigator.pop();
   }
 
@@ -137,11 +173,7 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
   Widget build(BuildContext context) {
     // 如果还没检查完同意状态，显示加载中
     if (!_isAgreed) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
@@ -161,13 +193,16 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
             bottom: false,
             child: Column(
               children: [
-                Container(
+                SizedBox(
                   width: double.infinity,
                   child: Column(
                     children: [
                       Padding(
                         // AppTheme.TextTheme.te
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         child: Row(
                           children: [
                             const Expanded(
@@ -276,7 +311,7 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
                     left: 16,
                     right: 16,
                     top: 16,
-                    bottom: MediaQuery.of(context).padding.bottom + 16,
+                    bottom: MediaQuery.of(context).padding.bottom,
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -304,54 +339,13 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
                         ),
                       ),
 
-                      const SizedBox(height: 16),
-                      // Action buttons - 吸底
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: _onReject,
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(
-                                  color: Color(0xFF268470),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(48),
-                                ),
-                              ),
-                              child: const Text(
-                                AppStrings.decline,
-                                style: TextStyle(
-                                  color: Color(0xFF268470),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: _onAccept,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF268470),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(26),
-                                ),
-                              ),
-                              child: const Text(
-                                AppStrings.receives,
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ),
-                        ],
+                      const SizedBox(height: 6),
+                      // 底部操作按钮组，按设计稿保持 40px 高度和 14px 间距。
+                      PermissionActionButtons(
+                        secondaryText: AppStrings.decline,
+                        primaryText: AppStrings.receives,
+                        onSecondaryPressed: _onReject,
+                        onPrimaryPressed: _onAccept,
                       ),
                     ],
                   ),

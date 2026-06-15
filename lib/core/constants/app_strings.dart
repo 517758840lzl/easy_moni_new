@@ -44,6 +44,8 @@ class AppStrings {
   static const String chooseContacts = '选择父母/配偶联系人';
   static const String chooseFriends = '选择朋友/同事联系人';
   static const String needsContacts = '需要通讯录权限';
+  static const String needsSms = '需要短信权限';
+  static const String smsPermissionDesc = '读取存款、还款类交易短信，用作授信评估及风控核验，数据全程加密保护。';
   static const String cancel = '取消';
   static const String goSettings = '前往设置';
   static const String contactsEmpty = '通讯录为空';
@@ -72,6 +74,10 @@ class AppStrings {
   static const String selectProucts = 'Choose a loan product';
   static const String takeOcrPictures =
       'Please use landscape mode and place all four corners of your Ghana Card inside the frame.';
+
+  // ==================== 首页 =======================
+  static const String homeButtonText = '我要借款';
+
   // ==================== 贷款详情 ====================
   static const String loanDetailTitle = '贷款详情';
   static const String loanItemIdPrefix = '贷款Item ID: ';
@@ -81,4 +87,13 @@ class AppStrings {
   static const String typeLabel = 'Type';
   static const String typePremium = 'Premium';
   static const String createdLabel = 'Created';
+  // ==================== 借款审核 ====================
+  static const String loanReviewTitle = '审核中';
+  static const String loanReviewAppBarTitle = '申请借款';
+  static const String loanReviewDesc =
+      '您的借款申请正在审核中。\n通常会在几分钟内出结果。\n请耐心等待，结果将及时通知您。';
+
+  // ===================== 优惠券 ========================
+  static const String couponEmptyDesc = '无可用优惠券，按时还款，后续可解锁优惠券';
+  static const String couponString = '优惠券';
 }

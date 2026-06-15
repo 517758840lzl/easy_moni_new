@@ -1,3 +1,4 @@
+import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -198,7 +199,7 @@ class _QuestionnairePageState extends ConsumerState<QuestionnairePage> {
     _hideSubmitDialog();
 
     if (result.isSuccess) {
-      context.go('/home');
+      context.go(AppRoutePaths.home);
       return;
     }
 

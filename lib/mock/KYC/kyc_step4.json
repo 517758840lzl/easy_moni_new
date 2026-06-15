@@ -1,0 +1,160 @@
+{
+  "code": 200,
+  "msg": "success",
+  "data": {
+    "processId": 36,
+    "stepInfoList": [
+      {
+        "step": 4,
+        "pageTitle": "Identity Verification",
+        "pageType": 4,
+        "entries": [
+          {
+            "code": "40007",
+            "showContent": "Front of Ghana Card",
+            "defaultText": "Front of Ghanaian ID Card or Voter’s ID",
+            "submitValue": null,
+            "rules": null,
+            "type": 6,
+            "selectList": [
+              {
+                "key": "1",
+                "value": "Take pictures"
+              },
+              {
+                "key": "2",
+                "value": "Select from the album"
+              }
+            ],
+            "key": "id_card_front_image",
+            "order": 0,
+            "must": 1
+          },
+          {
+            "code": "40008",
+            "showContent": "Back of Ghana Card",
+            "defaultText": "",
+            "submitValue": null,
+            "rules": null,
+            "type": 6,
+            "selectList": [
+              {
+                "key": "1",
+                "value": "Take pictures"
+              },
+              {
+                "key": "2",
+                "value": "Select from the album"
+              }
+            ],
+            "key": "id_card_back_image",
+            "order": 1,
+            "must": 1
+          },
+          {
+            "code": "40002",
+            "showContent": "Personal ID Number",
+            "defaultText": "Please Fill in",
+            "submitValue": null,
+            "rules": [
+              {
+                "type": 1,
+                "validator": "^\\d{1,2}\\.\\d{3}\\.\\d{3}-[0-9Kk]$",
+                "errorMsg": "Please enter the correct format"
+              },
+              {
+                "type": 2,
+                "validator": "12",
+                "errorMsg": ""
+              }
+            ],
+            "type": 1,
+            "selectList": null,
+            "key": "national_id_number",
+            "order": 2,
+            "must": 1
+          },
+          {
+            "code": "40003",
+            "showContent": "Surname/Nom",
+            "defaultText": "Please Fill in",
+            "submitValue": null,
+            "rules": [
+              {
+                "type": 1,
+                "validator": "^(?![ ])(?=.*[a-zA-Z])[a-zA-Z]{1,30}$",
+                "errorMsg": "Please enter the correct format"
+              },
+              {
+                "type": 2,
+                "validator": "30",
+                "errorMsg": "Maximum length limit"
+              }
+            ],
+            "type": 1,
+            "selectList": null,
+            "key": "last_name",
+            "order": 3,
+            "must": 1
+          },
+          {
+            "code": "40004",
+            "showContent": "Firstname/Prénoms",
+            "defaultText": "Please Fill in",
+            "submitValue": null,
+            "rules": [
+              {
+                "type": 1,
+                "validator": "^(?![ ])(?=.*[a-zA-Z])[a-zA-Z]{1,30}$",
+                "errorMsg": "Please enter the correct format"
+              },
+              {
+                "type": 2,
+                "validator": "30",
+                "errorMsg": "Maximum length limit"
+              }
+            ],
+            "type": 1,
+            "selectList": null,
+            "key": "first_names",
+            "order": 4,
+            "must": 1
+          },
+          {
+            "code": "40001",
+            "showContent": "Gender",
+            "defaultText": "Please select",
+            "submitValue": null,
+            "rules": null,
+            "type": 4,
+            "selectList": [
+              {
+                "key": "1",
+                "value": "Male"
+              },
+              {
+                "key": "2",
+                "value": "Female"
+              }
+            ],
+            "key": "gender",
+            "order": 5,
+            "must": 1
+          },
+          {
+            "code": "40006",
+            "showContent": "Date of Birth/Date de Naissance",
+            "defaultText": "Please select",
+            "submitValue": null,
+            "rules": null,
+            "type": 5,
+            "selectList": null,
+            "key": "date_of_birth",
+            "order": 6,
+            "must": 1
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -7,10 +7,7 @@ import '../../../core/constants/app_strings.dart';
 class DetailPage extends BasePage {
   final String id;
 
-  const DetailPage({
-    super.key,
-    required this.id,
-  });
+  const DetailPage({super.key, required this.id});
 
   @override
   String get title => AppStrings.loanDetailTitle;
@@ -21,9 +18,7 @@ class DetailPage extends BasePage {
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildInfoCard(),
-        ],
+        children: [_buildInfoCard()],
       ),
     );
   }
@@ -67,10 +62,7 @@ class DetailPage extends BasePage {
                     const SizedBox(height: 4),
                     Text(
                       AppStrings.createdRecently,
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.grey, fontSize: 14),
                     ),
                   ],
                 ),
@@ -84,7 +76,10 @@ class DetailPage extends BasePage {
           const SizedBox(height: 8),
           _buildInfoRow(AppStrings.typeLabel, AppStrings.typePremium),
           const SizedBox(height: 8),
-          _buildInfoRow(AppStrings.createdLabel, DateTime.now().toString().split('.')[0]),
+          _buildInfoRow(
+            AppStrings.createdLabel,
+            DateTime.now().toString().split('.')[0],
+          ),
         ],
       ),
     );
@@ -94,19 +89,10 @@ class DetailPage extends BasePage {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.grey,
-            fontSize: 14,
-          ),
-        ),
+        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 14)),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         ),
       ],
     );

@@ -1,0 +1,63 @@
+{
+  "code": 200,
+  "msg": "success",
+  "data": {
+    "processId": 36,
+    "stepInfoList": [
+      {
+        "step": 3,
+        "pageTitle": "Add Your Payment Method",
+        "pageType": 3,
+        "entries": [
+          {
+            "code": "50001",
+            "showContent": "Wallet Type",
+            "defaultText": "Please select",
+            "submitValue": null,
+            "rules": null,
+            "type": 2,
+            "selectList": [
+              {
+                "key": "0",
+                "value": "Mobile Money"
+              }
+            ],
+            "key": "wallet_category",
+            "order": 0,
+            "must": 1
+          },
+          {
+            "code": "50005",
+            "showContent": "Wallet Provider",
+            "defaultText": "Please select",
+            "submitValue": null,
+            "rules": null,
+            "type": 2,
+            "selectList": null,
+            "key": "wallet_issuer",
+            "order": 1,
+            "must": 1
+          },
+          {
+            "code": "50002",
+            "showContent": "Wallet Account Number",
+            "defaultText": "Please Fill in",
+            "submitValue": null,
+            "rules": [
+              {
+                "type": 2,
+                "validator": "34",
+                "errorMsg": "Maximum length limit"
+              }
+            ],
+            "type": 3,
+            "selectList": null,
+            "key": "wallet_account_id",
+            "order": 2,
+            "must": 1
+          }
+        ]
+      }
+    ]
+  }
+}

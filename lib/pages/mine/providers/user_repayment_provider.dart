@@ -16,9 +16,7 @@ class UserRepaymentApi {
   }) async {
     final result = await HttpProvider.instance.post<List<dynamic>>(
       ApiConstants.userRepayment,
-      data: {
-        'statusList': statusList,
-      },
+      data: {'statusList': statusList},
       fromJson: (json) => json as List<dynamic>,
     );
 

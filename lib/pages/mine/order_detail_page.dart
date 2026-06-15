@@ -3,15 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../entities/bill_details_resp.dart';
 import '../../entities/user_repayment_resp.dart';
 import 'providers/bill_details_provider.dart';
+import 'package:easy_moni/core/utils/app_logger.dart';
 
 class DetailStatus {
-  static const int borrowing = 1;    // 放款中
-  static const int waiting = 2;      // 等待放款
-  static const int pending = 4;       // 待还款
-  static const int overdue = 3;      // 已逾期
-  static const int repayment = 5;     // 还款中(Reembolso)
-  static const int repaid = 6;        // 已还款
-  
+  static const int borrowing = 1; // 放款中
+  static const int waiting = 2; // 等待放款
+  static const int pending = 4; // 待还款
+  static const int overdue = 3; // 已逾期
+  static const int repayment = 5; // 还款中(Reembolso)
+  static const int repaid = 6; // 已还款
+
   const DetailStatus._();
 }
 
@@ -50,11 +51,7 @@ class OrderDetailPage extends ConsumerStatefulWidget {
   final OrderData? orderData;
   final List<UserRepaymentResp>? orders;
 
-  const OrderDetailPage({
-    super.key,
-    this.orderData,
-    this.orders,
-  });
+  const OrderDetailPage({super.key, this.orderData, this.orders});
 
   @override
   ConsumerState<OrderDetailPage> createState() => _OrderDetailPageState();
@@ -79,7 +76,7 @@ class _OrderDetailPageState extends ConsumerState<OrderDetailPage> {
 
     try {
       final api = ref.read(billDetailsProvider);
-      
+
       // 从订单列表获取 appOrderIds
       List<String> orderIds;
       if (widget.orders != null && widget.orders!.isNotEmpty) {
@@ -119,20 +116,27 @@ class _OrderDetailPageState extends ConsumerState<OrderDetailPage> {
   bool get _showRepayButton {
     if (_billDetails == null) return false;
     // 根据 extensionSwitch 和订单状态判断是否显示还款按钮
-    return _billDetails!.extensionSwitch || _billDetails!.loanOrderDetails.any(
-      (o) => o.orderStatus == DetailStatus.pending || o.orderStatus == DetailStatus.overdue,
-    );
+    return _billDetails!.extensionSwitch ||
+        _billDetails!.loanOrderDetails.any(
+          (o) =>
+              o.orderStatus == DetailStatus.pending ||
+              o.orderStatus == DetailStatus.overdue,
+        );
   }
 
   String get _statusTitle {
     if (_billDetails == null) return '';
-    
-    final hasOverdue = _billDetails!.loanOrderDetails.any((o) => o.remainingDay < 0);
+
+    final hasOverdue = _billDetails!.loanOrderDetails.any(
+      (o) => o.remainingDay < 0,
+    );
     if (hasOverdue) return '已逾期';
-    
-    final allRepayment = _billDetails!.loanOrderDetails.every((o) => o.orderStatus == DetailStatus.repayment);
+
+    final allRepayment = _billDetails!.loanOrderDetails.every(
+      (o) => o.orderStatus == DetailStatus.repayment,
+    );
     if (allRepayment) return '还款中';
-    
+
     return '待还款';
   }
 
@@ -159,12 +163,19 @@ class _OrderDetailPageState extends ConsumerState<OrderDetailPage> {
                 children: [
                   // Header
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 16,
+                    ),
                     child: Row(
                       children: [
                         GestureDetector(
                           onTap: () => Navigator.pop(context),
-                          child: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
+                          child: const Icon(
+                            Icons.arrow_back_ios,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                         ),
                         const Expanded(
                           child: Text(
@@ -224,9 +235,13 @@ class _OrderDetailPageState extends ConsumerState<OrderDetailPage> {
                             ],
                           ),
                         ),
-                        if (_billDetails != null && _billDetails!.remainingDay < 0)
+                        if (_billDetails != null &&
+                            _billDetails!.remainingDay < 0)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
                                 colors: [Color(0xFFFF5256), Color(0xFFFF8463)],
@@ -262,8 +277,13 @@ class _OrderDetailPageState extends ConsumerState<OrderDetailPage> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _error != null
-                      ? Center(child: Text(_error!, style: const TextStyle(color: Colors.red)))
-                      : _buildContent(),
+                  ? Center(
+                      child: Text(
+                        _error!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    )
+                  : _buildContent(),
             ),
           ),
           // 底部还款按钮
@@ -275,10 +295,12 @@ class _OrderDetailPageState extends ConsumerState<OrderDetailPage> {
 
   IconData _getStatusIcon() {
     if (_billDetails == null) return Icons.help;
-    
-    final hasOverdue = _billDetails!.loanOrderDetails.any((o) => o.remainingDay < 0);
+
+    final hasOverdue = _billDetails!.loanOrderDetails.any(
+      (o) => o.remainingDay < 0,
+    );
     if (hasOverdue) return Icons.warning_amber;
-    
+
     return Icons.schedule;
   }
 
@@ -293,10 +315,12 @@ class _OrderDetailPageState extends ConsumerState<OrderDetailPage> {
           _buildSummaryCard(),
           const SizedBox(height: 16),
           // 订单列表
-          ..._billDetails!.loanOrderDetails.map((detail) => Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: _buildOrderDetailCard(detail),
-          )),
+          ..._billDetails!.loanOrderDetails.map(
+            (detail) => Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _buildOrderDetailCard(detail),
+            ),
+          ),
           // 收款账户信息卡片
           if (_billDetails!.loanOrderDetails.isNotEmpty)
             _buildAccountInfoCard(_billDetails!.loanOrderDetails.first),
@@ -319,10 +343,7 @@ class _OrderDetailPageState extends ConsumerState<OrderDetailPage> {
             children: [
               const Text(
                 '待还总金额',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF0E0E0E),
-                ),
+                style: TextStyle(fontSize: 14, color: Color(0xFF0E0E0E)),
               ),
               Text(
                 'GHS ${_billDetails!.totalSureRepayAmounts.toStringAsFixed(2)}',
@@ -339,9 +360,15 @@ class _OrderDetailPageState extends ConsumerState<OrderDetailPage> {
             children: [
               _buildSummaryItem('剩余天数', '${_billDetails!.remainingDay}天'),
               const SizedBox(width: 24),
-              _buildSummaryItem('订单数量', '${_billDetails!.loanOrderDetails.length}个'),
+              _buildSummaryItem(
+                '订单数量',
+                '${_billDetails!.loanOrderDetails.length}个',
+              ),
               const SizedBox(width: 24),
-              _buildSummaryItem('展期', _billDetails!.isExtensionSwitch ? '可展期' : '不可展期'),
+              _buildSummaryItem(
+                '展期',
+                _billDetails!.isExtensionSwitch ? '可展期' : '不可展期',
+              ),
             ],
           ),
         ],
@@ -392,7 +419,11 @@ class _OrderDetailPageState extends ConsumerState<OrderDetailPage> {
                   color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Icon(Icons.receipt_long, size: 18, color: Colors.grey),
+                child: const Icon(
+                  Icons.receipt_long,
+                  size: 18,
+                  color: Colors.grey,
+                ),
               ),
               const SizedBox(width: 4),
               Expanded(
@@ -412,13 +443,20 @@ class _OrderDetailPageState extends ConsumerState<OrderDetailPage> {
           // 金额信息
           _buildInfoRow('借款金额', 'GHS ${detail.loanAmount.toStringAsFixed(2)}'),
           const SizedBox(height: 8),
-          _buildInfoRow('到账金额', 'GHS ${detail.receiptAmount.toStringAsFixed(2)}'),
+          _buildInfoRow(
+            '到账金额',
+            'GHS ${detail.receiptAmount.toStringAsFixed(2)}',
+          ),
           const SizedBox(height: 8),
           _buildInfoRow('服务费', 'GHS ${detail.serviceFee.toStringAsFixed(2)}'),
           const SizedBox(height: 8),
           _buildInfoRow('利息', 'GHS ${detail.interest.toStringAsFixed(2)}'),
           const SizedBox(height: 8),
-          _buildInfoRow('应还金额', 'GHS ${detail.repaymentAmount.toStringAsFixed(2)}', isHighlight: true),
+          _buildInfoRow(
+            '应还金额',
+            'GHS ${detail.repaymentAmount.toStringAsFixed(2)}',
+            isHighlight: true,
+          ),
           const SizedBox(height: 8),
           _buildInfoRow('借款期限', '${detail.term}期'),
           const SizedBox(height: 8),
@@ -434,7 +472,7 @@ class _OrderDetailPageState extends ConsumerState<OrderDetailPage> {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: isOverdue 
+          colors: isOverdue
               ? [const Color(0xFFFF5256), const Color(0xFFFF8463)]
               : [const Color(0xFF45F3A6), const Color(0xFF268470)],
         ),
@@ -467,7 +505,9 @@ class _OrderDetailPageState extends ConsumerState<OrderDetailPage> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: isHighlight ? FontWeight.w600 : FontWeight.w500,
-            color: isHighlight ? const Color(0xFFFF5256) : const Color(0xFF0E0E0E),
+            color: isHighlight
+                ? const Color(0xFFFF5256)
+                : const Color(0xFF0E0E0E),
           ),
         ),
       ],
@@ -493,7 +533,11 @@ class _OrderDetailPageState extends ConsumerState<OrderDetailPage> {
                   color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Icon(Icons.account_balance_wallet, size: 18, color: Colors.grey),
+                child: const Icon(
+                  Icons.account_balance_wallet,
+                  size: 18,
+                  color: Colors.grey,
+                ),
               ),
               const SizedBox(width: 4),
               const Text(
@@ -528,7 +572,7 @@ class _OrderDetailPageState extends ConsumerState<OrderDetailPage> {
       color: Colors.white,
       child: GestureDetector(
         onTap: () {
-          debugPrint('点击了立即还款');
+          AppLogger.debug('点击了立即还款');
           // TODO: 跳转到还款页面
         },
         child: Container(

@@ -12,9 +12,12 @@ class CustomerServiceInfoResp {
   factory CustomerServiceInfoResp.fromJson(Map<String, dynamic> json) {
     return CustomerServiceInfoResp(
       showType: json['showType'] as int? ?? 0,
-      appCustomerServiceInfoResps: json['appCustomerServiceInfoResps'] as List<dynamic>? ?? [],
+      appCustomerServiceInfoResps:
+          json['appCustomerServiceInfoResps'] as List<dynamic>? ?? [],
       appCustomerServiceInfo: json['appCustomerServiceInfo'] != null
-          ? CustomerServiceDetail.fromJson(json['appCustomerServiceInfo'] as Map<String, dynamic>)
+          ? CustomerServiceDetail.fromJson(
+              json['appCustomerServiceInfo'] as Map<String, dynamic>,
+            )
           : null,
     );
   }
@@ -42,7 +45,9 @@ class CustomerServiceDetail {
       title: json['title'] as String?,
       desc: json['desc'] as String?,
       accountList: (json['accountList'] as List<dynamic>?)
-          ?.map((e) => CustomerServiceAccount.fromJson(e as Map<String, dynamic>))
+          ?.map(
+            (e) => CustomerServiceAccount.fromJson(e as Map<String, dynamic>),
+          )
           .toList(),
     );
   }
@@ -70,7 +75,9 @@ class CustomerServiceAccount {
       title: json['title'] as String?,
       desc: json['desc'] as String?,
       accountList: (json['accountList'] as List<dynamic>?)
-          ?.map((e) => CustomerServiceAccount.fromJson(e as Map<String, dynamic>))
+          ?.map(
+            (e) => CustomerServiceAccount.fromJson(e as Map<String, dynamic>),
+          )
           .toList(),
     );
   }

@@ -1,13 +1,13 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
+import 'package:easy_moni/core/utils/app_logger.dart';
 
 class CheckUploadDataValidResp {
   final int? appTrackId;
   final int? isValid;
-  final int? isValidDeviceInfo;//是否有可用设备信息 1:有效 0：无效
+  final int? isValidDeviceInfo; //是否有可用设备信息 1:有效 0：无效
   final int? isValidContacts;
-  final int? isValidAppList;//是否有可用应用列表 1:有效 0：无效
-  final int? isValidSmsRecord;//是否有可用短信记录 1:有效 0：无效
+  final int? isValidAppList; //是否有可用应用列表 1:有效 0：无效
+  final int? isValidSmsRecord; //是否有可用短信记录 1:有效 0：无效
   final int? isValidCallLog;
 
   const CheckUploadDataValidResp({
@@ -30,7 +30,9 @@ class CheckUploadDataValidResp {
       } else if (json is String) {
         map = Map<String, dynamic>.from(jsonDecode(json) as Map);
       } else {
-        debugPrint('CheckUploadDataValidResp.fromJson: 未知类型 ${json.runtimeType}');
+        AppLogger.debug(
+          'CheckUploadDataValidResp.fromJson: 未知类型 ${json.runtimeType}',
+        );
         return const CheckUploadDataValidResp();
       }
 
@@ -44,7 +46,7 @@ class CheckUploadDataValidResp {
         isValidCallLog: _parseInt(map['isValidCallLog']),
       );
     } catch (e, stack) {
-      debugPrint('CheckUploadDataValidResp.fromJson 异常: $e\n$stack');
+      AppLogger.debug('CheckUploadDataValidResp.fromJson 异常: $e\n$stack');
       return const CheckUploadDataValidResp();
     }
   }

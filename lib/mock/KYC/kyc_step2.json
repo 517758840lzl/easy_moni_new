@@ -1,0 +1,122 @@
+{
+  "code": 200,
+  "msg": "success",
+  "data": {
+    "processId": 36,
+    "stepInfoList": [
+      {
+        "step": 2,
+        "pageTitle": "Contact Information",
+        "pageType": 2,
+        "entries": [
+          {
+            "code": "30051",
+            "showContent": "Parents/Spouse",
+            "defaultText": "Please enter the name of the contact person",
+            "submitValue": "1",
+            "rules": null,
+            "type": 8,
+            "selectList": null,
+            "key": "primary_family_relation",
+            "order": 0,
+            "must": 1
+          },
+          {
+            "code": "30052",
+            "showContent": "Name",
+            "defaultText": "Please Fill in",
+            "submitValue": null,
+            "rules": [
+              {
+                "type": 2,
+                "validator": "50",
+                "errorMsg": "Maximum length limit"
+              }
+            ],
+            "type": 9,
+            "selectList": null,
+            "key": "primary_full_name",
+            "order": 1,
+            "must": 1
+          },
+          {
+            "code": "30053",
+            "showContent": "Phone Number",
+            "defaultText": "Please select",
+            "submitValue": null,
+            "rules": [
+              {
+                "type": 1,
+                "validator": "^(?![ ])(?=.*[a-zA-Z])[a-zA-Z]{1,30}$",
+                "errorMsg": "Please enter the correct format"
+              },
+              {
+                "type": 2,
+                "validator": "50",
+                "errorMsg": "Maximum length limit"
+              }
+            ],
+            "type": 9,
+            "selectList": null,
+            "key": "primary_phone_number",
+            "order": 2,
+            "must": 1
+          },
+          {
+            "code": "30061",
+            "showContent": "Friend",
+            "defaultText": "Please enter the name of the contact person",
+            "submitValue": "2",
+            "rules": null,
+            "type": 8,
+            "selectList": null,
+            "key": "secondary_contact",
+            "order": 3,
+            "must": 1
+          },
+          {
+            "code": "30062",
+            "showContent": "Name",
+            "defaultText": "Please Fill in",
+            "submitValue": null,
+            "rules": [
+              {
+                "type": 2,
+                "validator": "50",
+                "errorMsg": "Maximum length limit"
+              }
+            ],
+            "type": 10,
+            "selectList": null,
+            "key": "secondary_full_name",
+            "order": 4,
+            "must": 1
+          },
+          {
+            "code": "30063",
+            "showContent": "Phone Number",
+            "defaultText": "Please select",
+            "submitValue": null,
+            "rules": [
+              {
+                "type": 1,
+                "validator": "^(?![ ])(?=.*[a-zA-Z])[a-zA-Z]{1,30}$",
+                "errorMsg": "Please enter the correct format"
+              },
+              {
+                "type": 2,
+                "validator": "50",
+                "errorMsg": "Maximum length limit"
+              }
+            ],
+            "type": 10,
+            "selectList": null,
+            "key": "secondary_phone_number",
+            "order": 5,
+            "must": 1
+          }
+        ]
+      }
+    ]
+  }
+}

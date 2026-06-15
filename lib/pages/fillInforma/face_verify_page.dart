@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:easy_moni/core/utils/app_logger.dart';
 
 import 'package:camera/camera.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
@@ -105,7 +106,7 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
 
       if (configResult.isSuccess && configResult.data != null) {
         _startupConfig = configResult.data as StartupConfigResp;
-        debugPrint(
+        AppLogger.debug(
           'Face config from backend: faceStep=${_startupConfig?.faceStep}, '
           'faceLiveStep=${_startupConfig?.faceLiveStep}',
         );
@@ -127,22 +128,26 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
   }
 
   List<_FaceLivenessStep> _buildLivenessSteps(StartupConfigResp? config) {
-    final stepsFromConfig = config?.faceStep
-        ?.map((step) => _FaceLivenessStep.fromBackend(
-      key: step.key,
-      description: step.description,
-    ))
-        .whereType<_FaceLivenessStep>()
-        .toList() ??
+    final stepsFromConfig =
+        config?.faceStep
+            ?.map(
+              (step) => _FaceLivenessStep.fromBackend(
+                key: step.key,
+                description: step.description,
+              ),
+            )
+            .whereType<_FaceLivenessStep>()
+            .toList() ??
         <_FaceLivenessStep>[];
     if (stepsFromConfig.isNotEmpty) {
       return stepsFromConfig;
     }
 
-    final stepsFromKeys = config?.faceLiveStep
-        ?.map((key) => _FaceLivenessStep.fromBackend(key: key))
-        .whereType<_FaceLivenessStep>()
-        .toList() ??
+    final stepsFromKeys =
+        config?.faceLiveStep
+            ?.map((key) => _FaceLivenessStep.fromBackend(key: key))
+            .whereType<_FaceLivenessStep>()
+            .toList() ??
         <_FaceLivenessStep>[];
     if (stepsFromKeys.isNotEmpty) {
       return stepsFromKeys;
@@ -176,17 +181,19 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
 
     final cameras = await availableCameras();
     final frontCamera = cameras.cast<CameraDescription?>().firstWhere(
-          (camera) => camera?.lensDirection == CameraLensDirection.front,
+      (camera) => camera?.lensDirection == CameraLensDirection.front,
       orElse: () => null,
     );
-    final targetCamera = frontCamera ?? (cameras.isNotEmpty ? cameras.first : null);
+    final targetCamera =
+        frontCamera ?? (cameras.isNotEmpty ? cameras.first : null);
     if (targetCamera == null) {
       _cameraError = '未找到可用相机';
       return;
     }
 
-    final imageFormatGroup =
-    Platform.isIOS ? ImageFormatGroup.bgra8888 : ImageFormatGroup.nv21;
+    final imageFormatGroup = Platform.isIOS
+        ? ImageFormatGroup.bgra8888
+        : ImageFormatGroup.nv21;
 
     final controller = CameraController(
       targetCamera,
@@ -265,7 +272,7 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
         }
       }
     } catch (e) {
-      debugPrint('人脸识别处理失败: $e');
+      AppLogger.debug('人脸识别处理失败: $e');
     } finally {
       _isProcessingImage = false;
     }
@@ -353,10 +360,9 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
         _faceImage = bytes;
       });
 
-      final uploadResult = await ref.read(uploadFileProvider).call(
-        bytes: bytes,
-        filename: 'face_verify.jpg',
-      );
+      final uploadResult = await ref
+          .read(uploadFileProvider)
+          .call(bytes: bytes, filename: 'face_verify.jpg');
       if (!mounted) return;
 
       if (uploadResult.isSuccess) {
@@ -393,7 +399,8 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     if (Platform.isIOS) {
       rotation = InputImageRotationValue.fromRawValue(sensorOrientation);
     } else if (Platform.isAndroid) {
-      var rotationCompensation = _orientations[controller.value.deviceOrientation];
+      var rotationCompensation =
+          _orientations[controller.value.deviceOrientation];
       if (rotationCompensation == null) return null;
       if (camera.lensDirection == CameraLensDirection.front) {
         rotationCompensation = (sensorOrientation + rotationCompensation) % 360;
@@ -461,27 +468,28 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
           break;
         }
       }
-      key ??= _stepInfo!.entries.isNotEmpty ? _stepInfo!.entries.first.key : null;
+      key ??= _stepInfo!.entries.isNotEmpty
+          ? _stepInfo!.entries.first.key
+          : null;
       if (key == null) {
         throw Exception('face verify field missing');
       }
 
-      final result = await ref.read(submitAcpElementInfoProvider).call(
-        processId: _processId!,
-        step: _stepInfo!.step,
-        jsonParam: [
-          {
-            'key': key,
-            'value': _faceImageUrl!,
-          },
-        ],
-      );
+      final result = await ref
+          .read(submitAcpElementInfoProvider)
+          .call(
+            processId: _processId!,
+            step: _stepInfo!.step,
+            jsonParam: [
+              {'key': key, 'value': _faceImageUrl!},
+            ],
+          );
 
       if (!mounted) return;
       if (result.isSuccess) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const HomeShell()),
-              (route) => false,
+          (route) => false,
         );
       } else {
         ScaffoldMessenger.of(
@@ -521,17 +529,17 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : Padding(
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-                child: Column(
-                  children: [
-                    _buildStatusCard(),
-                    const SizedBox(height: 18),
-                    Expanded(child: _buildCameraArea()),
-                    const SizedBox(height: 18),
-                    _buildStepList(),
-                  ],
-                ),
-              ),
+                      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                      child: Column(
+                        children: [
+                          _buildStatusCard(),
+                          const SizedBox(height: 18),
+                          Expanded(child: _buildCameraArea()),
+                          const SizedBox(height: 18),
+                          _buildStepList(),
+                        ],
+                      ),
+                    ),
             ),
           ),
           BottomContinueButton(
@@ -597,10 +605,15 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
         if (_faceImage != null) {
           const actionAreaHeight = 54.0;
           const spacing = 14.0;
-          final availableImageHeight = (maxPreviewHeight - actionAreaHeight - spacing)
-              .clamp(120.0, maxPreviewHeight);
-          final previewWidth = (availableImageHeight * 3 / 4)
-              .clamp(0.0, maxPreviewWidth);
+          final availableImageHeight =
+              (maxPreviewHeight - actionAreaHeight - spacing).clamp(
+                120.0,
+                maxPreviewHeight,
+              );
+          final previewWidth = (availableImageHeight * 3 / 4).clamp(
+            0.0,
+            maxPreviewWidth,
+          );
 
           return Center(
             child: SizedBox(
@@ -644,7 +657,10 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
         }
 
         final previewSize = controller.value.previewSize;
-        final previewWidth = (maxPreviewHeight * 3 / 4).clamp(0.0, maxPreviewWidth);
+        final previewWidth = (maxPreviewHeight * 3 / 4).clamp(
+          0.0,
+          maxPreviewWidth,
+        );
 
         return Center(
           child: SizedBox(
@@ -708,7 +724,9 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
       children: [
         for (var index = 0; index < _livenessSteps.length; index++)
           Padding(
-            padding: EdgeInsets.only(bottom: index == _livenessSteps.length - 1 ? 0 : 10),
+            padding: EdgeInsets.only(
+              bottom: index == _livenessSteps.length - 1 ? 0 : 10,
+            ),
             child: Row(
               children: [
                 Container(
@@ -726,15 +744,15 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
                     child: index < _currentStepIndex
                         ? const Icon(Icons.check, size: 14, color: Colors.white)
                         : Text(
-                      '${index + 1}',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: index == _currentStepIndex
-                            ? const Color(0xFF0E8C6F)
-                            : const Color(0xFF94A3B8),
-                      ),
-                    ),
+                            '${index + 1}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: index == _currentStepIndex
+                                  ? const Color(0xFF0E8C6F)
+                                  : const Color(0xFF94A3B8),
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -760,10 +778,7 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
             padding: EdgeInsets.only(top: 12),
             child: Text(
               '动作已完成，请正视镜头，系统将自动抓拍正脸照片',
-              style: TextStyle(
-                fontSize: 12,
-                color: Color(0xFF667085),
-              ),
+              style: TextStyle(fontSize: 12, color: Color(0xFF667085)),
             ),
           ),
       ],
@@ -785,15 +800,9 @@ class _FaceLivenessStep {
   final _FaceAction action;
   final String description;
 
-  const _FaceLivenessStep({
-    required this.action,
-    required this.description,
-  });
+  const _FaceLivenessStep({required this.action, required this.description});
 
-  static _FaceLivenessStep? fromBackend({
-    String? key,
-    String? description,
-  }) {
+  static _FaceLivenessStep? fromBackend({String? key, String? description}) {
     final normalizedKey = (key ?? '').trim();
     if (normalizedKey.isEmpty) return null;
 
@@ -808,10 +817,10 @@ class _FaceLivenessStep {
           action: _FaceAction.smile,
           description: description ?? 'Please smile',
         );
-        // todo: 上下点头，左右摇头，眨眼，正面，张嘴
+      // todo: 上下点头，左右摇头，眨眼，正面，张嘴
     }
 
-    debugPrint('Unknown face liveness key from backend: $normalizedKey');
+    AppLogger.debug('Unknown face liveness key from backend: $normalizedKey');
     return null;
   }
 }

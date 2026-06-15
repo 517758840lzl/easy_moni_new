@@ -1,56 +1,63 @@
+import 'package:easy_moni/pages/fillInforma/contact_info_page.dart';
+import 'package:easy_moni/pages/fillInforma/face_verify_page.dart';
+import 'package:easy_moni/pages/fillInforma/id_camera_page.dart';
+import 'package:easy_moni/pages/fillInforma/identity_verify_page.dart';
+import 'package:easy_moni/pages/fillInforma/questionnaire_page.dart';
+import 'package:easy_moni/pages/loan/loan_confirm_page.dart';
+import 'package:easy_moni/pages/loan/loan_reviewing_page.dart';
+import 'package:easy_moni/pages/loan/models/loan_confirm_request_product.dart';
+import 'package:easy_moni/pages/mine/detailpage.dart';
+import 'package:easy_moni/pages/mine/mine.dart';
+import 'package:easy_moni/pages/mine/order_detail_page.dart';
+import 'package:easy_moni/pages/mine/order_history_page.dart';
+import 'package:easy_moni/pages/repay/extension_apply_page.dart';
+import 'package:easy_moni/pages/repay/payment_page.dart';
+import 'package:easy_moni/pages/repay/repay_detail_page.dart';
+import 'package:easy_moni/pages/repay/repay_entry_page.dart';
+import 'package:easy_moni/pages/repay/repay_multi_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:easy_moni/core/router/app_routes.dart';
+import 'package:easy_moni/pages/login/customer_service_page.dart';
 import 'package:easy_moni/pages/login/permissionpage.dart';
 import 'package:easy_moni/pages/login/loginpage.dart';
 import 'package:easy_moni/entities/user_repayment_resp.dart';
 import 'package:easy_moni/pages/home/homesell.dart';
-
-import '../../pages/fillInforma/contact_info_page.dart';
-import '../../pages/fillInforma/face_verify_page.dart';
-import '../../pages/fillInforma/id_camera_page.dart';
-import '../../pages/fillInforma/identity_verify_page.dart';
-import '../../pages/fillInforma/personal_info_page.dart' as fill_info;
-import '../../pages/fillInforma/questionnaire_page.dart';
-import '../../pages/loan/loan_confirm_page.dart';
-import '../../pages/loan/loan_reviewing_page.dart';
-import '../../pages/loan/models/loan_confirm_request_product.dart';
-import '../../pages/mine/detailpage.dart';
-import '../../pages/mine/mine.dart';
-import '../../pages/mine/order_history_page.dart';
-import '../../pages/mine/order_detail_page.dart';
-import '../../pages/repay/extension_apply_page.dart';
-import '../../pages/repay/payment_page.dart';
-import '../../pages/repay/repay_detail_page.dart';
-import '../../pages/repay/repay_entry_page.dart';
-import '../../pages/repay/repay_multi_detail_page.dart';
+import 'package:easy_moni/pages/fillInforma/personal_info_page.dart'
+    as fill_info;
 
 final globalNavigationKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: globalNavigationKey,
-    initialLocation: '/',
+    initialLocation: AppRoutePaths.root,
     debugLogDiagnostics: true,
     routes: [
       GoRoute(
-        path: '/',
-        name: 'home',
+        path: AppRoutePaths.root,
+        name: AppRouteNames.home,
         builder: (context, state) => const PermissionPage(),
       ),
       GoRoute(
-        path: '/login',
-        name: 'login',
+        path: AppRoutePaths.login,
+        name: AppRouteNames.login,
         builder: (context, state) => const LoginPage(),
       ),
       GoRoute(
-        path: '/home',
-        name: 'homeShell',
+        path: AppRoutePaths.customerService,
+        name: AppRouteNames.customerService,
+        builder: (context, state) => const CustomerServicePage(),
+      ),
+      GoRoute(
+        path: AppRoutePaths.home,
+        name: AppRouteNames.homeShell,
         builder: (context, state) => const HomeShell(),
       ),
       GoRoute(
-        path: '/idcamera',
-        name: 'idcamera',
+        path: AppRoutePaths.idCamera,
+        name: AppRouteNames.idCamera,
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
           final isFront = extra?['isFront'] as bool? ?? true;
@@ -59,8 +66,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
 
       GoRoute(
-        path: '/order-detail',
-        name: 'orderDetail',
+        path: AppRoutePaths.orderDetail,
+        name: AppRouteNames.orderDetail,
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
           if (extra != null && extra.containsKey('orders')) {
@@ -73,37 +80,37 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/repay-entry',
-        name: 'repayEntry',
+        path: AppRoutePaths.repayEntry,
+        name: AppRouteNames.repayEntry,
         builder: (context, state) => const RepayEntryPage(),
       ),
       GoRoute(
-        path: '/repay-detail',
-        name: 'repayDetail',
+        path: AppRoutePaths.repayDetail,
+        name: AppRouteNames.repayDetail,
         builder: (context, state) {
           final bill = state.extra as BillItem;
           return RepayDetailPage(bill: bill);
         },
       ),
       GoRoute(
-        path: '/repay-multi-detail',
-        name: 'repayMultiDetail',
+        path: AppRoutePaths.repayMultiDetail,
+        name: AppRouteNames.repayMultiDetail,
         builder: (context, state) {
           final bills = state.extra as List<BillItem>;
           return RepayMultiDetailPage(bills: bills);
         },
       ),
       GoRoute(
-        path: '/extension-apply',
-        name: 'extensionApply',
+        path: AppRoutePaths.extensionApply,
+        name: AppRouteNames.extensionApply,
         builder: (context, state) {
           final billId = state.extra as String? ?? '';
           return ExtensionApplyPage(billId: billId);
         },
       ),
       GoRoute(
-        path: '/payment',
-        name: 'payment',
+        path: AppRoutePaths.payment,
+        name: AppRouteNames.payment,
         builder: (context, state) {
           final params = state.extra as Map<String, dynamic>?;
           final amount = params?['amount'] as double? ?? 0.0;
@@ -113,8 +120,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/loan-confirm',
-        name: 'loanConfirm',
+        path: AppRoutePaths.loanConfirm,
+        name: AppRouteNames.loanConfirm,
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
           final rawProducts = extra?['products'];
@@ -125,48 +132,48 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/loan-reviewing',
-        name: 'loanReviewing',
+        path: AppRoutePaths.loanReviewing,
+        name: AppRouteNames.loanReviewing,
         builder: (context, state) => const LoanReviewingPage(),
       ),
       GoRoute(
-        path: '/contact-info',
-        name: 'contactInfo',
+        path: AppRoutePaths.contactInfo,
+        name: AppRouteNames.contactInfo,
         builder: (context, state) => const ContactInfoPage(),
       ),
       GoRoute(
-        path: '/personal-info',
-        name: 'personalInfo',
+        path: AppRoutePaths.personalInfo,
+        name: AppRouteNames.personalInfo,
         builder: (context, state) => const fill_info.PersonalInfoPage(),
       ),
       GoRoute(
-        path: '/identity-verify',
-        name: 'identityVerify',
+        path: AppRoutePaths.identityVerify,
+        name: AppRouteNames.identityVerify,
         builder: (context, state) => const IdentityVerifyPage(),
       ),
       GoRoute(
-        path: '/face-verify',
-        name: 'faceVerify',
+        path: AppRoutePaths.faceVerify,
+        name: AppRouteNames.faceVerify,
         builder: (context, state) => const FaceVerifyPage(),
       ),
       GoRoute(
-        path: '/questionnaire',
-        name: 'questionnaire',
+        path: AppRoutePaths.questionnaire,
+        name: AppRouteNames.questionnaire,
         builder: (context, state) => const QuestionnairePage(),
       ),
       GoRoute(
-        path: '/mine',
-        name: 'mine',
+        path: AppRoutePaths.mine,
+        name: AppRouteNames.mine,
         builder: (context, state) => const MinePage(),
       ),
       GoRoute(
-        path: '/order-history',
-        name: 'orderHistory',
+        path: AppRoutePaths.orderHistory,
+        name: AppRouteNames.orderHistory,
         builder: (context, state) => const OrderHistoryPage(),
       ),
       GoRoute(
-        path: '/detail/:id',
-        name: 'detail',
+        path: AppRoutePaths.detail,
+        name: AppRouteNames.detail,
         pageBuilder: (context, state) {
           final id = state.pathParameters['id'] ?? '';
           return CustomTransitionPage(
@@ -197,7 +204,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => context.go('/'),
+              onPressed: () => context.go(AppRoutePaths.root),
               child: const Text('Go Home'),
             ),
           ],

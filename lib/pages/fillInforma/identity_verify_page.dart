@@ -1,4 +1,5 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
+import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:easy_moni/entities/acp_element_info_resp.dart';
 import 'package:easy_moni/pages/fillInforma/providers/acp_element_info_provider.dart';
@@ -11,6 +12,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:easy_moni/core/utils/app_logger.dart';
 
 import '../../gen/assets.gen.dart';
 import '../../services/platform_service.dart';
@@ -103,7 +105,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
       if (!_allowContinueForFaceTest) {
         return;
       }
-      context.push('/face-verify');
+      context.push(AppRoutePaths.faceVerify);
       return;
     }
 
@@ -143,7 +145,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
 
       if (!mounted) return;
       if (result.isSuccess) {
-        context.push('/face-verify');
+        context.push(AppRoutePaths.faceVerify);
       } else {
         ScaffoldMessenger.of(
           context,
@@ -499,14 +501,14 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   }
 
   Future<void> _pickFromGallery({required bool isFront}) async {
-    debugPrint('开始选择身份证图片, isFront=$isFront, isWeb=$kIsWeb');
+    AppLogger.debug('开始选择身份证图片, isFront=$isFront, isWeb=$kIsWeb');
     final imageData = await CameraService.pickFromGallery();
     if (!mounted) return;
     if (imageData != null) {
-      debugPrint('已拿到图片数据, bytes=${imageData.length}, isFront=$isFront');
+      AppLogger.debug('已拿到图片数据, bytes=${imageData.length}, isFront=$isFront');
       await _onImageSelected(imageData, isFront: isFront);
     } else {
-      debugPrint('未拿到图片数据, isFront=$isFront');
+      AppLogger.debug('未拿到图片数据, isFront=$isFront');
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('未选择图片')));
@@ -531,7 +533,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     Uint8List imageData, {
     required bool isFront,
   }) async {
-    debugPrint('准备处理身份证图片, isFront=$isFront, bytes=${imageData.length}');
+    AppLogger.debug('准备处理身份证图片, isFront=$isFront, bytes=${imageData.length}');
     setState(() {
       if (isFront) {
         _idCardFrontData = imageData;
@@ -583,7 +585,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
         .read(ocrVerificationProvider)
         .call(bytes: imageData, filename: 'id_card_front.jpg', type: 'FRONT');
 
-    debugPrint(
+    AppLogger.debug(
       'OCR 接口返回: isSuccess=${result.isSuccess}, message=${result.message}, data=${result.data}',
     );
 

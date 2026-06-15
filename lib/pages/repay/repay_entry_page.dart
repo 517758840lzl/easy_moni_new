@@ -1,3 +1,4 @@
+import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,7 +7,7 @@ import '../../../utils/extensions.dart';
 class BillStatus {
   static const int overdue = 1;
   static const int normal = 2;
-  
+
   const BillStatus._();
 }
 
@@ -137,10 +138,7 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
                   const SizedBox(height: 16),
                   const Text(
                     '待还总额',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.white70,
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.white70),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -186,7 +184,8 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
                     child: ListView.separated(
                       padding: const EdgeInsets.all(10),
                       itemCount: _bills.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 12),
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         return _buildBillCard(_bills[index]);
                       },
@@ -195,18 +194,23 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
                   // 全部还款按钮
                   Container(
                     padding: const EdgeInsets.all(16),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                    ),
+                    decoration: const BoxDecoration(color: Colors.white),
                     child: GestureDetector(
                       onTap: () {
                         if (_selectedIds.isEmpty) return;
                         if (_selectedIds.length == 1) {
-                          final bill = _bills.firstWhere((b) => b.id == _selectedIds.first);
-                          context.push('/repay-detail', extra: bill);
+                          final bill = _bills.firstWhere(
+                            (b) => b.id == _selectedIds.first,
+                          );
+                          context.push(AppRoutePaths.repayDetail, extra: bill);
                         } else {
-                          final selectedBills = _bills.where((b) => _selectedIds.contains(b.id)).toList();
-                          context.push('/repay-multi-detail', extra: selectedBills);
+                          final selectedBills = _bills
+                              .where((b) => _selectedIds.contains(b.id))
+                              .toList();
+                          context.push(
+                            AppRoutePaths.repayMultiDetail,
+                            extra: selectedBills,
+                          );
                         }
                       },
                       child: Container(
@@ -265,7 +269,10 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
               child: Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
                     child: Row(
                       children: [
                         Container(
@@ -275,7 +282,11 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
                             color: Colors.white.withValues(alpha: 0.3),
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: const Icon(Icons.shopping_bag, size: 12, color: Colors.white),
+                          child: const Icon(
+                            Icons.shopping_bag,
+                            size: 12,
+                            color: Colors.white,
+                          ),
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -289,7 +300,10 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
                         const Spacer(),
                         if (isOverdue)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
                                 colors: [Color(0xFFFF5265), Color(0xFFFF8463)],
@@ -310,12 +324,23 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
                           width: 18,
                           height: 18,
                           decoration: BoxDecoration(
-                            color: isSelected ? const Color(0xFF3DCCC7) : Colors.transparent,
-                            border: isSelected ? null : Border.all(color: Colors.white.withValues(alpha: 0.5), width: 1),
+                            color: isSelected
+                                ? const Color(0xFF3DCCC7)
+                                : Colors.transparent,
+                            border: isSelected
+                                ? null
+                                : Border.all(
+                                    color: Colors.white.withValues(alpha: 0.5),
+                                    width: 1,
+                                  ),
                             shape: BoxShape.circle,
                           ),
                           child: isSelected
-                              ? const Icon(Icons.check, size: 12, color: Colors.white)
+                              ? const Icon(
+                                  Icons.check,
+                                  size: 12,
+                                  color: Colors.white,
+                                )
                               : null,
                         ),
                       ],
@@ -327,7 +352,10 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 11),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 11,
+                      ),
                       child: Row(
                         children: [
                           Expanded(
@@ -371,7 +399,7 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
   Widget _buildRepayButton(bool isOverdue, BillItem bill) {
     return GestureDetector(
       onTap: () {
-        context.push('/repay-detail', extra: bill);
+        context.push(AppRoutePaths.repayDetail, extra: bill);
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
@@ -394,5 +422,4 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
       ),
     );
   }
-
 }

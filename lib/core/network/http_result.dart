@@ -8,7 +8,7 @@ class HttpResultStatus {
   static const int cancel = 4;
   static const int serverError = 5;
   static const int unKnown = 6;
-  
+
   const HttpResultStatus._();
 }
 
@@ -26,9 +26,9 @@ class HttpResult<T> {
     this.statusCode,
     this.cancelToken,
   });
-  
+
   bool get isSuccess => status == HttpResultStatus.success;
-  
+
   factory HttpResult.success(T data, {CancelToken? cancelToken}) {
     return HttpResult(
       status: HttpResultStatus.success,

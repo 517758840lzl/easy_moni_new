@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
-import '../../entities/loan_confirm/loan_confirm_resp.dart';
-import '../../gen/assets.gen.dart';
-import '../../utils/extensions.dart';
-import '../../utils/widgets/loan_bottom_action_button.dart';
-import 'components/loan_order_card.dart';
-import 'models/loan_confirm_request_product.dart';
-import 'providers/loan_confirm_provider.dart';
+import 'package:easy_moni/core/constants/app_strings.dart';
+import 'package:easy_moni/core/router/app_routes.dart';
+import 'package:easy_moni/entities/coupon_resp.dart';
+import 'package:easy_moni/entities/loan_confirm/loan_confirm_resp.dart';
+import 'package:easy_moni/gen/assets.gen.dart';
+import 'package:easy_moni/pages/loan/components/coupon_bottom_sheet_content.dart';
+import 'package:easy_moni/pages/loan/components/coupon_entry_card.dart';
+import 'package:easy_moni/pages/loan/components/loan_order_card.dart';
+import 'package:easy_moni/pages/loan/models/loan_confirm_request_product.dart';
+import 'package:easy_moni/pages/loan/providers/loan_confirm_provider.dart';
+import 'package:easy_moni/pages/login/providers/auth_provider.dart';
+import 'package:easy_moni/services/platform_service.dart';
+import 'package:easy_moni/utils/extensions.dart';
+import 'package:easy_moni/utils/widgets/common_bottom_sheet.dart';
+import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
+import 'package:easy_moni/core/utils/app_logger.dart';
 
 class LoanConfirmPage extends ConsumerStatefulWidget {
   const LoanConfirmPage({super.key, required this.products});
@@ -23,7 +31,8 @@ class LoanConfirmPage extends ConsumerStatefulWidget {
 class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
   // 页面级状态：分别控制首次加载、提交按钮、错误提示和接口返回数据。
   bool _isLoading = true;
-  final bool _isSubmitting = false;
+  bool _isSubmitting = false;
+  bool _isCouponSheetOpen = false;
   String? _loadError;
   LoanConfirmResp? _loanConfirmResp;
 
@@ -83,39 +92,134 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
 
   Future<void> _submitOrder() async {
     if (_isSubmitting) return;
-    // 先做页面测试，再测试逻辑
-    context.go('/loan-reviewing');
-    // final data = _confirmData;
-    // final orders = data?.list ?? const <LoanConfirmOrder>[];
-    // if (data == null || orders.isEmpty) {
-    //   context.showSnackBar('暂无可确认借款', isError: true);
-    //   return;
-    // }
-    //
-    // setState(() {
-    //   _isSubmitting = true;
-    // });
-    //
-    // try {
-    //   final result = await ref
-    //       .read(loanConfirmProvider)
-    //       .confirmOrder(confirmData: data);
-    //   if (!mounted) return;
-    //   if (result.isSuccess) {
-    //     context.go('/loan-reviewing');
-    //   } else {
-    //     context.showSnackBar(result.message ?? '提交失败，请重试', isError: true);
-    //   }
-    // } catch (_) {
-    //   if (!mounted) return;
-    //   context.showSnackBar('提交失败，请重试', isError: true);
-    // } finally {
-    //   if (mounted) {
-    //     setState(() {
-    //       _isSubmitting = false;
-    //     });
-    //   }
-    // }
+
+    // 提交前确认用户已经授予短信读取权限；未授权时先展示隐私说明并引导去系统设置。
+    final hasSmsPermission = await SmsService.checkPermission();
+    if (!mounted) return;
+    if (!hasSmsPermission) {
+      await _showSmsPermissionSheet();
+      return;
+    }
+
+    final data = _confirmData;
+    final orders = data?.list ?? const <LoanConfirmOrder>[];
+    if (data == null || orders.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      await _checkUploadDataValidBeforeSubmit();
+      if (!mounted) return;
+
+      final result = await ref
+          .read(loanConfirmProvider)
+          .confirmOrder(confirmData: data);
+      if (!mounted) return;
+      if (result.isSuccess) {
+        context.go(AppRoutePaths.loanReviewing);
+      } else {
+        context.showSnackBar(result.message ?? '提交失败，请重试', isError: true);
+      }
+    } catch (_) {
+      if (!mounted) return;
+      context.showSnackBar('提交失败，请重试', isError: true);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
+
+  // 提交借款申请前，检查本地采集数据是否仍然有效。
+  Future<void> _checkUploadDataValidBeforeSubmit() async {
+    try {
+      final checkDataResult = await ref
+          .read(checkUploadDataValidProvider)
+          .call();
+      if (checkDataResult.isSuccess) {
+        AppLogger.debug(
+          'loanConfirm checkUploadDataValid 成功: ${checkDataResult.data}',
+        );
+      } else {
+        AppLogger.debug(
+          'loanConfirm checkUploadDataValid 失败: ${checkDataResult.message}',
+        );
+      }
+    } catch (e) {
+      AppLogger.debug('loanConfirm checkUploadDataValid 请求异常: $e');
+    }
+  }
+
+  Future<void> _showSmsPermissionSheet() {
+    return CommonBottomSheet.show<void>(
+      context: context,
+      title: AppStrings.needsSms,
+      description: AppStrings.smsPermissionDesc,
+      image: Assets.images.permissionSms.image(width: 122, height: 114),
+      actions: [
+        const CommonBottomSheetAction<void>(
+          text: AppStrings.cancel,
+          isPrimary: false,
+        ),
+        CommonBottomSheetAction<void>(
+          text: AppStrings.goSettings,
+          onPressed: SmsService.openAppSettings,
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showCoupons() async {
+    if (_isCouponSheetOpen) return;
+    final orders = _confirmData?.list ?? const <LoanConfirmOrder>[];
+    if (orders.isEmpty) return;
+
+    setState(() {
+      _isCouponSheetOpen = true;
+    });
+
+    try {
+      await CommonBottomSheet.show<void>(
+        context: context,
+        title: '',
+        description: '',
+        content: _CouponBottomSheetLoader(future: _loadCoupons(orders)),
+        actions: const [CommonBottomSheetAction<void>(text: 'Confirm')],
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCouponSheetOpen = false;
+        });
+      }
+    }
+  }
+
+  Future<List<CouponItem>> _loadCoupons(List<LoanConfirmOrder> orders) async {
+    // 点击入口后在弹层内实时拉取优惠券列表，避免用户看到过期券信息。
+    final result = await ref
+        .read(loanConfirmProvider)
+        .fetchCoupons(
+          appOrderIds: _couponAppOrderIds(orders),
+          productCodes: _couponProductCodes(orders),
+        );
+
+    if (!result.isSuccess || result.data == null) {
+      throw result.message ?? '优惠券加载失败，请重试';
+    }
+
+    final couponData = result.data?.data;
+    if (couponData?.showCouponCard != 1) {
+      return const <CouponItem>[];
+    }
+
+    return couponData?.coupons ?? const <CouponItem>[];
   }
 
   @override
@@ -124,7 +228,7 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
     final orders = data?.list ?? const <LoanConfirmOrder>[];
     final hasData = data != null && orders.isNotEmpty;
     final topInset = MediaQuery.of(context).padding.top;
-    final cardTop = topInset + 218;
+    final cardTop = topInset + 202;
     final contentTop = topInset + 278;
 
     return Scaffold(
@@ -155,9 +259,20 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
               // 收款账户卡片悬浮在顶部信息区和白色内容区之间。
               Positioned(
                 top: cardTop,
-                left: 14,
-                right: 14,
-                child: _MomoAccountCard(data: data),
+                left: 0,
+                right: 0,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: _MomoAccountCard(data: data),
+                ),
               ),
             // 主内容区：包含异形白底、加载/错误/空态和订单列表。
             Positioned.fill(
@@ -246,7 +361,7 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
       child: Column(
         children: [
           // 优惠券入口固定在订单列表最上方。
-          const _CouponEntryCard(),
+          CouponEntryCard(onTap: _showCoupons),
           const SizedBox(height: 14),
           ...List.generate(orders.length, (index) {
             return Padding(
@@ -258,6 +373,51 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
           }),
         ],
       ),
+    );
+  }
+}
+
+// 优惠券弹层内容加载
+class _CouponBottomSheetLoader extends StatelessWidget {
+  const _CouponBottomSheetLoader({required this.future});
+
+  final Future<List<CouponItem>> future;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<CouponItem>>(
+      future: future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const SizedBox(
+            height: 104,
+            child: Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Color(0xFF268470),
+              ),
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          final message = snapshot.error?.toString();
+          return SizedBox(
+            height: 104,
+            child: Center(
+              child: Text(
+                (message == null || message.isEmpty) ? '优惠券加载失败，请重试' : message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 14, color: Color(0xFF8A8F98)),
+              ),
+            ),
+          );
+        }
+
+        return CouponBottomSheetContent(
+          coupons: snapshot.data ?? const <CouponItem>[],
+        );
+      },
     );
   }
 }
@@ -425,7 +585,7 @@ class _Hero extends StatelessWidget {
             ),
           ),
           Positioned(
-            top: topInset + 132,
+            top: topInset + 116,
             left: 18,
             right: 18,
             child: Row(
@@ -443,10 +603,7 @@ class _Hero extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: _SummaryTile(
-                    icon: Assets.images.loanMoney.image(
-                      width: 22,
-                      height: 22,
-                    ),
+                    icon: Assets.images.loanMoney.image(width: 22, height: 22),
                     value: _amountText(repayTotal),
                     label: '应还金额',
                   ),
@@ -537,7 +694,7 @@ class _MomoAccountCard extends StatelessWidget {
   Widget build(BuildContext context) {
     // 接口字段为空时使用兜底文案，避免卡片出现空白。
     final accountName = _nonEmpty(data.bankCardName, fallback: 'Vodafone Cash');
-    final accountNo = _nonEmpty(data.bankCardNo, fallback: '-');
+    final accountNo = _maskAccountNo(_nonEmpty(data.bankCardNo, fallback: '-'));
 
     return Container(
       height: 92,
@@ -636,64 +793,6 @@ class _SimIcon extends StatelessWidget {
   }
 }
 
-// 优惠券入口卡片，目前作为列表顶部的固定入口展示。
-class _CouponEntryCard extends StatelessWidget {
-  const _CouponEntryCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 53,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFFFDF5EE),
-        borderRadius: BorderRadius.circular(4.375),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Row(
-        children: [
-          Assets.images.loanGhs.image(width: 28, height: 28),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
-                  children: [
-                    const Text(
-                      '优惠券',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF131313),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 3),
-                const Text(
-                  '提升额度或享受利息减免',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF8A8F98),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Icon(
-            Icons.chevron_right_rounded,
-            color: Color(0xFF9CA3AF),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // 金额展示统一加 GHS 前缀，并按项目扩展方法格式化小数。
 String _amountText(num? value) {
   return 'GHS ${(value ?? 0).toDouble().formatAmount()}';
@@ -709,4 +808,30 @@ String _dateText(String? value) {
 String _nonEmpty(String? value, {required String fallback}) {
   final text = value?.trim();
   return text == null || text.isEmpty ? fallback : text;
+}
+
+// 银行卡号脱敏：超过 8 位时仅展示前四位和后四位，保护用户账户信息。
+String _maskAccountNo(String value) {
+  if (value.length <= 8) return value;
+
+  return '${value.substring(0, 4)}****${value.substring(value.length - 4)}';
+}
+
+// 优惠券接口参数：只传有效订单 ID，避免把 0 或空值误认为真实订单。
+List<int> _couponAppOrderIds(List<LoanConfirmOrder> orders) {
+  return orders
+      .map((item) => item.appOrderId)
+      .whereType<int>()
+      .where((id) => id > 0)
+      .toList();
+}
+
+// 优惠券接口参数：按当前确认页产品去重，匹配后端筛券维度。
+List<String> _couponProductCodes(List<LoanConfirmOrder> orders) {
+  return orders
+      .map((item) => item.productCode?.trim())
+      .whereType<String>()
+      .where((code) => code.isNotEmpty)
+      .toSet()
+      .toList();
 }

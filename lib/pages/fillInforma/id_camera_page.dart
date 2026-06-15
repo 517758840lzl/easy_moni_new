@@ -6,6 +6,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:io';
 import 'package:image/image.dart' as img;
+import 'package:easy_moni/core/utils/app_logger.dart';
 
 import '../../utils/widgets/cardmask.dart';
 
@@ -187,9 +188,7 @@ class _IdCameraScreenState extends ConsumerState<IdCameraScreen> {
             right: 0,
             top: 10,
             bottom: 10,
-            width:
-                MediaQuery.of(context).size.width /
-                3.0,
+            width: MediaQuery.of(context).size.width / 3.0,
             child: Container(
               child: Row(
                 children: [
@@ -320,7 +319,7 @@ class _IdCameraScreenState extends ConsumerState<IdCameraScreen> {
       if (!mounted) return;
       Navigator.of(context).pop<Uint8List>(bytes);
     } catch (e) {
-      debugPrint("拍照出错: $e");
+      AppLogger.debug("拍照出错: $e");
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,

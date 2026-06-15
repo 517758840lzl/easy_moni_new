@@ -2,21 +2,20 @@ class ProvincesCitiesAreaResp {
   final List<AreaItem> province;
   final List<AreaItem> city;
 
-  const ProvincesCitiesAreaResp({
-    required this.province,
-    required this.city,
-  });
+  const ProvincesCitiesAreaResp({required this.province, required this.city});
 
   factory ProvincesCitiesAreaResp.fromJson(Map<String, dynamic> json) {
     final source = (json['data'] is Map<String, dynamic>)
         ? json['data'] as Map<String, dynamic>
         : json;
     return ProvincesCitiesAreaResp(
-      province: (source['province'] as List<dynamic>?)
+      province:
+          (source['province'] as List<dynamic>?)
               ?.map((e) => AreaItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      city: (source['city'] as List<dynamic>?)
+      city:
+          (source['city'] as List<dynamic>?)
               ?.map((e) => AreaItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],

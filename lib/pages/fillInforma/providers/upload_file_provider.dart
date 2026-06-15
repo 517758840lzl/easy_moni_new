@@ -1,10 +1,11 @@
-import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:typed_data';
 
-import '../../../core/constants/api_constants.dart';
-import '../../../core/network/http_provider.dart';
-import '../../../core/network/http_result.dart';
+import 'package:dio/dio.dart';
+import 'package:easy_moni/core/constants/api_constants.dart';
+import 'package:easy_moni/core/network/http_provider.dart';
+import 'package:easy_moni/core/network/http_result.dart';
+import 'package:easy_moni/core/utils/app_logger.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final uploadFileProvider = Provider<UploadFileApi>((ref) {
   return UploadFileApi();
@@ -21,19 +22,16 @@ class UploadFileApi {
     }
 
     try {
+      final config = HttpProvider.instance.config;
       final dio = Dio();
-      final uploadUrl = Uri.parse(
-        ApiConstants.baseUrl,
-      ).resolve(ApiConstants.uploadFile).toString();
-      final headers = <String, dynamic>{
-        'Accept': 'application/json',
-        'acqChannel': 'GHPM',
-        'acqChannelIndex': '0',
-        'disableEncBody': 'false',
-        'token': token,
-      };
+      final uploadUrl = config.resolveApiPath(ApiConstants.uploadFile);
+      final headers = config.commonHeaders(
+        token: token,
+        deviceId: HttpProvider.instance.deviceId,
+        includeContentType: false,
+      );
 
-      debugPrint(
+      AppLogger.debug(
         '上传文件开始: url=$uploadUrl, '
         'filename=$filename, bytes=${bytes.length}, headers=$headers',
       );
@@ -48,7 +46,7 @@ class UploadFileApi {
         options: Options(headers: headers),
       );
 
-      debugPrint(
+      AppLogger.debug(
         '上传文件响应: status=${response.statusCode}, data=${response.data}',
       );
 
@@ -64,7 +62,7 @@ class UploadFileApi {
         (map['msg'] ?? map['message'] ?? 'upload failed').toString(),
       );
     } on DioException catch (e) {
-      debugPrint(
+      AppLogger.debug(
         '上传文件 DioException: type=${e.type}, message=${e.message}, '
         'status=${e.response?.statusCode}, data=${e.response?.data}',
       );
@@ -73,7 +71,7 @@ class UploadFileApi {
         e.message ?? 'upload failed',
       );
     } catch (e) {
-      debugPrint('上传文件 Exception: $e');
+      AppLogger.debug('上传文件 Exception: $e');
       return HttpResult.error(HttpResultStatus.unKnown, e.toString());
     }
   }

@@ -1,11 +1,12 @@
+import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:easy_moni/core/utils/app_logger.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/network/http_provider.dart';
 import '../../gen/assets.gen.dart';
-import '../login/loginpage.dart';
 import 'providers/user_info_provider.dart';
 import 'providers/sign_out_provider.dart';
 import '../../utils/widgets/toast.dart';
@@ -40,38 +41,38 @@ class _MinePageState extends ConsumerState<MinePage> {
           _userName = userInfo.nickName ?? userInfo.userName ?? '用户';
           _userPhone = userInfo.phone?.toString() ?? '未绑定手机号';
         });
-        debugPrint('用户信息加载成功: $userInfo');
+        AppLogger.debug('用户信息加载成功: $userInfo');
       } else {
-        debugPrint('获取用户信息失败: ${result.message}');
+        AppLogger.debug('获取用户信息失败: ${result.message}');
       }
     } catch (e) {
       if (!mounted) return;
-      debugPrint('获取用户信息异常: $e');
+      AppLogger.debug('获取用户信息异常: $e');
     }
   }
 
   void _onRepayTap() {
-    debugPrint('点击了去还款');
+    AppLogger.debug('点击了去还款');
     // TODO: 跳转到还款页面
   }
 
   void _onHistoryTap() {
-    debugPrint('点击了历史订单');
-    context.push('/order-history');
+    AppLogger.debug('点击了历史订单');
+    context.push(AppRoutePaths.orderHistory);
   }
 
   void _onCustomerServiceTap() {
-    debugPrint('点击了客服');
+    AppLogger.debug('点击了客服');
     // TODO: 打开客服页面
   }
 
   void _onPrivacyPolicyTap() {
-    debugPrint('点击了隐私政策');
+    AppLogger.debug('点击了隐私政策');
     // TODO: 打开隐私政策页面
   }
 
   void _onSettingsTap() {
-    debugPrint('点击了设置');
+    AppLogger.debug('点击了设置');
     // TODO: 跳转到设置页面
   }
 
@@ -106,18 +107,15 @@ class _MinePageState extends ConsumerState<MinePage> {
       if (result.isSuccess) {
         await HttpProvider.instance.clearAuth();
         if (!mounted) return;
-        // HomeShell 由 MaterialPageRoute 压栈，需用 Navigator 清除后再跳转
-        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const LoginPage()),
-          (route) => false,
-        );
+        // 退出登录后回到 GoRouter 管理的登录页，避免原生 Navigator 覆盖路由栈
+        context.go(AppRoutePaths.login);
         showToast('已退出登录');
       } else {
         showToast(result.message ?? '退出失败，请重试');
       }
     } catch (e) {
       if (!mounted) return;
-      debugPrint('退出登录异常: $e');
+      AppLogger.debug('退出登录异常: $e');
       showToast('退出失败，请重试');
     }
   }

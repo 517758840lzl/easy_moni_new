@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
+import 'package:easy_moni/core/utils/app_logger.dart';
 
 class UserInfoResp {
   final int? clientType;
@@ -44,7 +44,7 @@ class UserInfoResp {
       } else if (json is String) {
         map = Map<String, dynamic>.from(jsonDecode(json) as Map);
       } else {
-        debugPrint('UserInfoResp.fromJson: 未知类型 ${json.runtimeType}');
+        AppLogger.debug('UserInfoResp.fromJson: 未知类型 ${json.runtimeType}');
         return const UserInfoResp();
       }
 
@@ -65,7 +65,7 @@ class UserInfoResp {
         userName: map['userName'] as String?,
       );
     } catch (e, stack) {
-      debugPrint('UserInfoResp.fromJson 异常: $e\n$stack');
+      AppLogger.debug('UserInfoResp.fromJson 异常: $e\n$stack');
       return const UserInfoResp();
     }
   }

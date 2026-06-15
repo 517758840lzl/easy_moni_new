@@ -1,3 +1,4 @@
+import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,22 +8,22 @@ import 'order_detail_page.dart';
 import 'providers/user_repayment_provider.dart';
 
 class OrderStatus {
-  static const int all = 0;       // 全部
-  static const int borrowing = 1;  // 借款中
-  static const int pending = 2;     // 待还款
-  static const int failed = 3;     // 放款失败
-  static const int repaided = 4;     // 还款中
+  static const int all = 0; // 全部
+  static const int borrowing = 1; // 借款中
+  static const int pending = 2; // 待还款
+  static const int failed = 3; // 放款失败
+  static const int repaided = 4; // 还款中
 
   const OrderStatus._();
 }
 
 class StatusTag {
-  static const int borrowing = 1;   // 放款中 - 橙色
-  static const int pending = 2;      // 待还款 - 橙色
-  static const int overdue = 3;      // 已逾期 - 红色
-  static const int failed = 4;       // 放款失败 - 灰色 (Reembolso)
-  static const int repaid = 5;       // 已还款 - 绿色
-  
+  static const int borrowing = 1; // 放款中 - 橙色
+  static const int pending = 2; // 待还款 - 橙色
+  static const int overdue = 3; // 已逾期 - 红色
+  static const int failed = 4; // 放款失败 - 灰色 (Reembolso)
+  static const int repaid = 5; // 已还款 - 绿色
+
   const StatusTag._();
 }
 
@@ -46,11 +47,13 @@ class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
 
   Future<void> _loadOrders() async {
     setState(() => _isLoading = true);
-    
+
     try {
       final api = ref.read(userRepaymentProvider);
-      final result = await api.call(statusList: [_currentStatus]); //_currentStatus statusList: [4] = Reembolso
-      
+      final result = await api.call(
+        statusList: [_currentStatus],
+      ); //_currentStatus statusList: [4] = Reembolso
+
       if (mounted) {
         setState(() {
           if (result.isSuccess && result.data != null) {
@@ -116,13 +119,20 @@ class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
               child: Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 16,
+                    ),
                     child: Row(
                       children: [
                         if (Navigator.of(context).canPop())
                           GestureDetector(
                             onTap: () => Navigator.of(context).pop(),
-                            child: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
+                            child: const Icon(
+                              Icons.arrow_back_ios,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                           ),
                         const Expanded(
                           child: Text(
@@ -157,8 +167,8 @@ class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _orders.isEmpty
-                      ? _buildEmptyState()
-                      : _buildOrderList(),
+                  ? _buildEmptyState()
+                  : _buildOrderList(),
             ),
           ),
         ],
@@ -234,10 +244,7 @@ class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
           SizedBox(height: 16),
           Text(
             '暂无订单记录',
-            style: TextStyle(
-              fontSize: 14,
-              color: Color(0xFFACACAC),
-            ),
+            style: TextStyle(fontSize: 14, color: Color(0xFFACACAC)),
           ),
         ],
       ),
@@ -272,10 +279,10 @@ class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
           walletType: order.bankCardName,
           status: _convertToDetailStatus(order.orderStatus),
         );
-        context.push('/order-detail', extra: {
-          'orderData': orderData,
-          'orders': _orders,
-        });
+        context.push(
+          AppRoutePaths.orderDetail,
+          extra: {'orderData': orderData, 'orders': _orders},
+        );
       },
       child: Container(
         padding: const EdgeInsets.fromLTRB(15, 10, 15, 10),
@@ -297,7 +304,11 @@ class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
                         color: Colors.grey[300],
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: const Icon(Icons.account_balance_wallet, size: 14, color: Colors.grey),
+                      child: const Icon(
+                        Icons.account_balance_wallet,
+                        size: 14,
+                        color: Colors.grey,
+                      ),
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -309,15 +320,25 @@ class _OrderHistoryPageState extends ConsumerState<OrderHistoryPage> {
                       ),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(Icons.keyboard_arrow_down, size: 14, color: Color(0xFF0E0E0E)),
+                    const Icon(
+                      Icons.keyboard_arrow_down,
+                      size: 14,
+                      color: Color(0xFF0E0E0E),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    _buildAmountItem('借款金额', 'GHS ${order.loanAmount.toStringAsFixed(2)}'),
+                    _buildAmountItem(
+                      '借款金额',
+                      'GHS ${order.loanAmount.toStringAsFixed(2)}',
+                    ),
                     const Spacer(),
-                    _buildAmountItem('到账金额', 'GHS ${order.receiptAmount.toStringAsFixed(2)}'),
+                    _buildAmountItem(
+                      '到账金额',
+                      'GHS ${order.receiptAmount.toStringAsFixed(2)}',
+                    ),
                     const Spacer(),
                     _buildAmountItem('借款日期', _formatDate(order.createTime)),
                   ],

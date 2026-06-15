@@ -26,7 +26,8 @@ class BillDetailsResp {
       remainingDay: json['remainingDay'] as int? ?? 0,
       extensionSwitch: json['extensionSwitch'] as bool? ?? false,
       isExtensionSwitch: json['isExtensionSwitch'] as bool? ?? false,
-      loanOrderDetails: (json['loanOrderDetails'] as List<dynamic>?)
+      loanOrderDetails:
+          (json['loanOrderDetails'] as List<dynamic>?)
               ?.map((e) => LoanOrderDetail.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],

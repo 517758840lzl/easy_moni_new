@@ -1,3 +1,4 @@
+import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -129,8 +130,13 @@ class _ExtensionApplyPageState extends ConsumerState<ExtensionApplyPage> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _error != null
-                      ? Center(child: Text(_error!, style: const TextStyle(color: Colors.red)))
-                      : _buildContent(),
+                  ? Center(
+                      child: Text(
+                        _error!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    )
+                  : _buildContent(),
             ),
           ),
         ],
@@ -332,7 +338,10 @@ class _ExtensionApplyPageState extends ConsumerState<ExtensionApplyPage> {
           const SizedBox(height: 16),
           _buildDetailRow('新的到期日：', _extensionData?.newDueDate ?? ''),
           const SizedBox(height: 16),
-          _buildDetailRow('新到期日应还金额：', 'GHS ${_extensionData?.totalSureRepayAmounts.toStringAsFixed(2) ?? '0.00'}'),
+          _buildDetailRow(
+            '新到期日应还金额：',
+            'GHS ${_extensionData?.totalSureRepayAmounts.toStringAsFixed(2) ?? '0.00'}',
+          ),
         ],
       ),
     );
@@ -410,7 +419,7 @@ class _ExtensionApplyPageState extends ConsumerState<ExtensionApplyPage> {
               ScaffoldMessenger.of(
                 context,
               ).showSnackBar(const SnackBar(content: Text('展期申请成功')));
-              context.go('/');
+              context.go(AppRoutePaths.root);
             },
             child: const Text('确认'),
           ),

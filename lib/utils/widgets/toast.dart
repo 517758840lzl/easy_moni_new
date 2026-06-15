@@ -12,11 +12,15 @@ class ToastPosition {
 
   static const ToastPosition center = ToastPosition();
 
-  static const ToastPosition bottom =
-      ToastPosition(align: Alignment.bottomCenter, offset: -30.0);
+  static const ToastPosition bottom = ToastPosition(
+    align: Alignment.bottomCenter,
+    offset: -30.0,
+  );
 
-  static const ToastPosition top =
-      ToastPosition(align: Alignment.topCenter, offset: 75.0);
+  static const ToastPosition top = ToastPosition(
+    align: Alignment.topCenter,
+    offset: 75.0,
+  );
 
   ToastPosition copyWith({AlignmentGeometry? align, double? offset}) {
     return ToastPosition(
@@ -30,17 +34,16 @@ class ToastPosition {
 }
 
 // ---------- typedef ----------
-typedef EasyToastAnimationBuilder = Widget Function(
-  BuildContext context,
-  Widget child,
-  AnimationController controller,
-  double percent,
-);
+typedef EasyToastAnimationBuilder =
+    Widget Function(
+      BuildContext context,
+      Widget child,
+      AnimationController controller,
+      double percent,
+    );
 
-typedef BuildContextPredicate = BuildContext Function(
-  Iterable<BuildContext> list,
-);
-
+typedef BuildContextPredicate =
+    BuildContext Function(Iterable<BuildContext> list);
 
 Widget _defaultBuildAnimation(
   BuildContext context,
@@ -121,8 +124,7 @@ class ToastTheme extends InheritedWidget {
 // ---------- context map ----------
 final LinkedHashMap<_EasyToastState, BuildContext> _contextMap =
     LinkedHashMap<_EasyToastState, BuildContext>();
-final Map<_EasyToastState, GlobalKey<OverlayState>> _overlayKeyMap =
-    {};
+final Map<_EasyToastState, GlobalKey<OverlayState>> _overlayKeyMap = {};
 
 // ---------- EasyToast widget ----------
 
@@ -210,15 +212,12 @@ class _EasyToastState extends State<EasyToast> {
         textDirection: widget.textDirection,
         child: Overlay(
           key: _overlayKey,
-          initialEntries: [
-            OverlayEntry(builder: (ctx) => widget.child),
-          ],
+          initialEntries: [OverlayEntry(builder: (ctx) => widget.child)],
         ),
       ),
     );
   }
 }
-
 
 ToastFuture showToast(
   String msg, {
@@ -432,9 +431,9 @@ class ToastFuture {
       state = key.currentState;
       if (state != null) break;
     }
-    state ??= Overlay.of(context);
-    _isEntryInserted = state != null;
-    state?.insert(_entry);
+    final overlayState = state ?? Overlay.of(context);
+    _isEntryInserted = true;
+    overlayState.insert(_entry);
   }
 
   void _removeEntry() {
@@ -560,11 +559,17 @@ class _ToastContainerState extends State<ToastContainer>
             top: pos.align == Alignment.topCenter ? pos.offset : 10,
             bottom: pos.align == Alignment.bottomCenter ? -pos.offset : 10,
           ),
-          child: widget.animationBuilder(
-            context,
-            widget.child,
-            _animationController,
-            _animation.value,
+          child: AnimatedBuilder(
+            animation: _animation,
+            child: widget.child,
+            builder: (context, child) {
+              return widget.animationBuilder(
+                context,
+                child ?? const SizedBox(),
+                _animationController,
+                _animation.value,
+              );
+            },
           ),
         ),
       ),

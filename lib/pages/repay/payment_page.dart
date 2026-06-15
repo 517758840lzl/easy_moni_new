@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -539,7 +540,7 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
               ScaffoldMessenger.of(
                 context,
               ).showSnackBar(const SnackBar(content: Text('借款申请已提交')));
-              context.go('/');
+              context.go(AppRoutePaths.root);
             },
             child: const Text('确认'),
           ),

@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
+import 'package:easy_moni/core/utils/app_logger.dart';
 
 class LoginResp {
   final String? token;
@@ -26,10 +26,10 @@ class LoginResp {
       } else if (json is String) {
         map = Map<String, dynamic>.from(jsonDecode(json) as Map);
       } else {
-        debugPrint('LoginResp.fromJson: 未知类型 ${json.runtimeType}');
+        AppLogger.debug('LoginResp.fromJson: 未知类型 ${json.runtimeType}');
         return const LoginResp();
       }
-      
+
       return LoginResp(
         token: map['token'] as String?,
         cacheData: _parseInt(map['cacheData']),
@@ -38,7 +38,7 @@ class LoginResp {
         uuid: map['uuid'] as String?,
       );
     } catch (e, stack) {
-      debugPrint('LoginResp.fromJson 异常: $e\n$stack');
+      AppLogger.debug('LoginResp.fromJson 异常: $e\n$stack');
       return const LoginResp();
     }
   }

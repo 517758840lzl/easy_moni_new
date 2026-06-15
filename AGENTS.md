@@ -16,6 +16,23 @@
 - Add Chinese comments for major modules, key logic, classes, and methods to make the code easier to understand.
 - Prefer concise explanatory comments that describe intent and responsibilities; avoid noisy line-by-line comments for obvious code.
 
+## Default Text
+
+- Default text values must be empty. Do not write specific sample or placeholder text unless the user explicitly provides it.
+
+## Dart Style
+
+- Do not use Dart `enum` in project development. Use `class` definitions instead when modeling fixed values or categories.
+
+## Page Structure
+
+- Keep page files concise. Pure UI files should preferably stay under 400 lines.
+- Encapsulate page logic in separate classes and let the UI reference those classes, keeping business logic decoupled from UI layout code.
+
+## Dart Imports
+
+- Import paths must be absolute package imports, for example `package:easy_moni/...`; do not use relative import paths.
+
 ## Flutter Assets
 
 - Design image slices and local image resources must be accessed through `lib/gen/assets.gen.dart`.
