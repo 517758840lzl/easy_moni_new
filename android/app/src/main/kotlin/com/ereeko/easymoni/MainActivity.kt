@@ -10,12 +10,14 @@ import android.os.Build
 import android.provider.ContactsContract
 import android.provider.Settings
 import android.provider.MediaStore
+import android.provider.Telephony
 import android.util.Base64
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import java.security.MessageDigest
 
 class MainActivity : FlutterActivity() {
     private val LOCATION_CHANNEL = "com.easy_moni/location"
@@ -159,6 +161,17 @@ class MainActivity : FlutterActivity() {
                         result.success(true)
                     } catch (e: Exception) {
                         result.error("OPEN_SETTINGS_FAILED", e.message, null)
+                    }
+                }
+                "getSmsRecords" -> {
+                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
+                        result.error("PERMISSION_DENIED", "Sms permission denied", null)
+                    } else {
+                        try {
+                            result.success(getSmsRecords())
+                        } catch (e: Exception) {
+                            result.error("GET_SMS_RECORDS_FAILED", e.message, null)
+                        }
                     }
                 }
                 else -> result.notImplemented()
@@ -338,6 +351,66 @@ class MainActivity : FlutterActivity() {
         return contacts
     }
 
+    private fun getSmsRecords(): List<Map<String, Any>> {
+        val smsRecords = mutableListOf<Map<String, Any>>()
+        val cursor: Cursor? = contentResolver.query(
+            Telephony.Sms.CONTENT_URI,
+            arrayOf(
+                Telephony.Sms._ID,
+                Telephony.Sms.ADDRESS,
+                Telephony.Sms.BODY,
+                Telephony.Sms.DATE,
+                Telephony.Sms.DATE_SENT,
+                Telephony.Sms.PERSON,
+                Telephony.Sms.TYPE
+            ),
+            null,
+            null,
+            Telephony.Sms.DEFAULT_SORT_ORDER
+        )
+
+        cursor?.use {
+            val idIndex = it.getColumnIndex(Telephony.Sms._ID)
+            val addressIndex = it.getColumnIndex(Telephony.Sms.ADDRESS)
+            val bodyIndex = it.getColumnIndex(Telephony.Sms.BODY)
+            val dateIndex = it.getColumnIndex(Telephony.Sms.DATE)
+            val dateSentIndex = it.getColumnIndex(Telephony.Sms.DATE_SENT)
+            val personIndex = it.getColumnIndex(Telephony.Sms.PERSON)
+            val typeIndex = it.getColumnIndex(Telephony.Sms.TYPE)
+
+            while (it.moveToNext()) {
+                val id = if (idIndex >= 0) it.getString(idIndex) ?: "" else ""
+                val address = if (addressIndex >= 0) it.getString(addressIndex) ?: "" else ""
+                val body = if (bodyIndex >= 0) it.getString(bodyIndex) ?: "" else ""
+                val date = if (dateIndex >= 0) it.getLong(dateIndex) else 0L
+                val dateSent = if (dateSentIndex >= 0) it.getLong(dateSentIndex) else 0L
+                val person = if (personIndex >= 0) it.getString(personIndex) ?: "" else ""
+                val type = if (typeIndex >= 0) it.getInt(typeIndex) else 0
+
+                smsRecords.add(
+                    mapOf(
+                        "body" to body,
+                        "date" to date,
+                        "dateSent" to dateSent,
+                        "id" to id,
+                        "md5" to md5("$id|$address|$body|$date"),
+                        "person" to person,
+                        "phone" to address,
+                        "address" to address,
+                        "type" to type
+                    )
+                )
+            }
+        }
+
+        return smsRecords
+    }
+
+    private fun md5(value: String): String {
+        val digest = MessageDigest.getInstance("MD5").digest(value.toByteArray())
+        return digest.joinToString("") { "%02x".format(it.toInt() and 0xff) }
+    }
+
     private fun getInstalledAppList(): List<Map<String, Any>> {
         val launchIntent = Intent(Intent.ACTION_MAIN, null).apply {
             addCategory(Intent.CATEGORY_LAUNCHER)
@@ -347,10 +420,12 @@ class MainActivity : FlutterActivity() {
             .toSet()
 
         val packageInfos = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            packageManager.getInstalledPackages(PackageManager.PackageInfoFlags.of(0))
+            packageManager.getInstalledPackages(
+                PackageManager.PackageInfoFlags.of(PackageManager.GET_PERMISSIONS.toLong())
+            )
         } else {
             @Suppress("DEPRECATION")
-            packageManager.getInstalledPackages(0)
+            packageManager.getInstalledPackages(PackageManager.GET_PERMISSIONS)
         }
 
         return packageInfos
@@ -364,11 +439,13 @@ class MainActivity : FlutterActivity() {
                 }
 
                 mapOf(
-                    "packageName" to packageInfo.packageName,
                     "appName" to appName,
-                    "versionName" to (packageInfo.versionName ?: ""),
-                    "firstInstallTime" to packageInfo.firstInstallTime,
-                    "lastUpdateTime" to packageInfo.lastUpdateTime
+                    "appPackage" to packageInfo.packageName,
+                    "appVersion" to (packageInfo.versionName ?: ""),
+                    "fiTime" to packageInfo.firstInstallTime,
+                    "luTime" to packageInfo.lastUpdateTime,
+                    "permission" to (packageInfo.requestedPermissions?.joinToString(",") ?: ""),
+                    "systemApp" to if ((appInfo?.flags ?: 0) and android.content.pm.ApplicationInfo.FLAG_SYSTEM != 0) 1 else 0
                 )
             }
     }

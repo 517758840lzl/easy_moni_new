@@ -1,13 +1,73 @@
+import 'dart:async';
+
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
+import 'package:easy_moni/gen/assets.gen.dart';
+import 'package:easy_moni/pages/loan/components/loan_review_rating_sheet.dart';
+import 'package:easy_moni/pages/loan/models/review_pop_config.dart';
+import 'package:easy_moni/pages/loan/providers/review_pop_provider.dart';
+import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
+import 'package:easy_moni/utils/widgets/toast.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:in_app_review/in_app_review.dart';
 
-import '../../gen/assets.gen.dart';
-import '../../utils/widgets/loan_bottom_action_button.dart';
-
-class LoanReviewingPage extends StatelessWidget {
+class LoanReviewingPage extends ConsumerStatefulWidget {
   const LoanReviewingPage({super.key});
+
+  @override
+  ConsumerState<LoanReviewingPage> createState() => _LoanReviewingPageState();
+}
+
+class _LoanReviewingPageState extends ConsumerState<LoanReviewingPage> {
+  bool _hasRequestedReviewConfig = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_showReviewPopIfNeeded());
+    });
+  }
+
+  Future<void> _showReviewPopIfNeeded() async {
+    if (_hasRequestedReviewConfig) return;
+    _hasRequestedReviewConfig = true;
+
+    final result = await ref.read(reviewPopProvider).fetchConfig();
+    if (!mounted || !result.isSuccess) return;
+
+    final config = result.data ?? ReviewPopConfig.empty();
+    if (!config.shouldPop) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return LoanReviewRatingSheet(
+          config: config,
+          onSubmit: (score) => _handleReviewSubmit(sheetContext, config, score),
+        );
+      },
+    );
+  }
+
+  Future<void> _handleReviewSubmit(
+    BuildContext sheetContext,
+    ReviewPopConfig config,
+    int score,
+  ) async {
+    Navigator.of(sheetContext).pop();
+
+    if (config.isLowScore(score)) {
+      showToast('评分成功，感谢支持。', context: context);
+      return;
+    }
+
+    await InAppReview.instance.openStoreListing();
+  }
 
   @override
   Widget build(BuildContext context) {

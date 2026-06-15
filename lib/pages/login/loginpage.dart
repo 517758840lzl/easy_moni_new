@@ -5,6 +5,7 @@ import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/entities/acquisition_progress_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/fillInforma/providers/acquisition_progress_provider.dart';
+import 'package:easy_moni/services/upload_data/upload_data_sync_service.dart';
 import 'package:easy_moni/utils/widgets/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -313,6 +314,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               AppLogger.debug(
                 'checkUploadDataValid 成功: ${checkDataResult.data}',
               );
+              ref
+                  .read(uploadDataSyncServiceProvider)
+                  .handleCheckResult(checkDataResult.data);
             } else {
               AppLogger.debug(
                 'checkUploadDataValid 失败: ${checkDataResult.message}',
@@ -322,11 +326,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             if (!mounted) return;
             AppLogger.debug('checkUploadDataValid 请求异常: $e');
           }
-
-          //查询检查必要数据是否过期，CheckUploadDataValidApi
-          final checkData = await ref.read(checkUploadDataValidProvider).call();
-          if (!mounted) return;
-          AppLogger.debug('checkData: $checkData');
 
           final progressResult = await ref
               .read(acquisitionProgressProvider)

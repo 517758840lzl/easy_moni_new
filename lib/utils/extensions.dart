@@ -19,6 +19,41 @@ extension StringExtension on String {
         ? substring(0, decimalIndex)
         : this;
   }
+
+  /// 将后端 yyyy-MM-dd 日期格式转换为 dd/MM/yyyy，格式不匹配时保留原值。
+  String formatBackendDate() {
+    if (isEmpty) return this;
+
+    final parts = split('-');
+    if (parts.length != 3) return this;
+
+    final year = parts[0];
+    final month = parts[1];
+    final day = parts[2];
+    if (year.length != 4 || month.length != 2 || day.length != 2) {
+      return this;
+    }
+
+    return '$day/$month/$year';
+  }
+
+  /// 格式化日利率展示文案，统一补充利率单位。
+  String formatDailyInterestLabel({String unit = 'per day'}) {
+    if (isEmpty || this == '-') return this;
+    return '$this $unit';
+  }
+}
+
+extension NullableIntExtension on int? {
+  /// 格式化借款期限展示文案，支持单一期限和区间期限。
+  String formatLoanTermLabel({int? to, String unit = 'days'}) {
+    final from = this;
+    if (from == null && to == null) return '-';
+    if (from != null && to != null && from != to) {
+      return '$from-$to $unit';
+    }
+    return '${from ?? to} $unit';
+  }
 }
 
 extension DateTimeExtension on DateTime {
@@ -64,12 +99,17 @@ extension DoubleExtension on double {
     return '${(this * 100).toStringAsFixed(decimals)}%';
   }
 
-  /// 格式化为千分位金额，如 57950.00 -> "57,950.00"
-  String formatAmount() {
-    return toStringAsFixed(2).replaceAllMapped(
+  /// 格式化金额，可控制是否展示金额单位，如 1000 -> "GHS 1,000"。
+  String formatAmount({
+    String currencySymbol = 'GHS',
+    bool showCurrencySymbol = true,
+  }) {
+    final amount = toStringAsFixed(2).replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
       (Match m) => '${m[1]},',
-    );
+    ).trimZeroDecimal();
+
+    return showCurrencySymbol ? '$currencySymbol $amount' : amount;
   }
 }
 

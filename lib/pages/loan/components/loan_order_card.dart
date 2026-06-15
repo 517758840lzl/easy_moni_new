@@ -1,10 +1,14 @@
+import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/entities/home_resp.dart';
 import 'package:easy_moni/entities/loan_confirm/loan_confirm_resp.dart';
+import 'package:easy_moni/gen/assets.gen.dart';
+import 'package:easy_moni/pages/loan/models/loan_order_card_config.dart';
+import 'package:easy_moni/utils/extensions.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
-import '../../../utils/extensions.dart';
-
-enum LoanOrderCardMode { repaymentStatus, loanConfirm }
+export 'package:easy_moni/pages/loan/models/loan_order_card_config.dart'
+    show LoanOrderCardMode;
 
 class LoanOrderCard extends StatelessWidget {
   const LoanOrderCard({
@@ -22,25 +26,23 @@ class LoanOrderCard extends StatelessWidget {
     this.interest,
     this.mode = LoanOrderCardMode.repaymentStatus,
     this.footerText,
+    this.hasAvailableCoupons = false,
     this.onTap,
   });
 
   factory LoanOrderCard.fromHomeProductItem(
     HomeProductItem item, {
     Key? key,
+    bool hasAvailableCoupons = false,
     VoidCallback? onTap,
   }) {
-    final dueDate = item.dueDate?.isNotEmpty == true
-        ? item.dueDate!
-        : item.repayDateStr?.isNotEmpty == true
-        ? item.repayDateStr!
-        : item.repayDate ?? '-';
+    final dueDate = _resolveHomeDueDate(item);
 
     return LoanOrderCard(
       key: key,
       productName: item.productName?.isNotEmpty == true
           ? item.productName!
-          : 'Product',
+          : AppStrings.loanOrderProductFallback,
       productLogo: item.productLogo,
       loanAmount: item.loanAmount ?? 0,
       receiptAmount: item.receiptAmount ?? 0,
@@ -48,6 +50,7 @@ class LoanOrderCard extends StatelessWidget {
       dueDate: dueDate,
       statusCode: item.appOrderStatus,
       totalServiceDays: item.totalServiceDays,
+      hasAvailableCoupons: hasAvailableCoupons,
       onTap: onTap,
     );
   }
@@ -57,26 +60,22 @@ class LoanOrderCard extends StatelessWidget {
     Key? key,
     VoidCallback? onTap,
   }) {
-    final dueDate = item.repayDateStr?.isNotEmpty == true
-        ? item.repayDateStr!
-        : item.repayDate?.isNotEmpty == true
-        ? item.repayDate!
-        : '-';
+    final dueDate =
+        item.dueDate?.formatBackendDate() ?? AppStrings.loanOrderEmptyValue;
 
     return LoanOrderCard(
       key: key,
       productName: item.productName?.isNotEmpty == true
           ? item.productName!
-          : 'Product',
+          : AppStrings.loanOrderProductFallback,
       productLogo: item.productLogo,
-      loanAmount: (item.loanAmount ?? 0).toDouble(),
-      receiptAmount: (item.actualToAccount ?? item.receiptAmount ?? 0)
-          .toDouble(),
-      repayAmount: (item.repayAmount ?? 0).toDouble(),
-      dueDate: item.dueDate,
+      loanAmount: item.loanAmount ?? 0,
+      receiptAmount: item.actualToAccount ?? item.receiptAmount ?? 0,
+      repayAmount: item.repayAmount ?? 0,
+      dueDate: dueDate,
       totalServiceDays: item.totalServiceDays,
-      serviceFee: (item.serviceFee ?? 0).toDouble(),
-      interest: (item.interest ?? 0).toDouble(),
+      serviceFee: item.serviceFee ?? 0,
+      interest: item.interest ?? 0,
       mode: LoanOrderCardMode.loanConfirm,
       onTap: onTap,
     );
@@ -84,17 +83,18 @@ class LoanOrderCard extends StatelessWidget {
 
   final String productName;
   final String? productLogo;
-  final double loanAmount;
-  final double receiptAmount;
-  final double repayAmount;
+  final num loanAmount;
+  final num receiptAmount;
+  final num repayAmount;
   final String? dueDate;
   final String? statusText;
   final int? statusCode;
   final int? totalServiceDays;
-  final double? serviceFee;
-  final double? interest;
+  final num? serviceFee;
+  final num? interest;
   final LoanOrderCardMode mode;
   final String? footerText;
+  final bool hasAvailableCoupons;
   final VoidCallback? onTap;
 
   @override
@@ -104,9 +104,23 @@ class LoanOrderCard extends StatelessWidget {
       totalServiceDays: totalServiceDays,
     );
     final effectiveStatusText = statusText ?? statusVisual.label;
-    final effectiveFooterText = footerText ?? statusVisual.footerText;
-    final isLoanConfirm = mode == LoanOrderCardMode.loanConfirm;
-    final cardHeight = isLoanConfirm ? 198.0 : 204.0;
+    final footerVisual = _LoanOrderFooterVisual.resolve(
+      statusCode: statusCode,
+      statusLabel: statusVisual.label,
+      statusFooterText: statusVisual.footerText,
+      hasAvailableCoupons: hasAvailableCoupons,
+      footerText: footerText,
+    );
+    final config = LoanOrderCardConfig.forMode(mode);
+    final fieldData = LoanOrderCardFieldData(
+      loanAmount: loanAmount,
+      receiptAmount: receiptAmount,
+      repayAmount: repayAmount,
+      dueDate: dueDate,
+      totalServiceDays: totalServiceDays,
+      serviceFee: serviceFee,
+      interest: interest,
+    );
 
     return GestureDetector(
       onTap: onTap,
@@ -114,12 +128,12 @@ class LoanOrderCard extends StatelessWidget {
           ? HitTestBehavior.deferToChild
           : HitTestBehavior.opaque,
       child: SizedBox(
-        height: cardHeight,
+        height: config.height,
         child: Stack(
           children: [
             Container(
               width: double.infinity,
-              height: cardHeight,
+              height: config.height,
               padding: const EdgeInsets.fromLTRB(15, 10, 15, 12),
               decoration: BoxDecoration(
                 color: const Color(0xFFFDF5EE),
@@ -133,42 +147,8 @@ class LoanOrderCard extends StatelessWidget {
                     productLogo: productLogo,
                   ),
                   const SizedBox(height: 7),
-                  _OrderInfoRow(
-                    label: '借款金额',
-                    value: _formatAmount(loanAmount),
-                  ),
-                  const SizedBox(height: 12),
-                  if (isLoanConfirm) ...[
-                    _OrderInfoRow(
-                      label: '借款期限',
-                      value: totalServiceDays == null
-                          ? '-'
-                          : '$totalServiceDays days',
-                    ),
-                    const SizedBox(height: 12),
-                    _OrderInfoRow(
-                      label: '服务费',
-                      value: _formatAmount(serviceFee ?? 0),
-                    ),
-                    const SizedBox(height: 12),
-                    _OrderInfoRow(
-                      label: '利息',
-                      value: _formatAmount(interest ?? 0),
-                    ),
-                    const SizedBox(height: 12),
-                    _OrderInfoRow(label: '还款日期', value: dueDate ?? ''),
-                  ] else ...[
-                    _OrderInfoRow(
-                      label: '到账金额',
-                      value: _formatAmount(receiptAmount),
-                    ),
-                    const SizedBox(height: 12),
-                    _OrderInfoRow(
-                      label: '应还金额',
-                      value: _formatAmount(repayAmount),
-                    ),
-                    const SizedBox(height: 12),
-                    _OrderInfoRow(label: '到期日', value: dueDate ?? ''),
+                  ..._buildInfoRows(config.fields, fieldData),
+                  if (config.showFooter) ...[
                     const SizedBox(height: 12),
                     const Divider(
                       height: 1,
@@ -176,22 +156,15 @@ class LoanOrderCard extends StatelessWidget {
                       color: Color(0x1A000000),
                     ),
                     const SizedBox(height: 11),
-                    Text(
-                      effectiveFooterText,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: Color(0xFF216A4A),
-                        height: 1,
-                      ),
+                    _OrderFooterAction(
+                      text: footerVisual.text,
+                      showCouponIcon: footerVisual.showCouponIcon,
                     ),
                   ],
                 ],
               ),
             ),
-            if (!isLoanConfirm)
+            if (config.showStatusBadge)
               Positioned(
                 top: 13,
                 right: 13,
@@ -206,7 +179,67 @@ class LoanOrderCard extends StatelessWidget {
     );
   }
 
-  static String _formatAmount(double value) => 'GHS ${value.formatAmount()}';
+  // 放款中后端不下发 dueDate，需要优先展示 repayDateStr。
+  static String _resolveHomeDueDate(HomeProductItem item) {
+    final date = item.appOrderStatus == 3 ? item.repayDateStr : item.dueDate;
+    return date?.formatBackendDate() ?? AppStrings.loanOrderEmptyValue;
+  }
+
+  /// 根据配置生成订单信息行，统一维护行间距。
+  static List<Widget> _buildInfoRows(
+    List<LoanOrderCardFieldConfig> fields,
+    LoanOrderCardFieldData data,
+  ) {
+    final widgets = <Widget>[];
+    for (var i = 0; i < fields.length; i++) {
+      final field = fields[i];
+      widgets.add(
+        _OrderInfoRow(label: field.label, value: field.resolveValue(data)),
+      );
+      if (i < fields.length - 1) {
+        widgets.add(const SizedBox(height: 12));
+      }
+    }
+    return widgets;
+  }
+}
+
+class _LoanOrderFooterVisual {
+  const _LoanOrderFooterVisual({
+    required this.text,
+    required this.showCouponIcon,
+  });
+
+  final String text;
+  final bool showCouponIcon;
+
+  factory _LoanOrderFooterVisual.resolve({
+    required int? statusCode,
+    required String statusLabel,
+    required String statusFooterText,
+    required bool hasAvailableCoupons,
+    String? footerText,
+  }) {
+    if (footerText != null) {
+      return _LoanOrderFooterVisual(text: footerText, showCouponIcon: false);
+    }
+
+    // 等待还款订单根据首页优惠券字段切换还款入口文案。
+    if (statusCode == 4 &&
+        statusLabel == AppStrings.loanOrderStatusWaitingRepayment) {
+      return _LoanOrderFooterVisual(
+        text: hasAvailableCoupons
+            ? AppStrings.loanOrderFooterCouponRepayment
+            : AppStrings.loanOrderFooterImmediateRepayment,
+        showCouponIcon: hasAvailableCoupons,
+      );
+    }
+
+    return _LoanOrderFooterVisual(
+      text: statusFooterText,
+      showCouponIcon: false,
+    );
+  }
 }
 
 class _LoanOrderStatusVisual {
@@ -226,42 +259,42 @@ class _LoanOrderStatusVisual {
   }) {
     if (statusCode == 4 && totalServiceDays != null && totalServiceDays < 0) {
       return const _LoanOrderStatusVisual(
-        label: '已逾期',
+        label: AppStrings.loanOrderStatusOverdue,
         gradient: [Color(0xFFFF5265), Color(0xFFFF843F)],
-        footerText: '已逾期，请尽快完成还款 >',
+        footerText: AppStrings.loanOrderFooterOverdue,
       );
     }
 
     switch (statusCode) {
       case 20:
         return const _LoanOrderStatusVisual(
-          label: '借款审核中',
+          label: AppStrings.loanOrderStatusReviewing,
           gradient: [Color(0xFF38B899), Color(0xFF38B899)],
-          footerText: '借款审核中，请耐心等待 >',
+          footerText: AppStrings.loanOrderFooterReviewing,
         );
       case 3:
         return const _LoanOrderStatusVisual(
-          label: '放款中',
+          label: AppStrings.loanOrderStatusDisbursing,
           gradient: [Color(0xFFF9B072), Color(0xFFFF843F)],
-          footerText: '放款中，资金即将抵达 MoMo 账户 >',
+          footerText: AppStrings.loanOrderFooterDisbursing,
         );
       case 4:
         return const _LoanOrderStatusVisual(
-          label: '等待还款',
+          label: AppStrings.loanOrderStatusWaitingRepayment,
           gradient: [Color(0xFFF9B072), Color(0xFFFF843F)],
-          footerText: '等待还款，请按时完成还款 >',
+          footerText: AppStrings.loanOrderFooterWaitingRepayment,
         );
       case 5:
         return const _LoanOrderStatusVisual(
-          label: '转账失败',
+          label: AppStrings.loanOrderStatusTransferFailed,
           gradient: [Color(0xFFC1C3C6), Color(0xFFC1C3C6)],
-          footerText: '转账失败，请查看订单详情 >',
+          footerText: AppStrings.loanOrderFooterTransferFailed,
         );
       default:
         return const _LoanOrderStatusVisual(
-          label: '借款审核中',
+          label: AppStrings.loanOrderStatusReviewing,
           gradient: [Color(0xFF38B899), Color(0xFF38B899)],
-          footerText: '借款审核中，请耐心等待 >',
+          footerText: AppStrings.loanOrderFooterReviewing,
         );
     }
   }
@@ -322,7 +355,9 @@ class _OrderLogo extends StatelessWidget {
   }
 
   Widget _buildFallback() {
-    final initial = productName.isNotEmpty ? productName.characters.first : 'P';
+    final initial = productName.isNotEmpty
+        ? productName.characters.first
+        : AppStrings.loanOrderLogoFallback;
 
     return Container(
       width: 21,
@@ -424,6 +459,38 @@ class _OrderInfoRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _OrderFooterAction extends StatelessWidget {
+  const _OrderFooterAction({required this.text, required this.showCouponIcon});
+
+  final String text;
+  final bool showCouponIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        if (showCouponIcon) ...[
+          SvgPicture.asset(Assets.images.couponIcon, width: 14, height: 14),
+          const SizedBox(width: 4),
+        ],
+        Flexible(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              color: Color(0xFF216A4A),
+              height: 1,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

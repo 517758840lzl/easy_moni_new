@@ -8,10 +8,12 @@ import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:easy_moni/entities/acquisition_progress_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/fillInforma/providers/acquisition_progress_provider.dart';
+import 'package:easy_moni/pages/login/providers/auth_provider.dart';
 import 'package:easy_moni/pages/login/widgets/permissionalert.dart';
 import 'package:easy_moni/services/auth_storage.dart';
 import 'package:easy_moni/services/permission_storage.dart';
 import 'package:easy_moni/services/platform_service.dart';
+import 'package:easy_moni/services/upload_data/upload_data_sync_service.dart';
 import 'package:easy_moni/utils/widgets/permission_action_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -42,6 +44,7 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
 
     if (privacyAgreed && permissionsAccepted) {
       // Permissions are already accepted, so route by saved token state.
+      unawaited(_runPrivacyAwareStartupSync());
       await _routeAfterPermissionsAccepted();
     } else {
       setState(() {
@@ -152,6 +155,7 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
         if (!mounted) return;
 
         _startSilentPermissionDataCollection();
+        unawaited(_runPrivacyAwareStartupSync());
 
         // 跳转到下一页面
         if (mounted) {
@@ -162,6 +166,35 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
         SystemNavigator.pop(); // 拒绝就退出
       },
     );
+  }
+
+  /// 隐私同意后执行启动阶段数据有效性检查，并按需触发非阻塞上传。
+  Future<void> _runPrivacyAwareStartupSync() async {
+    final checkUploadDataValidApi = ref.read(checkUploadDataValidProvider);
+    final uploadDataSyncService = ref.read(uploadDataSyncServiceProvider);
+
+    final privacyAgreed = await PermissionStorage.isPrivacyAgreed();
+    if (!privacyAgreed) return;
+
+    final savedToken = await AuthStorage.getToken();
+    if (savedToken == null || savedToken.isEmpty) return;
+
+    try {
+      await HttpProvider.instance.setToken(savedToken);
+      final checkDataResult = await checkUploadDataValidApi.call();
+      if (checkDataResult.isSuccess) {
+        AppLogger.debug(
+          'startup checkUploadDataValid 成功: ${checkDataResult.data}',
+        );
+        uploadDataSyncService.handleCheckResult(checkDataResult.data);
+      } else {
+        AppLogger.debug(
+          'startup checkUploadDataValid 失败: ${checkDataResult.message}',
+        );
+      }
+    } catch (error, stackTrace) {
+      AppLogger.debug('startup checkUploadDataValid 请求异常: $error\n$stackTrace');
+    }
   }
 
   void _onReject() {

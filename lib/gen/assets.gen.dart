@@ -41,6 +41,9 @@ class $AssetsImagesGen {
   AssetGenImage get biaoqian =>
       const AssetGenImage('assets/images/biaoqian.png');
 
+  /// File path: assets/images/coupon_Icon.svg
+  String get couponIcon => 'assets/images/coupon_Icon.svg';
+
   /// File path: assets/images/coupon_bg.png
   AssetGenImage get couponBg =>
       const AssetGenImage('assets/images/coupon_bg.png');
@@ -329,7 +332,7 @@ class $AssetsImagesGen {
       const AssetGenImage('assets/images/takepicture.png');
 
   /// List of all assets
-  List<AssetGenImage> get values => [
+  List<dynamic> get values => [
     cameraM,
     dangerCircle,
     dangerCircleNormal,
@@ -337,6 +340,7 @@ class $AssetsImagesGen {
     notebook,
     appLogo512,
     biaoqian,
+    couponIcon,
     couponBg,
     couponCardBorder,
     customer,

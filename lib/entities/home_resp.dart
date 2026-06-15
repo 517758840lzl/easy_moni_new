@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:easy_moni/core/utils/app_logger.dart';
-
-import '../utils/extensions.dart';
+import 'package:easy_moni/utils/extensions.dart';
 
 class HomeResp {
   final HomeConfirmData? confirmData;
@@ -220,16 +219,16 @@ class HomeProductItem {
 
   String get availableAmountLabel {
     if (productStatus == 0) {
-      return 'GHS ${availableAmount.formatAmount().trimZeroDecimal()}';
+      return availableAmount.formatAmount().trimZeroDecimal();
     }
 
     final from = loanLimitFrom;
     final to = loanLimitTo;
     if (from != null && to != null) {
       // 数字格式化
-      return 'GHS ${from.formatAmount().trimZeroDecimal()} - ${to.formatAmount().trimZeroDecimal()}';
+      return '${from.formatAmount().trimZeroDecimal()} - ${to.formatAmount().trimZeroDecimal()}';
     }
-    return 'GHS ${availableAmount.formatAmount()}';
+    return availableAmount.formatAmount();
   }
 
   String get interestLabel {
@@ -245,11 +244,7 @@ class HomeProductItem {
   String get termLabel {
     final from = daysPerTermFrom ?? term;
     final to = daysPerTermTo ?? term;
-    if (from == null && to == null) return '-';
-    if (from != null && to != null && from != to) {
-      return '$from-$to days';
-    }
-    return '${from ?? to} days';
+    return from.formatLoanTermLabel(to: to);
   }
 
   static String _formatRate(double rate) {

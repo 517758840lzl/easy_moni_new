@@ -13,6 +13,7 @@ import 'package:easy_moni/pages/loan/models/loan_confirm_request_product.dart';
 import 'package:easy_moni/pages/loan/providers/loan_confirm_provider.dart';
 import 'package:easy_moni/pages/login/providers/auth_provider.dart';
 import 'package:easy_moni/services/platform_service.dart';
+import 'package:easy_moni/services/upload_data/upload_data_sync_service.dart';
 import 'package:easy_moni/utils/extensions.dart';
 import 'package:easy_moni/utils/widgets/common_bottom_sheet.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
@@ -146,6 +147,9 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
         AppLogger.debug(
           'loanConfirm checkUploadDataValid 成功: ${checkDataResult.data}',
         );
+        ref
+            .read(uploadDataSyncServiceProvider)
+            .handleCheckResult(checkDataResult.data);
       } else {
         AppLogger.debug(
           'loanConfirm checkUploadDataValid 失败: ${checkDataResult.message}',

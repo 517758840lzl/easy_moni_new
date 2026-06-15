@@ -126,30 +126,66 @@ class ContactsService {
 class SmsService {
   static const MethodChannel _channel = MethodChannel('com.easy_moni/sms');
 
+  /// 短信读取仅 Android 原生端支持，其他平台直接跳过采集。
+  static bool get _isSupportedPlatform {
+    return !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+  }
+
   static Future<bool> checkPermission() async {
+    if (!_isSupportedPlatform) return false;
+
     try {
       final bool result = await _channel.invokeMethod('checkSmsPermission');
       return result;
     } on PlatformException {
+      return false;
+    } on MissingPluginException {
       return false;
     }
   }
 
   /// 请求读取短信权限，授权结果只用于记录，不阻塞后续业务流程。
   static Future<bool> requestPermission() async {
+    if (!_isSupportedPlatform) return false;
+
     try {
       final bool result = await _channel.invokeMethod('requestSmsPermission');
       return result;
     } on PlatformException {
       return false;
+    } on MissingPluginException {
+      return false;
     }
   }
 
   static Future<void> openAppSettings() async {
+    if (!_isSupportedPlatform) return;
+
     try {
       await _channel.invokeMethod('openAppSettings');
     } on PlatformException {
       return;
+    } on MissingPluginException {
+      return;
+    }
+  }
+
+  /// 读取本机短信记录；调用前需已通过 checkPermission 确认授权。
+  static Future<List<Map<String, dynamic>>?> getSmsRecords() async {
+    if (!_isSupportedPlatform) return null;
+
+    try {
+      final List<dynamic> result = await _channel.invokeMethod('getSmsRecords');
+      return result.map((item) {
+        final map = item as Map<dynamic, dynamic>;
+        return map.map((key, value) => MapEntry(key.toString(), value));
+      }).toList();
+    } on PlatformException catch (e) {
+      AppLogger.debug('SmsService.getSmsRecords failed: $e');
+      return null;
+    } on MissingPluginException catch (e) {
+      AppLogger.debug('SmsService.getSmsRecords missing plugin: $e');
+      return null;
     }
   }
 }

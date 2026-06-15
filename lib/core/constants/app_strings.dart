@@ -77,6 +77,9 @@ class AppStrings {
 
   // ==================== 首页 =======================
   static const String homeButtonText = '我要借款';
+  static const String homeLoanSectionTitle = '我的借款';
+  static const String homeHeaderTitle = '最高可借额度';
+  static const String homeAvailableString = '可借产品：';
 
   // ==================== 贷款详情 ====================
   static const String loanDetailTitle = '贷款详情';
@@ -87,6 +90,41 @@ class AppStrings {
   static const String typeLabel = 'Type';
   static const String typePremium = 'Premium';
   static const String createdLabel = 'Created';
+  static const String loanProductAvailable = '可借款';
+  static const String loanProductUnavailable = '不可借';
+  static const String loanProductRejected = '已拒绝';
+  static const String loanAvailableAmountLabel = 'Available Loan Amount';
+  static const String loanDailyInterestRateLabel = 'Daily Interest Rate';
+  static const String loanTermLabel = 'Term';
+  static const String loanProductLogoFallback = '?';
+
+  // ==================== 贷款订单状态 ====================
+  static const String loanOrderStatusOverdue = '已逾期';
+  static const String loanOrderStatusReviewing = '借款审核中';
+  static const String loanOrderStatusDisbursing = '放款中';
+  static const String loanOrderStatusWaitingRepayment = '等待还款';
+  static const String loanOrderStatusTransferFailed = '转账失败';
+  static const String loanOrderFooterOverdue = '已逾期，请尽快完成还款 >';
+  static const String loanOrderFooterReviewing = '借款审核中，请耐心等待 >';
+  static const String loanOrderFooterDisbursing = '放款中，资金即将抵达 MoMo 账户 >';
+  static const String loanOrderFooterWaitingRepayment = '等待还款，请按时完成还款 >';
+  static const String loanOrderFooterCouponRepayment = '优惠券还款 >';
+  static const String loanOrderFooterImmediateRepayment = '立即还款 >';
+  static const String loanOrderFooterTransferFailed = '转账失败，请查看订单详情 >';
+  static const String loanOrderProductFallback = '';
+  static const String loanOrderLogoFallback = '';
+  static const String loanOrderEmptyValue = '';
+  static const String loanOrderUnknownValue = '-';
+  static const String loanOrderDaysUnit = 'days';
+  static const String loanOrderLoanAmountLabel = '借款金额';
+  static const String loanOrderLoanTermLabel = '借款期限';
+  static const String loanOrderServiceFeeLabel = '服务费';
+  static const String loanOrderInterestLabel = '利息';
+  static const String loanOrderRepaymentDateLabel = '还款日期';
+  static const String loanOrderReceiptAmountLabel = '到账金额';
+  static const String loanOrderRepayAmountLabel = '应还金额';
+  static const String loanOrderDueDateLabel = '到期日';
+
   // ==================== 借款审核 ====================
   static const String loanReviewTitle = '审核中';
   static const String loanReviewAppBarTitle = '申请借款';

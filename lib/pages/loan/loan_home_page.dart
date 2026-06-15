@@ -4,15 +4,14 @@ import 'package:easy_moni/pages/loan/components/loan_order_card.dart';
 import 'package:easy_moni/pages/loan/components/loan_product_card.dart';
 import 'package:easy_moni/pages/loan/models/loan_confirm_request_product.dart';
 import 'package:easy_moni/pages/loan/providers/home_provider.dart';
+import 'package:easy_moni/entities/home_resp.dart';
+import 'package:easy_moni/gen/assets.gen.dart';
+import 'package:easy_moni/utils/extensions.dart';
+import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:easy_moni/core/utils/app_logger.dart';
-
-import '../../entities/home_resp.dart';
-import '../../gen/assets.gen.dart';
-import '../../utils/extensions.dart';
-import '../../utils/widgets/loan_bottom_action_button.dart';
 
 class LoanHomePage extends ConsumerStatefulWidget {
   const LoanHomePage({super.key});
@@ -159,6 +158,7 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
           ],
         ),
       ),
+      // 底部固定按钮
       bottomNavigationBar: hasOrders
           ? null
           : LoanBottomActionButton(
@@ -335,7 +335,7 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
               brand: product.brand,
               level: product.level,
               amountLabel: product.amountLabel,
-              interestLabel: '${product.interestLabel} per day',
+              interestLabel: product.interestLabel.formatDailyInterestLabel(),
               termLabel: product.termLabel,
               state: product.state,
               logoUrl: product.logoUrl,
@@ -361,7 +361,7 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          '我的借款',
+          AppStrings.homeLoanSectionTitle,
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -381,7 +381,10 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
             padding: EdgeInsets.only(
               bottom: index == orderItems.length - 1 ? 0 : 16,
             ),
-            child: LoanOrderCard.fromHomeProductItem(item),
+            child: LoanOrderCard.fromHomeProductItem(
+              item,
+              hasAvailableCoupons: _hasAvailableCoupons,
+            ),
           );
         }),
       ],
@@ -431,7 +434,7 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
               left: 56,
               right: 56,
               child: const Text(
-                '最高可借额度',
+                AppStrings.homeHeaderTitle,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
@@ -493,7 +496,7 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
                       Assets.images.loanCheck.image(width: 22.5, height: 22.5),
                       const SizedBox(width: 10),
                       Text(
-                        '可借产品：$_availableProductCount个',
+                        '${AppStrings.homeAvailableString} $_availableProductCount',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -553,9 +556,7 @@ class _LoanProduct {
     final state = _stateFromItem(item);
     return _LoanProduct(
       apiItem: item,
-      brand: item.productName?.isNotEmpty == true
-          ? item.productName!
-          : 'product${index + 1}',
+      brand: item.productName?.isNotEmpty == true ? item.productName! : '',
       level: 'Lv.${item.productLevel ?? 1}',
       amount: item.availableAmount,
       amountLabel: item.availableAmountLabel,

@@ -6,7 +6,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:8.8.1")
+        classpath("com.android.tools.build:gradle:8.11.1")
     }
 }
 
@@ -24,7 +24,7 @@ subprojects {
     project.buildscript {
         configurations.all {
             resolutionStrategy {
-                force("com.android.tools.build:gradle:8.8.1")
+                force("com.android.tools.build:gradle:8.11.1")
             }
         }
     }

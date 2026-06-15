@@ -1,24 +1,36 @@
 import 'package:flutter/material.dart';
 
-import '../../../utils/extensions.dart';
+import 'package:easy_moni/core/constants/app_strings.dart';
 
-enum LoanProductCardState { available, unavailable, rejected }
+/// 借款产品卡片状态
+class LoanProductCardState {
+  const LoanProductCardState._({
+    required this.label,
+    required this.canConfirm,
+    required this.isGreen,
+  });
 
-extension LoanProductCardStateX on LoanProductCardState {
-  bool get canConfirm => this == LoanProductCardState.available;
+  static const LoanProductCardState available = LoanProductCardState._(
+    label: AppStrings.loanProductAvailable,
+    canConfirm: true,
+    isGreen: true,
+  );
 
-  bool get isGreen => this == LoanProductCardState.available;
+  static const LoanProductCardState unavailable = LoanProductCardState._(
+    label: AppStrings.loanProductUnavailable,
+    canConfirm: false,
+    isGreen: false,
+  );
 
-  String get label {
-    switch (this) {
-      case LoanProductCardState.available:
-        return '可借款';
-      case LoanProductCardState.unavailable:
-        return '不可借';
-      case LoanProductCardState.rejected:
-        return '已拒绝';
-    }
-  }
+  static const LoanProductCardState rejected = LoanProductCardState._(
+    label: AppStrings.loanProductRejected,
+    canConfirm: false,
+    isGreen: false,
+  );
+
+  final String label;
+  final bool canConfirm;
+  final bool isGreen;
 }
 
 class LoanProductCard extends StatelessWidget {
@@ -91,14 +103,14 @@ class LoanProductCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     _InfoRow(
-                      label: 'Available Loan Amount',
+                      label: AppStrings.loanAvailableAmountLabel,
                       value: amountLabel,
                     ),
                     _InfoRow(
-                      label: 'Daily Interest Rate',
+                      label: AppStrings.loanDailyInterestRateLabel,
                       value: interestLabel,
                     ),
-                    _InfoRow(label: 'Term', value: termLabel),
+                    _InfoRow(label: AppStrings.loanTermLabel, value: termLabel),
                   ],
                 ),
               ),
@@ -231,7 +243,9 @@ class _ProductLogo extends StatelessWidget {
   }
 
   Widget _buildFallback() {
-    final initial = brand.isNotEmpty ? brand.characters.first : '?';
+    final initial = brand.isNotEmpty
+        ? brand.characters.first
+        : AppStrings.loanProductLogoFallback;
 
     return Container(
       width: 21,
