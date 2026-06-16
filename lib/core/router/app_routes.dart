@@ -5,13 +5,11 @@ class AppRoutePaths {
   static const String customerService = '/customer-service';
   static const String home = '/home';
   static const String idCamera = '/idcamera';
-  static const String orderDetail = '/order-detail';
   static const String repayEntry = '/repay-entry';
-  static const String repayDetail = '/repay-detail';
-  static const String repayMultiDetail = '/repay-multi-detail';
   static const String extensionApply = '/extension-apply';
   static const String payment = '/payment';
   static const String loanConfirm = '/loan-confirm';
+  static const String loanOrderDetail = '/loan-order-detail';
   static const String loanReviewing = '/loan-reviewing';
   static const String contactInfo = '/contact-info';
   static const String personalInfo = '/personal-info';
@@ -36,11 +34,10 @@ class AppRouteNames {
   static const String idCamera = 'idcamera';
   static const String orderDetail = 'orderDetail';
   static const String repayEntry = 'repayEntry';
-  static const String repayDetail = 'repayDetail';
-  static const String repayMultiDetail = 'repayMultiDetail';
   static const String extensionApply = 'extensionApply';
   static const String payment = 'payment';
   static const String loanConfirm = 'loanConfirm';
+  static const String loanOrderDetail = 'loanOrderDetail';
   static const String loanReviewing = 'loanReviewing';
   static const String contactInfo = 'contactInfo';
   static const String personalInfo = 'personalInfo';

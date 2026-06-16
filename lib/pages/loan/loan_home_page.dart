@@ -3,6 +3,7 @@ import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/pages/loan/components/loan_order_card.dart';
 import 'package:easy_moni/pages/loan/components/loan_product_card.dart';
 import 'package:easy_moni/pages/loan/models/loan_confirm_request_product.dart';
+import 'package:easy_moni/pages/loan/models/loan_order_detail_data.dart';
 import 'package:easy_moni/pages/loan/providers/home_provider.dart';
 import 'package:easy_moni/entities/home_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
@@ -162,6 +163,7 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
       bottomNavigationBar: hasOrders
           ? null
           : LoanBottomActionButton(
+              text: AppStrings.homeButtonText,
               enabled: canApply,
               onPressed: canApply
                   ? () => _handleApply(selectedLoanAmount)
@@ -265,6 +267,7 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
                 _buildProductSection(productItems),
               const SizedBox(height: 16),
               LoanBottomActionButton(
+                text:AppStrings.homeButtonText,
                 enabled: canApply,
                 onPressed: canApply ? onApply : null,
                 mode: LoanBottomActionButtonMode.inline,
@@ -384,6 +387,10 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
             child: LoanOrderCard.fromHomeProductItem(
               item,
               hasAvailableCoupons: _hasAvailableCoupons,
+              onTap: () => context.push(
+                AppRoutePaths.loanOrderDetail,
+                extra: LoanOrderDetailData.fromHomeProductItem(item),
+              ),
             ),
           );
         }),

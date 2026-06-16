@@ -102,6 +102,7 @@ class AppStrings {
   static const String loanOrderStatusOverdue = '已逾期';
   static const String loanOrderStatusReviewing = '借款审核中';
   static const String loanOrderStatusDisbursing = '放款中';
+  static const String loanOrderStatusDisbursingv2 = '放款中（至MoMo）';
   static const String loanOrderStatusWaitingRepayment = '等待还款';
   static const String loanOrderStatusTransferFailed = '转账失败';
   static const String loanOrderFooterOverdue = '已逾期，请尽快完成还款 >';
@@ -125,6 +126,48 @@ class AppStrings {
   static const String loanOrderRepayAmountLabel = '应还金额';
   static const String loanOrderDueDateLabel = '到期日';
 
+  // ==================== 账单详情 ====================
+  static const String orderDetailTitle = '账单详情';
+  static const String orderDetailNoOrderData = '没有订单数据';
+  static const String orderDetailLoadFailed = '获取账单详情失败';
+  static const String orderDetailRepayingStatus = '还款中';
+  static const String orderDetailPendingRepaymentStatus = '待还款';
+  static const String orderDetailTotalRepayAmountLabel = '待还总金额';
+  static const String orderDetailRemainingDaysLabel = '剩余天数';
+  static const String orderDetailOrderCountLabel = '订单数量';
+  static const String orderDetailExtensionLabel = '展期';
+  static const String orderDetailExtensionAvailable = '可展期';
+  static const String orderDetailExtensionUnavailable = '不可展期';
+  static const String orderDetailAccountInfoTitle = '收款账户信息';
+  static const String orderDetailMomoAccountLabel = 'MOMO账户';
+  static const String orderDetailWalletTypeLabel = '钱包类型';
+  static const String orderDetailRepayNow = '立即还款';
+  static const String orderDetailRepayLog = '点击了立即还款';
+  static const String orderDetailCurrencyCode = 'GHS';
+  static const String orderDetailZeroAmount = '0.00';
+
+  // ==================== 还款卡片 ====================
+  static const String repayEntryHeaderTitle = '待还总额';
+  static const String repayEntryBillTitle = '待还账单';
+  static const String repayEntryRepayAll = '全部还款';
+  static const String repayEntryEmpty = '暂无待还账单';
+  static const String repayEntryLoadFailed = '获取待还账单失败';
+  static const String repayEntryRetry = '重试';
+  static const String repayBillDueDateLabel = '到期日';
+  static const String repayBillOverdueStatus = '已逾期';
+  static const String repayBillRepayNow = '立即还款';
+  static const String repayBillLogoFallback = '';
+
+  static String orderDetailDayValue(int days) => '$days天';
+  static String orderDetailCountValue(int count) => '$count个';
+  static String orderDetailPeriodValue(int period) => '$period期';
+  static String orderDetailOverdueDays(int days) => '已逾期$days天';
+  static String orderDetailRemainingDays(int days) => '剩余$days天';
+  static String orderDetailCurrencyAmount(num amount) =>
+      '$orderDetailCurrencyCode ${amount.toStringAsFixed(2)}';
+  static String orderDetailRepayButtonText(num? amount) =>
+      '$orderDetailRepayNow $orderDetailCurrencyCode ${amount?.toStringAsFixed(2) ?? orderDetailZeroAmount}';
+
   // ==================== 借款审核 ====================
   static const String loanReviewTitle = '审核中';
   static const String loanReviewAppBarTitle = '申请借款';
@@ -134,4 +177,8 @@ class AppStrings {
   // ===================== 优惠券 ========================
   static const String couponEmptyDesc = '无可用优惠券，按时还款，后续可解锁优惠券';
   static const String couponString = '优惠券';
+
+  // ==================== 确认借款 ====================
+  static const String loanConfirmButtonText = '确认借款';
+  static const String loanConfirmButtonLoadingText = '提交中...';
 }

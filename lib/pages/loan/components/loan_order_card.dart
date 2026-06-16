@@ -22,6 +22,7 @@ class LoanOrderCard extends StatelessWidget {
     this.statusText,
     this.statusCode,
     this.totalServiceDays,
+    this.remainingDays,
     this.serviceFee,
     this.interest,
     this.mode = LoanOrderCardMode.repaymentStatus,
@@ -50,6 +51,7 @@ class LoanOrderCard extends StatelessWidget {
       dueDate: dueDate,
       statusCode: item.appOrderStatus,
       totalServiceDays: item.totalServiceDays,
+      remainingDays: item.remainingDays,
       hasAvailableCoupons: hasAvailableCoupons,
       onTap: onTap,
     );
@@ -90,6 +92,7 @@ class LoanOrderCard extends StatelessWidget {
   final String? statusText;
   final int? statusCode;
   final int? totalServiceDays;
+  final int? remainingDays;
   final num? serviceFee;
   final num? interest;
   final LoanOrderCardMode mode;
@@ -101,7 +104,7 @@ class LoanOrderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final statusVisual = _LoanOrderStatusVisual.forStatus(
       statusCode,
-      totalServiceDays: totalServiceDays,
+      remainingDays: remainingDays,
     );
     final effectiveStatusText = statusText ?? statusVisual.label;
     final footerVisual = _LoanOrderFooterVisual.resolve(
@@ -255,9 +258,9 @@ class _LoanOrderStatusVisual {
 
   factory _LoanOrderStatusVisual.forStatus(
     int? statusCode, {
-    int? totalServiceDays,
+    int? remainingDays,
   }) {
-    if (statusCode == 4 && totalServiceDays != null && totalServiceDays < 0) {
+    if (statusCode == 4 && remainingDays != null && remainingDays < 0) {
       return const _LoanOrderStatusVisual(
         label: AppStrings.loanOrderStatusOverdue,
         gradient: [Color(0xFFFF5265), Color(0xFFFF843F)],

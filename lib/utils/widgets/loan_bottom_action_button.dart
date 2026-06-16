@@ -7,7 +7,7 @@ class LoanBottomActionButton extends StatelessWidget {
     super.key,
     required this.enabled,
     required this.onPressed,
-    this.text = '确认借款',
+    this.text = '',
     this.mode = LoanBottomActionButtonMode.fixed,
     this.fontWeight = FontWeight.w700,
   });

@@ -214,6 +214,18 @@ class $AssetsImagesGen {
   AssetGenImage get loanOpen =>
       const AssetGenImage('assets/images/loan_open.png');
 
+  /// File path: assets/images/loan_order_error.png
+  AssetGenImage get loanOrderError =>
+      const AssetGenImage('assets/images/loan_order_error.png');
+
+  /// File path: assets/images/loan_order_loading.png
+  AssetGenImage get loanOrderLoading =>
+      const AssetGenImage('assets/images/loan_order_loading.png');
+
+  /// File path: assets/images/loan_order_warning.png
+  AssetGenImage get loanOrderWarning =>
+      const AssetGenImage('assets/images/loan_order_warning.png');
+
   /// File path: assets/images/loan_reviewing.png
   AssetGenImage get loanReviewing =>
       const AssetGenImage('assets/images/loan_reviewing.png');
@@ -323,6 +335,10 @@ class $AssetsImagesGen {
   AssetGenImage get permissionSms =>
       const AssetGenImage('assets/images/permission_sms.png');
 
+  /// File path: assets/images/right_arrow.png
+  AssetGenImage get rightArrow =>
+      const AssetGenImage('assets/images/right_arrow.png');
+
   /// File path: assets/images/star_icon.png
   AssetGenImage get starIcon =>
       const AssetGenImage('assets/images/star_icon.png');
@@ -384,6 +400,9 @@ class $AssetsImagesGen {
     loanMoney,
     loanNormal,
     loanOpen,
+    loanOrderError,
+    loanOrderLoading,
+    loanOrderWarning,
     loanReviewing,
     loanSecurity,
     loanSelect,
@@ -412,6 +431,7 @@ class $AssetsImagesGen {
     moban,
     permissionCamera3d,
     permissionSms,
+    rightArrow,
     starIcon,
     takepicture,
   ];

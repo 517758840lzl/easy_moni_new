@@ -289,7 +289,7 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
       bottomNavigationBar: hasData
           ? LoanBottomActionButton(
               enabled: !_isSubmitting,
-              text: _isSubmitting ? '提交中...' : '确认借款',
+              text: _isSubmitting ? AppStrings.loanConfirmButtonLoadingText : AppStrings.loanConfirmButtonText,
               onPressed: _isSubmitting ? null : _submitOrder,
             )
           : null,

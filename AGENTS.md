@@ -16,9 +16,15 @@
 - Add Chinese comments for major modules, key logic, classes, and methods to make the code easier to understand.
 - Prefer concise explanatory comments that describe intent and responsibilities; avoid noisy line-by-line comments for obvious code.
 
+## Requirement Clarification
+
+- When data sources, page parameters, navigation payloads, or mock data are uncertain, add `TODO` comments at the relevant code locations so they can be reviewed later.
+- User requirements may be unclear. Do not guess or over-infer requirements casually. First restate the requirement from a product manager perspective using professional terminology, then confirm any unclear parts with the user before implementation.
+
 ## Default Text
 
 - Default text values must be empty. Do not write specific sample or placeholder text unless the user explicitly provides it.
+- Do not hardcode fixed text directly in pages, such as `title: Text('xxx')`. Define shared text in `lib/core/constants/app_strings.dart` and reference it from UI code.
 
 ## Dart Style
 
