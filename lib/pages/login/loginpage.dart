@@ -670,7 +670,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   ),
                 )
               : const Text(
-                  AppStrings.login_in,
+                  AppStrings.login,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,

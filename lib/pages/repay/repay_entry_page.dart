@@ -73,6 +73,11 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
     });
   }
 
+  /// 下拉刷新复用还款入口待还账单 Provider，确保重新发起首页数据请求。
+  Future<void> _refreshBills() async {
+    await ref.refresh(repayEntryBillsProvider.future).then<void>((_) {});
+  }
+
   @override
   Widget build(BuildContext context) {
     final topInset = MediaQuery.of(context).padding.top;
@@ -101,34 +106,40 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
         totalAmount: _totalAmount(selectedBills),
         showTotalAmount: showTotalAmount,
       ),
-      content: billsAsync.when(
-        data: (items) => _RepayEntryContent(
-          bills: items,
-          selectedBillKeys: _selectedBillKeys,
-          billKeyBuilder: _billKey,
-          onBillTap: (bill) => _openBillDetail(context, bill),
-          onSelectionTap: _toggleBill,
-          onRepayTap: (bill) => _openPayment(context, [bill]),
+      content: RefreshIndicator(
+        onRefresh: _refreshBills,
+        child: billsAsync.when(
+          data: (items) => _RepayEntryContent(
+            bills: items,
+            selectedBillKeys: _selectedBillKeys,
+            billKeyBuilder: _billKey,
+            onSelectionTap: _toggleBill,
+            onRepayTap: (bill) => _openBillDetail(context, bill),
+          ),
+          error: (_, _) => _RepayEntryScrollableStateView(
+            icon: Icons.error_outline_rounded,
+            text: AppStrings.repayEntryLoadFailed,
+            actionText: AppStrings.repayEntryRetry,
+            onActionTap: () => ref.invalidate(repayEntryBillsProvider),
+          ),
+          loading: () => const _RepayEntryScrollableStateView(
+            child: CircularProgressIndicator(),
+          ),
         ),
-        error: (_, _) => _RepayEntryStateView(
-          icon: Icons.error_outline_rounded,
-          text: AppStrings.repayEntryLoadFailed,
-          actionText: AppStrings.repayEntryRetry,
-          onActionTap: () => ref.invalidate(repayEntryBillsProvider),
-        ),
-        loading: () =>
-            const _RepayEntryStateView(child: CircularProgressIndicator()),
       ),
-      bottomNavigationBar: LoanBottomActionButton(
-        enabled: selectedBills.isNotEmpty,
-        text: AppStrings.repayEntryRepayAll,
-        onPressed: () => _openPayment(context, selectedBills),
-      ),
+      // 待还订单只有一个不展示全部按钮
+      bottomNavigationBar: bills.length > 1
+          ? LoanBottomActionButton(
+              enabled: selectedBills.isNotEmpty,
+              text: AppStrings.repayEntryRepayAll,
+              onPressed: () => _openPayment(context, selectedBills),
+            )
+          : SizedBox.shrink(),
     );
   }
 
   void _openBillDetail(BuildContext context, RepayResp bill) {
-    // TODO: 账单详情页需要接口返回完整详情后再补充路由和传参。
+    context.push(AppRoutePaths.repayOrderDetail, extra: bill);
   }
 
   void _openPayment(BuildContext context, List<RepayResp> selectedBills) {
@@ -226,7 +237,6 @@ class _RepayEntryContent extends StatelessWidget {
     required this.bills,
     required this.selectedBillKeys,
     required this.billKeyBuilder,
-    required this.onBillTap,
     required this.onSelectionTap,
     required this.onRepayTap,
   });
@@ -234,7 +244,6 @@ class _RepayEntryContent extends StatelessWidget {
   final List<RepayResp> bills;
   final Set<String> selectedBillKeys;
   final String Function(RepayResp bill, int index) billKeyBuilder;
-  final ValueChanged<RepayResp> onBillTap;
   final void Function(RepayResp bill, int index) onSelectionTap;
   final ValueChanged<RepayResp> onRepayTap;
 
@@ -259,11 +268,12 @@ class _RepayEntryContent extends StatelessWidget {
         ),
         Expanded(
           child: bills.isEmpty
-              ? const _RepayEntryStateView(
+              ? const _RepayEntryScrollableStateView(
                   icon: Icons.receipt_long_outlined,
                   text: AppStrings.repayEntryEmpty,
                 )
               : ListView.separated(
+                  physics: const AlwaysScrollableScrollPhysics(),
                   padding: EdgeInsets.fromLTRB(
                     10,
                     0,
@@ -280,13 +290,49 @@ class _RepayEntryContent extends StatelessWidget {
                       showSelection: showSelection,
                       selected: selectedBillKeys.contains(billKey),
                       onSelectionTap: () => onSelectionTap(bill, index),
-                      onTap: () => onBillTap(bill),
                       onRepayTap: () => onRepayTap(bill),
                     );
                   },
                 ),
         ),
       ],
+    );
+  }
+}
+
+class _RepayEntryScrollableStateView extends StatelessWidget {
+  const _RepayEntryScrollableStateView({
+    this.child,
+    this.icon,
+    this.text = '',
+    this.actionText = '',
+    this.onActionTap,
+  });
+
+  final Widget? child;
+  final IconData? icon;
+  final String text;
+  final String actionText;
+  final VoidCallback? onActionTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: _RepayEntryStateView(
+              icon: icon,
+              text: text,
+              actionText: actionText,
+              onActionTap: onActionTap,
+              child: child,
+            ),
+          ),
+        );
+      },
     );
   }
 }

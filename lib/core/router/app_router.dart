@@ -8,9 +8,13 @@ import 'package:easy_moni/pages/loan/loan_order_detail_page.dart';
 import 'package:easy_moni/pages/loan/loan_reviewing_page.dart';
 import 'package:easy_moni/pages/loan/models/loan_confirm_request_product.dart';
 import 'package:easy_moni/pages/loan/models/loan_order_detail_data.dart';
+import 'package:easy_moni/entities/repay/repay_resp.dart';
 import 'package:easy_moni/pages/mine/detailpage.dart';
 import 'package:easy_moni/pages/mine/mine.dart';
 import 'package:easy_moni/pages/repay/repay_entry_page.dart';
+import 'package:easy_moni/pages/repay/repay_extension_page.dart';
+import 'package:easy_moni/pages/repay/models/repay_extension_request_data.dart';
+import 'package:easy_moni/pages/repay/repay_order_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -63,6 +67,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutePaths.repayEntry,
         name: AppRouteNames.repayEntry,
         builder: (context, state) => const RepayEntryPage(),
+      ),
+      GoRoute(
+        path: AppRoutePaths.repayOrderDetail,
+        name: AppRouteNames.repayOrderDetail,
+        builder: (context, state) {
+          final bill = state.extra as RepayResp?;
+          if (bill == null) {
+            return const Scaffold(body: SizedBox.shrink());
+          }
+          return RepayOrderDetailPage(bill: bill);
+        },
+      ),
+      GoRoute(
+        path: AppRoutePaths.repayExtension,
+        name: AppRouteNames.repayExtension,
+        builder: (context, state) {
+          final requestData = state.extra as RepayExtensionRequestData?;
+          if (requestData == null) {
+            return const Scaffold(body: SizedBox.shrink());
+          }
+          return RepayExtensionPage(requestData: requestData);
+        },
       ),
       GoRoute(
         path: AppRoutePaths.loanConfirm,

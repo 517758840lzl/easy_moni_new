@@ -12,7 +12,8 @@ class ApiConstants {
   /*检数据是否过期接口*/
   static const String checkUploadDataValid =
       '/api/upload/data/checkUploadDataValid';
-  static const String submitUserUploadData = '/api/upload/data/submitUserUploadData';
+  static const String submitUserUploadData =
+      '/api/upload/data/submitUserUploadData';
   /*查询用户状态GET*/
   static const String queryAcquisitionProgress =
       '/api/user/acquisition/queryAcquisitionProgress';
@@ -48,7 +49,8 @@ class ApiConstants {
   //获取待还款列表
   static const String userRepayment = '/api/order/loanOrder/userRepayment';
   //获取用户要还款的订单详情 POST
-  static const String billDetails = '/api/order/loanOrder/billDetails';
+  static const String billDetails =
+      '/api/order/loanOrder/api/order/billDetails';
   //还款
   static const String generatesUrl = '/api/order/loanOrder/generatesUrl';
   //获取展期详情 POST

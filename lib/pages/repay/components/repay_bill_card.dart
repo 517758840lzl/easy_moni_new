@@ -1,3 +1,4 @@
+import 'package:easy_moni/pages/repay/components/overdue_badge.dart';
 import 'package:flutter/material.dart';
 
 import 'package:easy_moni/core/constants/app_strings.dart';
@@ -62,7 +63,7 @@ class RepayBillCard extends StatelessWidget {
 
   Widget _buildHeader(_RepayBillCardColors colors) {
     return SizedBox(
-      height: 18,
+      height: 21,
       child: Row(
         children: [
           const SizedBox(width: 4),
@@ -85,7 +86,7 @@ class RepayBillCard extends StatelessWidget {
               ),
             ),
           ),
-          if (_isOverdue) ...[const SizedBox(width: 8), const _OverdueBadge()],
+          if (_isOverdue) ...[const SizedBox(width: 8), const OverdueBadge()],
           if (showSelection) ...[
             const SizedBox(width: 8),
             GestureDetector(
@@ -249,38 +250,6 @@ class _ProductLogo extends StatelessWidget {
             fontSize: 12,
             fontWeight: FontWeight.w800,
             color: color,
-            height: 1,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _OverdueBadge extends StatelessWidget {
-  const _OverdueBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 18,
-      constraints: const BoxConstraints(minWidth: 57),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFF5265), Color(0xFFFF843F)],
-        ),
-        borderRadius: BorderRadius.circular(5),
-      ),
-      child: const Center(
-        child: Text(
-          AppStrings.repayBillOverdueStatus,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 9,
-            fontWeight: FontWeight.w500,
-            color: Colors.white,
             height: 1,
           ),
         ),

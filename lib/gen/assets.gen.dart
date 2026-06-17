@@ -11,6 +11,13 @@
 
 import 'package:flutter/widgets.dart';
 
+class $LibGen {
+  const $LibGen();
+
+  /// Directory path: lib/pages
+  $LibPagesGen get pages => const $LibPagesGen();
+}
+
 class $AssetsImagesGen {
   const $AssetsImagesGen();
 
@@ -437,10 +444,38 @@ class $AssetsImagesGen {
   ];
 }
 
+class $LibPagesGen {
+  const $LibPagesGen();
+
+  /// Directory path: lib/pages/repay
+  $LibPagesRepayGen get repay => const $LibPagesRepayGen();
+}
+
+class $LibPagesRepayGen {
+  const $LibPagesRepayGen();
+
+  /// Directory path: lib/pages/repay/mock
+  $LibPagesRepayMockGen get mock => const $LibPagesRepayMockGen();
+}
+
+class $LibPagesRepayMockGen {
+  const $LibPagesRepayMockGen();
+
+  /// File path: lib/pages/repay/mock/repay_detail.json
+  String get repayDetail => 'lib/pages/repay/mock/repay_detail.json';
+
+  /// File path: lib/pages/repay/mock/repay_list.json
+  String get repayList => 'lib/pages/repay/mock/repay_list.json';
+
+  /// List of all assets
+  List<String> get values => [repayDetail, repayList];
+}
+
 class Assets {
   const Assets._();
 
   static const $AssetsImagesGen images = $AssetsImagesGen();
+  static const $LibGen lib = $LibGen();
 }
 
 class AssetGenImage {

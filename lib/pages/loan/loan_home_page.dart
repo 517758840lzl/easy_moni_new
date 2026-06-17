@@ -36,11 +36,13 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
     _loadHomeData();
   }
 
-  Future<void> _loadHomeData() async {
-    setState(() {
-      _isLoading = true;
-      _loadError = null;
-    });
+  Future<void> _loadHomeData({bool showLoading = true}) async {
+    if (showLoading) {
+      setState(() {
+        _isLoading = true;
+        _loadError = null;
+      });
+    }
 
     try {
       final result = await ref.read(homeProvider).call();
@@ -49,18 +51,34 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
       if (result.isSuccess && result.data != null) {
         _applyHomeData(result.data!);
       } else {
-        setState(() {
-          _isLoading = false;
-          _loadError = result.message ?? '加载失败，请重试';
-        });
+        _handleHomeLoadFailed(
+          result.message ?? '加载失败，请重试',
+          showErrorPage: showLoading,
+        );
       }
     } catch (e) {
       if (!mounted) return;
+      _handleHomeLoadFailed('加载失败，请重试', showErrorPage: showLoading);
+    }
+  }
+
+  // 首页下拉刷新：复用首屏接口请求，刷新过程中保留当前页面内容。
+  Future<void> _refreshHomeData() {
+    return _loadHomeData(showLoading: false);
+  }
+
+  void _handleHomeLoadFailed(String message, {required bool showErrorPage}) {
+    if (!mounted) return;
+
+    if (showErrorPage || _products.isEmpty) {
       setState(() {
         _isLoading = false;
-        _loadError = '加载失败，请重试';
+        _loadError = message;
       });
+      return;
     }
+
+    AppLogger.debug('首页刷新失败: $message');
   }
 
   void _applyHomeData(HomeResp data) {
@@ -227,17 +245,34 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
 
   Widget _buildProductOnlyContent(List<_LoanProduct> productItems) {
     if (productItems.isEmpty) {
-      return const Center(
-        child: Text(
-          AppStrings.noLoanProducts,
-          style: TextStyle(fontSize: 14, color: Color(0xFF909399)),
+      return RefreshIndicator(
+        onRefresh: _refreshHomeData,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: const Center(
+                  child: Text(
+                    AppStrings.noLoanProducts,
+                    style: TextStyle(fontSize: 14, color: Color(0xFF909399)),
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       );
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(10, 17, 10, 92),
-      child: _buildProductSection(productItems),
+    return RefreshIndicator(
+      onRefresh: _refreshHomeData,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(10, 17, 10, 92),
+        child: _buildProductSection(productItems),
+      ),
     );
   }
 
@@ -247,40 +282,47 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
     required bool canApply,
     required VoidCallback onApply,
   }) {
-    return CustomScrollView(
-      slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(10, 17, 10, 0),
-          sliver: SliverList(
-            delegate: SliverChildListDelegate([
-              if (productItems.isEmpty)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: Text(
-                      AppStrings.noLoanProducts,
-                      style: TextStyle(fontSize: 14, color: Color(0xFF909399)),
+    return RefreshIndicator(
+      onRefresh: _refreshHomeData,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(10, 17, 10, 0),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                if (productItems.isEmpty)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        AppStrings.noLoanProducts,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF909399),
+                        ),
+                      ),
                     ),
-                  ),
-                )
-              else
-                _buildProductSection(productItems),
-              const SizedBox(height: 16),
-              LoanBottomActionButton(
-                text:AppStrings.homeButtonText,
-                enabled: canApply,
-                onPressed: canApply ? onApply : null,
-                mode: LoanBottomActionButtonMode.inline,
-              ),
-              const SizedBox(height: 20),
-              _buildMyLoansSection(orderItems),
-            ]),
+                  )
+                else
+                  _buildProductSection(productItems),
+                const SizedBox(height: 16),
+                LoanBottomActionButton(
+                  text: AppStrings.homeButtonText,
+                  enabled: canApply,
+                  onPressed: canApply ? onApply : null,
+                  mode: LoanBottomActionButtonMode.inline,
+                ),
+                const SizedBox(height: 20),
+                _buildMyLoansSection(orderItems),
+              ]),
+            ),
           ),
-        ),
-        SliverToBoxAdapter(
-          child: SizedBox(height: MediaQuery.of(context).padding.bottom + 20),
-        ),
-      ],
+          SliverToBoxAdapter(
+            child: SizedBox(height: MediaQuery.of(context).padding.bottom + 20),
+          ),
+        ],
+      ),
     );
   }
 
@@ -384,9 +426,14 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
             padding: EdgeInsets.only(
               bottom: index == orderItems.length - 1 ? 0 : 16,
             ),
-            child: LoanOrderCard.fromHomeProductItem(
-              item,
-              hasAvailableCoupons: _hasAvailableCoupons,
+            child: LoanOrderCard(
+              productName: item.productName?.isNotEmpty == true
+                  ? item.productName!
+                  : AppStrings.loanOrderProductFallback,
+              productLogo: item.productLogo,
+              rows: _homeOrderRows(item),
+              statusBadge: _homeOrderStatusBadge(item),
+              footer: _homeOrderFooter(item, _hasAvailableCoupons),
               onTap: () => context.push(
                 AppRoutePaths.loanOrderDetail,
                 extra: LoanOrderDetailData.fromHomeProductItem(item),
@@ -533,6 +580,132 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
         ),
       ),
     );
+  }
+}
+
+// 首页订单卡片字段：页面负责把接口数据转换成展示文案。
+List<LoanOrderCardRowData> _homeOrderRows(HomeProductItem item) {
+  final dueDate = _resolveHomeDueDate(item);
+
+  return [
+    LoanOrderCardRowData(
+      label: AppStrings.loanOrderLoanAmountLabel,
+      value: _amountText(item.loanAmount),
+    ),
+    LoanOrderCardRowData(
+      label: AppStrings.loanOrderReceiptAmountLabel,
+      value: _amountText(item.receiptAmount),
+    ),
+    LoanOrderCardRowData(
+      label: AppStrings.loanOrderRepayAmountLabel,
+      value: _amountText(item.repayAmount),
+    ),
+    LoanOrderCardRowData(
+      label: AppStrings.loanOrderDueDateLabel,
+      value: dueDate,
+    ),
+  ];
+}
+
+// 放款中/待还款等后端不下发 dueDate，可以展示 repayDateStr。
+String _resolveHomeDueDate(HomeProductItem item) {
+  final date = item.dueDate ?? item.repayDateStr;
+  return date?.formatBackendDate() ?? AppStrings.loanOrderEmptyValue;
+}
+
+LoanOrderCardStatusBadgeData _homeOrderStatusBadge(HomeProductItem item) {
+  final visual = _HomeOrderStatusVisual.forStatus(
+    item.appOrderStatus,
+    remainingDays: item.remainingDays,
+  );
+  return LoanOrderCardStatusBadgeData(
+    text: visual.label,
+    gradient: visual.gradient,
+  );
+}
+
+LoanOrderCardFooterData _homeOrderFooter(
+  HomeProductItem item,
+  bool hasAvailableCoupons,
+) {
+  final visual = _HomeOrderStatusVisual.forStatus(
+    item.appOrderStatus,
+    remainingDays: item.remainingDays,
+  );
+
+  // 等待还款订单根据首页优惠券字段切换还款入口文案。
+  if (item.appOrderStatus == 4 &&
+      visual.label == AppStrings.loanOrderStatusWaitingRepayment) {
+    return LoanOrderCardFooterData(
+      text: hasAvailableCoupons
+          ? AppStrings.loanOrderFooterCouponRepayment
+          : AppStrings.loanOrderFooterImmediateRepayment,
+      showCouponIcon: hasAvailableCoupons,
+    );
+  }
+
+  return LoanOrderCardFooterData(text: visual.footerText);
+}
+
+String _amountText(num? value) {
+  return (value ?? 0).toDouble().formatAmount(showCurrencySymbol: true);
+}
+
+class _HomeOrderStatusVisual {
+  const _HomeOrderStatusVisual({
+    required this.label,
+    required this.gradient,
+    required this.footerText,
+  });
+
+  final String label;
+  final List<Color> gradient;
+  final String footerText;
+
+  static _HomeOrderStatusVisual forStatus(
+    int? statusCode, {
+    int? remainingDays,
+  }) {
+    if (statusCode == 4 && remainingDays != null && remainingDays < 0) {
+      return const _HomeOrderStatusVisual(
+        label: AppStrings.loanOrderStatusOverdue,
+        gradient: [Color(0xFFFF5265), Color(0xFFFF843F)],
+        footerText: AppStrings.loanOrderFooterOverdue,
+      );
+    }
+
+    switch (statusCode) {
+      case 20:
+        return const _HomeOrderStatusVisual(
+          label: AppStrings.loanOrderStatusReviewing,
+          gradient: [Color(0xFF38B899), Color(0xFF38B899)],
+          footerText: AppStrings.loanOrderFooterReviewing,
+        );
+      case 3:
+        return const _HomeOrderStatusVisual(
+          label: AppStrings.loanOrderStatusDisbursing,
+          gradient: [Color(0xFFF9B072), Color(0xFFFF843F)],
+          footerText: AppStrings.loanOrderFooterDisbursing,
+        );
+      case 4:
+        return const _HomeOrderStatusVisual(
+          label: AppStrings.loanOrderStatusWaitingRepayment,
+          gradient: [Color(0xFFF9B072), Color(0xFFFF843F)],
+          footerText: AppStrings.loanOrderFooterWaitingRepayment,
+        );
+      case 5:
+        return const _HomeOrderStatusVisual(
+          label: AppStrings.loanOrderStatusTransferFailed,
+          gradient: [Color(0xFFC1C3C6), Color(0xFFC1C3C6)],
+          footerText: AppStrings.loanOrderFooterTransferFailed,
+        );
+      default:
+        return const _HomeOrderStatusVisual(
+          label: AppStrings.loanOrderStatusReviewing,
+          gradient: [Color(0xFF38B899), Color(0xFF38B899)],
+          footerText: AppStrings.loanOrderFooterReviewing,
+        );
+    }
   }
 }
 

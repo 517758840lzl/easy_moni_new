@@ -6,7 +6,7 @@
     "sureRepayPeriods": 0,
     "remainingDay": -31,
     "extensionSwitch": true,
-    "isExtensionSwitch": false,
+    "isExtensionSwitch": true,
     "loanOrderDetails": [
       {
         "appOrderId": "1498982927590731776",

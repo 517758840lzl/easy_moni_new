@@ -1,6 +1,16 @@
 import 'package:flutter/material.dart';
 
-enum LoanBottomActionButtonMode { fixed, inline }
+class LoanBottomActionButtonMode {
+  const LoanBottomActionButtonMode._(this.name);
+
+  /// 固定在底部的按钮模式，包含底部安全区和白色背景。
+  static const fixed = LoanBottomActionButtonMode._('fixed');
+
+  /// 内联按钮模式，由外部布局控制间距和背景。
+  static const inline = LoanBottomActionButtonMode._('inline');
+
+  final String name;
+}
 
 class LoanBottomActionButton extends StatelessWidget {
   const LoanBottomActionButton({
@@ -56,11 +66,10 @@ class LoanBottomActionButton extends StatelessWidget {
   }
 
   EdgeInsets get _padding {
-    switch (mode) {
-      case LoanBottomActionButtonMode.fixed:
-        return const EdgeInsets.fromLTRB(28, 8, 28, 8);
-      case LoanBottomActionButtonMode.inline:
-        return EdgeInsets.zero;
+    if (mode == LoanBottomActionButtonMode.inline) {
+      return EdgeInsets.zero;
     }
+
+    return const EdgeInsets.fromLTRB(28, 8, 28, 8);
   }
 }

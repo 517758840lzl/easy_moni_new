@@ -6,6 +6,7 @@ class AppRoutePaths {
   static const String home = '/home';
   static const String idCamera = '/idcamera';
   static const String repayEntry = '/repay-entry';
+  static const String repayOrderDetail = '/repay-order-detail';
   static const String extensionApply = '/extension-apply';
   static const String payment = '/payment';
   static const String loanConfirm = '/loan-confirm';
@@ -19,6 +20,7 @@ class AppRoutePaths {
   static const String mine = '/mine';
   static const String orderHistory = '/order-history';
   static const String detail = '/detail/:id';
+  static const String repayExtension = '/repay-extension';
 
   const AppRoutePaths._();
 
@@ -34,8 +36,8 @@ class AppRouteNames {
   static const String idCamera = 'idcamera';
   static const String orderDetail = 'orderDetail';
   static const String repayEntry = 'repayEntry';
+  static const String repayOrderDetail = 'repayOrderDetail';
   static const String extensionApply = 'extensionApply';
-  static const String payment = 'payment';
   static const String loanConfirm = 'loanConfirm';
   static const String loanOrderDetail = 'loanOrderDetail';
   static const String loanReviewing = 'loanReviewing';
@@ -47,6 +49,7 @@ class AppRouteNames {
   static const String mine = 'mine';
   static const String orderHistory = 'orderHistory';
   static const String detail = 'detail';
+  static const String repayExtension = 'repayExtension';
 
   const AppRouteNames._();
 }

@@ -53,5 +53,6 @@ flutter:
   assets:
     - assets/images/
     - lib/pages/repay/mock/repay_list.json
+    - lib/pages/repay/mock/repay_detail.json
 flutter_gen:
   output: lib/gen/

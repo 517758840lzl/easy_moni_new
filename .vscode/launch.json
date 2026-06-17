@@ -7,28 +7,49 @@
         {
             "name": "easy_moni",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+            "cwd": "${workspaceFolder}",
+            "program": "lib/main.dart",
+            "toolArgs": [
+                "--dart-define=APP_ENV=test"
+            ]
+        },
+        {
+            "name": "easy_moni test",
+            "request": "launch",
+            "type": "dart",
+            "cwd": "${workspaceFolder}",
+            "program": "lib/main.dart",
+            "toolArgs": [
+                "--dart-define=APP_ENV=test"
+            ]
         },
         {
             "name": "easy_moni22",
             "request": "launch",
             "type": "dart",
-            // ✅ 新增下面这行，指定只在安卓设备上跑
-            "args": [
-                "-d",
-                "emulator-5554"
-            ]
+            "cwd": "${workspaceFolder}",
+            "program": "lib/main.dart",
+            "toolArgs": [
+                "--dart-define=APP_ENV=test"
+            ],
+            // 指定只在安卓模拟器上运行。
+            "deviceId": "emulator-5554"
         },
         {
             "name": "easy_moni (profile mode)",
             "request": "launch",
             "type": "dart",
+            "cwd": "${workspaceFolder}",
+            "program": "lib/main.dart",
             "flutterMode": "profile"
         },
         {
             "name": "easy_moni (release mode)",
             "request": "launch",
             "type": "dart",
+            "cwd": "${workspaceFolder}",
+            "program": "lib/main.dart",
             "flutterMode": "release"
         }
     ]

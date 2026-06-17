@@ -1,5 +1,6 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
+import 'package:easy_moni/entities/repay/repay_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/loan/components/loan_order_detail_cards.dart';
 import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
@@ -17,6 +18,8 @@ class LoanOrderDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final topInset = MediaQuery.of(context).padding.top;
+    final canRepay = data.statusCode == 4;
+    final hasRepayOrderId = data.appOrderId.isNotEmpty;
 
     return LoanRoundedPageShell(
       contentTop: (_) => topInset + 114,
@@ -30,27 +33,56 @@ class LoanOrderDetailPage extends StatelessWidget {
       ),
       header: _OrderDetailHeader(data: data),
       content: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(
-          20,
-          20,
-          20,
-          MediaQuery.of(context).padding.bottom + 20,
-        ),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
         child: Column(
           children: [
             LoanOrderDetailCards(data: data),
-            if (data.statusCode == 4) ...[
-              const SizedBox(height: 20),
-              LoanBottomActionButton(
-                enabled: true,
-                text: AppStrings.orderDetailRepayNow,
-                mode: LoanBottomActionButtonMode.inline,
-                onPressed: () => context.push(AppRoutePaths.repayEntry),
-              ),
-            ],
           ],
         ),
       ),
+      bottomNavigationBar: canRepay
+          ? LoanBottomActionButton(
+              enabled: hasRepayOrderId,
+              text: AppStrings.orderDetailRepayNow,
+              onPressed: hasRepayOrderId
+                  ? () => context.push(
+                      AppRoutePaths.repayOrderDetail,
+                      extra: data.toRepayResp(),
+                    )
+                  : null,
+            )
+          : null,
+    );
+  }
+}
+
+extension _LoanOrderDetailRepayMapper on LoanOrderDetailData {
+  /// 将首页订单快照转换为还款详情页需要的账单参数。
+  RepayResp toRepayResp() {
+    return RepayResp(
+      appOrderId: appOrderId,
+      bankCardName: walletType,
+      bankCardNo: momoAccount,
+      productLevel: productLevel,
+      productLogo: productLogo,
+      productName: productName,
+      // TODO: 与后端确认首页 productCode 是否等同还款列表 productSetCode。
+      productSetCode: productCode,
+      loanAmount: loanAmount,
+      receiptAmount: receiptAmount,
+      interest: interest,
+      isExtensionSwitch: isExtensionSwitch,
+      orderStatus: statusCode,
+      orderStatusStr: statusText,
+      remainingDays: remainingDays,
+      repaidAmount: repaidAmount,
+      repayAmount: repayAmount,
+      repayDate: rawRepayDate,
+      repayDateStr: repayDateStr,
+      term: term,
+      totalServiceDays: totalServiceDays,
+      updateTime: updateTime,
+      createTime: createTime,
     );
   }
 }

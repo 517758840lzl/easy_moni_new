@@ -289,7 +289,9 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
       bottomNavigationBar: hasData
           ? LoanBottomActionButton(
               enabled: !_isSubmitting,
-              text: _isSubmitting ? AppStrings.loanConfirmButtonLoadingText : AppStrings.loanConfirmButtonText,
+              text: _isSubmitting
+                  ? AppStrings.loanConfirmButtonLoadingText
+                  : AppStrings.loanConfirmButtonText,
               onPressed: _isSubmitting ? null : _submitOrder,
             )
           : null,
@@ -372,13 +374,50 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
               padding: EdgeInsets.only(
                 bottom: index == orders.length - 1 ? 0 : 16,
               ),
-              child: LoanOrderCard.confirmFromLoanConfirmOrder(orders[index]),
+              child: LoanOrderCard(
+                productName: orders[index].productName?.isNotEmpty == true
+                    ? orders[index].productName!
+                    : AppStrings.loanOrderProductFallback,
+                productLogo: orders[index].productLogo,
+                rows: _loanConfirmOrderRows(orders[index]),
+              ),
             );
           }),
         ],
       ),
     );
   }
+}
+
+// 确认页订单字段：只展示确认借款需要核对的信息，不展示状态和底部操作。
+List<LoanOrderCardRowData> _loanConfirmOrderRows(LoanConfirmOrder item) {
+  final dueDate =
+      item.dueDate?.formatBackendDate() ?? AppStrings.loanOrderEmptyValue;
+
+  return [
+    LoanOrderCardRowData(
+      label: AppStrings.loanOrderLoanAmountLabel,
+      value: _amountText(item.loanAmount),
+    ),
+    LoanOrderCardRowData(
+      label: AppStrings.loanOrderLoanTermLabel,
+      value: item.totalServiceDays == null
+          ? AppStrings.loanOrderUnknownValue
+          : '${item.totalServiceDays} ${AppStrings.loanOrderDaysUnit}',
+    ),
+    LoanOrderCardRowData(
+      label: AppStrings.loanOrderServiceFeeLabel,
+      value: _amountText(item.serviceFee),
+    ),
+    LoanOrderCardRowData(
+      label: AppStrings.loanOrderInterestLabel,
+      value: _amountText(item.interest),
+    ),
+    LoanOrderCardRowData(
+      label: AppStrings.loanOrderRepaymentDateLabel,
+      value: dueDate,
+    ),
+  ];
 }
 
 // 优惠券弹层内容加载

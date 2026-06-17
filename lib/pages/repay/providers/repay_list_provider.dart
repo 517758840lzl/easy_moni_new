@@ -28,7 +28,7 @@ final repayEntryBillsProvider = FutureProvider.autoDispose<List<RepayResp>>((
 ) async {
   // TODO: 当前按页面联调诉求使用本地 Mock API 展示；真实环境切换规则待确认后接入 repayListApiProvider。
   final result = await ref
-      .read(mockRepayListApiProvider)
+      .read(repayListApiProvider)
       .call(statusList: RepayListOrderStatus.waitingRepaymentStatusList);
 
   if (result.isSuccess) {

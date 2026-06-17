@@ -40,7 +40,7 @@ class AppStrings {
   static const String phoneStr = '用于移动支付的手机号码';
   static const String codestr = '输入短信中的验证码';
   static const String gainCode = '获取验证码';
-  static const String login_in = 'Log in';
+  static const String login = 'Log in';
   static const String chooseContacts = '选择父母/配偶联系人';
   static const String chooseFriends = '选择朋友/同事联系人';
   static const String needsContacts = '需要通讯录权限';
@@ -120,6 +120,9 @@ class AppStrings {
   static const String loanOrderLoanAmountLabel = '借款金额';
   static const String loanOrderLoanTermLabel = '借款期限';
   static const String loanOrderServiceFeeLabel = '服务费';
+  static const String loanOrderOverdueFeeLabel = '逾期费';
+  static const String loanOrderOverdueDaysLabel = '逾期天数';
+  static const String loanOrderRemainingDayLabel = '距离到期日';
   static const String loanOrderInterestLabel = '利息';
   static const String loanOrderRepaymentDateLabel = '还款日期';
   static const String loanOrderReceiptAmountLabel = '到账金额';
@@ -157,6 +160,27 @@ class AppStrings {
   static const String repayBillOverdueStatus = '已逾期';
   static const String repayBillRepayNow = '立即还款';
   static const String repayBillLogoFallback = '';
+  static const String repayDetailTitle = '还款详情';
+  static const String repayDetailPendingStatus = '待还款';
+  static const String repayDetailApplyExtension = '申请展期';
+  static const String repayDetailRepayNow = '立即还款';
+  static const String repayDetailOrderInfoTitle = '订单信息';
+  static const String repayDetailCouponUnavailable = '暂无可用优惠券';
+  static const String repayDetailPaymentPending = '还款页面待接入';
+  static const String repayDetailExtensionPending = '展期页面待接入';
+  static const String repayExtensionTitle = '展期申请';
+  static const String repayExtensionFeeLabel = 'Extension Fee';
+  static const String repayExtensionInfoTitle = '展期信息';
+  static const String repayExtensionNotice = '延期成功后，还款金额将保持不变，不会产生更多费用。';
+  static const String repayExtensionDaysLabel = '延长天数';
+  static const String repayExtensionNewDueDateLabel = '新的到期日';
+  static const String repayExtensionNewRepayAmountLabel = '新到期日应还金额';
+  static const String repayExtensionConfirm = '确认展期';
+  static const String repayExtensionLoadFailed = '获取展期信息失败';
+  static const String repayExtensionNoOrderData = '没有展期订单数据';
+  static const String repayExtensionSubmitPending = '展期提交接口待接入';
+  static const String couponEntrySubtitle = '提额券或降息券';
+  static const String couponSelectedFallback = '已选择优惠券';
 
   static String orderDetailDayValue(int days) => '$days天';
   static String orderDetailCountValue(int count) => '$count个';
@@ -177,6 +201,8 @@ class AppStrings {
   // ===================== 优惠券 ========================
   static const String couponEmptyDesc = '无可用优惠券，按时还款，后续可解锁优惠券';
   static const String couponString = '优惠券';
+  static const String couponConfirmButtonText = 'Confirm';
+  static const String couponLoadFailed = '优惠券加载失败，请重试';
 
   // ==================== 确认借款 ====================
   static const String loanConfirmButtonText = '确认借款';

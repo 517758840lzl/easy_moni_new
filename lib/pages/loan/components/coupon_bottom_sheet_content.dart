@@ -7,9 +7,16 @@ import '../../../utils/extensions.dart';
 
 // 优惠券弹窗内容：仅负责列表和选中态展示，确认按钮由 CommonBottomSheet 统一承载。
 class CouponBottomSheetContent extends StatefulWidget {
-  const CouponBottomSheetContent({super.key, required this.coupons});
+  const CouponBottomSheetContent({
+    super.key,
+    required this.coupons,
+    this.initialSelectedCouponId,
+    this.onSelectionChanged,
+  });
 
   final List<CouponItem> coupons;
+  final int? initialSelectedCouponId;
+  final ValueChanged<CouponItem?>? onSelectionChanged;
 
   @override
   State<CouponBottomSheetContent> createState() =>
@@ -18,6 +25,23 @@ class CouponBottomSheetContent extends StatefulWidget {
 
 class _CouponBottomSheetContentState extends State<CouponBottomSheetContent> {
   int? _selectedIndex;
+  bool _initializedSelection = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncInitialSelection();
+  }
+
+  @override
+  void didUpdateWidget(covariant CouponBottomSheetContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialSelectedCouponId != widget.initialSelectedCouponId ||
+        oldWidget.coupons != widget.coupons) {
+      _initializedSelection = false;
+      _syncInitialSelection();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,6 +98,26 @@ class _CouponBottomSheetContentState extends State<CouponBottomSheetContent> {
     setState(() {
       _selectedIndex = _selectedIndex == index ? null : index;
     });
+    final selectedIndex = _selectedIndex;
+    widget.onSelectionChanged?.call(
+      selectedIndex == null ? null : widget.coupons[selectedIndex],
+    );
+  }
+
+  // 弹窗重新打开时恢复页面外部保存的优惠券选择状态。
+  void _syncInitialSelection() {
+    if (_initializedSelection) return;
+    _initializedSelection = true;
+
+    final couponId = widget.initialSelectedCouponId;
+    if (couponId == null) return;
+
+    final index = widget.coupons.indexWhere(
+      (item) => item.couponId == couponId,
+    );
+    if (index >= 0) {
+      _selectedIndex = index;
+    }
   }
 }
 
@@ -296,25 +340,3 @@ String _couponTypeText(int? discountType) {
   if (discountType == null) return '提额券';
   return '提额券';
 }
-
-// 优惠券 UI 预览数据
-const List<CouponItem> _mockCouponItems = [
-  CouponItem(
-    couponId: 1,
-    discountType: 1,
-    discountValue: 120,
-    summary: 'Valid for loan amount increase',
-    title: 'Limit increase',
-    type: 'limit',
-    status: 1,
-  ),
-  CouponItem(
-    couponId: 1,
-    discountType: 1,
-    discountValue: 120,
-    summary: 'Valid for loan amount increase',
-    title: 'Limit increase',
-    type: 'limit',
-    status: 1,
-  ),
-];
