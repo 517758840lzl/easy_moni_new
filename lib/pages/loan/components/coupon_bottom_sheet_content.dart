@@ -1,9 +1,8 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
+import 'package:easy_moni/entities/coupon_resp.dart';
+import 'package:easy_moni/gen/assets.gen.dart';
+import 'package:easy_moni/pages/loan/providers/coupon_provider.dart';
 import 'package:flutter/material.dart';
-
-import '../../../entities/coupon_resp.dart';
-import '../../../gen/assets.gen.dart';
-import '../../../utils/extensions.dart';
 
 // 优惠券弹窗内容：仅负责列表和选中态展示，确认按钮由 CommonBottomSheet 统一承载。
 class CouponBottomSheetContent extends StatefulWidget {
@@ -85,7 +84,7 @@ class _CouponBottomSheetContentState extends State<CouponBottomSheetContent> {
           ),
           child: CouponTicketCard(
             coupon: coupon,
-            selected: index == _selectedIndex,
+            selected: coupon.isUsable && index == _selectedIndex,
             onTap: () => _toggleCouponSelection(index),
           ),
         );
@@ -93,8 +92,10 @@ class _CouponBottomSheetContentState extends State<CouponBottomSheetContent> {
     );
   }
 
-  // 切换优惠券选中态：点击未选中的券进行选中，重复点击当前券则取消选择。
+  // 切换优惠券选中态：仅可用券允许选中，重复点击当前券则取消选择。
   void _toggleCouponSelection(int index) {
+    if (!widget.coupons[index].isUsable) return;
+
     setState(() {
       _selectedIndex = _selectedIndex == index ? null : index;
     });
@@ -113,7 +114,7 @@ class _CouponBottomSheetContentState extends State<CouponBottomSheetContent> {
     if (couponId == null) return;
 
     final index = widget.coupons.indexWhere(
-      (item) => item.couponId == couponId,
+      (item) => item.isUsable && item.couponId == couponId,
     );
     if (index >= 0) {
       _selectedIndex = index;
@@ -136,14 +137,15 @@ class CouponTicketCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = _nonEmpty(coupon.title, fallback: 'Coupon name');
-    final summary = _nonEmpty(coupon.summary, fallback: 'details information');
-    final discountValue = (coupon.discountValue ?? 0).toDouble().formatAmount();
+    final title = _nonEmpty(coupon.title, fallback: '');
+    final summary = _nonEmpty(coupon.summary, fallback: '');
+    final desc = _nonEmpty(coupon.description, fallback: '');
     final couponType = _couponTypeText(coupon.discountType);
+    final isUsable = coupon.isUsable;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: onTap,
+      onTap: isUsable ? onTap : null,
       child: SizedBox(
         height: 104,
         width: double.infinity,
@@ -163,9 +165,9 @@ class CouponTicketCard extends StatelessWidget {
                 // title
                 _CouponTitle(title: title, couponType: couponType),
                 const SizedBox(height: 8),
-                // amount
+                // summary
                 Text(
-                  'GHS $discountValue',
+                  summary,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -175,22 +177,25 @@ class CouponTicketCard extends StatelessWidget {
                     color: Color(0xFF252629),
                   ),
                 ),
-                // summary
+                // desc
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      summary,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        height: 14 / 14,
-                        color: Color(0xFF2F2F2F),
+                    Expanded(
+                      child: Text(
+                        desc,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          height: 14 / 14,
+                          color: Color(0xFF2F2F2F),
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 8),
                     // check
-                    _CouponCheckMark(selected: selected),
+                    if (isUsable) _CouponCheckMark(selected: selected),
                   ],
                 ),
               ],

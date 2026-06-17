@@ -17,7 +17,8 @@ final mockRepayExtensionApiProvider = Provider<MockRepayExtensionApi>((ref) {
 });
 
 final repayExtensionProvider = FutureProvider.autoDispose
-    .family<RepayExtensionRespData, int?>((ref, installmentId) async {
+    .family<RepayExtensionRespData, RepayExtensionQuery>((ref, query) async {
+      final installmentId = query.installmentId;
       if (installmentId == null || installmentId <= 0) {
         throw Exception(AppStrings.repayExtensionNoOrderData);
       }
@@ -25,7 +26,7 @@ final repayExtensionProvider = FutureProvider.autoDispose
       // TODO: 联调确认展期详情接口在测试环境稳定后，可切回 mockRepayExtensionApiProvider。
       final result = await ref
           .read(repayExtensionApiProvider)
-          .call(installmentId: installmentId);
+          .call(installmentId: installmentId, couponIds: query.couponIds);
 
       if (result.isSuccess && result.data != null) {
         return result.data!;
@@ -34,14 +35,50 @@ final repayExtensionProvider = FutureProvider.autoDispose
       throw Exception(result.message ?? AppStrings.repayExtensionLoadFailed);
     });
 
+/// 展期详情查询参数：账单 ID 和已选优惠券共同决定重新试算后的展期金额。
+class RepayExtensionQuery {
+  const RepayExtensionQuery({
+    required this.installmentId,
+    this.couponIds = const <int>[],
+  });
+
+  final int? installmentId;
+  final List<int> couponIds;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is RepayExtensionQuery &&
+            other.installmentId == installmentId &&
+            _listEquals(other.couponIds, couponIds);
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(installmentId, Object.hashAll(couponIds));
+  }
+}
+
+/// 将页面状态转换成稳定的 provider family 查询参数。
+RepayExtensionQuery buildRepayExtensionQuery({
+  required int? installmentId,
+  Iterable<int?> couponIds = const <int?>[],
+}) {
+  return RepayExtensionQuery(
+    installmentId: installmentId,
+    couponIds: couponIds.whereType<int>().where((id) => id > 0).toList(),
+  );
+}
+
 class RepayExtensionApi {
   /// 获取展期详情，installmentId 为当前申请展期账单的ID。
   Future<HttpResult<RepayExtensionRespData>> call({
     required int installmentId,
+    List<int> couponIds = const <int>[],
   }) async {
     final result = await HttpProvider.instance.post<RepayExtensionRespData>(
       ApiConstants.extension,
-      data: {'couponIds': <int>[], 'installmentId': installmentId},
+      data: {'couponIds': couponIds, 'installmentId': installmentId},
       fromJson: (json) =>
           RepayExtensionRespData.fromJson(json as Map<String, dynamic>),
     );
@@ -64,6 +101,7 @@ class MockRepayExtensionApi {
   /// 模拟展期详情接口，从本地 JSON 读取数据并延迟返回，方便页面联调。
   Future<HttpResult<RepayExtensionRespData>> call({
     required int installmentId,
+    List<int> couponIds = const <int>[],
   }) async {
     try {
       await Future<void>.delayed(const Duration(milliseconds: 500));
@@ -85,4 +123,13 @@ class MockRepayExtensionApi {
       return HttpResult.error(HttpResultStatus.unKnown, e.toString());
     }
   }
+}
+
+bool _listEquals<T>(List<T> left, List<T> right) {
+  if (identical(left, right)) return true;
+  if (left.length != right.length) return false;
+  for (var index = 0; index < left.length; index++) {
+    if (left[index] != right[index]) return false;
+  }
+  return true;
 }

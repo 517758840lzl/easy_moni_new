@@ -42,6 +42,7 @@ class LoanOrderCard extends StatelessWidget {
     this.productLogo,
     this.statusBadge,
     this.footer,
+    this.onFooterTap,
     this.onTap,
   });
 
@@ -50,6 +51,7 @@ class LoanOrderCard extends StatelessWidget {
   final List<LoanOrderCardRowData> rows;
   final LoanOrderCardStatusBadgeData? statusBadge;
   final LoanOrderCardFooterData? footer;
+  final VoidCallback? onFooterTap;
   final VoidCallback? onTap;
 
   @override
@@ -85,6 +87,7 @@ class LoanOrderCard extends StatelessWidget {
                 _OrderFooterAction(
                   text: footer!.text,
                   showCouponIcon: footer!.showCouponIcon,
+                  onTap: onFooterTap,
                 ),
               ],
             ],
@@ -295,14 +298,19 @@ class _OrderInfoRow extends StatelessWidget {
 }
 
 class _OrderFooterAction extends StatelessWidget {
-  const _OrderFooterAction({required this.text, required this.showCouponIcon});
+  const _OrderFooterAction({
+    required this.text,
+    required this.showCouponIcon,
+    this.onTap,
+  });
 
   final String text;
   final bool showCouponIcon;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final content = Row(
       children: [
         if (showCouponIcon) ...[
           SvgPicture.asset(Assets.images.couponIcon, width: 14, height: 14),
@@ -322,6 +330,17 @@ class _OrderFooterAction extends StatelessWidget {
           ),
         ),
       ],
+    );
+
+    if (onTap == null) {
+      return content;
+    }
+
+    // footer 操作区独立响应点击，避免和整卡详情跳转职责混在一起。
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: content,
     );
   }
 }

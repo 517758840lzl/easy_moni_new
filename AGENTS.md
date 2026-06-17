@@ -29,6 +29,7 @@
 ## Dart Style
 
 - Do not use Dart `enum` in project development. Use `class` definitions instead when modeling fixed values or categories.
+- Avoid hand-writing complex logic or functions when an official recommended library exists; prefer library APIs over custom implementations.
 
 ## Page Structure
 

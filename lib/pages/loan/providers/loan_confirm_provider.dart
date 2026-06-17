@@ -1,11 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/constants/api_constants.dart';
-import '../../../core/network/http_provider.dart';
-import '../../../core/network/http_result.dart';
-import '../../../entities/coupon_resp.dart';
-import '../../../entities/loan_confirm/loan_confirm_resp.dart';
-import '../models/loan_confirm_request_product.dart';
+import 'package:easy_moni/core/constants/api_constants.dart';
+import 'package:easy_moni/core/network/http_provider.dart';
+import 'package:easy_moni/core/network/http_result.dart';
+import 'package:easy_moni/entities/loan_confirm/loan_confirm_resp.dart';
+import 'package:easy_moni/pages/loan/models/loan_confirm_request_product.dart';
 
 final loanConfirmProvider = Provider<LoanConfirmApi>((ref) {
   return LoanConfirmApi();
@@ -23,24 +22,6 @@ class LoanConfirmApi {
         'list': products.map((item) => item.toJson()).toList(),
       },
       fromJson: (json) => _parseLoanConfirmResp(json),
-    );
-  }
-
-  Future<HttpResult<CouponResp>> fetchCoupons({
-    required List<int> appOrderIds,
-    required List<String> productCodes,
-    String couponType = 'PRE',
-    int repaymentType = 1,
-  }) {
-    return HttpProvider.instance.post<CouponResp>(
-      ApiConstants.customerCouponList,
-      data: {
-        'appOrderIds': appOrderIds,
-        'couponType': couponType,
-        'productCodes': productCodes,
-        'repaymentType': repaymentType,
-      },
-      fromJson: (json) => _parseCouponResp(json),
     );
   }
 
@@ -76,15 +57,5 @@ class LoanConfirmApi {
       });
     }
     return const LoanConfirmResp();
-  }
-
-  CouponResp _parseCouponResp(dynamic json) {
-    if (json is Map<String, dynamic> && json.containsKey('data')) {
-      return CouponResp.fromJson(json);
-    }
-    if (json is Map) {
-      return CouponResp.fromJson({'data': Map<String, dynamic>.from(json)});
-    }
-    return const CouponResp();
   }
 }

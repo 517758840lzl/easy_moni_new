@@ -1,10 +1,10 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
-import 'package:easy_moni/entities/repay/repay_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/loan/components/loan_order_detail_cards.dart';
 import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
 import 'package:easy_moni/pages/loan/models/loan_order_detail_data.dart';
+import 'package:easy_moni/pages/repay/models/repay_order_detail_request_data.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -34,11 +34,7 @@ class LoanOrderDetailPage extends StatelessWidget {
       header: _OrderDetailHeader(data: data),
       content: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-        child: Column(
-          children: [
-            LoanOrderDetailCards(data: data),
-          ],
-        ),
+        child: Column(children: [LoanOrderDetailCards(data: data)]),
       ),
       bottomNavigationBar: canRepay
           ? LoanBottomActionButton(
@@ -47,42 +43,13 @@ class LoanOrderDetailPage extends StatelessWidget {
               onPressed: hasRepayOrderId
                   ? () => context.push(
                       AppRoutePaths.repayOrderDetail,
-                      extra: data.toRepayResp(),
+                      extra: RepayOrderDetailRequestData(
+                        appOrderIds: [data.appOrderId],
+                      ),
                     )
                   : null,
             )
           : null,
-    );
-  }
-}
-
-extension _LoanOrderDetailRepayMapper on LoanOrderDetailData {
-  /// 将首页订单快照转换为还款详情页需要的账单参数。
-  RepayResp toRepayResp() {
-    return RepayResp(
-      appOrderId: appOrderId,
-      bankCardName: walletType,
-      bankCardNo: momoAccount,
-      productLevel: productLevel,
-      productLogo: productLogo,
-      productName: productName,
-      // TODO: 与后端确认首页 productCode 是否等同还款列表 productSetCode。
-      productSetCode: productCode,
-      loanAmount: loanAmount,
-      receiptAmount: receiptAmount,
-      interest: interest,
-      isExtensionSwitch: isExtensionSwitch,
-      orderStatus: statusCode,
-      orderStatusStr: statusText,
-      remainingDays: remainingDays,
-      repaidAmount: repaidAmount,
-      repayAmount: repayAmount,
-      repayDate: rawRepayDate,
-      repayDateStr: repayDateStr,
-      term: term,
-      totalServiceDays: totalServiceDays,
-      updateTime: updateTime,
-      createTime: createTime,
     );
   }
 }

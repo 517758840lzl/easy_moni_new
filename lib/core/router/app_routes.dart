@@ -7,6 +7,7 @@ class AppRoutePaths {
   static const String idCamera = '/idcamera';
   static const String repayEntry = '/repay-entry';
   static const String repayOrderDetail = '/repay-order-detail';
+  static const String repayMultiOrderDetail = '/repay-multi-order-detail';
   static const String extensionApply = '/extension-apply';
   static const String payment = '/payment';
   static const String loanConfirm = '/loan-confirm';
@@ -37,6 +38,7 @@ class AppRouteNames {
   static const String orderDetail = 'orderDetail';
   static const String repayEntry = 'repayEntry';
   static const String repayOrderDetail = 'repayOrderDetail';
+  static const String repayMultiOrderDetail = 'repayMultiOrderDetail';
   static const String extensionApply = 'extensionApply';
   static const String loanConfirm = 'loanConfirm';
   static const String loanOrderDetail = 'loanOrderDetail';

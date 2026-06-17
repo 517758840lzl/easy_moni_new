@@ -59,6 +59,10 @@ class $AssetsImagesGen {
   AssetGenImage get couponCardBorder =>
       const AssetGenImage('assets/images/coupon_card_border.png');
 
+  /// File path: assets/images/coupon_selected_bg.png
+  AssetGenImage get couponSelectedBg =>
+      const AssetGenImage('assets/images/coupon_selected_bg.png');
+
   /// File path: assets/images/customer.png
   AssetGenImage get customer =>
       const AssetGenImage('assets/images/customer.png');
@@ -366,6 +370,7 @@ class $AssetsImagesGen {
     couponIcon,
     couponBg,
     couponCardBorder,
+    couponSelectedBg,
     customer,
     dotss,
     inforamtionBgheader,

@@ -17,8 +17,8 @@ final mockRepayDetailApiProvider = Provider<MockRepayDetailApi>((ref) {
 });
 
 final repayOrderDetailProvider = FutureProvider.autoDispose
-    .family<RepayDetailRespData, String>((ref, appOrderIdsParam) async {
-      final appOrderIds = parseRepayDetailAppOrderIds(appOrderIdsParam);
+    .family<RepayDetailRespData, RepayDetailQuery>((ref, query) async {
+      final appOrderIds = query.appOrderIds;
       if (appOrderIds.isEmpty) {
         throw Exception(AppStrings.orderDetailNoOrderData);
       }
@@ -26,7 +26,7 @@ final repayOrderDetailProvider = FutureProvider.autoDispose
       // TODO: 当前按页面联调诉求使用本地 Mock API 展示；真实环境切换规则待确认后接入 repayDetailApiProvider。
       final result = await ref
           .read(repayDetailApiProvider)
-          .call(appOrderIds: appOrderIds);
+          .call(appOrderIds: appOrderIds, couponIds: query.couponIds);
 
       if (result.isSuccess && result.data != null) {
         return result.data!;
@@ -35,32 +35,57 @@ final repayOrderDetailProvider = FutureProvider.autoDispose
       throw Exception(result.message ?? AppStrings.orderDetailLoadFailed);
     });
 
-/// 将路由入参中的订单号串还原为接口请求需要的订单号列表。
-List<String> parseRepayDetailAppOrderIds(String appOrderIdsParam) {
-  return appOrderIdsParam
-      .split(',')
-      .map((id) => id.trim())
-      .where((id) => id.isNotEmpty)
-      .toList();
+/// 还款详情查询参数：订单号和已选优惠券共同决定详情金额。
+class RepayDetailQuery {
+  const RepayDetailQuery({
+    required this.appOrderIds,
+    this.couponIds = const <int>[],
+  });
+
+  final List<String> appOrderIds;
+  final List<int> couponIds;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is RepayDetailQuery &&
+            _listEquals(other.appOrderIds, appOrderIds) &&
+            _listEquals(other.couponIds, couponIds);
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(Object.hashAll(appOrderIds), Object.hashAll(couponIds));
+  }
 }
 
-/// 将订单号列表转换成稳定的 provider family 参数。
-String buildRepayDetailAppOrderIdsParam(Iterable<String?> appOrderIds) {
-  return appOrderIds
-      .whereType<String>()
-      .map((id) => id.trim())
-      .where((id) => id.isNotEmpty)
-      .join(',');
+/// 将订单号列表转换成稳定的 provider family 查询参数。
+RepayDetailQuery buildRepayDetailQuery({
+  required Iterable<String?> appOrderIds,
+  Iterable<int?> couponIds = const <int?>[],
+}) {
+  return RepayDetailQuery(
+    appOrderIds: appOrderIds
+        .whereType<String>()
+        .map((id) => id.trim())
+        .where((id) => id.isNotEmpty)
+        .toList(),
+    couponIds: couponIds.whereType<int>().where((id) => id > 0).toList(),
+  );
 }
 
 class RepayDetailApi {
   /// 获取用户要还款的订单详情，appOrderIds 为待还款订单号列表。
   Future<HttpResult<RepayDetailRespData>> call({
     required List<String> appOrderIds,
+    List<int> couponIds = const <int>[],
   }) async {
     final result = await HttpProvider.instance.post<RepayDetailRespData>(
       ApiConstants.billDetails,
-      data: {'appOrderIds': appOrderIds.map(_requestOrderId).toList()},
+      data: {
+        'appOrderIds': appOrderIds.map(_requestOrderId).toList(),
+        'couponIds': couponIds,
+      },
       fromJson: (json) =>
           RepayDetailRespData.fromJson(json as Map<String, dynamic>),
     );
@@ -82,6 +107,7 @@ class MockRepayDetailApi {
   /// 模拟还款详情接口，从本地 JSON 读取数据并延迟返回，方便页面联调。
   Future<HttpResult<RepayDetailRespData>> call({
     required List<String> appOrderIds,
+    List<int> couponIds = const <int>[],
   }) async {
     try {
       await Future<void>.delayed(const Duration(milliseconds: 500));
@@ -115,4 +141,13 @@ class MockRepayDetailApi {
 
 Object _requestOrderId(String appOrderId) {
   return int.tryParse(appOrderId) ?? appOrderId;
+}
+
+bool _listEquals<T>(List<T> left, List<T> right) {
+  if (identical(left, right)) return true;
+  if (left.length != right.length) return false;
+  for (var index = 0; index < left.length; index++) {
+    if (left[index] != right[index]) return false;
+  }
+  return true;
 }

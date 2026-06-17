@@ -10,6 +10,7 @@ import 'package:easy_moni/pages/loan/components/coupon_bottom_sheet_content.dart
 import 'package:easy_moni/pages/loan/components/coupon_entry_card.dart';
 import 'package:easy_moni/pages/loan/components/loan_order_card.dart';
 import 'package:easy_moni/pages/loan/models/loan_confirm_request_product.dart';
+import 'package:easy_moni/pages/loan/providers/coupon_provider.dart';
 import 'package:easy_moni/pages/loan/providers/loan_confirm_provider.dart';
 import 'package:easy_moni/pages/login/providers/auth_provider.dart';
 import 'package:easy_moni/services/platform_service.dart';
@@ -194,7 +195,11 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
         title: '',
         description: '',
         content: _CouponBottomSheetLoader(future: _loadCoupons(orders)),
-        actions: const [CommonBottomSheetAction<void>(text: 'Confirm')],
+        actions: const [
+          CommonBottomSheetAction<void>(
+            text: AppStrings.couponConfirmButtonText,
+          ),
+        ],
       );
     } finally {
       if (mounted) {
@@ -207,23 +212,16 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
 
   Future<List<CouponItem>> _loadCoupons(List<LoanConfirmOrder> orders) async {
     // 点击入口后在弹层内实时拉取优惠券列表，避免用户看到过期券信息。
-    final result = await ref
-        .read(loanConfirmProvider)
-        .fetchCoupons(
+    return ref.read(
+      couponListProvider(
+        CouponRequestParams(
           appOrderIds: _couponAppOrderIds(orders),
           productCodes: _couponProductCodes(orders),
-        );
-
-    if (!result.isSuccess || result.data == null) {
-      throw result.message ?? '优惠券加载失败，请重试';
-    }
-
-    final couponData = result.data?.data;
-    if (couponData?.showCouponCard != 1) {
-      return const <CouponItem>[];
-    }
-
-    return couponData?.coupons ?? const <CouponItem>[];
+          couponType: CouponTypes.pre,
+          repaymentType: CouponRepaymentTypes.fullAmount,
+        ),
+      ).future,
+    );
   }
 
   @override
@@ -449,7 +447,9 @@ class _CouponBottomSheetLoader extends StatelessWidget {
             height: 104,
             child: Center(
               child: Text(
-                (message == null || message.isEmpty) ? '优惠券加载失败，请重试' : message,
+                (message == null || message.isEmpty)
+                    ? AppStrings.couponLoadFailed
+                    : message,
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 14, color: Color(0xFF8A8F98)),
               ),
@@ -613,7 +613,9 @@ class _Hero extends StatelessWidget {
                       ),
                     ),
                     TextSpan(
-                      text: (data?.loanAmount ?? 0).toDouble().formatAmount(),
+                      text: (data?.loanAmount ?? 0).toDouble().formatAmount(
+                        showCurrencySymbol: false,
+                      ),
                     ),
                   ],
                 ),
@@ -699,7 +701,7 @@ class _SummaryTile extends StatelessWidget {
           icon,
           const SizedBox(height: 4),
           Text(
-            value,
+            value.formatBackendDate(),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
@@ -804,7 +806,7 @@ class _MomoAccountCard extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.only(top: 7),
                 child: Text(
-                  'MoMo收款账户',
+                  AppStrings.loanOrderAccountLabel,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.right,
@@ -838,7 +840,7 @@ class _SimIcon extends StatelessWidget {
 
 // 金额展示统一加 GHS 前缀，并按项目扩展方法格式化小数。
 String _amountText(num? value) {
-  return 'GHS ${(value ?? 0).toDouble().formatAmount()}';
+  return (value ?? 0).toDouble().formatAmount();
 }
 
 // 日期字段为空时展示占位符，避免 UI 直接显示空字符串。

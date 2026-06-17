@@ -5,6 +5,7 @@ import 'package:easy_moni/pages/loan/components/loan_product_card.dart';
 import 'package:easy_moni/pages/loan/models/loan_confirm_request_product.dart';
 import 'package:easy_moni/pages/loan/models/loan_order_detail_data.dart';
 import 'package:easy_moni/pages/loan/providers/home_provider.dart';
+import 'package:easy_moni/pages/repay/models/repay_order_detail_request_data.dart';
 import 'package:easy_moni/entities/home_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/utils/extensions.dart';
@@ -27,7 +28,6 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
   String? _loadError;
 
   List<_LoanProduct> _products = [];
-  String? _couponsTitle;
   bool _hasAvailableCoupons = false;
 
   @override
@@ -99,7 +99,6 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
 
     setState(() {
       _products = products;
-      _couponsTitle = data.couponsTitle;
       _hasAvailableCoupons = data.hasAvailableCoupons ?? false;
       _isLoading = false;
       _loadError = null;
@@ -434,6 +433,7 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
               rows: _homeOrderRows(item),
               statusBadge: _homeOrderStatusBadge(item),
               footer: _homeOrderFooter(item, _hasAvailableCoupons),
+              onFooterTap: _homeOrderFooterTap(context, item),
               onTap: () => context.push(
                 AppRoutePaths.loanOrderDetail,
                 extra: LoanOrderDetailData.fromHomeProductItem(item),
@@ -562,25 +562,23 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
                 ),
               ),
             ),
-            if (_hasAvailableCoupons && (_couponsTitle?.isNotEmpty ?? false))
-              Positioned(
-                top: topInset + 148,
-                left: 20,
-                right: 20,
-                child: Text(
-                  _couponsTitle!,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withValues(alpha: 0.85),
-                  ),
-                ),
-              ),
           ],
         ),
       ),
     );
   }
+}
+
+VoidCallback? _homeOrderFooterTap(BuildContext context, HomeProductItem item) {
+  if (item.appOrderStatus != 4) return null;
+
+  final appOrderId = _resolveHomeAppOrderId(item);
+  if (appOrderId.isEmpty) return null;
+
+  return () => context.push(
+    AppRoutePaths.repayOrderDetail,
+    extra: RepayOrderDetailRequestData(appOrderIds: [appOrderId]),
+  );
 }
 
 // 首页订单卡片字段：页面负责把接口数据转换成展示文案。
@@ -605,6 +603,14 @@ List<LoanOrderCardRowData> _homeOrderRows(HomeProductItem item) {
       value: dueDate,
     ),
   ];
+}
+
+String _resolveHomeAppOrderId(HomeProductItem item) {
+  final appOrderIdStr = item.appOrderIdStr?.trim();
+  if (appOrderIdStr != null && appOrderIdStr.isNotEmpty) {
+    return appOrderIdStr;
+  }
+  return item.appOrderId?.toString() ?? '';
 }
 
 // 放款中/待还款等后端不下发 dueDate，可以展示 repayDateStr。

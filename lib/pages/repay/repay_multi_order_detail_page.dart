@@ -1,5 +1,4 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
-import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/entities/coupon_resp.dart';
 import 'package:easy_moni/entities/repay/repay_detail_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
@@ -8,31 +7,29 @@ import 'package:easy_moni/pages/loan/components/coupon_entry_card.dart';
 import 'package:easy_moni/pages/loan/components/loan_order_card.dart';
 import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
 import 'package:easy_moni/pages/loan/providers/coupon_provider.dart';
-import 'package:easy_moni/pages/repay/components/overdue_badge.dart';
-import 'package:easy_moni/pages/repay/models/repay_extension_request_data.dart';
-import 'package:easy_moni/pages/repay/models/repay_order_detail_request_data.dart';
+import 'package:easy_moni/pages/repay/models/repay_multi_order_detail_request_data.dart';
 import 'package:easy_moni/pages/repay/providers/repay_detail_provider.dart';
 import 'package:easy_moni/utils/extensions.dart';
 import 'package:easy_moni/utils/widgets/common_bottom_sheet.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
-import 'package:easy_moni/utils/widgets/permission_action_buttons.dart';
 import 'package:easy_moni/utils/widgets/selected_coupon_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// 单笔订单还款详情页，承接待还账单列表进入后的订单确认与还款操作。
-class RepayOrderDetailPage extends ConsumerStatefulWidget {
-  const RepayOrderDetailPage({super.key, required this.requestData});
+/// 多订单还款详情页，复用 billDetails 接口并按聚合订单展示多笔待还信息。
+class RepayMultiOrderDetailPage extends ConsumerStatefulWidget {
+  const RepayMultiOrderDetailPage({super.key, required this.requestData});
 
-  final RepayOrderDetailRequestData requestData;
+  final RepayMultiOrderDetailRequestData requestData;
 
   @override
-  ConsumerState<RepayOrderDetailPage> createState() =>
-      _RepayOrderDetailPageState();
+  ConsumerState<RepayMultiOrderDetailPage> createState() =>
+      _RepayMultiOrderDetailPageState();
 }
 
-class _RepayOrderDetailPageState extends ConsumerState<RepayOrderDetailPage> {
+class _RepayMultiOrderDetailPageState
+    extends ConsumerState<RepayMultiOrderDetailPage> {
   bool _isCouponSheetOpen = false;
   CouponItem? _selectedCoupon;
 
@@ -41,6 +38,7 @@ class _RepayOrderDetailPageState extends ConsumerState<RepayOrderDetailPage> {
     final topInset = MediaQuery.of(context).padding.top;
     final detailQuery = buildRepayDetailQuery(
       appOrderIds: widget.requestData.appOrderIds,
+      couponIds: [_selectedCoupon?.couponId],
     );
     final detailAsync = ref.watch(repayOrderDetailProvider(detailQuery));
     final detail = detailAsync.when(
@@ -48,11 +46,9 @@ class _RepayOrderDetailPageState extends ConsumerState<RepayOrderDetailPage> {
       error: (_, _) => null,
       loading: () => null,
     );
-    final showExtensionButton =
-        detail?.isExtensionSwitch == true && _firstOrder(detail) != null;
 
     return LoanRoundedPageShell(
-      contentTop: (_) => topInset + 114,
+      contentTop: (_) => topInset + 180,
       contentTopRadius: 16,
       backgroundDecoration: BoxDecoration(
         image: DecorationImage(
@@ -61,14 +57,14 @@ class _RepayOrderDetailPageState extends ConsumerState<RepayOrderDetailPage> {
           alignment: Alignment.topCenter,
         ),
       ),
-      header: _RepayDetailHeader(detail: detail),
+      header: _RepayMultiHeader(detail: detail),
       content: detailAsync.when(
-        data: (data) => _RepayDetailContent(
+        data: (data) => _RepayMultiContent(
           detail: data,
           selectedCoupon: _selectedCoupon,
           onCouponTap: () => _showCoupons(data),
         ),
-        error: (_, _) => _RepayDetailStateView(
+        error: (_, _) => _RepayMultiStateView(
           icon: Icons.error_outline_rounded,
           text: AppStrings.orderDetailLoadFailed,
           actionText: AppStrings.repayEntryRetry,
@@ -76,14 +72,23 @@ class _RepayOrderDetailPageState extends ConsumerState<RepayOrderDetailPage> {
               ref.invalidate(repayOrderDetailProvider(detailQuery)),
         ),
         loading: () =>
-            const _RepayDetailStateView(child: CircularProgressIndicator()),
+            const _RepayMultiStateView(child: CircularProgressIndicator()),
       ),
-      bottomNavigationBar: _RepayDetailActions(
-        showExtensionButton: showExtensionButton,
-        onExtensionTap: () => _openExtension(context, detail),
-        onRepayTap: () => _openPayment(context, detail),
+      bottomNavigationBar: LoanBottomActionButton(
+        enabled: detail != null,
+        text: AppStrings.repayDetailRepayNow,
+        onPressed: detail == null ? null : () => _openPayment(context, detail),
       ),
     );
+  }
+
+  void _openPayment(BuildContext context, RepayDetailRespData detail) {
+    final couponId = _selectedCoupon?.couponId;
+    // TODO: 确认多订单还款提交接口联调细节后，调用 generatesUrl 并随请求传递 couponId。
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text(AppStrings.repayDetailPaymentPending)),
+    );
+    debugPrint('Repay coupon id for submit: $couponId');
   }
 
   Future<void> _showCoupons(RepayDetailRespData detail) async {
@@ -95,9 +100,9 @@ class _RepayOrderDetailPageState extends ConsumerState<RepayOrderDetailPage> {
       _isCouponSheetOpen = true;
     });
 
-    try {
-      CouponItem? tempSelectedCoupon = _selectedCoupon;
+    CouponItem? tempSelectedCoupon = _selectedCoupon;
 
+    try {
       final confirmed = await CommonBottomSheet.show<bool>(
         context: context,
         title: '',
@@ -118,7 +123,9 @@ class _RepayOrderDetailPageState extends ConsumerState<RepayOrderDetailPage> {
       );
 
       if (mounted && confirmed == true) {
-        _updateSelectedCoupon(tempSelectedCoupon);
+        setState(() {
+          _selectedCoupon = tempSelectedCoupon;
+        });
       }
     } finally {
       if (mounted) {
@@ -131,8 +138,8 @@ class _RepayOrderDetailPageState extends ConsumerState<RepayOrderDetailPage> {
 
   Future<List<CouponItem>> _loadCoupons(
     List<RepayDetailRespDataLoanOrderDetails> orders,
-  ) async {
-    // 点击入口后实时拉取优惠券列表，确保还款前看到的是当前订单可用券。
+  ) {
+    // 多订单还款按订单和产品维度筛选可用的贷后全额还款优惠券。
     return ref.read(
       couponListProvider(
         CouponRequestParams(
@@ -144,46 +151,9 @@ class _RepayOrderDetailPageState extends ConsumerState<RepayOrderDetailPage> {
       ).future,
     );
   }
-
-  // 确认优惠券选择后更新页面状态，并输出当前选中优惠券 ID 便于联调确认。
-  void _updateSelectedCoupon(CouponItem? coupon) {
-    setState(() {
-      _selectedCoupon = coupon;
-    });
-
-    final couponId = coupon?.couponId;
-    if (couponId != null) {
-      debugPrint('Selected coupon id: $couponId');
-    }
-  }
-
-  void _openPayment(BuildContext context, RepayDetailRespData? detail) {
-    final couponId = _selectedCoupon?.couponId;
-    // TODO: 确认还款提交接口联调细节后，调用 generatesUrl 并随请求传递 couponId。
-    _showSnack(context, AppStrings.repayDetailPaymentPending);
-    debugPrint('Repay coupon id for submit: $couponId');
-  }
-
-  void _openExtension(BuildContext context, RepayDetailRespData? detail) {
-    final order = _firstOrder(detail);
-    if (order == null) return;
-
-    context.pushNamed(
-      AppRouteNames.repayExtension,
-      extra: RepayExtensionRequestData(
-        appOrderId: order.appOrderId?.trim() ?? '',
-        productCode: order.productCode?.trim() ?? '',
-        installmentId: order.installmentId,
-      ),
-    );
-  }
-
-  void _showSnack(BuildContext context, String text) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
-  }
 }
 
-// 优惠券弹层内容加载：保持与确认借款页相同的加载、失败和内容展示流程。
+// 优惠券弹层内容加载：多订单页复用统一券列表样式并回传单选结果。
 class _CouponBottomSheetLoader extends StatelessWidget {
   const _CouponBottomSheetLoader({
     required this.future,
@@ -238,16 +208,22 @@ class _CouponBottomSheetLoader extends StatelessWidget {
   }
 }
 
-class _RepayDetailHeader extends StatelessWidget {
-  const _RepayDetailHeader({required this.detail});
+class _RepayMultiHeader extends StatelessWidget {
+  const _RepayMultiHeader({required this.detail});
 
   final RepayDetailRespData? detail;
 
   @override
   Widget build(BuildContext context) {
-    final firstOrder = _firstOrder(detail);
-    // 顶部区域突出展示当前单笔订单应还金额，详情未返回前展示 0.00。
-    final repaymentAmount = firstOrder?.repaymentAmount ?? 0;
+    final orders = detail?.loanOrderDetails ?? const [];
+    final loanAmount = _sumOrderAmount(orders, (order) => order.loanAmount);
+    final interest = _sumOrderAmount(orders, (order) => order.interest);
+    final overdueFee = _sumOrderAmount(
+      orders.where((order) => _isOverdue(order)).toList(),
+      (order) => order.serviceFee,
+    );
+    // 顶部主金额展示多订单确认还款总额
+    final totalRepayAmount = detail?.totalSureRepayAmounts ?? 0;
 
     return SafeArea(
       bottom: false,
@@ -270,8 +246,9 @@ class _RepayDetailHeader extends StatelessWidget {
                     ),
                   ),
                 ),
+                // title
                 const Text(
-                  AppStrings.repayDetailTitle,
+                  AppStrings.repayMultiDetailTitle,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
@@ -287,24 +264,32 @@ class _RepayDetailHeader extends StatelessWidget {
               ],
             ),
           ),
+          // const SizedBox(height: 16),
+          _TotalRepayAmountDisplay(amount: totalRepayAmount),
+          const SizedBox(height: 18),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-            child: Column(
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            child: Row(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      _amountText(repaymentAmount),
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        height: 38 / 32,
-                      ),
-                    ),
-                  ],
+                Expanded(
+                  child: _SummaryCard(
+                    amount: loanAmount,
+                    label: AppStrings.repayMultiTotalLoanAmountLabel,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _SummaryCard(
+                    amount: interest,
+                    label: AppStrings.repayMultiTotalInterestLabel,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _SummaryCard(
+                    amount: overdueFee,
+                    label: AppStrings.repayMultiTotalOverdueFeeLabel,
+                  ),
                 ),
               ],
             ),
@@ -315,9 +300,93 @@ class _RepayDetailHeader extends StatelessWidget {
   }
 }
 
-// 白色内容区域
-class _RepayDetailContent extends StatelessWidget {
-  const _RepayDetailContent({
+class _TotalRepayAmountDisplay extends StatelessWidget {
+  const _TotalRepayAmountDisplay({required this.amount});
+
+  final num amount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text.rich(
+      TextSpan(
+        children: [
+          const TextSpan(
+            text: AppStrings.orderDetailCurrencyCode,
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              height: 36 / 26,
+            ),
+          ),
+          TextSpan(
+            text: amount.toDouble().formatAmount(showCurrencySymbol: false),
+            style: const TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              height: 38 / 32,
+            ),
+          ),
+        ],
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: TextAlign.center,
+    );
+  }
+}
+
+class _SummaryCard extends StatelessWidget {
+  const _SummaryCard({required this.amount, required this.label});
+
+  final num amount;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 51,
+      padding: const EdgeInsets.fromLTRB(9, 8, 9, 7),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            amount.toDouble().formatAmount(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+              height: 16 / 14,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              color: Colors.white.withValues(alpha: 0.5),
+              height: 12 / 10,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RepayMultiContent extends StatelessWidget {
+  const _RepayMultiContent({
     required this.detail,
     required this.selectedCoupon,
     required this.onCouponTap,
@@ -330,33 +399,17 @@ class _RepayDetailContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final orders = detail.loanOrderDetails ?? const [];
-    final showOverdueBadge = _hasOverdueOrder(detail);
     final selected = selectedCoupon;
 
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
-        14,
+        10,
         16,
-        14,
+        10,
         MediaQuery.of(context).padding.bottom + 92,
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Text(
-                AppStrings.orderDetailTitle,
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-              ),
-              if (showOverdueBadge) ...[
-                const SizedBox(width: 8),
-                const OverdueBadge(),
-              ],
-            ],
-          ),
-
-          const SizedBox(height: 8),
           if (selected == null)
             CouponEntryCard(onTap: onCouponTap)
           else
@@ -367,7 +420,7 @@ class _RepayDetailContent extends StatelessWidget {
             ),
           const SizedBox(height: 12),
           if (orders.isEmpty)
-            const _RepayDetailStateView(
+            const _RepayMultiStateView(
               icon: Icons.receipt_long_outlined,
               text: AppStrings.orderDetailNoOrderData,
             )
@@ -381,27 +434,21 @@ class _RepayDetailContent extends StatelessWidget {
                 child: LoanOrderCard(
                   productName: _productName(order),
                   productLogo: order.productLogo,
-                  rows: _repayOrderRows(order),
+                  statusBadge: _overdueStatusBadge(order),
+                  rows: _multiOrderRows(order),
                 ),
               );
             }),
-          const SizedBox(height: 12),
         ],
       ),
     );
   }
 }
 
-// 还款详情订单字段：页面适配层负责决定展示哪些账单信息。
-List<LoanOrderCardRowData> _repayOrderRows(
+List<LoanOrderCardRowData> _multiOrderRows(
   RepayDetailRespDataLoanOrderDetails order,
 ) {
-  final remainingDay = order.remainingDay ?? 0;
-  final isOverdue = _isOrderOverdue(order);
-  final dueDate =
-      order.repayDate?.formatBackendDate() ?? AppStrings.loanOrderEmptyValue;
-
-  return [
+  final rows = <LoanOrderCardRowData>[
     LoanOrderCardRowData(
       label: AppStrings.loanOrderLoanAmountLabel,
       value: _amountText(order.loanAmount),
@@ -410,125 +457,46 @@ List<LoanOrderCardRowData> _repayOrderRows(
       label: AppStrings.loanOrderInterestLabel,
       value: _amountText(order.interest),
     ),
-    if (isOverdue) ...[
+  ];
+
+  if (_isOverdue(order)) {
+    rows.add(
       LoanOrderCardRowData(
         label: AppStrings.loanOrderOverdueFeeLabel,
         value: _amountText(order.serviceFee),
       ),
-      LoanOrderCardRowData(
-        label: AppStrings.loanOrderOverdueDaysLabel,
-        value: AppStrings.orderDetailDayValue(remainingDay.abs()),
-      ),
-    ] else
-      LoanOrderCardRowData(
-        label: AppStrings.loanOrderRemainingDayLabel,
-        value: AppStrings.orderDetailDayValue(remainingDay),
-      ),
-    LoanOrderCardRowData(
-      label: AppStrings.loanOrderDueDateLabel,
-      value: dueDate,
-    ),
-  ];
-}
-
-/// 订单 remainingDay 小于 0 时视为逾期。
-bool _isOrderOverdue(RepayDetailRespDataLoanOrderDetails order) {
-  return (order.remainingDay ?? 0) < 0;
-}
-
-bool _hasOverdueOrder(RepayDetailRespData detail) {
-  final orders = detail.loanOrderDetails ?? const [];
-  if (orders.isEmpty) return (detail.remainingDay ?? 0) < 0;
-  return orders.any(_isOrderOverdue);
-}
-
-String _amountText(num? value) {
-  return (value ?? 0).toDouble().formatAmount(showCurrencySymbol: true);
-}
-
-String _productName(RepayDetailRespDataLoanOrderDetails order) {
-  return order.productName?.isNotEmpty == true
-      ? order.productName!
-      : AppStrings.loanOrderProductFallback;
-}
-
-String _couponName(CouponItem coupon) {
-  final title = coupon.title?.trim();
-  return title == null || title.isEmpty ? AppStrings.couponString : title;
-}
-
-String _couponAmountText(CouponItem coupon) {
-  final summary = coupon.summary?.trim();
-  return summary == null || summary.isEmpty
-      ? AppStrings.couponSelectedFallback
-      : summary;
-}
-
-// 优惠券接口参数：还款详情返回的订单 ID 为字符串，这里仅保留可转换的有效 ID。
-List<int> _couponAppOrderIds(List<RepayDetailRespDataLoanOrderDetails> orders) {
-  return orders
-      .map((item) => int.tryParse(item.appOrderId?.trim() ?? ''))
-      .whereType<int>()
-      .where((id) => id > 0)
-      .toList();
-}
-
-// 优惠券接口参数：按当前待还产品去重，后端会根据产品维度筛选可用券。
-List<String> _couponProductCodes(
-  List<RepayDetailRespDataLoanOrderDetails> orders,
-) {
-  return orders
-      .map((item) => item.productCode?.trim())
-      .whereType<String>()
-      .where((code) => code.isNotEmpty)
-      .toSet()
-      .toList();
-}
-
-RepayDetailRespDataLoanOrderDetails? _firstOrder(RepayDetailRespData? detail) {
-  final orders = detail?.loanOrderDetails;
-  if (orders == null || orders.isEmpty) return null;
-  return orders.first;
-}
-
-class _RepayDetailActions extends StatelessWidget {
-  const _RepayDetailActions({
-    required this.showExtensionButton,
-    required this.onExtensionTap,
-    required this.onRepayTap,
-  });
-
-  final bool showExtensionButton;
-  final VoidCallback onExtensionTap;
-  final VoidCallback onRepayTap;
-
-  @override
-  Widget build(BuildContext context) {
-    if (showExtensionButton) {
-      return Container(
-        color: Colors.white,
-        child: SafeArea(
-          top: false,
-          child: PermissionActionButtons(
-            secondaryText: AppStrings.repayDetailApplyExtension,
-            primaryText: AppStrings.repayDetailRepayNow,
-            onSecondaryPressed: onExtensionTap,
-            onPrimaryPressed: onRepayTap,
-          ),
-        ),
-      );
-    }
-
-    return LoanBottomActionButton(
-      enabled: true,
-      text: AppStrings.repayDetailRepayNow,
-      onPressed: onRepayTap,
     );
   }
+
+  rows.addAll([
+    LoanOrderCardRowData(
+      label: AppStrings.loanOrderRepayAmountLabel,
+      value: _amountText(order.repaymentAmount),
+    ),
+    LoanOrderCardRowData(
+      label: AppStrings.loanOrderDueDateLabel,
+      value:
+          order.repayDate?.formatBackendDate() ??
+          AppStrings.loanOrderEmptyValue,
+    ),
+  ]);
+
+  return rows;
 }
 
-class _RepayDetailStateView extends StatelessWidget {
-  const _RepayDetailStateView({
+LoanOrderCardStatusBadgeData? _overdueStatusBadge(
+  RepayDetailRespDataLoanOrderDetails order,
+) {
+  if (!_isOverdue(order)) return null;
+
+  return const LoanOrderCardStatusBadgeData(
+    text: AppStrings.loanOrderStatusOverdue,
+    gradient: [Color(0xFFEA4335), Color(0xFFFF8A65)],
+  );
+}
+
+class _RepayMultiStateView extends StatelessWidget {
+  const _RepayMultiStateView({
     this.child,
     this.icon,
     this.text = '',
@@ -545,9 +513,7 @@ class _RepayDetailStateView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final customChild = child;
-    if (customChild != null) {
-      return Center(child: customChild);
-    }
+    if (customChild != null) return Center(child: customChild);
 
     return Center(
       child: Column(
@@ -575,4 +541,58 @@ class _RepayDetailStateView extends StatelessWidget {
       ),
     );
   }
+}
+
+num _sumOrderAmount(
+  Iterable<RepayDetailRespDataLoanOrderDetails> orders,
+  num? Function(RepayDetailRespDataLoanOrderDetails order) valueOf,
+) {
+  return orders.fold<num>(0, (sum, order) => sum + (valueOf(order) ?? 0));
+}
+
+bool _isOverdue(RepayDetailRespDataLoanOrderDetails order) {
+  return (order.remainingDay ?? 0) < 0;
+}
+
+String _amountText(num? value) {
+  return (value ?? 0).toDouble().formatAmount(showCurrencySymbol: true);
+}
+
+String _couponName(CouponItem coupon) {
+  final title = coupon.title?.trim();
+  return title == null || title.isEmpty ? AppStrings.couponString : title;
+}
+
+String _couponAmountText(CouponItem coupon) {
+  final summary = coupon.summary?.trim();
+  return summary == null || summary.isEmpty
+      ? AppStrings.couponSelectedFallback
+      : summary;
+}
+
+String _productName(RepayDetailRespDataLoanOrderDetails order) {
+  return order.productName?.isNotEmpty == true
+      ? order.productName!
+      : AppStrings.loanOrderProductFallback;
+}
+
+// 优惠券接口参数：多订单只传可解析且大于 0 的订单 ID。
+List<int> _couponAppOrderIds(List<RepayDetailRespDataLoanOrderDetails> orders) {
+  return orders
+      .map((item) => int.tryParse(item.appOrderId?.trim() ?? ''))
+      .whereType<int>()
+      .where((id) => id > 0)
+      .toList();
+}
+
+// 优惠券接口参数：按多订单涉及的产品编码去重。
+List<String> _couponProductCodes(
+  List<RepayDetailRespDataLoanOrderDetails> orders,
+) {
+  return orders
+      .map((item) => item.productCode?.trim())
+      .whereType<String>()
+      .where((code) => code.isNotEmpty)
+      .toSet()
+      .toList();
 }

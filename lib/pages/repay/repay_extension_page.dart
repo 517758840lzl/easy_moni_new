@@ -1,17 +1,17 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/entities/coupon_resp.dart';
 import 'package:easy_moni/entities/repay/repay_extension_resp.dart';
-import 'package:easy_moni/entities/repay/repay_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/loan/components/coupon_bottom_sheet_content.dart';
 import 'package:easy_moni/pages/loan/components/coupon_entry_card.dart';
 import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
-import 'package:easy_moni/pages/loan/providers/loan_confirm_provider.dart';
+import 'package:easy_moni/pages/loan/providers/coupon_provider.dart';
 import 'package:easy_moni/pages/repay/models/repay_extension_request_data.dart';
 import 'package:easy_moni/pages/repay/providers/repay_extension_provider.dart';
 import 'package:easy_moni/utils/extensions.dart';
 import 'package:easy_moni/utils/widgets/common_bottom_sheet.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
+import 'package:easy_moni/utils/widgets/selected_coupon_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -34,7 +34,11 @@ class _RepayExtensionPageState extends ConsumerState<RepayExtensionPage> {
   Widget build(BuildContext context) {
     final topInset = MediaQuery.of(context).padding.top;
     final installmentId = widget.requestData.installmentId;
-    final detailAsync = ref.watch(repayExtensionProvider(installmentId));
+    final detailQuery = buildRepayExtensionQuery(
+      installmentId: installmentId,
+      couponIds: [_selectedCoupon?.couponId],
+    );
+    final detailAsync = ref.watch(repayExtensionProvider(detailQuery));
     final detail = detailAsync.when(
       data: (data) => data,
       error: (_, _) => null,
@@ -60,14 +64,13 @@ class _RepayExtensionPageState extends ConsumerState<RepayExtensionPage> {
           detail: data,
           selectedCoupon: _selectedCoupon,
           onCouponTap: () => _showCoupons(),
-          onCouponClear: () => setState(() => _selectedCoupon = null),
         ),
         error: (_, _) => _RepayExtensionStateView(
           icon: Icons.error_outline_rounded,
           text: AppStrings.repayExtensionLoadFailed,
           actionText: AppStrings.repayEntryRetry,
           onActionTap: () =>
-              ref.invalidate(repayExtensionProvider(installmentId)),
+              ref.invalidate(repayExtensionProvider(detailQuery)),
         ),
         loading: () =>
             const _RepayExtensionStateView(child: CircularProgressIndicator()),
@@ -124,24 +127,16 @@ class _RepayExtensionPageState extends ConsumerState<RepayExtensionPage> {
   }
 
   Future<List<CouponItem>> _loadCoupons() async {
-    // TODO: 与后端确认展期场景是否需要独立的 couponType 或 repaymentType。
-    final result = await ref
-        .read(loanConfirmProvider)
-        .fetchCoupons(
-          appOrderIds: _couponAppOrderIds(widget.requestData.bill),
-          productCodes: _couponProductCodes(widget.requestData.bill),
-        );
-
-    if (!result.isSuccess || result.data == null) {
-      throw result.message ?? AppStrings.couponLoadFailed;
-    }
-
-    final couponData = result.data?.data;
-    if (couponData?.showCouponCard != 1) {
-      return const <CouponItem>[];
-    }
-
-    return couponData?.coupons ?? const <CouponItem>[];
+    return ref.read(
+      couponListProvider(
+        CouponRequestParams(
+          appOrderIds: _couponAppOrderIds(widget.requestData.appOrderId),
+          productCodes: _couponProductCodes(widget.requestData.productCode),
+          couponType: CouponTypes.post,
+          repaymentType: CouponRepaymentTypes.extension,
+        ),
+      ).future,
+    );
   }
 
   void _submitExtension(BuildContext context) {
@@ -277,18 +272,18 @@ class _RepayExtensionHeader extends StatelessWidget {
                   ),
                 ),
                 if (hasSelectedCoupon) ...[
-                const SizedBox(height: 2),
-                // 展示优惠前金额
-                Text(
-                  _amountText(detail?.extensionFee),
-                  style: const TextStyle(
-                    fontSize: 20,
-                    color: Colors.white70,
-                    decoration: TextDecoration.lineThrough,
-                    decorationColor: Colors.white70,
-                    height: 24 / 20,
+                  const SizedBox(height: 2),
+                  // 展示优惠前金额
+                  Text(
+                    _amountText(detail?.extensionFee),
+                    style: const TextStyle(
+                      fontSize: 20,
+                      color: Colors.white70,
+                      decoration: TextDecoration.lineThrough,
+                      decorationColor: Colors.white70,
+                      height: 24 / 20,
+                    ),
                   ),
-                ),
                 ],
               ],
             ),
@@ -304,16 +299,16 @@ class _RepayExtensionContent extends StatelessWidget {
     required this.detail,
     required this.selectedCoupon,
     required this.onCouponTap,
-    required this.onCouponClear,
   });
 
   final RepayExtensionRespData detail;
   final CouponItem? selectedCoupon;
   final VoidCallback onCouponTap;
-  final VoidCallback onCouponClear;
 
   @override
   Widget build(BuildContext context) {
+    final selected = selectedCoupon;
+
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
         10,
@@ -336,11 +331,14 @@ class _RepayExtensionContent extends StatelessWidget {
           const SizedBox(height: 16),
           const _RepayExtensionNotice(),
           const SizedBox(height: 16),
-          CouponEntryCard(
-            selectedCoupon: selectedCoupon,
-            onClear: onCouponClear,
-            onTap: onCouponTap,
-          ),
+          if (selected == null)
+            CouponEntryCard(onTap: onCouponTap)
+          else
+            SelectedCouponCard(
+              couponName: _couponName(selected),
+              amountText: _couponAmountText(selected),
+              onTap: onCouponTap,
+            ),
           const SizedBox(height: 16),
           _RepayExtensionInfoCard(detail: detail),
         ],
@@ -518,15 +516,26 @@ String _amountText(num? value) {
   return (value ?? 0).toDouble().formatAmount(showCurrencySymbol: true);
 }
 
-List<int> _couponAppOrderIds(RepayResp bill) {
-  final id = int.tryParse(bill.appOrderId?.trim() ?? '');
+String _couponName(CouponItem coupon) {
+  final title = coupon.title?.trim();
+  return title == null || title.isEmpty ? AppStrings.couponString : title;
+}
+
+String _couponAmountText(CouponItem coupon) {
+  final summary = coupon.summary?.trim();
+  return summary == null || summary.isEmpty
+      ? AppStrings.couponSelectedFallback
+      : summary;
+}
+
+List<int> _couponAppOrderIds(String appOrderId) {
+  final id = int.tryParse(appOrderId.trim());
   if (id == null || id <= 0) return const <int>[];
   return [id];
 }
 
-List<String> _couponProductCodes(RepayResp bill) {
-  // TODO: 与后端确认展期优惠券筛选应使用 productSetCode 还是订单详情里的 productCode。
-  final code = bill.productSetCode?.trim();
-  if (code == null || code.isEmpty) return const <String>[];
+List<String> _couponProductCodes(String productCode) {
+  final code = productCode.trim();
+  if (code.isEmpty) return const <String>[];
   return [code];
 }

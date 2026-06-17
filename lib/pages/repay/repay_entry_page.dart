@@ -4,6 +4,8 @@ import 'package:easy_moni/entities/repay/repay_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
 import 'package:easy_moni/pages/repay/components/repay_bill_card.dart';
+import 'package:easy_moni/pages/repay/models/repay_multi_order_detail_request_data.dart';
+import 'package:easy_moni/pages/repay/models/repay_order_detail_request_data.dart';
 import 'package:easy_moni/pages/repay/providers/repay_list_provider.dart';
 import 'package:easy_moni/utils/extensions.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
@@ -132,37 +134,43 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
           ? LoanBottomActionButton(
               enabled: selectedBills.isNotEmpty,
               text: AppStrings.repayEntryRepayAll,
-              onPressed: () => _openPayment(context, selectedBills),
+              onPressed: () => _openSelectedRepayDetail(context, selectedBills),
             )
           : SizedBox.shrink(),
     );
   }
 
   void _openBillDetail(BuildContext context, RepayResp bill) {
-    context.push(AppRoutePaths.repayOrderDetail, extra: bill);
-  }
-
-  void _openPayment(BuildContext context, List<RepayResp> selectedBills) {
-    if (selectedBills.isEmpty) return;
-
-    final amount = selectedBills.fold<double>(
-      0,
-      (sum, bill) => sum + (bill.repayAmount ?? 0).toDouble(),
-    );
+    final appOrderId = bill.appOrderId?.trim();
+    if (appOrderId == null || appOrderId.isEmpty) return;
 
     context.push(
-      AppRoutePaths.payment,
-      // TODO: 待创建还款详情页后，补充多单/单单还款需要的路由、页面参数和订单号字段消费逻辑。
-      extra: {
-        'amount': amount,
-        'phone': '',
-        'idNumber': '',
-        'bills': selectedBills,
-        'orderIds': selectedBills
-            .map((bill) => bill.appOrderId ?? '')
-            .where((id) => id.isNotEmpty)
-            .toList(),
-      },
+      AppRoutePaths.repayOrderDetail,
+      extra: RepayOrderDetailRequestData(appOrderIds: [appOrderId]),
+    );
+  }
+
+  void _openSelectedRepayDetail(
+    BuildContext context,
+    List<RepayResp> selectedBills,
+  ) {
+    if (selectedBills.isEmpty) return;
+
+    if (selectedBills.length == 1) {
+      _openBillDetail(context, selectedBills.first);
+      return;
+    }
+
+    final appOrderIds = selectedBills
+        .map((bill) => bill.appOrderId?.trim())
+        .whereType<String>()
+        .where((id) => id.isNotEmpty)
+        .toList();
+    if (appOrderIds.isEmpty) return;
+
+    context.push(
+      AppRoutePaths.repayMultiOrderDetail,
+      extra: RepayMultiOrderDetailRequestData(appOrderIds: appOrderIds),
     );
   }
 }

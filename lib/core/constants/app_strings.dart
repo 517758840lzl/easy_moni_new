@@ -128,6 +128,7 @@ class AppStrings {
   static const String loanOrderReceiptAmountLabel = '到账金额';
   static const String loanOrderRepayAmountLabel = '应还金额';
   static const String loanOrderDueDateLabel = '到期日';
+  static const String loanOrderAccountLabel = 'MoMo收款账户';
 
   // ==================== 账单详情 ====================
   static const String orderDetailTitle = '账单详情';
@@ -168,6 +169,10 @@ class AppStrings {
   static const String repayDetailCouponUnavailable = '暂无可用优惠券';
   static const String repayDetailPaymentPending = '还款页面待接入';
   static const String repayDetailExtensionPending = '展期页面待接入';
+  static const String repayMultiDetailTitle = '还款详情';
+  static const String repayMultiTotalLoanAmountLabel = '总借款本金';
+  static const String repayMultiTotalInterestLabel = '总利息';
+  static const String repayMultiTotalOverdueFeeLabel = '总逾期费';
   static const String repayExtensionTitle = '展期申请';
   static const String repayExtensionFeeLabel = 'Extension Fee';
   static const String repayExtensionInfoTitle = '展期信息';
