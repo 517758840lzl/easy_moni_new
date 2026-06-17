@@ -113,6 +113,30 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
   int get _availableProductCount =>
       _products.where((p) => p.state.canConfirm).length;
 
+  bool get _canSelectMultipleProducts {
+    return _products
+            .where((p) => !p.shouldUseOrderCard && p.state.canConfirm)
+            .length >
+        1;
+  }
+
+  // 首页展示优先级：可借款产品卡片置顶，其余卡片继续保持后端返回顺序。
+  List<int> get _orderedHomeIndexes {
+    final availableProductIndexes = <int>[];
+    final remainingIndexes = <int>[];
+
+    for (var index = 0; index < _products.length; index++) {
+      final product = _products[index];
+      if (!product.shouldUseOrderCard && product.state.canConfirm) {
+        availableProductIndexes.add(index);
+      } else {
+        remainingIndexes.add(index);
+      }
+    }
+
+    return [...availableProductIndexes, ...remainingIndexes];
+  }
+
   double get _selectedLoanAmount {
     return _selectedProductIndexes.fold<double>(0, (total, index) {
       if (index < 0 || index >= _products.length) return total;
@@ -149,13 +173,6 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
 
     final selectedLoanAmount = _selectedLoanAmount;
     final canApply = selectedLoanAmount > 0;
-    final productItems = _products
-        .where((p) => p.apiItem?.appOrderStatus == null)
-        .toList();
-    final orderItems = _products
-        .where((p) => p.apiItem?.appOrderStatus != null)
-        .toList();
-    final hasOrders = orderItems.isNotEmpty;
 
     return Scaffold(
       backgroundColor: const Color(0xFF216A4A),
@@ -165,27 +182,17 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
             Positioned(top: 0, left: 0, right: 0, child: _buildTopHero()),
             Positioned.fill(
               top: _contentPanelTop(context),
-              child: _buildWhiteContentPanel(
-                hasOrders: hasOrders,
-                productItems: productItems,
-                orderItems: orderItems,
-                canApply: canApply,
-                onApply: () => _handleApply(selectedLoanAmount),
-              ),
+              child: _buildWhiteContentPanel(),
             ),
           ],
         ),
       ),
       // 底部固定按钮
-      bottomNavigationBar: hasOrders
-          ? null
-          : LoanBottomActionButton(
-              text: AppStrings.homeButtonText,
-              enabled: canApply,
-              onPressed: canApply
-                  ? () => _handleApply(selectedLoanAmount)
-                  : null,
-            ),
+      bottomNavigationBar: LoanBottomActionButton(
+        text: AppStrings.homeButtonText,
+        enabled: canApply,
+        onPressed: canApply ? () => _handleApply(selectedLoanAmount) : null,
+      ),
     );
   }
 
@@ -217,13 +224,7 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
     );
   }
 
-  Widget _buildWhiteContentPanel({
-    required bool hasOrders,
-    required List<_LoanProduct> productItems,
-    required List<_LoanProduct> orderItems,
-    required bool canApply,
-    required VoidCallback onApply,
-  }) {
+  Widget _buildWhiteContentPanel() {
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
@@ -231,217 +232,98 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       clipBehavior: Clip.antiAlias,
-      child: hasOrders
-          ? _buildOrdersScrollableContent(
-              productItems: productItems,
-              orderItems: orderItems,
-              canApply: canApply,
-              onApply: onApply,
-            )
-          : _buildProductOnlyContent(productItems),
+      child: _buildHomeScrollableContent(),
     );
   }
 
-  Widget _buildProductOnlyContent(List<_LoanProduct> productItems) {
-    if (productItems.isEmpty) {
+  Widget _buildHomeScrollableContent() {
+    if (_products.isEmpty) {
       return RefreshIndicator(
         onRefresh: _refreshHomeData,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: const Center(
-                  child: Text(
-                    AppStrings.noLoanProducts,
-                    style: TextStyle(fontSize: 14, color: Color(0xFF909399)),
-                  ),
-                ),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(10, 17, 10, 92),
+          children: const [
+            _SelectionHint(canSelectMultiple: false),
+            SizedBox(height: 24),
+            Center(
+              child: Text(
+                AppStrings.noLoanProducts,
+                style: TextStyle(fontSize: 14, color: Color(0xFF909399)),
               ),
-            );
-          },
+            ),
+          ],
         ),
       );
     }
 
+    final orderedHomeIndexes = _orderedHomeIndexes;
+
     return RefreshIndicator(
       onRefresh: _refreshHomeData,
-      child: SingleChildScrollView(
+      child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(10, 17, 10, 92),
-        child: _buildProductSection(productItems),
+        itemCount: orderedHomeIndexes.length + 1,
+        separatorBuilder: (context, index) {
+          return SizedBox(height: index == 0 ? 12 : 16);
+        },
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return _SelectionHint(
+              canSelectMultiple: _canSelectMultipleProducts,
+            );
+          }
+          return _buildHomeListItem(orderedHomeIndexes[index - 1]);
+        },
       ),
     );
   }
 
-  Widget _buildOrdersScrollableContent({
-    required List<_LoanProduct> productItems,
-    required List<_LoanProduct> orderItems,
-    required bool canApply,
-    required VoidCallback onApply,
-  }) {
-    return RefreshIndicator(
-      onRefresh: _refreshHomeData,
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(10, 17, 10, 0),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                if (productItems.isEmpty)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Text(
-                        AppStrings.noLoanProducts,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF909399),
-                        ),
-                      ),
-                    ),
-                  )
-                else
-                  _buildProductSection(productItems),
-                const SizedBox(height: 16),
-                LoanBottomActionButton(
-                  text: AppStrings.homeButtonText,
-                  enabled: canApply,
-                  onPressed: canApply ? onApply : null,
-                  mode: LoanBottomActionButtonMode.inline,
-                ),
-                const SizedBox(height: 20),
-                _buildMyLoansSection(orderItems),
-              ]),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: SizedBox(height: MediaQuery.of(context).padding.bottom + 20),
-          ),
-        ],
-      ),
+  Widget _buildHomeListItem(int index) {
+    final product = _products[index];
+
+    if (product.shouldUseOrderCard) {
+      return _buildOrderCard(product);
+    }
+
+    return LoanProductCard(
+      brand: product.brand,
+      level: product.level,
+      amountLabel: product.amountLabel,
+      interestLabel: product.interestLabel.formatDailyInterestLabel(),
+      termLabel: product.termLabel,
+      state: product.state,
+      logoUrl: product.logoUrl,
+      isSelected: _selectedProductIndexes.contains(index),
+      isConfirmed: _selectedProductIndexes.contains(index),
+      onTap: () => _onProductTap(index),
+      onToggleConfirmed: product.state.canConfirm
+          ? () => _toggleProductSelection(index)
+          : null,
     );
   }
 
-  Widget _buildProductSection(List<_LoanProduct> productItems) {
-    final canSelectMultiple =
-        productItems.where((p) => p.state.canConfirm).length > 1;
+  Widget _buildOrderCard(_LoanProduct product) {
+    final item = product.apiItem;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 可选提示
-        Row(
-          children: [
-            const Text(
-              AppStrings.selectProucts,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-                letterSpacing: 0.41,
-              ),
-            ),
-            if (canSelectMultiple) ...[
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE9F6EF),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Text(
-                  '可多选',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF216A4A),
-                    height: 14 / 11,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: 12),
-        // 产品列表
-        ...List.generate(productItems.length, (index) {
-          final product = productItems[index];
-          final productIndex = _products.indexOf(product);
-
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: index == productItems.length - 1 ? 0 : 16,
-            ),
-            child: LoanProductCard(
-              brand: product.brand,
-              level: product.level,
-              amountLabel: product.amountLabel,
-              interestLabel: product.interestLabel.formatDailyInterestLabel(),
-              termLabel: product.termLabel,
-              state: product.state,
-              logoUrl: product.logoUrl,
-              isSelected: _selectedProductIndexes.contains(productIndex),
-              isConfirmed: _selectedProductIndexes.contains(productIndex),
-              onTap: () => _onProductTap(productIndex),
-              onToggleConfirmed: product.state.canConfirm
-                  ? () => _toggleProductSelection(productIndex)
-                  : null,
-            ),
-          );
-        }),
-      ],
-    );
-  }
-
-  Widget _buildMyLoansSection(List<_LoanProduct> orderItems) {
-    if (orderItems.isEmpty) {
+    if (item == null) {
       return const SizedBox.shrink();
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          AppStrings.homeLoanSectionTitle,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-            letterSpacing: 0.41,
-          ),
-        ),
-        const SizedBox(height: 12),
-        ...List.generate(orderItems.length, (index) {
-          final item = orderItems[index].apiItem;
-
-          if (item == null) {
-            return const SizedBox.shrink();
-          }
-
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: index == orderItems.length - 1 ? 0 : 16,
-            ),
-            child: LoanOrderCard(
-              productName: item.productName?.isNotEmpty == true
-                  ? item.productName!
-                  : AppStrings.loanOrderProductFallback,
-              productLogo: item.productLogo,
-              rows: _homeOrderRows(item),
-              statusBadge: _homeOrderStatusBadge(item),
-              footer: _homeOrderFooter(item, _hasAvailableCoupons),
-              onFooterTap: _homeOrderFooterTap(context, item),
-              onTap: () => context.push(
-                AppRoutePaths.loanOrderDetail,
-                extra: LoanOrderDetailData.fromHomeProductItem(item),
-              ),
-            ),
-          );
-        }),
-      ],
+    return LoanOrderCard(
+      productName: item.productName?.isNotEmpty == true
+          ? item.productName!
+          : AppStrings.loanOrderProductFallback,
+      productLogo: item.productLogo,
+      rows: _homeOrderRows(item),
+      statusBadge: _homeOrderStatusBadge(item),
+      footer: _homeOrderFooter(item, _hasAvailableCoupons),
+      onFooterTap: _homeOrderFooterTap(context, item),
+      onTap: () => context.push(
+        AppRoutePaths.loanOrderDetail,
+        extra: LoanOrderDetailData.fromHomeProductItem(item),
+      ),
     );
   }
 
@@ -565,6 +447,48 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SelectionHint extends StatelessWidget {
+  const _SelectionHint({required this.canSelectMultiple});
+
+  final bool canSelectMultiple;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Text(
+          AppStrings.selectProucts,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+            letterSpacing: 0.41,
+          ),
+        ),
+        if (canSelectMultiple) ...[
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE9F6EF),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Text(
+              AppStrings.homeMultiSelectHint,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF216A4A),
+                height: 14 / 11,
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
