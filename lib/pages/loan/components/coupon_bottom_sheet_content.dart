@@ -140,7 +140,7 @@ class CouponTicketCard extends StatelessWidget {
     final title = _nonEmpty(coupon.title, fallback: '');
     final summary = _nonEmpty(coupon.summary, fallback: '');
     final desc = _nonEmpty(coupon.description, fallback: '');
-    final couponType = _couponTypeText(coupon.discountType);
+    final couponType = _couponTypeText(coupon.type);
     final isUsable = coupon.isUsable;
 
     return GestureDetector(
@@ -182,6 +182,7 @@ class CouponTicketCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
+                      flex: 2,
                       child: Text(
                         desc,
                         maxLines: 1,
@@ -193,9 +194,16 @@ class CouponTicketCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
                     // check
-                    if (isUsable) _CouponCheckMark(selected: selected),
+                    Expanded(
+                      flex: 1,
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: isUsable
+                            ? _CouponCheckMark(selected: selected)
+                            : const SizedBox.shrink(),
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -340,8 +348,14 @@ String _nonEmpty(String? value, {required String fallback}) {
   return text == null || text.isEmpty ? fallback : text;
 }
 
-// 优惠券类型入口先使用 discountType 字段，当前统一展示“提额券”。
-String _couponTypeText(int? discountType) {
-  if (discountType == null) return '提额券';
-  return '提额券';
+// 优惠券类型文案：后端 type 为 PRE 时展示提额券，POST 时展示减免券。
+String _couponTypeText(String? type) {
+  switch (type) {
+    case CouponTypes.pre:
+      return AppStrings.couponTypePre;
+    case CouponTypes.post:
+      return AppStrings.couponTypePost;
+    default:
+      return '';
+  }
 }

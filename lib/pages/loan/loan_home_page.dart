@@ -5,7 +5,6 @@ import 'package:easy_moni/pages/loan/components/loan_product_card.dart';
 import 'package:easy_moni/pages/loan/models/loan_confirm_request_product.dart';
 import 'package:easy_moni/pages/loan/models/loan_order_detail_data.dart';
 import 'package:easy_moni/pages/loan/providers/home_provider.dart';
-import 'package:easy_moni/pages/repay/models/repay_order_detail_request_data.dart';
 import 'package:easy_moni/entities/home_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/utils/extensions.dart';
@@ -499,10 +498,8 @@ VoidCallback? _homeOrderFooterTap(BuildContext context, HomeProductItem item) {
   final appOrderId = _resolveHomeAppOrderId(item);
   if (appOrderId.isEmpty) return null;
 
-  return () => context.push(
-    AppRoutePaths.repayOrderDetail,
-    extra: RepayOrderDetailRequestData(appOrderIds: [appOrderId]),
-  );
+  return () =>
+      context.push(AppRoutePaths.repayOrderDetailWithIds([appOrderId]));
 }
 
 // 首页订单卡片字段：页面负责把接口数据转换成展示文案。
@@ -578,7 +575,7 @@ LoanOrderCardFooterData _homeOrderFooter(
 }
 
 String _amountText(num? value) {
-  return (value ?? 0).toDouble().formatAmount(showCurrencySymbol: true);
+  return (value ?? 0).formatAmount(showCurrencySymbol: true);
 }
 
 class _HomeOrderStatusVisual {

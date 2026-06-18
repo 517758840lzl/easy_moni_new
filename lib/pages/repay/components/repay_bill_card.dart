@@ -42,13 +42,6 @@ class RepayBillCard extends StatelessWidget {
             colors: colors.cardGradient,
           ),
           borderRadius: BorderRadius.circular(10),
-          // boxShadow: const [
-          //   BoxShadow(
-          //     color: Color(0x0A0F1418),
-          //     blurRadius: 14,
-          //     offset: Offset(0, 5),
-          //   ),
-          // ],
         ),
         child: Column(
           children: [
@@ -157,7 +150,7 @@ class RepayBillCard extends StatelessWidget {
   String get _amountLabel {
     final amount = bill.repayAmount;
     if (amount == null) return '';
-    return amount.toDouble().formatAmount();
+    return amount.formatAmount();
   }
 
   String get _dueDateLabel {

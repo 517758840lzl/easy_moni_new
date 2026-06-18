@@ -6,16 +6,18 @@ import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/entities/coupon_resp.dart';
 import 'package:easy_moni/entities/loan_confirm/loan_confirm_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
-import 'package:easy_moni/pages/loan/components/coupon_bottom_sheet_content.dart';
+import 'package:easy_moni/pages/loan/components/coupon_bottom_sheet_loader.dart';
 import 'package:easy_moni/pages/loan/components/coupon_entry_card.dart';
 import 'package:easy_moni/pages/loan/components/loan_order_card.dart';
 import 'package:easy_moni/pages/loan/models/loan_confirm_request_product.dart';
 import 'package:easy_moni/pages/loan/providers/coupon_provider.dart';
 import 'package:easy_moni/pages/loan/providers/loan_confirm_provider.dart';
 import 'package:easy_moni/pages/login/providers/auth_provider.dart';
+import 'package:easy_moni/pages/repay/components/total_repay_amount_display.dart';
 import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/services/upload_data/upload_data_sync_service.dart';
 import 'package:easy_moni/utils/extensions.dart';
+import 'package:easy_moni/utils/loan_confirm_content_edge.dart';
 import 'package:easy_moni/utils/widgets/common_bottom_sheet.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:easy_moni/core/utils/app_logger.dart';
@@ -74,7 +76,7 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
       if (!confirmResult.isSuccess || confirmResult.data == null) {
         setState(() {
           _isLoading = false;
-          _loadError = confirmResult.message ?? '加载失败，请重试';
+          _loadError = confirmResult.message ?? AppStrings.errorMessage;
         });
         return;
       }
@@ -87,7 +89,7 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _loadError = '加载失败，请重试';
+        _loadError = AppStrings.errorMessage;
       });
     }
   }
@@ -124,11 +126,14 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
       if (result.isSuccess) {
         context.go(AppRoutePaths.loanReviewing);
       } else {
-        context.showSnackBar(result.message ?? '提交失败，请重试', isError: true);
+        context.showSnackBar(
+          result.message ?? AppStrings.loanConfirmErrorText,
+          isError: true,
+        );
       }
     } catch (_) {
       if (!mounted) return;
-      context.showSnackBar('提交失败，请重试', isError: true);
+      context.showSnackBar(AppStrings.loanConfirmErrorText, isError: true);
     } finally {
       if (mounted) {
         setState(() {
@@ -194,7 +199,7 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
         context: context,
         title: '',
         description: '',
-        content: _CouponBottomSheetLoader(future: _loadCoupons(orders)),
+        content: CouponBottomSheetLoader(future: _loadCoupons(orders)),
         actions: const [
           CommonBottomSheetAction<void>(
             text: AppStrings.couponConfirmButtonText,
@@ -304,7 +309,7 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        const _LoanConfirmContentEdge(),
+        const LoanConfirmContentEdge(),
         ClipPath(
           clipper: const _LoanConfirmContentClipper(),
           child: ColoredBox(
@@ -320,7 +325,7 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
     required LoanConfirmData? data,
     required List<LoanConfirmOrder> orders,
   }) {
-    // 内容区只负责状态切换：加载、错误、空数据、正常列表。
+    // 内容区根据加载结果切换订单列表、错误态和空态。
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -333,7 +338,10 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
           children: [
             Text(loadError, style: const TextStyle(color: Color(0xFF909399))),
             const SizedBox(height: 16),
-            TextButton(onPressed: _loadData, child: const Text('重试')),
+            TextButton(
+              onPressed: _loadData,
+              child: const Text(AppStrings.errorMessage),
+            ),
           ],
         ),
       );
@@ -345,16 +353,30 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              '暂无可确认借款',
+              AppStrings.loanConfirmEmptyText,
               style: TextStyle(fontSize: 14, color: Color(0xFF909399)),
             ),
-            const SizedBox(height: 16),
-            TextButton(onPressed: () => context.pop(), child: const Text('返回')),
           ],
         ),
       );
     }
 
+    return _LoanConfirmOrderList(orders: orders, onCouponTap: _showCoupons);
+  }
+}
+
+// 确认页订单列表，只负责组合优惠券入口和订单卡片。
+class _LoanConfirmOrderList extends StatelessWidget {
+  const _LoanConfirmOrderList({
+    required this.orders,
+    required this.onCouponTap,
+  });
+
+  final List<LoanConfirmOrder> orders;
+  final VoidCallback onCouponTap;
+
+  @override
+  Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
         10,
@@ -365,19 +387,20 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
       child: Column(
         children: [
           // 优惠券入口固定在订单列表最上方。
-          CouponEntryCard(onTap: _showCoupons),
+          CouponEntryCard(onTap: onCouponTap),
           const SizedBox(height: 14),
           ...List.generate(orders.length, (index) {
+            final order = orders[index];
             return Padding(
               padding: EdgeInsets.only(
                 bottom: index == orders.length - 1 ? 0 : 16,
               ),
               child: LoanOrderCard(
-                productName: orders[index].productName?.isNotEmpty == true
-                    ? orders[index].productName!
-                    : AppStrings.loanOrderProductFallback,
-                productLogo: orders[index].productLogo,
-                rows: _loanConfirmOrderRows(orders[index]),
+                productName:
+                    order.productName?.trim() ??
+                    AppStrings.loanOrderProductFallback,
+                productLogo: order.productLogo,
+                rows: _loanConfirmOrderRows(order),
               ),
             );
           }),
@@ -389,8 +412,7 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
 
 // 确认页订单字段：只展示确认借款需要核对的信息，不展示状态和底部操作。
 List<LoanOrderCardRowData> _loanConfirmOrderRows(LoanConfirmOrder item) {
-  final dueDate =
-      item.dueDate?.formatBackendDate() ?? AppStrings.loanOrderEmptyValue;
+  final dueDate = _dateText(item.dueDate);
 
   return [
     LoanOrderCardRowData(
@@ -400,7 +422,7 @@ List<LoanOrderCardRowData> _loanConfirmOrderRows(LoanConfirmOrder item) {
     LoanOrderCardRowData(
       label: AppStrings.loanOrderLoanTermLabel,
       value: item.totalServiceDays == null
-          ? AppStrings.loanOrderUnknownValue
+          ? AppStrings.loanOrderEmptyValue
           : '${item.totalServiceDays} ${AppStrings.loanOrderDaysUnit}',
     ),
     LoanOrderCardRowData(
@@ -418,59 +440,12 @@ List<LoanOrderCardRowData> _loanConfirmOrderRows(LoanConfirmOrder item) {
   ];
 }
 
-// 优惠券弹层内容加载
-class _CouponBottomSheetLoader extends StatelessWidget {
-  const _CouponBottomSheetLoader({required this.future});
-
-  final Future<List<CouponItem>> future;
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<List<CouponItem>>(
-      future: future,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const SizedBox(
-            height: 104,
-            child: Center(
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Color(0xFF268470),
-              ),
-            ),
-          );
-        }
-
-        if (snapshot.hasError) {
-          final message = snapshot.error?.toString();
-          return SizedBox(
-            height: 104,
-            child: Center(
-              child: Text(
-                (message == null || message.isEmpty)
-                    ? AppStrings.couponLoadFailed
-                    : message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14, color: Color(0xFF8A8F98)),
-              ),
-            ),
-          );
-        }
-
-        return CouponBottomSheetContent(
-          coupons: snapshot.data ?? const <CouponItem>[],
-        );
-      },
-    );
-  }
-}
-
 // 裁剪白色内容区的顶部形状：两侧圆角，中间向下形成柔和弧线。
 class _LoanConfirmContentClipper extends CustomClipper<Path> {
   const _LoanConfirmContentClipper();
 
-  static const sideHeight = 16.0;
-  static const centerHeight = 30.0;
+  static const sideHeight = LoanConfirmContentEdge.sideHeight;
+  static const centerHeight = LoanConfirmContentEdge.centerHeight;
 
   @override
   Path getClip(Size size) {
@@ -496,55 +471,6 @@ class _LoanConfirmContentClipper extends CustomClipper<Path> {
   bool shouldReclip(_LoanConfirmContentClipper oldClipper) => false;
 }
 
-// 内容区顶部的阴影层，和 ClipPath 使用同一条曲线保持视觉贴合。
-class _LoanConfirmContentEdge extends StatelessWidget {
-  const _LoanConfirmContentEdge();
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(painter: _LoanConfirmContentEdgePainter());
-  }
-}
-
-// 沿内容区顶部曲线绘制一条模糊描边，增强白色区域和绿色背景的层次感。
-class _LoanConfirmContentEdgePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    // 曲线参数复用 clipper 常量，避免阴影和裁剪边缘错位。
-    final curve = Path()
-      ..moveTo(0, _LoanConfirmContentClipper.sideHeight)
-      ..quadraticBezierTo(0, 0, _LoanConfirmContentClipper.sideHeight, 0)
-      ..cubicTo(
-        size.width * 0.28,
-        _LoanConfirmContentClipper.centerHeight,
-        size.width * 0.72,
-        _LoanConfirmContentClipper.centerHeight,
-        size.width - _LoanConfirmContentClipper.sideHeight,
-        0,
-      )
-      ..quadraticBezierTo(
-        size.width,
-        0,
-        size.width,
-        _LoanConfirmContentClipper.sideHeight,
-      );
-
-    canvas.drawPath(
-      // 略微上移，让模糊阴影主要露在白色内容区外侧。
-      curve.shift(const Offset(0, -1)),
-      Paint()
-        ..color = const Color(0x663D250C)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 7
-        ..strokeCap = StrokeCap.round
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
-    );
-  }
-
-  @override
-  bool shouldRepaint(_LoanConfirmContentEdgePainter oldDelegate) => false;
-}
-
 // 页面头图区域：展示导航、客服入口、借款总额和三项关键确认信息。
 class _Hero extends StatelessWidget {
   const _Hero({required this.data});
@@ -557,7 +483,7 @@ class _Hero extends StatelessWidget {
     final orders = data?.list ?? const <LoanConfirmOrder>[];
     // 应还金额来自所有待确认订单的 repayAmount 汇总。
     final repayTotal = orders.fold<double>(0, (sum, item) {
-      return sum + (item.repayAmount ?? 0).toDouble();
+      return sum + (item.repayAmount ?? 0);
     });
 
     return SizedBox(
@@ -581,7 +507,7 @@ class _Hero extends StatelessWidget {
             left: 64,
             right: 64,
             child: const Text(
-              '确认借款',
+              AppStrings.loanConfirmTitle,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
@@ -602,31 +528,7 @@ class _Hero extends StatelessWidget {
             right: 20,
             child: FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text.rich(
-                TextSpan(
-                  children: [
-                    const TextSpan(
-                      text: 'GHS ',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    TextSpan(
-                      text: (data?.loanAmount ?? 0).toDouble().formatAmount(
-                        showCurrencySymbol: false,
-                      ),
-                    ),
-                  ],
-                ),
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  height: 1,
-                ),
-              ),
+              child: TotalRepayAmountDisplay(amount: data?.loanAmount ?? 0),
             ),
           ),
           Positioned(
@@ -642,7 +544,7 @@ class _Hero extends StatelessWidget {
                       height: 22,
                     ),
                     value: _amountText(data?.actualToAccountMoney),
-                    label: '到账金额',
+                    label: AppStrings.loanConfirmActualAmountLabel,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -650,7 +552,7 @@ class _Hero extends StatelessWidget {
                   child: _SummaryTile(
                     icon: Assets.images.loanMoney.image(width: 22, height: 22),
                     value: _amountText(repayTotal),
-                    label: '应还金额',
+                    label: AppStrings.loanConfirmRepayAmountLabel,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -661,7 +563,7 @@ class _Hero extends StatelessWidget {
                       height: 22,
                     ),
                     value: _dateText(data?.repayDate),
-                    label: '还款日期',
+                    label: AppStrings.loanConfirmRepaymentDateLabel,
                   ),
                 ),
               ],
@@ -737,9 +639,8 @@ class _MomoAccountCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 接口字段为空时使用兜底文案，避免卡片出现空白。
-    final accountName = _nonEmpty(data.bankCardName, fallback: 'Vodafone Cash');
-    final accountNo = _maskAccountNo(_nonEmpty(data.bankCardNo, fallback: '-'));
+    final accountName = _emptyWhenNull(data.bankCardName);
+    final accountNo = _maskAccountNo(_emptyWhenNull(data.bankCardNo));
 
     return Container(
       height: 92,
@@ -840,19 +741,21 @@ class _SimIcon extends StatelessWidget {
 
 // 金额展示统一加 GHS 前缀，并按项目扩展方法格式化小数。
 String _amountText(num? value) {
-  return (value ?? 0).toDouble().formatAmount();
+  return (value ?? 0).formatAmount();
 }
 
-// 日期字段为空时展示占位符，避免 UI 直接显示空字符串。
+// 日期字段为空时展示空字符串，避免补充不真实的默认文案。
 String _dateText(String? value) {
   final text = value?.trim();
-  return text == null || text.isEmpty ? '-' : text;
+  return text == null || text.isEmpty
+      ? AppStrings.loanOrderEmptyValue
+      : text.formatBackendDate();
 }
 
-// 字符串兜底工具：处理接口返回 null、空串或全空格的情况。
-String _nonEmpty(String? value, {required String fallback}) {
+// 字符串清理工具：处理接口返回 null、空串或全空格的情况。
+String _emptyWhenNull(String? value) {
   final text = value?.trim();
-  return text == null || text.isEmpty ? fallback : text;
+  return text == null || text.isEmpty ? AppStrings.loanOrderEmptyValue : text;
 }
 
 // 银行卡号脱敏：超过 8 位时仅展示前四位和后四位，保护用户账户信息。

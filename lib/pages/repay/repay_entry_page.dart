@@ -4,10 +4,8 @@ import 'package:easy_moni/entities/repay/repay_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
 import 'package:easy_moni/pages/repay/components/repay_bill_card.dart';
-import 'package:easy_moni/pages/repay/models/repay_multi_order_detail_request_data.dart';
-import 'package:easy_moni/pages/repay/models/repay_order_detail_request_data.dart';
+import 'package:easy_moni/pages/repay/components/total_repay_amount_display.dart';
 import 'package:easy_moni/pages/repay/providers/repay_list_provider.dart';
-import 'package:easy_moni/utils/extensions.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,22 +26,18 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
   double _totalAmount(List<RepayResp> bills) {
     return bills.fold<double>(
       0,
-      (sum, bill) => sum + (bill.repayAmount ?? 0).toDouble(),
+      (sum, bill) => sum + (bill.repayAmount ?? 0),
     );
   }
 
-  String _billKey(RepayResp bill, int index) {
-    final appOrderId = bill.appOrderId;
-    if (appOrderId != null && appOrderId.isNotEmpty) return appOrderId;
-
-    // TODO: 真实接口需保证账单唯一标识稳定，当前兜底 index 仅用于本地 Mock 数据交互。
-    return 'repay-bill-$index';
+  String _billKey(RepayResp bill) {
+    return bill.appOrderId!;
   }
 
   void _syncSelectedBills(List<RepayResp> bills) {
     final signature = List.generate(
       bills.length,
-      (index) => _billKey(bills[index], index),
+      (index) => _billKey(bills[index]),
     ).join('|');
 
     if (signature == _billListSignature) return;
@@ -52,20 +46,20 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
     _selectedBillKeys
       ..clear()
       ..addAll(
-        List.generate(bills.length, (index) => _billKey(bills[index], index)),
+        List.generate(bills.length, (index) => _billKey(bills[index])),
       );
   }
 
   List<RepayResp> _selectedBills(List<RepayResp> bills) {
     return [
       for (var index = 0; index < bills.length; index++)
-        if (_selectedBillKeys.contains(_billKey(bills[index], index)))
+        if (_selectedBillKeys.contains(_billKey(bills[index])))
           bills[index],
     ];
   }
 
   void _toggleBill(RepayResp bill, int index) {
-    final key = _billKey(bill, index);
+    final key = _billKey(bill);
     setState(() {
       if (_selectedBillKeys.contains(key)) {
         _selectedBillKeys.remove(key);
@@ -144,10 +138,7 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
     final appOrderId = bill.appOrderId?.trim();
     if (appOrderId == null || appOrderId.isEmpty) return;
 
-    context.push(
-      AppRoutePaths.repayOrderDetail,
-      extra: RepayOrderDetailRequestData(appOrderIds: [appOrderId]),
-    );
+    context.push(AppRoutePaths.repayOrderDetailWithIds([appOrderId]));
   }
 
   void _openSelectedRepayDetail(
@@ -168,10 +159,7 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
         .toList();
     if (appOrderIds.isEmpty) return;
 
-    context.push(
-      AppRoutePaths.repayMultiOrderDetail,
-      extra: RepayMultiOrderDetailRequestData(appOrderIds: appOrderIds),
-    );
+    context.push(AppRoutePaths.repayMultiOrderDetailWithIds(appOrderIds));
   }
 }
 
@@ -218,15 +206,7 @@ class _RepayEntryHeader extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  totalAmount.formatAmount(),
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    height: 38 / 32,
-                  ),
-                ),
+                TotalRepayAmountDisplay(amount: totalAmount,),
                 const SizedBox(width: 6),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
@@ -251,7 +231,7 @@ class _RepayEntryContent extends StatelessWidget {
 
   final List<RepayResp> bills;
   final Set<String> selectedBillKeys;
-  final String Function(RepayResp bill, int index) billKeyBuilder;
+  final String Function(RepayResp bill) billKeyBuilder;
   final void Function(RepayResp bill, int index) onSelectionTap;
   final ValueChanged<RepayResp> onRepayTap;
 
@@ -292,7 +272,7 @@ class _RepayEntryContent extends StatelessWidget {
                   separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final bill = bills[index];
-                    final billKey = billKeyBuilder(bill, index);
+                    final billKey = billKeyBuilder(bill);
                     return RepayBillCard(
                       bill: bill,
                       showSelection: showSelection,

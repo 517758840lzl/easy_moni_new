@@ -1,27 +1,47 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
+import 'package:easy_moni/core/router/app_routes.dart';
+import 'package:easy_moni/gen/assets.gen.dart';
+import 'package:easy_moni/pages/mine/mine.dart';
 import 'package:easy_moni/pages/loan/loan_home_page.dart';
 import 'package:easy_moni/pages/repay/repay_entry_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:easy_moni/pages/mine/mine.dart';
-
-import '../../gen/assets.gen.dart';
 
 class HomeShell extends ConsumerStatefulWidget {
-  const HomeShell({super.key});
+  const HomeShell({
+    super.key,
+    this.initialTab = AppHomeTabs.loan,
+    this.tabRequestId = '',
+  });
+
+  final String initialTab;
+  final String tabRequestId;
 
   @override
   ConsumerState<HomeShell> createState() => _HomeShellState();
 }
 
 class _HomeShellState extends ConsumerState<HomeShell> {
-  int _currentIndex = 0;
+  late int _currentIndex = _tabIndex(widget.initialTab);
 
   final List<Widget> _pages = const [
     LoanHomePage(),
     RepayEntryPage(),
     MinePage(),
   ];
+
+  @override
+  void didUpdateWidget(covariant HomeShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialTab == widget.initialTab &&
+        oldWidget.tabRequestId == widget.tabRequestId) {
+      return;
+    }
+
+    setState(() {
+      _currentIndex = _tabIndex(widget.initialTab);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -117,5 +137,18 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         ),
       ),
     );
+  }
+}
+
+/// 将路由 tab 参数转换为底部导航索引，未知参数默认回到首页。
+int _tabIndex(String tab) {
+  switch (tab) {
+    case AppHomeTabs.repay:
+      return 1;
+    case AppHomeTabs.mine:
+      return 2;
+    case AppHomeTabs.loan:
+    default:
+      return 0;
   }
 }

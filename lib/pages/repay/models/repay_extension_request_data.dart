@@ -1,12 +1,15 @@
-/// 展期页面入参，隔离还款详情订单模型和展期接口所需字段。
+import 'package:easy_moni/entities/repay/repay_detail_resp.dart';
+
+/// 展期页面入参，保留订单详情，避免展期支付参数和优惠券参数重复拆字段。
 class RepayExtensionRequestData {
   const RepayExtensionRequestData({
-    required this.appOrderId,
-    required this.productCode,
-    required this.installmentId,
+    required this.loanOrderDetails,
   });
 
-  final String appOrderId;
-  final String productCode;
-  final int? installmentId;
+  final List<RepayDetailRespDataLoanOrderDetails> loanOrderDetails;
+
+  RepayDetailRespDataLoanOrderDetails? get firstOrder {
+    if (loanOrderDetails.isEmpty) return null;
+    return loanOrderDetails.first;
+  }
 }

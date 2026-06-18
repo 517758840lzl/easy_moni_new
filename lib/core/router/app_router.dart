@@ -8,9 +8,11 @@ import 'package:easy_moni/pages/loan/loan_order_detail_page.dart';
 import 'package:easy_moni/pages/loan/loan_reviewing_page.dart';
 import 'package:easy_moni/pages/loan/models/loan_confirm_request_product.dart';
 import 'package:easy_moni/pages/loan/models/loan_order_detail_data.dart';
-import 'package:easy_moni/pages/mine/detailpage.dart';
 import 'package:easy_moni/pages/mine/mine.dart';
+import 'package:easy_moni/entities/repay/repay_detail_resp.dart';
 import 'package:easy_moni/pages/repay/repay_entry_page.dart';
+import 'package:easy_moni/pages/repay/payment_page.dart';
+import 'package:easy_moni/pages/repay/models/payment_request_params.dart';
 import 'package:easy_moni/pages/repay/repay_extension_page.dart';
 import 'package:easy_moni/pages/repay/models/repay_extension_request_data.dart';
 import 'package:easy_moni/pages/repay/models/repay_multi_order_detail_request_data.dart';
@@ -20,6 +22,7 @@ import 'package:easy_moni/pages/repay/repay_order_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/pages/login/customer_service_page.dart';
 import 'package:easy_moni/pages/login/permissionpage.dart';
@@ -54,7 +57,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutePaths.home,
         name: AppRouteNames.homeShell,
-        builder: (context, state) => const HomeShell(),
+        builder: (context, state) {
+          final initialTab =
+              state.uri.queryParameters['tab'] ?? AppHomeTabs.loan;
+          final tabRequestId = state.uri.queryParameters['tabRequestId'] ?? '';
+          return HomeShell(initialTab: initialTab, tabRequestId: tabRequestId);
+        },
       ),
       GoRoute(
         path: AppRoutePaths.idCamera,
@@ -74,22 +82,30 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutePaths.repayOrderDetail,
         name: AppRouteNames.repayOrderDetail,
         builder: (context, state) {
-          final requestData = state.extra as RepayOrderDetailRequestData?;
-          if (requestData == null) {
-            return const Scaffold(body: SizedBox.shrink());
+          final appOrderIds = _queryList(state, 'appOrderIds');
+          if (appOrderIds.isEmpty) {
+            // TODO: 确认是否存在旧版本跳转仍未携带 appOrderIds，需要灰度期间重点观察。
+            return const _MissingRepayRouteParamsPage();
           }
-          return RepayOrderDetailPage(requestData: requestData);
+          return RepayOrderDetailPage(
+            requestData: RepayOrderDetailRequestData(appOrderIds: appOrderIds),
+          );
         },
       ),
       GoRoute(
         path: AppRoutePaths.repayMultiOrderDetail,
         name: AppRouteNames.repayMultiOrderDetail,
         builder: (context, state) {
-          final requestData = state.extra as RepayMultiOrderDetailRequestData?;
-          if (requestData == null) {
-            return const Scaffold(body: SizedBox.shrink());
+          final appOrderIds = _queryList(state, 'appOrderIds');
+          if (appOrderIds.isEmpty) {
+            // TODO: 确认是否存在旧版本跳转仍未携带 appOrderIds，需要灰度期间重点观察。
+            return const _MissingRepayRouteParamsPage();
           }
-          return RepayMultiOrderDetailPage(requestData: requestData);
+          return RepayMultiOrderDetailPage(
+            requestData: RepayMultiOrderDetailRequestData(
+              appOrderIds: appOrderIds,
+            ),
+          );
         },
       ),
       GoRoute(
@@ -97,10 +113,41 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: AppRouteNames.repayExtension,
         builder: (context, state) {
           final requestData = state.extra as RepayExtensionRequestData?;
-          if (requestData == null) {
-            return const Scaffold(body: SizedBox.shrink());
+          if (requestData != null) {
+            return RepayExtensionPage(requestData: requestData);
           }
-          return RepayExtensionPage(requestData: requestData);
+
+          final appOrderId = state.uri.queryParameters['appOrderId'] ?? '';
+          final productCode = state.uri.queryParameters['productCode'] ?? '';
+          final installmentId = _queryInt(state, 'installmentId');
+          if (appOrderId.trim().isEmpty || installmentId == null) {
+            // TODO: 确认是否存在旧版本跳转仍未携带展期必要参数，需要灰度期间重点观察。
+            return const _MissingRepayRouteParamsPage();
+          }
+          return RepayExtensionPage(
+            // TODO: 旧 query 入口无法携带完整订单详情，后续确认无外部依赖后移除该兼容分支。
+            requestData: RepayExtensionRequestData(
+              loanOrderDetails: [
+                RepayDetailRespDataLoanOrderDetails(
+                  appOrderId: appOrderId.trim(),
+                  productCode: productCode.trim(),
+                  installmentId: installmentId,
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutePaths.payment,
+        name: AppRouteNames.payment,
+        builder: (context, state) {
+          final requestParams = state.extra as PaymentRequestParams?;
+          if (requestParams == null) {
+            // TODO: 确认是否存在外部入口直接打开付款页，若存在需补充 query 参数解析。
+            return const _MissingRepayRouteParamsPage();
+          }
+          return PaymentPage(requestParams: requestParams);
         },
       ),
       GoRoute(
@@ -161,21 +208,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: AppRouteNames.mine,
         builder: (context, state) => const MinePage(),
       ),
-      GoRoute(
-        path: AppRoutePaths.detail,
-        name: AppRouteNames.detail,
-        pageBuilder: (context, state) {
-          final id = state.pathParameters['id'] ?? '';
-          return CustomTransitionPage(
-            key: state.pageKey,
-            child: DetailPage(id: id),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-                  return _buildSlideTransition(animation, child);
-                },
-          );
-        },
-      ),
     ],
     errorBuilder: (context, state) => Scaffold(
       body: Center(
@@ -203,6 +235,71 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ),
   );
 });
+
+/// 从 query 中解析逗号分隔的列表参数。
+List<String> _queryList(GoRouterState state, String key) {
+  final rawValue = state.uri.queryParameters[key];
+  if (rawValue == null || rawValue.trim().isEmpty) {
+    return const <String>[];
+  }
+
+  return rawValue
+      .split(',')
+      .map((value) => value.trim())
+      .where((value) => value.isNotEmpty)
+      .toList();
+}
+
+/// 从 query 中解析正整数参数。
+int? _queryInt(GoRouterState state, String key) {
+  final rawValue = state.uri.queryParameters[key];
+  if (rawValue == null || rawValue.trim().isEmpty) return null;
+  final value = int.tryParse(rawValue.trim());
+  if (value == null || value <= 0) return null;
+  return value;
+}
+
+/// 还款流程缺少必要路由参数时的兜底页，避免用户看到纯白屏。
+class _MissingRepayRouteParamsPage extends StatelessWidget {
+  const _MissingRepayRouteParamsPage();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text(AppStrings.repayDetailTitle)),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.info_outline_rounded,
+                size: 48,
+                color: Color(0xFF6B7280),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                AppStrings.orderDetailMissingRouteParams,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF111827),
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: () => context.go(AppRoutePaths.repayEntry),
+                child: const Text(AppStrings.orderDetailBackToRepayEntry),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 Widget _buildSlideTransition(Animation<double> animation, Widget child) {
   const begin = Offset(1.0, 0.0);

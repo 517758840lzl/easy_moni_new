@@ -81,6 +81,7 @@ class AppStrings {
   static const String homeHeaderTitle = '最高可借额度';
   static const String homeAvailableString = '可借产品：';
   static const String homeMultiSelectHint = '可多选';
+  static const String backToHomeText = '回到首页';
 
   // ==================== 贷款详情 ====================
   static const String loanDetailTitle = '贷款详情';
@@ -135,6 +136,8 @@ class AppStrings {
   static const String orderDetailTitle = '账单详情';
   static const String orderDetailNoOrderData = '没有订单数据';
   static const String orderDetailLoadFailed = '获取账单详情失败';
+  static const String orderDetailMissingRouteParams = '缺少订单参数，请返回后重试';
+  static const String orderDetailBackToRepayEntry = '返回还款页';
   static const String orderDetailRepayingStatus = '还款中';
   static const String orderDetailPendingRepaymentStatus = '待还款';
   static const String orderDetailTotalRepayAmountLabel = '待还总金额';
@@ -170,6 +173,9 @@ class AppStrings {
   static const String repayDetailCouponUnavailable = '暂无可用优惠券';
   static const String repayDetailPaymentPending = '还款页面待接入';
   static const String repayDetailExtensionPending = '展期页面待接入';
+  static const String paymentTitle = '付款';
+  static const String paymentNoOrderData = '没有付款订单数据';
+  static const String paymentGenerateFailed = '获取付款链接失败';
   static const String repayMultiDetailTitle = '还款详情';
   static const String repayMultiTotalLoanAmountLabel = '总借款本金';
   static const String repayMultiTotalInterestLabel = '总利息';
@@ -203,14 +209,26 @@ class AppStrings {
   static const String loanReviewAppBarTitle = '申请借款';
   static const String loanReviewDesc =
       '您的借款申请正在审核中。\n通常会在几分钟内出结果。\n请耐心等待，结果将及时通知您。';
+  static const String scoreSuccess = '评分成功，感谢支持。';
 
   // ===================== 优惠券 ========================
   static const String couponEmptyDesc = '无可用优惠券，按时还款，后续可解锁优惠券';
   static const String couponString = '优惠券';
   static const String couponConfirmButtonText = 'Confirm';
   static const String couponLoadFailed = '优惠券加载失败，请重试';
+  static const String couponTypePre = '提额券';
+  static const String couponTypePost = '减免券';
 
   // ==================== 确认借款 ====================
+  static const String loanConfirmTitle = '确认借款';
   static const String loanConfirmButtonText = '确认借款';
+  static const String loanConfirmEmptyText = '暂无可确认借款';
   static const String loanConfirmButtonLoadingText = '提交中...';
+  static const String loanConfirmErrorText = '提交失败，请重试';
+  static const String loanConfirmActualAmountLabel = '到账金额';
+  static const String loanConfirmRepayAmountLabel = '应还金额';
+  static const String loanConfirmRepaymentDateLabel = '还款日期';
+
+  // ==================== 状态 =====================
+  static const String errorMessage = '加载失败，请重试';
 }

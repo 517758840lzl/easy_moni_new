@@ -215,7 +215,7 @@ class _DetailRowData {
       label: label,
       value: value == null
           ? ''
-          : value.toDouble().formatAmount(showCurrencySymbol: true),
+          : value.formatAmount(showCurrencySymbol: true),
     );
   }
 

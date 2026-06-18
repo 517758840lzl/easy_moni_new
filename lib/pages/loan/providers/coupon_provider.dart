@@ -3,6 +3,7 @@ import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/network/http_provider.dart';
 import 'package:easy_moni/core/network/http_result.dart';
 import 'package:easy_moni/entities/coupon_resp.dart';
+import 'package:easy_moni/entities/use_coupon_resp/use_coupon_resp.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,7 +24,19 @@ final couponListProvider = FutureProvider.autoDispose
         return const <CouponItem>[];
       }
 
-      return couponData?.coupons ?? const <CouponItem>[];
+      final coupons = couponData?.coupons ?? const <CouponItem>[];
+      return coupons.where((coupon) => coupon.isUsable).toList();
+    });
+
+final useCouponPostProvider = FutureProvider.autoDispose
+    .family<UseCouponRespData, UseCouponRequestParams>((ref, params) async {
+      final result = await ref.read(couponApiProvider).useCouponPost(params);
+
+      if (!result.isSuccess || result.data == null) {
+        throw result.message ?? AppStrings.couponLoadFailed;
+      }
+
+      return result.data!;
     });
 
 class CouponTypes {
@@ -100,6 +113,45 @@ class CouponRequestParams {
   }
 }
 
+/// 优惠券试算请求参数：用于选择优惠券后预览优惠前后金额。
+class UseCouponRequestParams {
+  const UseCouponRequestParams({
+    required this.appOrderIds,
+    required this.couponIds,
+    required this.productCodes,
+  });
+
+  final List<int> appOrderIds;
+  final List<int> couponIds;
+  final List<String> productCodes;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'appOrderIds': appOrderIds,
+      'couponIds': couponIds,
+      'productCodes': productCodes,
+    };
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is UseCouponRequestParams &&
+            listEquals(other.appOrderIds, appOrderIds) &&
+            listEquals(other.couponIds, couponIds) &&
+            listEquals(other.productCodes, productCodes);
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(
+      Object.hashAll(appOrderIds),
+      Object.hashAll(couponIds),
+      Object.hashAll(productCodes),
+    );
+  }
+}
+
 class CouponApi {
   /// 获取优惠券列表，页面只消费筛选后的 CouponItem 列表。
   Future<HttpResult<CouponResp>> fetchCoupons(CouponRequestParams params) {
@@ -107,6 +159,17 @@ class CouponApi {
       ApiConstants.customerCouponList,
       data: params.toJson(),
       fromJson: (json) => _parseCouponResp(json),
+    );
+  }
+
+  /// 使用还款优惠券试算金额，返回优惠前后的订单金额数据。
+  Future<HttpResult<UseCouponRespData>> useCouponPost(
+    UseCouponRequestParams params,
+  ) {
+    return HttpProvider.instance.post<UseCouponRespData>(
+      ApiConstants.useCouponPost,
+      data: params.toJson(),
+      fromJson: (json) => _parseUseCouponData(json),
     );
   }
 
@@ -118,5 +181,15 @@ class CouponApi {
       return CouponResp.fromJson({'data': Map<String, dynamic>.from(json)});
     }
     return const CouponResp();
+  }
+
+  UseCouponRespData _parseUseCouponData(dynamic json) {
+    if (json is Map<String, dynamic>) {
+      return UseCouponRespData.fromJson(json);
+    }
+    if (json is Map) {
+      return UseCouponRespData.fromJson(Map<String, dynamic>.from(json));
+    }
+    return const UseCouponRespData();
   }
 }

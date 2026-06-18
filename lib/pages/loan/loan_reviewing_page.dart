@@ -62,7 +62,7 @@ class _LoanReviewingPageState extends ConsumerState<LoanReviewingPage> {
     Navigator.of(sheetContext).pop();
 
     if (config.isLowScore(score)) {
-      showToast('评分成功，感谢支持。', context: context);
+      showToast(AppStrings.scoreSuccess, context: context);
       return;
     }
 
@@ -87,7 +87,7 @@ class _LoanReviewingPageState extends ConsumerState<LoanReviewingPage> {
       ),
       bottomNavigationBar: LoanBottomActionButton(
         enabled: true,
-        text: '回到首页',
+        text: AppStrings.backToHomeText,
         onPressed: () => context.go(AppRoutePaths.home),
       ),
     );

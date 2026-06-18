@@ -90,7 +90,7 @@ extension DateTimeExtension on DateTime {
   }
 }
 
-extension DoubleExtension on double {
+extension NumExtension on num {
   String toCurrency({String symbol = '\$', int decimals = 2}) {
     return '$symbol${toStringAsFixed(decimals)}';
   }

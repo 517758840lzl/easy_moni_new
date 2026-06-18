@@ -1,12 +1,16 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/entities/coupon_resp.dart';
 import 'package:easy_moni/entities/repay/repay_detail_resp.dart';
+import 'package:easy_moni/entities/use_coupon_resp/use_coupon_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
-import 'package:easy_moni/pages/loan/components/coupon_bottom_sheet_content.dart';
+import 'package:easy_moni/pages/loan/components/coupon_bottom_sheet_loader.dart';
 import 'package:easy_moni/pages/loan/components/coupon_entry_card.dart';
 import 'package:easy_moni/pages/loan/components/loan_order_card.dart';
 import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
 import 'package:easy_moni/pages/loan/providers/coupon_provider.dart';
+import 'package:easy_moni/core/router/app_routes.dart';
+import 'package:easy_moni/pages/repay/components/total_repay_amount_display.dart';
+import 'package:easy_moni/pages/repay/models/payment_request_params.dart';
 import 'package:easy_moni/pages/repay/models/repay_multi_order_detail_request_data.dart';
 import 'package:easy_moni/pages/repay/providers/repay_detail_provider.dart';
 import 'package:easy_moni/utils/extensions.dart';
@@ -17,7 +21,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// 多订单还款详情页，复用 billDetails 接口并按聚合订单展示多笔待还信息。
+/// 多订单还款详情页
 class RepayMultiOrderDetailPage extends ConsumerStatefulWidget {
   const RepayMultiOrderDetailPage({super.key, required this.requestData});
 
@@ -32,6 +36,9 @@ class _RepayMultiOrderDetailPageState
     extends ConsumerState<RepayMultiOrderDetailPage> {
   bool _isCouponSheetOpen = false;
   CouponItem? _selectedCoupon;
+  UseCouponRespData? _couponAmountPreview;
+  bool _isCouponAmountPreviewLoading = false;
+  int _couponPreviewRequestId = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -46,9 +53,14 @@ class _RepayMultiOrderDetailPageState
       error: (_, _) => null,
       loading: () => null,
     );
+    final showCouponAmount = _shouldShowCouponRepaymentAmount(
+      _couponAmountPreview,
+    );
+    final reserveCouponAmountSpace =
+        _isCouponAmountPreviewLoading || showCouponAmount;
 
     return LoanRoundedPageShell(
-      contentTop: (_) => topInset + 180,
+      contentTop: (_) => topInset + (reserveCouponAmountSpace ? 204 : 180),
       contentTopRadius: 16,
       backgroundDecoration: BoxDecoration(
         image: DecorationImage(
@@ -57,7 +69,11 @@ class _RepayMultiOrderDetailPageState
           alignment: Alignment.topCenter,
         ),
       ),
-      header: _RepayMultiHeader(detail: detail),
+      header: _RepayMultiHeader(
+        detail: detail,
+        couponAmountPreview: _couponAmountPreview,
+        isCouponAmountLoading: _isCouponAmountPreviewLoading,
+      ),
       content: detailAsync.when(
         data: (data) => _RepayMultiContent(
           detail: data,
@@ -83,12 +99,15 @@ class _RepayMultiOrderDetailPageState
   }
 
   void _openPayment(BuildContext context, RepayDetailRespData detail) {
-    final couponId = _selectedCoupon?.couponId;
-    // TODO: 确认多订单还款提交接口联调细节后，调用 generatesUrl 并随请求传递 couponId。
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text(AppStrings.repayDetailPaymentPending)),
-    );
-    debugPrint('Repay coupon id for submit: $couponId');
+    final requestParams = _buildPaymentParams(detail, _selectedCoupon);
+    if (requestParams == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(AppStrings.paymentNoOrderData)),
+      );
+      return;
+    }
+
+    context.push(AppRoutePaths.payment, extra: requestParams);
   }
 
   Future<void> _showCoupons(RepayDetailRespData detail) async {
@@ -107,7 +126,7 @@ class _RepayMultiOrderDetailPageState
         context: context,
         title: '',
         description: '',
-        content: _CouponBottomSheetLoader(
+        content: CouponBottomSheetLoader(
           future: _loadCoupons(orders),
           initialSelectedCouponId: _selectedCoupon?.couponId,
           onSelectionChanged: (coupon) {
@@ -123,9 +142,7 @@ class _RepayMultiOrderDetailPageState
       );
 
       if (mounted && confirmed == true) {
-        setState(() {
-          _selectedCoupon = tempSelectedCoupon;
-        });
+        _updateSelectedCoupon(data: detail, coupon: tempSelectedCoupon);
       }
     } finally {
       if (mounted) {
@@ -151,67 +168,72 @@ class _RepayMultiOrderDetailPageState
       ).future,
     );
   }
-}
 
-// 优惠券弹层内容加载：多订单页复用统一券列表样式并回传单选结果。
-class _CouponBottomSheetLoader extends StatelessWidget {
-  const _CouponBottomSheetLoader({
-    required this.future,
-    required this.onSelectionChanged,
-    this.initialSelectedCouponId,
-  });
+  // 确认多订单优惠券后，刷新顶部优惠金额试算结果。
+  void _updateSelectedCoupon({
+    required RepayDetailRespData data,
+    required CouponItem? coupon,
+  }) {
+    _couponPreviewRequestId++;
+    final couponId = coupon?.couponId;
+    setState(() {
+      _selectedCoupon = coupon;
+      _couponAmountPreview = null;
+      _isCouponAmountPreviewLoading = couponId != null && couponId > 0;
+    });
 
-  final Future<List<CouponItem>> future;
-  final int? initialSelectedCouponId;
-  final ValueChanged<CouponItem?> onSelectionChanged;
+    if (couponId == null || couponId <= 0) {
+      return;
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<List<CouponItem>>(
-      future: future,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const SizedBox(
-            height: 104,
-            child: Center(
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Color(0xFF268470),
-              ),
-            ),
-          );
-        }
+    _loadCouponAmountPreview(data, couponId);
+  }
 
-        if (snapshot.hasError) {
-          final message = snapshot.error?.toString();
-          return SizedBox(
-            height: 104,
-            child: Center(
-              child: Text(
-                (message == null || message.isEmpty)
-                    ? AppStrings.couponLoadFailed
-                    : message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14, color: Color(0xFF8A8F98)),
-              ),
-            ),
-          );
-        }
+  Future<void> _loadCouponAmountPreview(
+    RepayDetailRespData detail,
+    int couponId,
+  ) async {
+    final orders = detail.loanOrderDetails ?? const [];
+    final requestId = ++_couponPreviewRequestId;
+    try {
+      final preview = await ref.read(
+        useCouponPostProvider(
+          UseCouponRequestParams(
+            appOrderIds: _couponAppOrderIds(orders),
+            couponIds: [couponId],
+            productCodes: _couponProductCodes(orders),
+          ),
+        ).future,
+      );
+      if (!mounted || requestId != _couponPreviewRequestId) return;
+      setState(() {
+        _couponAmountPreview = preview;
+        _isCouponAmountPreviewLoading = false;
+      });
+    } catch (error) {
+      if (!mounted || requestId != _couponPreviewRequestId) return;
+      setState(() {
+        _isCouponAmountPreviewLoading = false;
+      });
+      _showSnack(context, error.toString());
+    }
+  }
 
-        return CouponBottomSheetContent(
-          coupons: snapshot.data ?? const <CouponItem>[],
-          initialSelectedCouponId: initialSelectedCouponId,
-          onSelectionChanged: onSelectionChanged,
-        );
-      },
-    );
+  void _showSnack(BuildContext context, String text) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 }
 
 class _RepayMultiHeader extends StatelessWidget {
-  const _RepayMultiHeader({required this.detail});
+  const _RepayMultiHeader({
+    required this.detail,
+    required this.couponAmountPreview,
+    required this.isCouponAmountLoading,
+  });
 
   final RepayDetailRespData? detail;
+  final UseCouponRespData? couponAmountPreview;
+  final bool isCouponAmountLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -224,6 +246,11 @@ class _RepayMultiHeader extends StatelessWidget {
     );
     // 顶部主金额展示多订单确认还款总额
     final totalRepayAmount = detail?.totalSureRepayAmounts ?? 0;
+    final previewAmount = couponAmountPreview?.newRepaymentAmount;
+    final originalAmount = couponAmountPreview?.repaymentAmount;
+    final showCouponAmount = _shouldShowCouponRepaymentAmount(
+      couponAmountPreview,
+    );
 
     return SafeArea(
       bottom: false,
@@ -264,8 +291,38 @@ class _RepayMultiHeader extends StatelessWidget {
               ],
             ),
           ),
-          // const SizedBox(height: 16),
-          _TotalRepayAmountDisplay(amount: totalRepayAmount),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (isCouponAmountLoading)
+                  const SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                else if (showCouponAmount)
+                  Column(
+                    children: [
+                      TotalRepayAmountDisplay(amount: previewAmount ?? 0),
+                      const SizedBox(height: 4),
+                      TotalRepayAmountDisplay(
+                        amount: originalAmount ?? 0,
+                        currencyStyle: _couponOriginalAmountStyle,
+                        amountStyle: _couponOriginalAmountStyle,
+                      ),
+                    ],
+                  )
+                else
+                  TotalRepayAmountDisplay(amount: totalRepayAmount),
+              ],
+            ),
+          ),
           const SizedBox(height: 18),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -300,43 +357,6 @@ class _RepayMultiHeader extends StatelessWidget {
   }
 }
 
-class _TotalRepayAmountDisplay extends StatelessWidget {
-  const _TotalRepayAmountDisplay({required this.amount});
-
-  final num amount;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text.rich(
-      TextSpan(
-        children: [
-          const TextSpan(
-            text: AppStrings.orderDetailCurrencyCode,
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-              height: 36 / 26,
-            ),
-          ),
-          TextSpan(
-            text: amount.toDouble().formatAmount(showCurrencySymbol: false),
-            style: const TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              height: 38 / 32,
-            ),
-          ),
-        ],
-      ),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      textAlign: TextAlign.center,
-    );
-  }
-}
-
 class _SummaryCard extends StatelessWidget {
   const _SummaryCard({required this.amount, required this.label});
 
@@ -357,7 +377,7 @@ class _SummaryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            amount.toDouble().formatAmount(),
+            amount.formatAmount(),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -384,6 +404,15 @@ class _SummaryCard extends StatelessWidget {
     );
   }
 }
+
+const TextStyle _couponOriginalAmountStyle = TextStyle(
+  fontSize: 20,
+  fontWeight: FontWeight.w500,
+  color: Color(0xCCFFFFFF),
+  height: 24 / 20,
+  decoration: TextDecoration.lineThrough,
+  decorationColor: Color(0xCCFFFFFF),
+);
 
 class _RepayMultiContent extends StatelessWidget {
   const _RepayMultiContent({
@@ -555,7 +584,7 @@ bool _isOverdue(RepayDetailRespDataLoanOrderDetails order) {
 }
 
 String _amountText(num? value) {
-  return (value ?? 0).toDouble().formatAmount(showCurrencySymbol: true);
+  return (value ?? 0).formatAmount(showCurrencySymbol: true);
 }
 
 String _couponName(CouponItem coupon) {
@@ -570,13 +599,83 @@ String _couponAmountText(CouponItem coupon) {
       : summary;
 }
 
+// 还款优惠券金额试算：仅当优惠后金额小于原始总还金额时展示双行金额。
+bool _shouldShowCouponRepaymentAmount(UseCouponRespData? preview) {
+  final previewAmount = preview?.newRepaymentAmount;
+  final originalAmount = preview?.repaymentAmount;
+  return previewAmount != null &&
+      originalAmount != null &&
+      previewAmount < originalAmount;
+}
+
 String _productName(RepayDetailRespDataLoanOrderDetails order) {
   return order.productName?.isNotEmpty == true
       ? order.productName!
       : AppStrings.loanOrderProductFallback;
 }
 
-// 优惠券接口参数：多订单只传可解析且大于 0 的订单 ID。
+PaymentRequestParams? _buildPaymentParams(
+  RepayDetailRespData detail,
+  CouponItem? selectedCoupon,
+) {
+  final orders = detail.loanOrderDetails ?? const [];
+  final allocations = orders
+      .map(_paymentAllocationFromOrder)
+      .whereType<PaymentAllocation>()
+      .toList();
+  if (allocations.isEmpty) return null;
+
+  return PaymentRequestParams(
+    allocations: allocations,
+    couponIds: _selectedCouponIds(selectedCoupon),
+    orderType: PaymentOrderTypes.normal,
+    repayAmount: detail.totalSureRepayAmounts ?? 0,
+    originalTotalRepayAmount: 0,
+    choseProductCodes: _paymentProductCodes(orders),
+  );
+}
+
+PaymentAllocation? _paymentAllocationFromOrder(
+  RepayDetailRespDataLoanOrderDetails order,
+) {
+  final appOrderId = _paymentOrderId(order.appOrderId);
+  final installmentId = order.installmentId;
+  if (appOrderId == null || installmentId == null || installmentId <= 0) {
+    return null;
+  }
+
+  return PaymentAllocation(
+    // 多订单分账金额逐笔取订单明细的应还金额。
+    allocationAmount: order.repaymentAmount ?? 0,
+    appOrderId: appOrderId,
+    installmentId: installmentId,
+  );
+}
+
+Object? _paymentOrderId(String? appOrderId) {
+  final value = appOrderId?.trim();
+  if (value == null || value.isEmpty) return null;
+  return int.tryParse(value) ?? value;
+}
+
+List<int> _selectedCouponIds(CouponItem? coupon) {
+  final couponId = coupon?.couponId;
+  if (couponId == null || couponId <= 0) return const <int>[];
+  return [couponId];
+}
+
+List<String> _paymentProductCodes(
+  List<RepayDetailRespDataLoanOrderDetails> orders,
+) {
+  return orders
+      .map((item) => item.productCode?.trim())
+      .whereType<String>()
+      .where((code) => code.isNotEmpty)
+      .toSet()
+      .toList();
+}
+
+// 优惠券接口参数
 List<int> _couponAppOrderIds(List<RepayDetailRespDataLoanOrderDetails> orders) {
   return orders
       .map((item) => int.tryParse(item.appOrderId?.trim() ?? ''))

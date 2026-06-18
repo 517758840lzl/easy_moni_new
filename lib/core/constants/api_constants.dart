@@ -63,4 +63,8 @@ class ApiConstants {
   static const String uploadFile = '/api/common/uploadFile';
   /*上传人脸视频接口*/
   static const String uploadFaceVideo = '/api/user/acquisition/uploadFaceVideo';
+  // 使用还款优惠券预览金额接口
+  static const String useCouponPost = '/api/customer/coupon/post/use';
+  // 使用贷前优惠券预览金额接口
+  static const String useCouponPre = '/api/customer/coupon/pre/use';
 }

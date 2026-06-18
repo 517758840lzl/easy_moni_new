@@ -4,7 +4,6 @@ import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/loan/components/loan_order_detail_cards.dart';
 import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
 import 'package:easy_moni/pages/loan/models/loan_order_detail_data.dart';
-import 'package:easy_moni/pages/repay/models/repay_order_detail_request_data.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -42,10 +41,7 @@ class LoanOrderDetailPage extends StatelessWidget {
               text: AppStrings.orderDetailRepayNow,
               onPressed: hasRepayOrderId
                   ? () => context.push(
-                      AppRoutePaths.repayOrderDetail,
-                      extra: RepayOrderDetailRequestData(
-                        appOrderIds: [data.appOrderId],
-                      ),
+                      AppRoutePaths.repayOrderDetailWithIds([data.appOrderId]),
                     )
                   : null,
             )
