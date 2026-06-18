@@ -75,6 +75,20 @@ class AppStrings {
   static const String takeOcrPictures =
       'Please use landscape mode and place all four corners of your Ghana Card inside the frame.';
 
+  // ==================== 我的 ====================
+  static const String mineCurrentPending = '当前待还';
+  static const String mineGoToRepay = '去还款';
+  static const String mineOtherFeatures = '其他功能';
+  static const String mineHistoryOrders = '我的订单';
+  static const String mineCustomerService = '客服';
+  static const String mineSettings = '设置';
+  static const String mineLogout = 'Log out';
+  static const String mineLogoutDialogTitle = '退出登录';
+  static const String mineLogoutDialogContent = '确定要退出登录吗？';
+  static const String mineLogoutDialogConfirm = '确定';
+  static const String mineLogoutSuccess = '已退出登录';
+  static const String mineLogoutFailed = '退出失败，请重试';
+
   // ==================== 首页 =======================
   static const String homeButtonText = '我要借款';
   static const String homeLoanSectionTitle = '我的借款';

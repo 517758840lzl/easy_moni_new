@@ -8,7 +8,7 @@ import 'package:easy_moni/pages/loan/loan_order_detail_page.dart';
 import 'package:easy_moni/pages/loan/loan_reviewing_page.dart';
 import 'package:easy_moni/pages/loan/models/loan_confirm_request_product.dart';
 import 'package:easy_moni/pages/loan/models/loan_order_detail_data.dart';
-import 'package:easy_moni/pages/mine/mine.dart';
+import 'package:easy_moni/pages/mine/mine_page.dart';
 import 'package:easy_moni/entities/repay/repay_detail_resp.dart';
 import 'package:easy_moni/pages/repay/repay_entry_page.dart';
 import 'package:easy_moni/pages/repay/payment_page.dart';
@@ -84,7 +84,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final appOrderIds = _queryList(state, 'appOrderIds');
           if (appOrderIds.isEmpty) {
-            // TODO: 确认是否存在旧版本跳转仍未携带 appOrderIds，需要灰度期间重点观察。
             return const _MissingRepayRouteParamsPage();
           }
           return RepayOrderDetailPage(
@@ -98,7 +97,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final appOrderIds = _queryList(state, 'appOrderIds');
           if (appOrderIds.isEmpty) {
-            // TODO: 确认是否存在旧版本跳转仍未携带 appOrderIds，需要灰度期间重点观察。
             return const _MissingRepayRouteParamsPage();
           }
           return RepayMultiOrderDetailPage(
@@ -112,39 +110,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutePaths.repayExtension,
         name: AppRouteNames.repayExtension,
         builder: (context, state) {
-          final requestData = state.extra as RepayExtensionRequestData?;
+          final requestData = _typedExtra<RepayExtensionRequestData>(state);
           if (requestData != null) {
             return RepayExtensionPage(requestData: requestData);
           }
 
-          final appOrderId = state.uri.queryParameters['appOrderId'] ?? '';
-          final productCode = state.uri.queryParameters['productCode'] ?? '';
-          final installmentId = _queryInt(state, 'installmentId');
-          if (appOrderId.trim().isEmpty || installmentId == null) {
-            // TODO: 确认是否存在旧版本跳转仍未携带展期必要参数，需要灰度期间重点观察。
+          final fallbackRequestData = _repayExtensionRequestFromQuery(state);
+          if (fallbackRequestData == null) {
             return const _MissingRepayRouteParamsPage();
           }
-          return RepayExtensionPage(
-            // TODO: 旧 query 入口无法携带完整订单详情，后续确认无外部依赖后移除该兼容分支。
-            requestData: RepayExtensionRequestData(
-              loanOrderDetails: [
-                RepayDetailRespDataLoanOrderDetails(
-                  appOrderId: appOrderId.trim(),
-                  productCode: productCode.trim(),
-                  installmentId: installmentId,
-                ),
-              ],
-            ),
-          );
+          return RepayExtensionPage(requestData: fallbackRequestData);
         },
       ),
       GoRoute(
         path: AppRoutePaths.payment,
         name: AppRouteNames.payment,
         builder: (context, state) {
-          final requestParams = state.extra as PaymentRequestParams?;
+          final requestParams = _typedExtra<PaymentRequestParams>(state);
           if (requestParams == null) {
-            // TODO: 确认是否存在外部入口直接打开付款页，若存在需补充 query 参数解析。
             return const _MissingRepayRouteParamsPage();
           }
           return PaymentPage(requestParams: requestParams);
@@ -236,6 +219,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   );
 });
 
+/// 安全读取路由 extra，避免类型不匹配导致路由构建异常。
+T? _typedExtra<T>(GoRouterState state) {
+  final extra = state.extra;
+  return extra is T ? extra : null;
+}
+
 /// 从 query 中解析逗号分隔的列表参数。
 List<String> _queryList(GoRouterState state, String key) {
   final rawValue = state.uri.queryParameters[key];
@@ -257,6 +246,27 @@ int? _queryInt(GoRouterState state, String key) {
   final value = int.tryParse(rawValue.trim());
   if (value == null || value <= 0) return null;
   return value;
+}
+
+/// 从展期 query 入口构造最小页面入参，支持页面恢复和外部链接直达。
+RepayExtensionRequestData? _repayExtensionRequestFromQuery(
+  GoRouterState state,
+) {
+  final appOrderId = state.uri.queryParameters['appOrderId']?.trim() ?? '';
+  final productCode = state.uri.queryParameters['productCode']?.trim() ?? '';
+  final installmentId = _queryInt(state, 'installmentId');
+
+  if (appOrderId.isEmpty || installmentId == null) return null;
+
+  return RepayExtensionRequestData(
+    loanOrderDetails: [
+      RepayDetailRespDataLoanOrderDetails(
+        appOrderId: appOrderId,
+        productCode: productCode,
+        installmentId: installmentId,
+      ),
+    ],
+  );
 }
 
 /// 还款流程缺少必要路由参数时的兜底页，避免用户看到纯白屏。
@@ -301,13 +311,3 @@ class _MissingRepayRouteParamsPage extends StatelessWidget {
   }
 }
 
-Widget _buildSlideTransition(Animation<double> animation, Widget child) {
-  const begin = Offset(1.0, 0.0);
-  const end = Offset.zero;
-  const curve = Curves.easeOutCubic;
-
-  var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-  var offsetAnimation = animation.drive(tween);
-
-  return SlideTransition(position: offsetAnimation, child: child);
-}
