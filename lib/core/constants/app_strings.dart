@@ -83,6 +83,15 @@ class AppStrings {
   static const String mineCustomerService = '客服';
   static const String mineSettings = '设置';
   static const String mineLogout = 'Log out';
+  static const String mineOrderHistoryTitle = '历史订单';
+  static const String mineOrderHistoryAllTab = '全部';
+  static const String mineOrderHistoryDisbursingTab = '借款中';
+  static const String mineOrderHistoryRepayingTab = '待还款';
+  static const String mineOrderHistoryFailedTab = '失败';
+  static const String mineOrderHistoryEmpty = '暂无订单';
+  static const String mineOrderHistoryLoadFailed = '获取订单失败';
+  static const String mineOrderHistoryRetry = '重试';
+  static const String mineOrderLoanDateLabel = '借款日期';
   static const String mineLogoutDialogTitle = '退出登录';
   static const String mineLogoutDialogContent = '确定要退出登录吗？';
   static const String mineLogoutDialogConfirm = '确定';
@@ -133,18 +142,23 @@ class AppStrings {
   static const String loanOrderEmptyValue = '';
   static const String loanOrderUnknownValue = '-';
   static const String loanOrderDaysUnit = 'days';
+  static const String loanOrderDetailInfoTitle = '订单信息';
+  static const String loanOrderAccountInfoTitle = '收款账户信息';
   static const String loanOrderLoanAmountLabel = '借款金额';
   static const String loanOrderLoanTermLabel = '借款期限';
   static const String loanOrderServiceFeeLabel = '服务费';
   static const String loanOrderOverdueFeeLabel = '逾期费';
   static const String loanOrderOverdueDaysLabel = '逾期天数';
   static const String loanOrderRemainingDayLabel = '距离到期日';
+  static const String loanOrderRepaymentRemainingDaysLabel = '距离还款天数';
   static const String loanOrderInterestLabel = '利息';
   static const String loanOrderRepaymentDateLabel = '还款日期';
   static const String loanOrderReceiptAmountLabel = '到账金额';
   static const String loanOrderRepayAmountLabel = '应还金额';
   static const String loanOrderDueDateLabel = '到期日';
   static const String loanOrderAccountLabel = 'MoMo收款账户';
+  static const String loanOrderMomoAccountLabel = 'MOMO账户';
+  static const String loanOrderWalletTypeLabel = '钱包类型';
 
   // ==================== 账单详情 ====================
   static const String orderDetailTitle = '账单详情';
@@ -210,6 +224,7 @@ class AppStrings {
 
   static String orderDetailDayValue(int days) => '$days天';
   static String orderDetailCountValue(int count) => '$count个';
+  static String mineOrderHistoryTabCount(int count) => '($count)';
   static String orderDetailPeriodValue(int period) => '$period期';
   static String orderDetailOverdueDays(int days) => '已逾期$days天';
   static String orderDetailRemainingDays(int days) => '剩余$days天';

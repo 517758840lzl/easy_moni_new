@@ -8,6 +8,7 @@ import 'package:easy_moni/pages/loan/providers/home_provider.dart';
 import 'package:easy_moni/entities/home_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/utils/extensions.dart';
+import 'package:easy_moni/utils/loan_order_status_visual.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -541,7 +542,7 @@ String _resolveHomeDueDate(HomeProductItem item) {
 }
 
 LoanOrderCardStatusBadgeData _homeOrderStatusBadge(HomeProductItem item) {
-  final visual = _HomeOrderStatusVisual.forStatus(
+  final visual = LoanOrderStatusVisual.forStatus(
     item.appOrderStatus,
     remainingDays: item.remainingDays,
   );
@@ -555,7 +556,7 @@ LoanOrderCardFooterData _homeOrderFooter(
   HomeProductItem item,
   bool hasAvailableCoupons,
 ) {
-  final visual = _HomeOrderStatusVisual.forStatus(
+  final visual = LoanOrderStatusVisual.forStatus(
     item.appOrderStatus,
     remainingDays: item.remainingDays,
   );
@@ -576,64 +577,6 @@ LoanOrderCardFooterData _homeOrderFooter(
 
 String _amountText(num? value) {
   return (value ?? 0).formatAmount(showCurrencySymbol: true);
-}
-
-class _HomeOrderStatusVisual {
-  const _HomeOrderStatusVisual({
-    required this.label,
-    required this.gradient,
-    required this.footerText,
-  });
-
-  final String label;
-  final List<Color> gradient;
-  final String footerText;
-
-  static _HomeOrderStatusVisual forStatus(
-    int? statusCode, {
-    int? remainingDays,
-  }) {
-    if (statusCode == 4 && remainingDays != null && remainingDays < 0) {
-      return const _HomeOrderStatusVisual(
-        label: AppStrings.loanOrderStatusOverdue,
-        gradient: [Color(0xFFFF5265), Color(0xFFFF843F)],
-        footerText: AppStrings.loanOrderFooterOverdue,
-      );
-    }
-
-    switch (statusCode) {
-      case 20:
-        return const _HomeOrderStatusVisual(
-          label: AppStrings.loanOrderStatusReviewing,
-          gradient: [Color(0xFF38B899), Color(0xFF38B899)],
-          footerText: AppStrings.loanOrderFooterReviewing,
-        );
-      case 3:
-        return const _HomeOrderStatusVisual(
-          label: AppStrings.loanOrderStatusDisbursing,
-          gradient: [Color(0xFFF9B072), Color(0xFFFF843F)],
-          footerText: AppStrings.loanOrderFooterDisbursing,
-        );
-      case 4:
-        return const _HomeOrderStatusVisual(
-          label: AppStrings.loanOrderStatusWaitingRepayment,
-          gradient: [Color(0xFFF9B072), Color(0xFFFF843F)],
-          footerText: AppStrings.loanOrderFooterWaitingRepayment,
-        );
-      case 5:
-        return const _HomeOrderStatusVisual(
-          label: AppStrings.loanOrderStatusTransferFailed,
-          gradient: [Color(0xFFC1C3C6), Color(0xFFC1C3C6)],
-          footerText: AppStrings.loanOrderFooterTransferFailed,
-        );
-      default:
-        return const _HomeOrderStatusVisual(
-          label: AppStrings.loanOrderStatusReviewing,
-          gradient: [Color(0xFF38B899), Color(0xFF38B899)],
-          footerText: AppStrings.loanOrderFooterReviewing,
-        );
-    }
-  }
 }
 
 class _LoanProduct {

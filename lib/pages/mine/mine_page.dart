@@ -125,7 +125,7 @@ class _MinePageState extends ConsumerState<MinePage> {
 
   void _onHistoryTap() {
     AppLogger.debug('点击了历史订单');
-    // context.push(AppRoutePaths.orderHistory);
+    context.push(AppRoutePaths.orderHistory);
   }
 
   void _onCustomerServiceTap() {
@@ -195,13 +195,6 @@ class _MinePageState extends ConsumerState<MinePage> {
       contentTop: (_) => topInset + 212,
       contentTopRadius: 16,
       backgroundColor: AppColors.primaryDark,
-      backgroundDecoration: BoxDecoration(
-        image: DecorationImage(
-          image: Assets.images.mineBg.provider(),
-          fit: BoxFit.cover,
-          alignment: Alignment.topCenter,
-        ),
-      ),
       header: _MineHeader(userName: _userName, userPhone: _userPhone),
       content: _MineContent(
         showPendingRepayCard: _showPendingRepayCard,
@@ -227,50 +220,58 @@ class _MineHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO:header部分背景使用mineBg
-    return SafeArea(
-      bottom: false,
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: SizedBox(
-              height: 44,
-              child: Row(
-                children: [
-                  const Spacer(),
-                  Assets.images.customer.image(width: 28, height: 28),
-                ],
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: Assets.images.mineBg.provider(),
+          fit: BoxFit.cover,
+          alignment: Alignment.topCenter,
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: SizedBox(
+                height: 44,
+                child: Row(
+                  children: [
+                    const Spacer(),
+                    Assets.images.customer.image(width: 28, height: 28),
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(
-            width: 91,
-            height: 91,
-            child: CircleAvatar(
-              backgroundColor: Color(0xFF268470),
-              radius: 40,
-              child: Icon(Icons.person, size: 50, color: Colors.white),
+            const SizedBox(
+              width: 91,
+              height: 91,
+              child: CircleAvatar(
+                backgroundColor: Color(0xFF268470),
+                radius: 40,
+                child: Icon(Icons.person, size: 50, color: Colors.white),
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            userName,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
+            const SizedBox(height: 12),
+            Text(
+              userName,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
             ),
-          ),
-          Text(
-            userPhone,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.white.withValues(alpha: 0.8),
+            Text(
+              userPhone,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.white.withValues(alpha: 0.8),
+              ),
             ),
-          ),
-          const SizedBox(height: 26),
-        ],
+            const SizedBox(height: 26),
+          ],
+        ),
       ),
     );
   }
@@ -305,6 +306,7 @@ class _MineContent extends StatelessWidget {
     return SingleChildScrollView(
       child: Column(
         children: [
+          const SizedBox(height: 16),
           if (showPendingRepayCard)
             PendingRepayCard(
               amount: pendingAmount,

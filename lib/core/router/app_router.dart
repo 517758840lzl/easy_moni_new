@@ -8,6 +8,7 @@ import 'package:easy_moni/pages/loan/loan_order_detail_page.dart';
 import 'package:easy_moni/pages/loan/loan_reviewing_page.dart';
 import 'package:easy_moni/pages/loan/models/loan_confirm_request_product.dart';
 import 'package:easy_moni/pages/loan/models/loan_order_detail_data.dart';
+import 'package:easy_moni/pages/mine/mine_order_history_page.dart';
 import 'package:easy_moni/pages/mine/mine_page.dart';
 import 'package:easy_moni/entities/repay/repay_detail_resp.dart';
 import 'package:easy_moni/pages/repay/repay_entry_page.dart';
@@ -191,6 +192,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: AppRouteNames.mine,
         builder: (context, state) => const MinePage(),
       ),
+      GoRoute(
+        path: AppRoutePaths.orderHistory,
+        name: AppRouteNames.orderHistory,
+        builder: (context, state) => const MineOrderHistoryPage(),
+      ),
     ],
     errorBuilder: (context, state) => Scaffold(
       body: Center(
@@ -310,4 +316,3 @@ class _MissingRepayRouteParamsPage extends StatelessWidget {
     );
   }
 }
-

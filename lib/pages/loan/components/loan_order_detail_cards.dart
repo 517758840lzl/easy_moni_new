@@ -19,14 +19,14 @@ class LoanOrderDetailCards extends StatelessWidget {
       children: [
         _DetailInfoCard(
           icon: Assets.images.mineBillList.image(width: 30, height: 30),
-          title: '订单信息',
+          title: AppStrings.loanOrderDetailInfoTitle,
           rows: orderRows,
         ),
         if (accountRows.isNotEmpty) ...[
           const SizedBox(height: 16),
           _DetailInfoCard(
             icon: Assets.images.mineWallet.image(width: 30, height: 30),
-            title: '收款账户信息',
+            title: AppStrings.loanOrderAccountInfoTitle,
             rows: accountRows,
           ),
         ],
@@ -44,14 +44,21 @@ class LoanOrderDetailCards extends StatelessWidget {
           data.loanAmount,
         ),
         _DetailRowData.amount(AppStrings.loanOrderInterestLabel, data.interest),
-        _DetailRowData.amount('逾期费用', data.serviceFee),
+        _DetailRowData.amount(
+          AppStrings.loanOrderOverdueFeeLabel,
+          data.serviceFee,
+        ),
         _DetailRowData.amount(
           AppStrings.loanOrderRepayAmountLabel,
           data.repayAmount,
         ),
         _DetailRowData.days(AppStrings.loanOrderLoanTermLabel, data.term),
         _DetailRowData.text(AppStrings.loanOrderDueDateLabel, data.dueDate),
-        _DetailRowData.days('逾期天数', data.remainingDays),
+        // 逾期状态下后端 remainingDays 为负数，展示时按逾期天数取绝对值。
+        _DetailRowData.days(
+          AppStrings.loanOrderOverdueDaysLabel,
+          data.remainingDays?.abs(),
+        ),
       ]);
     }
 
@@ -68,7 +75,10 @@ class LoanOrderDetailCards extends StatelessWidget {
         ),
         _DetailRowData.days(AppStrings.loanOrderLoanTermLabel, data.term),
         _DetailRowData.text(AppStrings.loanOrderDueDateLabel, data.dueDate),
-        _DetailRowData.days('距离还款天数', data.remainingDays),
+        _DetailRowData.days(
+          AppStrings.loanOrderRepaymentRemainingDaysLabel,
+          data.remainingDays,
+        ),
       ]);
     }
 
@@ -93,8 +103,11 @@ class LoanOrderDetailCards extends StatelessWidget {
 
   static List<_DetailRowData> _resolveAccountRows(LoanOrderDetailData data) {
     return [
-      _DetailRowData.text('MOMO账户', data.momoAccount),
-      _DetailRowData.text('钱包类型', data.walletType),
+      _DetailRowData.text(
+        AppStrings.loanOrderMomoAccountLabel,
+        data.momoAccount,
+      ),
+      _DetailRowData.text(AppStrings.loanOrderWalletTypeLabel, data.walletType),
     ].where((row) => row.value.isNotEmpty).toList(growable: false);
   }
 
@@ -207,14 +220,17 @@ class _DetailRowData {
   const _DetailRowData({required this.label, required this.value});
 
   factory _DetailRowData.text(String label, String? value) {
-    return _DetailRowData(label: label, value: value ?? '');
+    return _DetailRowData(
+      label: label,
+      value: value ?? AppStrings.loanOrderEmptyValue,
+    );
   }
 
   factory _DetailRowData.amount(String label, num? value) {
     return _DetailRowData(
       label: label,
       value: value == null
-          ? ''
+          ? AppStrings.loanOrderEmptyValue
           : value.formatAmount(showCurrencySymbol: true),
     );
   }
@@ -223,7 +239,7 @@ class _DetailRowData {
     return _DetailRowData(
       label: label,
       value: value == null
-          ? ''
+          ? AppStrings.loanOrderEmptyValue
           : '$value ${AppStrings.loanOrderDaysUnit.capitalize}',
     );
   }

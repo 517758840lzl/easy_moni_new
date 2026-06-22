@@ -1,5 +1,6 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/entities/home_resp.dart';
+import 'package:easy_moni/entities/order_list_resp.dart';
 import 'package:easy_moni/utils/extensions.dart';
 
 /// 首页传入订单详情页的展示快照，详情页不再额外请求接口。
@@ -62,6 +63,38 @@ class LoanOrderDetailData {
     );
   }
 
+  /// 从历史订单完整数据生成详情页快照，避免页面层分散维护字段映射。
+  factory LoanOrderDetailData.fromOrderListItem(OrderListItem order) {
+    return LoanOrderDetailData(
+      appOrderId: order.appOrderId?.trim() ?? '',
+      productName: order.productName?.trim().isNotEmpty == true
+          ? order.productName!.trim()
+          : AppStrings.loanOrderProductFallback,
+      loanAmount: order.loanAmount ?? 0,
+      receiptAmount: order.receiptAmount ?? 0,
+      repayAmount: order.repayAmount ?? 0,
+      productCode: order.productSetCode,
+      productLevel: _parseProductLevel(order.productLevel),
+      productLogo: order.productLogo,
+      statusCode: order.orderStatus,
+      statusText: order.orderStatusStr,
+      totalServiceDays: order.totalServiceDays,
+      remainingDays: order.remainingDays,
+      interest: order.interest,
+      term: order.term,
+      repaidAmount: order.repaidAmount,
+      rawRepayDate: order.repayDate,
+      repayDateStr: order.repayDateStr,
+      isExtensionSwitch: order.isExtensionSwitch,
+      borrowDate: _formatOrderHistoryDate(order.createTime),
+      dueDate: _formatOrderHistoryDate(order.repayDateStr ?? order.repayDate),
+      momoAccount: order.bankCardNo,
+      walletType: order.bankCardName ?? order.bankCardType,
+      createTime: order.createTime,
+      updateTime: order.updateTime,
+    );
+  }
+
   final String appOrderId;
   final String productName;
   final num loanAmount;
@@ -101,6 +134,20 @@ class LoanOrderDetailData {
       return appOrderIdStr;
     }
     return item.appOrderId?.toString() ?? '';
+  }
+
+  static int? _parseProductLevel(String? value) {
+    final trimmed = value?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    return int.tryParse(trimmed);
+  }
+
+  static String _formatOrderHistoryDate(String? value) {
+    final trimmed = value?.trim() ?? '';
+    if (trimmed.isEmpty) return '';
+
+    final datePart = trimmed.contains(' ') ? trimmed.split(' ').first : trimmed;
+    return datePart.formatBackendDate();
   }
 }
 
