@@ -1,12 +1,14 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/login/loginpage.dart';
+import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:flutter/material.dart';
 
+/// 借款流程挽留弹窗，用于提示用户继续完成借款资料。
 class FundingLimitDialog extends StatelessWidget {
   final VoidCallback? onGiveUp;
 
-  const FundingLimitDialog({Key? key, this.onGiveUp}) : super(key: key);
+  const FundingLimitDialog({super.key, this.onGiveUp});
 
   static void show(BuildContext context, {VoidCallback? onGiveUp}) {
     showDialog(
@@ -55,7 +57,7 @@ class FundingLimitDialog extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               const Text(
-                "离成功只差一步，完成借款即可快速到账，解决您的资金需求。",
+                AppStrings.fundingLimitDialogDesc,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Color(0xFF222222),
@@ -66,28 +68,20 @@ class FundingLimitDialog extends StatelessWidget {
               ),
               const SizedBox(height: 32),
 
-              GestureDetector(
-                onTap: () {
+              LoanBottomActionButton(
+                enabled: true,
+                onPressed: () {
                   Navigator.pop(context);
                 },
-                child: Container(
-                  width: double.infinity,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E826C), // 深绿色主按钮
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  alignment: Alignment.center,
-                  child: const Text(
-                    AppStrings.continueSallery,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
+                text: AppStrings.continueSallery,
+                height: 48,
+                padding: EdgeInsets.zero,
+                backgroundColor: Colors.transparent,
+                enabledColor: const Color(0xFF1E826C),
+                useSafeArea: false,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
               ),
               const SizedBox(height: 16),
 

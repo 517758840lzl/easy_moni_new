@@ -1,15 +1,14 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class DashedLinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.5)
+      ..color = Colors.white.withValues(alpha: 0.8)
       ..strokeWidth = 1;
 
-    const double dashWidth = 5; // 💡 每段虚线的长度
-    const double dashSpace = 3; // 💡 虚线之间的空白间距
+    const double dashWidth = 2; // 每段虚线的长度
+    const double dashSpace = 2; // 虚线之间的空白间距
 
     double startX = 0;
     final double y = size.height / 2; // Y 轴居中

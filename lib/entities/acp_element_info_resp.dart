@@ -56,6 +56,7 @@ class FormEntry {
   final String key;
   final int order;
   final int must;
+  final List<FormEntryRule> rules;
 
   const FormEntry({
     required this.code,
@@ -67,6 +68,7 @@ class FormEntry {
     required this.key,
     required this.order,
     required this.must,
+    required this.rules,
   });
 
   factory FormEntry.fromJson(Map<String, dynamic> json) {
@@ -82,6 +84,32 @@ class FormEntry {
       key: json['key'] as String? ?? '',
       order: json['order'] as int? ?? 0,
       must: json['must'] as int? ?? 0,
+      rules:
+          (json['rules'] as List<dynamic>?)
+              ?.map((e) => FormEntryRule.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+    );
+  }
+}
+
+/// 表单项校验规则模型。
+class FormEntryRule {
+  final int type;
+  final String validator;
+  final String errorMsg;
+
+  const FormEntryRule({
+    required this.type,
+    required this.validator,
+    required this.errorMsg,
+  });
+
+  factory FormEntryRule.fromJson(Map<String, dynamic> json) {
+    return FormEntryRule(
+      type: json['type'] as int? ?? 0,
+      validator: json['validator'] as String? ?? '',
+      errorMsg: json['errorMsg'] as String? ?? '',
     );
   }
 }

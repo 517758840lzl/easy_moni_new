@@ -8,46 +8,62 @@ class LoanBottomActionButton extends StatelessWidget {
     required this.onPressed,
     this.text = '',
     this.fontWeight = FontWeight.w700,
+    this.fontSize = 14,
+    this.letterSpacing,
+    this.height = 40,
+    this.padding = const EdgeInsets.fromLTRB(28, 8, 28, 8),
+    this.backgroundColor = Colors.white,
+    this.enabledColor = const Color(0xFF268470),
+    this.disabledColor = const Color(0xFFC2C9CE),
+    this.useSafeArea = true,
   });
 
   final bool enabled;
   final VoidCallback? onPressed;
   final String text;
   final FontWeight fontWeight;
+  final double fontSize;
+  final double? letterSpacing;
+  final double height;
+  final EdgeInsetsGeometry padding;
+  final Color backgroundColor;
+  final Color enabledColor;
+  final Color disabledColor;
+  final bool useSafeArea;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(28, 8, 28, 8),
-          child: GestureDetector(
-            onTap: enabled ? onPressed : null,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              height: 40,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: enabled
-                    ? const Color(0xFF268470)
-                    : const Color(0xFFC2C9CE),
-                borderRadius: BorderRadius.circular(100),
-              ),
-              child: Center(
-                child: Text(
-                  text,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.white,
-                  ).copyWith(fontWeight: fontWeight),
-                ),
-              ),
+    // 主按钮主体可被弹窗、底栏等不同场景复用，外层容器保持可配置。
+    Widget button = Padding(
+      padding: padding,
+      child: GestureDetector(
+        onTap: enabled ? onPressed : null,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          height: height,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: enabled ? enabledColor : disabledColor,
+            borderRadius: BorderRadius.circular(100),
+          ),
+          child: Center(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: fontSize,
+                color: Colors.white,
+                letterSpacing: letterSpacing,
+              ).copyWith(fontWeight: fontWeight),
             ),
           ),
         ),
       ),
     );
+
+    if (useSafeArea) {
+      button = SafeArea(top: false, child: button);
+    }
+
+    return Container(color: backgroundColor, child: button);
   }
 }

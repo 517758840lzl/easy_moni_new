@@ -9,7 +9,7 @@ import 'package:easy_moni/entities/startup_config_resp.dart';
 import 'package:easy_moni/pages/fillInforma/providers/acp_element_info_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/submit_acp_element_info_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/upload_file_provider.dart';
-import 'package:easy_moni/pages/fillInforma/widgets/progressInformation.dart';
+import 'package:easy_moni/pages/fillInforma/widgets/progress_information.dart';
 import 'package:easy_moni/pages/home/homesell.dart';
 import 'package:easy_moni/pages/login/providers/auth_provider.dart';
 import 'package:easy_moni/utils/widgets/informationBottomButton.dart';

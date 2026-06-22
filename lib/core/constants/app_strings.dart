@@ -41,8 +41,10 @@ class AppStrings {
   static const String codestr = '输入短信中的验证码';
   static const String gainCode = '获取验证码';
   static const String login = 'Log in';
+  // ================ 联系人流程 ========================
   static const String chooseContacts = '选择父母/配偶联系人';
   static const String chooseFriends = '选择朋友/同事联系人';
+  static const String contactPlaceholder = '从通讯录中选择';
   static const String needsContacts = '需要通讯录权限';
   static const String needsSms = '需要短信权限';
   static const String smsPermissionDesc = '读取存款、还款类交易短信，用作授信评估及风控核验，数据全程加密保护。';
@@ -50,12 +52,30 @@ class AppStrings {
   static const String goSettings = '前往设置';
   static const String contactsEmpty = '通讯录为空';
   static const String chooseContactsPhone = '父母/配偶联系电话';
+  static const String contactInfoTitle = 'Contact information';
+  static const String contactInfoFriendColleaguePhone =
+      'Friend/colleague phone number';
+  static const String contactInfoLoadFailed = 'Failed to load contacts';
+  static const String contactInfoNoPhoneNumber =
+      'No phone number found for this contact';
+  static const String contactInfoPickFailed =
+      'Failed to open contacts. Please try again.';
+  static const String contactInfoSaveFailed = 'Save failed';
   static const String checkIdCard = '请确保您的加纳身份证四角完整、图像清晰，光线均匀。';
   static const String chooseUploadMethod = '选择上传方式';
   static const String selectFormPhotos = '从相册选择';
   static const String takephotos = '拍摄照片';
   static const String idcardMessage = '为了让您上传加纳身份证，我们需要获取相机访问权限。';
   static const String idcardVer = '身份验证';
+  static const String informationPersonalStep = '个人信息';
+  static const String informationIdentityStep = '身份验证';
+  static const String informationFaceStep = '人脸验证';
+  static const String personalInfoSaving = '保存中...';
+  static const String personalInfoRegionCityTitle = '居住地区与城市';
+  static const String personalInfoPickerConfirm = 'Confirm';
+  static const String locationPermissionTitle = '需要位置权限';
+  static const String locationPermissionDesc =
+      '我们使用位置信息来保障您的账户安全、防范欺诈行为。请允许位置访问权限以继续操作。';
   static const String homeTab = '首页';
   static const String repayTab = '还款';
   static const String mineTab = '我的';
@@ -68,6 +88,7 @@ class AppStrings {
   static const String toolBright = 'Too bright';
   static const String incompletePhoto = 'Incomplete photo';
   static const String blueryPhoto = 'Blurry/Faded photo';
+  static const String fundingLimitDialogDesc = '离成功只差一步，完成借款即可快速到账，解决您的资金需求。';
   static const String continueSallery = "继续获取资金";
   static const String looseSallery = "放弃本次机会";
   static const String noLoanProducts = '暂无可借产品';

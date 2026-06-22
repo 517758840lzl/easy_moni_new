@@ -7,7 +7,7 @@ import 'package:easy_moni/pages/fillInforma/id_camera_page.dart';
 import 'package:easy_moni/pages/fillInforma/providers/ocr_verification_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/submit_acp_element_info_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/upload_file_provider.dart';
-import 'package:easy_moni/pages/fillInforma/widgets/progressInformation.dart';
+import 'package:easy_moni/pages/fillInforma/widgets/progress_information.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

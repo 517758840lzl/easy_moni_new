@@ -452,6 +452,7 @@ List<MineOrderSummaryCardColumnData> _buildDisbursementColumns(
       label: AppStrings.loanOrderReceiptAmountLabel,
       value: (order.receiptAmount ?? 0).formatAmount(),
     ),
+    // TODO 借款日期暂时使用 createTime
     MineOrderSummaryCardColumnData(
       label: AppStrings.mineOrderLoanDateLabel,
       value: _formatDate(order.createTime),

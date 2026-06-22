@@ -1,7 +1,10 @@
+import 'dart:convert';
+
+import 'package:easy_moni/core/constants/api_constants.dart';
+import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/http_provider.dart';
 import '../../../core/network/http_result.dart';
-import '../../../core/constants/api_constants.dart';
 
 final submitAcpElementInfoProvider = Provider<SubmitAcpElementInfoApi>((ref) {
   return SubmitAcpElementInfoApi();
@@ -31,6 +34,9 @@ class SubmitAcpElementInfoApi {
             'step': step,
             'data': data ?? <String, dynamic>{},
           };
+    AppLogger.debug(
+      'submitAcpElementInfo requestBody: ${jsonEncode(requestBody)}',
+    );
 
     final result = await HttpProvider.instance.post<dynamic>(
       ApiConstants.submitAcpElementInfo,
