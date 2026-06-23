@@ -17,9 +17,11 @@ class AppRoutePaths {
   static const String personalInfo = '/personal-info';
   static const String identityVerify = '/identity-verify';
   static const String faceVerify = '/face-verify';
+  static const String faceVerifyCapture = '/face-verify/capture';
   static const String questionnaire = '/questionnaire';
   static const String mine = '/mine';
   static const String orderHistory = '/order-history';
+  static const String settings = '/settings';
   static const String detail = '/detail/:id';
   static const String repayExtension = '/repay-extension';
 
@@ -105,9 +107,11 @@ class AppRouteNames {
   static const String personalInfo = 'personalInfo';
   static const String identityVerify = 'identityVerify';
   static const String faceVerify = 'faceVerify';
+  static const String faceVerifyCapture = 'faceVerifyCapture';
   static const String questionnaire = 'questionnaire';
   static const String mine = 'mine';
   static const String orderHistory = 'orderHistory';
+  static const String settings = 'settings';
   static const String detail = 'detail';
   static const String repayExtension = 'repayExtension';
 

@@ -196,7 +196,11 @@ class _RepayEntryHeader extends StatelessWidget {
                 ),
                 Positioned(
                   right: 20,
-                  child: Assets.images.customer.image(width: 32, height: 32),
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => context.push(AppRoutePaths.customerService),
+                    child: Assets.images.customer.image(width: 32, height: 32),
+                  ),
                 ),
               ],
             ),

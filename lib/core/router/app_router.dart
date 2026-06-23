@@ -1,4 +1,5 @@
 import 'package:easy_moni/pages/fillInforma/contact_info_page.dart';
+import 'package:easy_moni/pages/fillInforma/face_verify_entry_page.dart';
 import 'package:easy_moni/pages/fillInforma/face_verify_page.dart';
 import 'package:easy_moni/pages/fillInforma/id_camera_page.dart';
 import 'package:easy_moni/pages/fillInforma/identity_verify_page.dart';
@@ -11,6 +12,7 @@ import 'package:easy_moni/pages/loan/models/loan_order_detail_data.dart';
 import 'package:easy_moni/pages/mine/customer_service_page.dart';
 import 'package:easy_moni/pages/mine/mine_order_history_page.dart';
 import 'package:easy_moni/pages/mine/mine_page.dart';
+import 'package:easy_moni/pages/mine/settings_page.dart';
 import 'package:easy_moni/entities/repay/repay_detail_resp.dart';
 import 'package:easy_moni/pages/repay/repay_entry_page.dart';
 import 'package:easy_moni/pages/repay/payment_page.dart';
@@ -180,6 +182,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutePaths.faceVerify,
         name: AppRouteNames.faceVerify,
+        builder: (context, state) => const FaceVerifyEntryPage(),
+      ),
+      GoRoute(
+        path: AppRoutePaths.faceVerifyCapture,
+        name: AppRouteNames.faceVerifyCapture,
         builder: (context, state) => const FaceVerifyPage(),
       ),
       GoRoute(
@@ -196,6 +203,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutePaths.orderHistory,
         name: AppRouteNames.orderHistory,
         builder: (context, state) => const MineOrderHistoryPage(),
+      ),
+      GoRoute(
+        path: AppRoutePaths.settings,
+        name: AppRouteNames.settings,
+        builder: (context, state) => const SettingsPage(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

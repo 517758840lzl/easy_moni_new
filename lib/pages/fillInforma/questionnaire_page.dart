@@ -1,13 +1,14 @@
-import 'package:easy_moni/core/router/app_routes.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:easy_moni/core/constants/app_strings.dart';
+import 'package:easy_moni/core/router/acquisition_progress_route_resolver.dart';
+import 'package:easy_moni/entities/acp_element_info_resp.dart';
+import 'package:easy_moni/gen/assets.gen.dart';
+import 'package:easy_moni/pages/fillInforma/providers/questionnaire_provider.dart';
+import 'package:easy_moni/pages/fillInforma/widgets/personal_info_form_item.dart';
+import 'package:easy_moni/pages/fillInforma/widgets/picker_bottom_sheet.dart';
+import 'package:easy_moni/utils/widgets/informationBottomButton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
-import '../../entities/acp_element_info_resp.dart';
-import '../../gen/assets.gen.dart';
-import '../../utils/widgets/informationBottomButton.dart';
-import 'providers/questionnaire_provider.dart';
 
 class QuestionnairePage extends ConsumerStatefulWidget {
   const QuestionnairePage({super.key});
@@ -18,6 +19,15 @@ class QuestionnairePage extends ConsumerStatefulWidget {
 
 class _QuestionnairePageState extends ConsumerState<QuestionnairePage> {
   static const Duration _submitDialogMinDuration = Duration(seconds: 2);
+  final Map<String, TextEditingController> _textControllers = {};
+
+  @override
+  void dispose() {
+    for (final controller in _textControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(
@@ -40,116 +50,30 @@ class _QuestionnairePageState extends ConsumerState<QuestionnairePage> {
     }
   }
 
+  /// 展示问卷选择项通用底部弹窗，并在确认后同步表单状态。
   Future<bool> _showPicker({
     required FormEntry entry,
     required List<SelectOption> options,
     required int selectedIndex,
   }) async {
-    int tempSelectedIndex = selectedIndex;
-
-    final result = await showModalBottomSheet<bool>(
+    var isConfirmed = false;
+    await PickerBottomSheet.show(
       context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
-      ),
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            return SizedBox(
-              height: 320,
-              child: Column(
-                children: [
-                  Container(
-                    height: 50,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(color: Color(0xFFE7E7E7)),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        GestureDetector(
-                          onTap: () => Navigator.pop(context, false),
-                          child: const Icon(
-                            Icons.close,
-                            size: 20,
-                            color: Color(0xFF1A1A1A),
-                          ),
-                        ),
-                        Flexible(
-                          child: Text(
-                            entry.showContent,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF1A1A1A),
-                            ),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            final option = options[tempSelectedIndex];
-                            ref
-                                .read(questionnaireProvider.notifier)
-                                .selectOption(
-                                  entry: entry,
-                                  option: option,
-                                  index: tempSelectedIndex,
-                                );
-                            Navigator.pop(context, true);
-                          },
-                          child: const Text(
-                            'Confirm',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF268470),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: CupertinoPicker(
-                      scrollController: FixedExtentScrollController(
-                        initialItem: selectedIndex,
-                      ),
-                      itemExtent: 40,
-                      onSelectedItemChanged: (index) {
-                        tempSelectedIndex = index;
-                      },
-                      children: options
-                          .map(
-                            (option) => Center(
-                              child: Text(
-                                option.value,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Color(0xFF1A1A1A),
-                                ),
-                              ),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
+      title: entry.showContent,
+      options: options
+          .map((option) => PickerBottomSheetOption(label: option.value))
+          .toList(),
+      selectedIndex: selectedIndex,
+      onConfirm: (index) {
+        isConfirmed = true;
+        final option = options[index];
+        ref
+            .read(questionnaireProvider.notifier)
+            .selectOption(entry: entry, option: option, index: index);
       },
     );
 
-    return result ?? false;
+    return isConfirmed;
   }
 
   Future<bool> _showPickerForEntry(FormEntry entry) async {
@@ -199,11 +123,20 @@ class _QuestionnairePageState extends ConsumerState<QuestionnairePage> {
     _hideSubmitDialog();
 
     if (result.isSuccess) {
-      context.go(AppRoutePaths.home);
+      final submitData = result.submitData;
+      if (submitData == null) {
+        _showSnackBar(result.message ?? AppStrings.questionnaireSaveFailed);
+        return;
+      }
+
+      final route = AcquisitionProgressRouteResolver.resolveSubmitResult(
+        submitData,
+      );
+      context.go(route);
       return;
     }
 
-    _showSnackBar(result.message ?? 'Save failed');
+    _showSnackBar(result.message ?? AppStrings.questionnaireSaveFailed);
   }
 
   @override
@@ -212,7 +145,7 @@ class _QuestionnairePageState extends ConsumerState<QuestionnairePage> {
     final formState = questionnaireAsync.value;
     final pageTitle = formState?.stepInfo?.pageTitle.trim().isNotEmpty == true
         ? formState!.stepInfo!.pageTitle
-        : 'Credit Report';
+        : AppStrings.questionnaireDefaultTitle;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -241,7 +174,7 @@ class _QuestionnairePageState extends ConsumerState<QuestionnairePage> {
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
                       height: 1.1,
-                      letterSpacing: -1.5,
+                      letterSpacing: 0,
                     ),
                   ),
                 ),
@@ -249,7 +182,7 @@ class _QuestionnairePageState extends ConsumerState<QuestionnairePage> {
                 const Padding(
                   padding: EdgeInsets.only(left: 24, right: 150),
                   child: Text(
-                    'Complete this questionnaire to help us better evaluate your credit profile.',
+                    AppStrings.questionnaireDescription,
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.white70,
@@ -279,8 +212,8 @@ class _QuestionnairePageState extends ConsumerState<QuestionnairePage> {
         isEnabled: formState?.canSubmit ?? false,
         onTap: _onSubmit,
         text: (formState?.isSubmitting ?? false)
-            ? 'Saving...'
-            : 'Submit report, get quota',
+            ? AppStrings.questionnaireSaving
+            : AppStrings.questionnaireSubmitButton,
       ),
     );
   }
@@ -330,7 +263,7 @@ class _QuestionnairePageState extends ConsumerState<QuestionnairePage> {
         if (formState.entries.isEmpty) {
           return const Center(
             child: Text(
-              'No questionnaire data',
+              AppStrings.questionnaireNoData,
               style: TextStyle(fontSize: 14, color: Color(0xFFACACAC)),
             ),
           );
@@ -353,6 +286,7 @@ class _QuestionnairePageState extends ConsumerState<QuestionnairePage> {
     );
   }
 
+  /// 根据问卷表单配置复用个人信息表单项，统一选择项与输入项样式。
   Widget _buildEntryItem({
     required QuestionnaireState formState,
     required FormEntry entry,
@@ -362,155 +296,32 @@ class _QuestionnairePageState extends ConsumerState<QuestionnairePage> {
         .read(questionnaireProvider.notifier)
         .isPickerEntry(entry);
     if (isPicker) {
-      return _buildPickerItem(
-        formState: formState,
-        entry: entry,
+      return PersonalInfoFormItem(
+        title: entry.showContent,
+        isRequired: entry.must == 1,
+        value: formState.selectedValues[entry.key],
+        placeholder: entry.defaultText,
         showDivider: showDivider,
+        onTap: () => _onPickerEntryTap(entry),
       );
     }
-    return _buildTextInputItem(
-      formState: formState,
-      entry: entry,
+
+    final controller = _textControllers[entry.key] ??= TextEditingController(
+      text: formState.selectedSubmitValues[entry.key] ?? '',
+    );
+
+    return PersonalInfoFormItem(
+      title: entry.showContent,
+      isRequired: entry.must == 1,
+      placeholder: entry.defaultText,
+      controller: controller,
       showDivider: showDivider,
+      onChanged: (value) {
+        ref
+            .read(questionnaireProvider.notifier)
+            .updateTextValue(entry: entry, value: value);
+      },
     );
-  }
-
-  Widget _buildPickerItem({
-    required QuestionnaireState formState,
-    required FormEntry entry,
-    required bool showDivider,
-  }) {
-    final value = formState.selectedValues[entry.key];
-    final hasValue = value != null && value.isNotEmpty;
-
-    return GestureDetector(
-      onTap: () => _onPickerEntryTap(entry),
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildEntryTitle(entry),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.only(left: 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      hasValue ? value : entry.defaultText,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 14,
-                        height: 1.42,
-                        color: hasValue
-                            ? const Color(0xFF070707)
-                            : const Color(0xFFCCCCCC),
-                      ),
-                    ),
-                  ),
-                  Icon(
-                    Icons.chevron_right,
-                    size: 18,
-                    color: Colors.black.withValues(alpha: 0.3),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            if (showDivider) _buildDivider(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextInputItem({
-    required QuestionnaireState formState,
-    required FormEntry entry,
-    required bool showDivider,
-  }) {
-    final initialValue = formState.selectedSubmitValues[entry.key] ?? '';
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildEntryTitle(entry),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.only(left: 12),
-            child: TextFormField(
-              key: ValueKey(entry.key),
-              initialValue: initialValue,
-              decoration: InputDecoration(
-                isDense: true,
-                filled: true,
-                fillColor: Colors.transparent,
-                hintText: entry.defaultText,
-                hintStyle: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFFCCCCCC),
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-              ),
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF070707),
-                height: 1.42,
-              ),
-              onChanged: (value) {
-                ref
-                    .read(questionnaireProvider.notifier)
-                    .updateTextValue(entry: entry, value: value);
-              },
-            ),
-          ),
-          if (showDivider) _buildDivider(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEntryTitle(FormEntry entry) {
-    return Row(
-      children: [
-        if (entry.must == 1)
-          const Text(
-            '*',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.red,
-              letterSpacing: 0.4,
-            ),
-          ),
-        if (entry.must == 1) const SizedBox(width: 4),
-        Expanded(
-          child: Text(
-            entry.showContent,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF070707),
-              letterSpacing: 0.4,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDivider() {
-    return Container(height: 1, color: const Color(0xFFF5F5F5));
   }
 }
 
@@ -541,7 +352,7 @@ class _SubmitProgressDialog extends StatelessWidget {
                   right: 24,
                   top: 86,
                   child: Text(
-                    'Authentication',
+                    AppStrings.questionnaireAuthentication,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white,
@@ -563,7 +374,7 @@ class _SubmitProgressDialog extends StatelessWidget {
                   right: 24,
                   top: 248,
                   child: Text(
-                    'Just a moment...',
+                    AppStrings.questionnaireSubmitWaiting,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white,

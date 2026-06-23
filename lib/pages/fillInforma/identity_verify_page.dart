@@ -1,4 +1,5 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
+import 'package:easy_moni/core/router/acquisition_progress_route_resolver.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:easy_moni/core/utils/app_logger.dart';
@@ -162,7 +163,20 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
 
       if (!mounted) return;
       if (result.isSuccess) {
-        context.push(AppRoutePaths.faceVerify);
+        final submitData = result.data;
+        if (submitData == null) {
+          _showSnackBar(result.message ?? AppStrings.errorMessage);
+          return;
+        }
+
+        final route = AcquisitionProgressRouteResolver.resolveSubmitResult(
+          submitData,
+        );
+        if (route == AppRoutePaths.home) {
+          context.go(route);
+        } else {
+          context.push(route);
+        }
       } else {
         _showSnackBar(result.message ?? AppStrings.identityVerifySaveFailed);
       }

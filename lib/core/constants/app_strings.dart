@@ -49,7 +49,7 @@ class AppStrings {
   static const String needsSms = '需要短信权限';
   static const String needsCamera = '需要相机权限';
   static const String smsPermissionDesc = '读取存款、还款类交易短信，用作授信评估及风控核验，数据全程加密保护。';
-  static const String cancel = '取消';
+  static const String cancel = 'cancel';
   static const String goSettings = '前往设置';
   static const String contactsEmpty = '通讯录为空';
   static const String chooseContactsPhone = '父母/配偶联系电话';
@@ -74,6 +74,15 @@ class AppStrings {
   static const String personalInfoSaving = '保存中...';
   static const String personalInfoRegionCityTitle = '居住地区与城市';
   static const String personalInfoPickerConfirm = 'Confirm';
+  static const String questionnaireDefaultTitle = '';
+  static const String questionnaireDescription =
+      'Complete this questionnaire to help us better evaluate your credit profile.';
+  static const String questionnaireSaving = 'Saving...';
+  static const String questionnaireSubmitButton = 'Submit report, get quota';
+  static const String questionnaireNoData = 'No questionnaire data';
+  static const String questionnaireSaveFailed = 'Save failed';
+  static const String questionnaireAuthentication = 'Authentication';
+  static const String questionnaireSubmitWaiting = 'Just a moment...';
   static const String locationPermissionTitle = '需要位置权限';
   static const String locationPermissionDesc =
       '我们使用位置信息来保障您的账户安全、防范欺诈行为。请允许位置访问权限以继续操作。';
@@ -84,6 +93,33 @@ class AppStrings {
   static const String continueIdentifyStr = '开始识别证件信息...';
   static const String continueUploadPicture = '开始上传证件图片...';
   static const String continueOcr = '请根据指引完成人脸验证';
+  static const String faceVerifyEntryContinue = 'CONTINUE';
+  static const String faceVerifyEntryRetake = '重拍';
+  static const String faceVerifyEntryConfirmPhoto = '照片清晰，完成';
+  static const String faceVerifyEntryNoPhoto = '请先完成人脸拍摄';
+  static const String faceVerifyEntryPhotoConfirmTip = '请确认照片是否清晰';
+  static const String faceVerifyEntryPhotoBlurRisk = '若照片模糊，可能导致审核拒绝';
+  static const String faceVerifyTitle = '人脸验证';
+  static const String faceVerifyGuideTitle = '请按照指引完成人脸验证';
+  static const String faceVerifyLookStraight =
+      'Please look straight at the camera';
+  static const String faceVerifyFaceFront =
+      'Please look straight at the camera';
+  static const String faceVerifyNodHead = 'Please nod your head';
+  static const String faceVerifyShakeHead = 'Please shake your head';
+  static const String faceVerifyTurnLeft = 'Please turn your head left';
+  static const String faceVerifyTurnRight = 'Please turn your head right';
+  static const String faceVerifyBlink = 'Please blink your eyes';
+  static const String faceVerifyOpenMouth = 'Please open your mouth';
+  static const String faceVerifySmile = 'Please smile';
+  static const String faceVerifyCaptureCompleted = 'Face capture completed';
+  static const String faceVerifyUploadFailed = '上传失败，请重试';
+  static const String faceVerifyCaptureFailedRetry = '拍照失败，请重试';
+  static const String faceVerifyUnsupportedWeb =
+      '暂不支持 Web 端活体识别，请使用 Android 真机测试';
+  static const String faceVerifyNoCamera = '未找到可用相机';
+  static const String faceVerifySubmitFailed = '提交失败';
+  static const String faceVerifyAutoCaptureHint = '动作已完成，请正视镜头，系统将自动抓拍正脸照片';
   static const String identityVerifyCheckInfo = '请仔细核对个人身份信息';
   static const String identityVerifyConfirmIdNumber = '请再次核对您的身份证号码';
   static const String identityVerifyConfirmRequired = '请先确认身份证号码';
@@ -110,13 +146,18 @@ class AppStrings {
   static const String takeOcrPictures =
       'Please use landscape mode and place all four corners of your Ghana Card inside the frame.';
   static String captureFailed(Object error) => '拍照失败: $error';
+  static String faceVerifyCameraInitFailed(Object error) => '相机初始化失败: $error';
+  static String faceVerifyEntryOwnerConfirm(String userName) {
+    final name = userName.trim();
+    return name.isEmpty ? confirmOwnerData : '请确认 $name  本人操作';
+  }
 
   // ==================== 我的 ====================
   static const String mineCurrentPending = '当前待还';
   static const String mineGoToRepay = '去还款';
   static const String mineOtherFeatures = '其他功能';
   static const String mineHistoryOrders = '我的订单';
-  static const String mineCustomerService = '客服';
+  static const String mineCustomerService = 'Service';
   static const String mineCustomerServiceEmpty = '暂无客服信息';
   static const String mineCustomerServiceLoadFailed = '获取客服信息失败';
   static const String customerServicePhone = 'Phone';
@@ -127,6 +168,13 @@ class AppStrings {
   static const String customerServiceAntiFraudDesc = '认准官方联系方式，请勿\n轻信陌生来电或消息';
   static const String mineSettings = '设置';
   static const String mineLogout = 'Log out';
+  static const String mineDeleteAccount = 'Delete Account';
+  static const String mineDeleteAccountDialogTitle = 'Delete Account';
+  static const String mineDeleteAccountDialogContent =
+      'Are you sure you want to delete your account?';
+  static const String mineDeleteAccountConfirm = 'Confirm';
+  static const String mineDeleteAccountSuccess = 'Account deleted';
+  static const String mineDeleteAccountFailed = 'Delete failed, please retry';
   static const String mineOrderHistoryTitle = '历史订单';
   static const String mineOrderHistoryAllTab = '全部';
   static const String mineOrderHistoryDisbursingTab = '借款中';

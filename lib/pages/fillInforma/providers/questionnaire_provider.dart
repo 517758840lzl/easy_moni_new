@@ -1,8 +1,8 @@
+import 'package:easy_moni/entities/acp_element_info_resp.dart';
+import 'package:easy_moni/entities/submit_acp_info_resp.dart';
+import 'package:easy_moni/pages/fillInforma/providers/acp_element_info_provider.dart';
+import 'package:easy_moni/pages/fillInforma/providers/submit_acp_element_info_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../entities/acp_element_info_resp.dart';
-import 'acp_element_info_provider.dart';
-import 'submit_acp_element_info_provider.dart';
 
 final questionnaireProvider =
     AsyncNotifierProvider.autoDispose<
@@ -78,8 +78,13 @@ class QuestionnaireState {
 class QuestionnaireSubmitResult {
   final bool isSuccess;
   final String? message;
+  final SubmitAcpInfoResp? submitData;
 
-  const QuestionnaireSubmitResult({required this.isSuccess, this.message});
+  const QuestionnaireSubmitResult({
+    required this.isSuccess,
+    this.message,
+    this.submitData,
+  });
 }
 
 class QuestionnaireController extends AsyncNotifier<QuestionnaireState> {
@@ -184,6 +189,7 @@ class QuestionnaireController extends AsyncNotifier<QuestionnaireState> {
       return QuestionnaireSubmitResult(
         isSuccess: result.isSuccess,
         message: result.message,
+        submitData: result.data,
       );
     } catch (e) {
       return QuestionnaireSubmitResult(

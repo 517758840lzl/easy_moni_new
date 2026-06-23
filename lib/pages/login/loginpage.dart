@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/network/http_provider.dart';
+import 'package:easy_moni/core/router/acquisition_progress_route_resolver.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/entities/acquisition_progress_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
@@ -76,46 +77,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         (digits.length == 10 && digits.startsWith('0'));
   }
 
-  String _routeByProgress(AcquisitionProgressResp progressData) {
-    final steps = progressData.processSteps ?? const [];
-    final filledStep = progressData.filledStep ?? 0;
-
-    if (progressData.hasCompletedKyc) {
-      return AppRoutePaths.home;
-    }
-
-    if (steps.isEmpty) {
-      return AppRoutePaths.personalInfo;
-    }
-
-    ProcessStep? nextStep;
-    for (final step in steps) {
-      if ((step.step ?? 0) > filledStep) {
-        nextStep = step;
-        break;
-      }
-    }
-
-    nextStep ??= steps.isNotEmpty ? steps.first : null;
-
-    switch (filledStep + 1) {
-      case 1:
-        return AppRoutePaths.personalInfo;
-      case 2:
-        return AppRoutePaths.contactInfo;
-      case 4:
-        return AppRoutePaths.identityVerify;
-      case 5:
-        return AppRoutePaths.faceVerify;
-      case 6:
-        return AppRoutePaths.questionnaire;
-      default:
-        return AppRoutePaths.home;
-    }
-  }
-
   void _navigateByProgress(AcquisitionProgressResp progressData) {
-    final route = _routeByProgress(progressData);
+    final route = AcquisitionProgressRouteResolver.resolve(progressData);
     AppLogger.debug('登录后跳转目标: $route');
     context.go(route);
   }

@@ -25,6 +25,10 @@ class $AssetsImagesGen {
   AssetGenImage get dangerCircleNormal =>
       const AssetGenImage('assets/images/DangerCircle_normal.png');
 
+  /// File path: assets/images/Easy_Moni_text.png
+  AssetGenImage get easyMoniText =>
+      const AssetGenImage('assets/images/Easy_Moni_text.png');
+
   /// File path: assets/images/GallerySend.png
   AssetGenImage get gallerySend =>
       const AssetGenImage('assets/images/GallerySend.png');
@@ -66,6 +70,14 @@ class $AssetsImagesGen {
 
   /// File path: assets/images/dotss.png
   AssetGenImage get dotss => const AssetGenImage('assets/images/dotss.png');
+
+  /// File path: assets/images/face_verify_circle.png
+  AssetGenImage get faceVerifyCircle =>
+      const AssetGenImage('assets/images/face_verify_circle.png');
+
+  /// File path: assets/images/face_verify_rectangle.png
+  AssetGenImage get faceVerifyRectangle =>
+      const AssetGenImage('assets/images/face_verify_rectangle.png');
 
   /// File path: assets/images/id_card_rectangle.png
   AssetGenImage get idCardRectangle =>
@@ -359,6 +371,10 @@ class $AssetsImagesGen {
   AssetGenImage get serviceSafe =>
       const AssetGenImage('assets/images/service_safe.png');
 
+  /// File path: assets/images/settings_delete_account.png
+  AssetGenImage get settingsDeleteAccount =>
+      const AssetGenImage('assets/images/settings_delete_account.png');
+
   /// File path: assets/images/star_icon.png
   AssetGenImage get starIcon =>
       const AssetGenImage('assets/images/star_icon.png');
@@ -372,6 +388,7 @@ class $AssetsImagesGen {
     cameraM,
     dangerCircle,
     dangerCircleNormal,
+    easyMoniText,
     gallerySend,
     notebook,
     appLogo512,
@@ -383,6 +400,8 @@ class $AssetsImagesGen {
     couponSelectedBg,
     customer,
     dotss,
+    faceVerifyCircle,
+    faceVerifyRectangle,
     idCardRectangle,
     inforamtionBgheader,
     inforamtionF,
@@ -457,6 +476,7 @@ class $AssetsImagesGen {
     rightArrow,
     serviceRightArrow,
     serviceSafe,
+    settingsDeleteAccount,
     starIcon,
     takepicture,
   ];

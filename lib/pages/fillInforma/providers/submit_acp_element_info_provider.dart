@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:easy_moni/core/constants/api_constants.dart';
 import 'package:easy_moni/core/utils/app_logger.dart';
+import 'package:easy_moni/entities/submit_acp_info_resp.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/http_provider.dart';
 import '../../../core/network/http_result.dart';
@@ -15,7 +16,7 @@ class SubmitAcpElementInfoApi {
   /// [processId] 流程ID
   /// [step] 步骤
   /// [jsonParam] 按文档格式提交的字段列表
-  Future<HttpResult<dynamic>> call({
+  Future<HttpResult<SubmitAcpInfoResp>> call({
     required int processId,
     required int step,
     List<Map<String, dynamic>>? jsonParam,
@@ -38,10 +39,10 @@ class SubmitAcpElementInfoApi {
       'submitAcpElementInfo requestBody: ${jsonEncode(requestBody)}',
     );
 
-    final result = await HttpProvider.instance.post<dynamic>(
+    final result = await HttpProvider.instance.post<SubmitAcpInfoResp>(
       ApiConstants.submitAcpElementInfo,
       data: requestBody,
-      fromJson: (json) => json,
+      fromJson: SubmitAcpInfoResp.fromJson,
     );
     return result;
   }

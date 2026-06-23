@@ -138,7 +138,11 @@ class _ReviewingAppBar extends StatelessWidget {
           Positioned(
             top: 11,
             right: 21,
-            child: Assets.images.customer.image(width: 32, height: 32),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => context.push(AppRoutePaths.customerService),
+              child: Assets.images.customer.image(width: 32, height: 32),
+            ),
           ),
         ],
       ),

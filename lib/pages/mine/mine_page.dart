@@ -36,7 +36,7 @@ class _MinePageState extends ConsumerState<MinePage> {
   String _userName = '';
   String _userPhone = '';
   List<UserRepaymentResp> _pendingRepayOrders = const <UserRepaymentResp>[];
-  bool _showPendingRepayCard = true;
+  bool _showPendingRepayCard = false;
 
   /// 当前待还金额为所有待还订单 repayAmount 之和。
   double get _totalRepayAmount {
@@ -90,6 +90,7 @@ class _MinePageState extends ConsumerState<MinePage> {
       if (result.isSuccess) {
         setState(() {
           _pendingRepayOrders = result.data ?? const <UserRepaymentResp>[];
+          _showPendingRepayCard = _pendingRepayOrders.isNotEmpty;
         });
         AppLogger.debug('待还订单加载成功: ${_pendingRepayOrders.length}');
       } else {
@@ -135,12 +136,12 @@ class _MinePageState extends ConsumerState<MinePage> {
 
   void _onPrivacyPolicyTap() {
     AppLogger.debug('点击了隐私政策');
-    // TODO: 打开隐私政策页面
+    // TODO: 打开隐私政策页面，webview打开h5页面
   }
 
   void _onSettingsTap() {
     AppLogger.debug('点击了设置');
-    // TODO: 跳转到设置页面
+    context.push(AppRoutePaths.settings);
   }
 
   Future<void> _onLogoutTap() async {
@@ -195,7 +196,11 @@ class _MinePageState extends ConsumerState<MinePage> {
       contentTop: (_) => topInset + 212,
       contentTopRadius: 16,
       backgroundColor: AppColors.primaryDark,
-      header: _MineHeader(userName: _userName, userPhone: _userPhone),
+      header: _MineHeader(
+        userName: _userName,
+        userPhone: _userPhone,
+        onCustomerServiceTap: _onCustomerServiceTap,
+      ),
       content: _MineContent(
         showPendingRepayCard: _showPendingRepayCard,
         pendingAmount: _totalRepayAmount,
@@ -213,10 +218,15 @@ class _MinePageState extends ConsumerState<MinePage> {
 
 /// 我的页面顶部用户资料区。
 class _MineHeader extends StatelessWidget {
-  const _MineHeader({required this.userName, required this.userPhone});
+  const _MineHeader({
+    required this.userName,
+    required this.userPhone,
+    required this.onCustomerServiceTap,
+  });
 
   final String userName;
   final String userPhone;
+  final VoidCallback onCustomerServiceTap;
 
   @override
   Widget build(BuildContext context) {
@@ -239,7 +249,14 @@ class _MineHeader extends StatelessWidget {
                 child: Row(
                   children: [
                     const Spacer(),
-                    Assets.images.customer.image(width: 28, height: 28),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: onCustomerServiceTap,
+                      child: Assets.images.customer.image(
+                        width: 28,
+                        height: 28,
+                      ),
+                    ),
                   ],
                 ),
               ),

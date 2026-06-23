@@ -35,7 +35,7 @@ Widget buildInformationHeader({
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: SizedBox(
-              height: 44,
+              height: 48,
               child: Row(
                 children: [
                   GestureDetector(
@@ -64,7 +64,7 @@ Widget buildInformationHeader({
           ),
           const SizedBox(height: 16),
           buildProgressIndicator(activeStep: activeStep),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
         ],
       ),
     ),

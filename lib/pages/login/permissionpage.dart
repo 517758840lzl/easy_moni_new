@@ -3,9 +3,9 @@ import 'package:easy_moni/core/utils/app_logger.dart';
 
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/network/http_provider.dart';
+import 'package:easy_moni/core/router/acquisition_progress_route_resolver.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
-import 'package:easy_moni/entities/acquisition_progress_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/fillInforma/providers/acquisition_progress_provider.dart';
 import 'package:easy_moni/pages/login/providers/auth_provider.dart';
@@ -53,34 +53,6 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
     }
   }
 
-  String _routeByProgress(AcquisitionProgressResp progressData) {
-    final steps = progressData.processSteps ?? const [];
-    final filledStep = progressData.filledStep ?? 0;
-
-    if (progressData.hasCompletedKyc) {
-      return AppRoutePaths.home;
-    }
-
-    if (steps.isEmpty) {
-      return AppRoutePaths.personalInfo;
-    }
-
-    switch (filledStep + 1) {
-      case 1:
-        return AppRoutePaths.personalInfo;
-      case 2:
-        return AppRoutePaths.contactInfo;
-      case 4:
-        return AppRoutePaths.identityVerify;
-      case 5:
-        return AppRoutePaths.faceVerify;
-      case 6:
-        return AppRoutePaths.questionnaire;
-      default:
-        return AppRoutePaths.home;
-    }
-  }
-
   Future<void> _routeAfterPermissionsAccepted() async {
     final savedToken = await AuthStorage.getToken();
     if (!mounted) return;
@@ -97,7 +69,10 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
     if (!mounted) return;
 
     if (progressResult.isSuccess && progressResult.data != null) {
-      context.go(_routeByProgress(progressResult.data!));
+      final route = AcquisitionProgressRouteResolver.resolve(
+        progressResult.data!,
+      );
+      context.go(route);
     } else {
       await HttpProvider.instance.clearAuth();
       if (!mounted) return;

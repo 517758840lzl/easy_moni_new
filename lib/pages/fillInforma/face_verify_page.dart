@@ -1,18 +1,17 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/utils/app_logger.dart';
 
 import 'package:camera/camera.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
-import 'package:easy_moni/entities/acp_element_info_resp.dart';
 import 'package:easy_moni/entities/startup_config_resp.dart';
-import 'package:easy_moni/pages/fillInforma/providers/acp_element_info_provider.dart';
-import 'package:easy_moni/pages/fillInforma/providers/submit_acp_element_info_provider.dart';
+import 'package:easy_moni/gen/assets.gen.dart';
+import 'package:easy_moni/pages/fillInforma/models/face_verify_action_config.dart';
+import 'package:easy_moni/pages/fillInforma/models/face_verify_capture_result.dart';
 import 'package:easy_moni/pages/fillInforma/providers/upload_file_provider.dart';
-import 'package:easy_moni/pages/fillInforma/widgets/progress_information.dart';
-import 'package:easy_moni/pages/home/homesell.dart';
+import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
 import 'package:easy_moni/pages/login/providers/auth_provider.dart';
-import 'package:easy_moni/utils/widgets/informationBottomButton.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,8 +19,7 @@ import 'package:flutter/services.dart';
 
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
-import '../../utils/widgets/limit_toast.dart';
-
+/// 人脸活体采集页，负责相机预览、动作识别和最终照片上传。
 class FaceVerifyPage extends ConsumerStatefulWidget {
   const FaceVerifyPage({super.key});
 
@@ -29,6 +27,7 @@ class FaceVerifyPage extends ConsumerStatefulWidget {
   ConsumerState<FaceVerifyPage> createState() => _FaceVerifyPageState();
 }
 
+/// 维护相机、MLKit 检测和页面展示状态。
 class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
   static const Map<DeviceOrientation, int> _orientations = {
     DeviceOrientation.portraitUp: 0,
@@ -48,17 +47,13 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
   );
 
   CameraController? _cameraController;
-  StepInfo? _stepInfo;
-  int? _processId;
   StartupConfigResp? _startupConfig;
-  List<_FaceLivenessStep> _livenessSteps = const [];
+  List<FaceLivenessStep> _livenessSteps = const [];
 
   Uint8List? _faceImage;
-  String? _faceImageUrl;
 
   bool _isLoading = true;
   bool _isCameraReady = false;
-  bool _isSubmitting = false;
   bool _isUploading = false;
   bool _isProcessingImage = false;
   bool _hasCapturedFinalImage = false;
@@ -67,10 +62,11 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
   int _stableMatchCount = 0;
   int _stableFrontCount = 0;
   bool _blinkClosedDetected = false;
+  int _nodStartDirection = 0;
+  int _shakeStartDirection = 0;
   String? _cameraError;
   String? _hintText;
 
-  bool get _canContinue => _faceImageUrl?.isNotEmpty == true;
   bool get _allActionsCompleted => _currentStepIndex >= _livenessSteps.length;
 
   @override
@@ -86,23 +82,11 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     super.dispose();
   }
 
+  /// 初始化后端活体配置和前置摄像头。
   Future<void> _initialize() async {
     try {
-      final results = await Future.wait([
-        ref.read(acpElementInfoProvider).call(5),
-        ref.read(startupConfigProvider).call(),
-      ]);
+      final configResult = await ref.read(startupConfigProvider).call();
       if (!mounted) return;
-
-      final stepResult = results[0] as dynamic;
-      final configResult = results[1] as dynamic;
-
-      if (stepResult.isSuccess && stepResult.data != null) {
-        _processId = stepResult.data.processId as int?;
-        _stepInfo = stepResult.data.stepInfoList.isNotEmpty
-            ? stepResult.data.stepInfoList.first
-            : null;
-      }
 
       if (configResult.isSuccess && configResult.data != null) {
         _startupConfig = configResult.data as StartupConfigResp;
@@ -112,14 +96,14 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
         );
       }
 
-      _livenessSteps = _buildLivenessSteps(_startupConfig);
+      _livenessSteps = _buildLivenessSteps();
       _hintText = _livenessSteps.isNotEmpty
           ? _livenessSteps.first.description
-          : 'Please face the camera';
+          : FaceVerifyActionConfig.finalCaptureStep.description;
 
       await _initializeCamera();
     } catch (e) {
-      _cameraError = '相机初始化失败: $e';
+      _cameraError = AppStrings.faceVerifyCameraInitFailed(e);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -127,55 +111,14 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     }
   }
 
-  List<_FaceLivenessStep> _buildLivenessSteps(StartupConfigResp? config) {
-    final stepsFromConfig =
-        config?.faceStep
-            ?.map(
-              (step) => _FaceLivenessStep.fromBackend(
-                key: step.key,
-                description: step.description,
-              ),
-            )
-            .whereType<_FaceLivenessStep>()
-            .toList() ??
-        <_FaceLivenessStep>[];
-    if (stepsFromConfig.isNotEmpty) {
-      return stepsFromConfig;
-    }
-
-    final stepsFromKeys =
-        config?.faceLiveStep
-            ?.map((key) => _FaceLivenessStep.fromBackend(key: key))
-            .whereType<_FaceLivenessStep>()
-            .toList() ??
-        <_FaceLivenessStep>[];
-    if (stepsFromKeys.isNotEmpty) {
-      return stepsFromKeys;
-    }
-
-    return const [
-      _FaceLivenessStep(
-        action: _FaceAction.lookStraight,
-        description: 'Please look straight at the camera',
-      ),
-      _FaceLivenessStep(
-        action: _FaceAction.turnLeft,
-        description: 'Please turn your head left',
-      ),
-      _FaceLivenessStep(
-        action: _FaceAction.turnRight,
-        description: 'Please turn your head right',
-      ),
-      _FaceLivenessStep(
-        action: _FaceAction.blink,
-        description: 'Please blink your eyes',
-      ),
-    ];
+  List<FaceLivenessStep> _buildLivenessSteps() {
+    // TODO: 当前模拟后端动作配置，后续改为读取接口下发的 2-3 个 action。
+    return FaceVerifyActionConfig.mockBackendSteps();
   }
 
   Future<void> _initializeCamera() async {
     if (kIsWeb) {
-      _cameraError = '暂不支持 Web 端活体识别，请使用 Android 真机测试';
+      _cameraError = AppStrings.faceVerifyUnsupportedWeb;
       return;
     }
 
@@ -187,7 +130,7 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     final targetCamera =
         frontCamera ?? (cameras.isNotEmpty ? cameras.first : null);
     if (targetCamera == null) {
-      _cameraError = '未找到可用相机';
+      _cameraError = AppStrings.faceVerifyNoCamera;
       return;
     }
 
@@ -233,16 +176,13 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     try {
       final faces = await _faceDetector.processImage(inputImage);
       if (!mounted || faces.isEmpty) {
-        _stableMatchCount = 0;
-        _stableFrontCount = 0;
-        _blinkClosedDetected = false;
+        _resetActionProgress();
         return;
       }
 
       final face = faces.first;
       if (faces.length != 1 || !_isFaceCentered(face)) {
-        _stableMatchCount = 0;
-        _stableFrontCount = 0;
+        _resetActionProgress();
         return;
       }
 
@@ -251,7 +191,12 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
         final matched = _matchesStep(face, currentStep);
         if (matched) {
           _stableMatchCount += 1;
-          if (_stableMatchCount >= 3) {
+          if (_stableMatchCount >= currentStep.stableFrameThreshold) {
+            _logFaceActionPassed(
+              face: face,
+              step: currentStep,
+              stepIndex: _currentStepIndex,
+            );
             _completeCurrentStep();
           }
         } else {
@@ -260,15 +205,23 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
         return;
       }
 
-      if (_isFrontalFace(face)) {
+      final finalCaptureStep = FaceVerifyActionConfig.finalCaptureStep;
+      if (_matchesStep(face, finalCaptureStep)) {
         _stableFrontCount += 1;
-        if (_stableFrontCount >= 4) {
+        if (_stableFrontCount >=
+            FaceVerifyActionConfig.finalCaptureStableFrameThreshold) {
+          _logFaceActionPassed(
+            face: face,
+            step: finalCaptureStep,
+            stepIndex: _currentStepIndex,
+            isFinalCapture: true,
+          );
           await _captureFinalFacePhoto();
         }
       } else {
         _stableFrontCount = 0;
-        if (_hintText != 'Please look straight at the camera') {
-          setState(() => _hintText = 'Please look straight at the camera');
+        if (_hintText != finalCaptureStep.description) {
+          setState(() => _hintText = finalCaptureStep.description);
         }
       }
     } catch (e) {
@@ -290,32 +243,154 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     return centerX > 0.25 && centerX < 0.75 && centerY > 0.2 && centerY < 0.8;
   }
 
-  bool _matchesStep(Face face, _FaceLivenessStep step) {
-    switch (step.action) {
-      case _FaceAction.lookStraight:
-        return _isFrontalFace(face);
-      case _FaceAction.turnLeft:
-        return (face.headEulerAngleY ?? 0) > 12;
-      case _FaceAction.turnRight:
-        return (face.headEulerAngleY ?? 0) < -12;
-      case _FaceAction.lookUp:
-        return (face.headEulerAngleX ?? 0) > 10;
-      case _FaceAction.lookDown:
-        return (face.headEulerAngleX ?? 0) < -10;
-      case _FaceAction.blink:
-        final left = face.leftEyeOpenProbability ?? 1;
-        final right = face.rightEyeOpenProbability ?? 1;
-        if (left < 0.35 && right < 0.35) {
-          _blinkClosedDetected = true;
-        }
-        if (_blinkClosedDetected && left > 0.75 && right > 0.75) {
-          _blinkClosedDetected = false;
-          return true;
-        }
-        return false;
-      case _FaceAction.smile:
-        return (face.smilingProbability ?? 0) > 0.2;
+  bool _matchesStep(Face face, FaceLivenessStep step) {
+    if (step.action == FaceAction.faceFront) {
+      return _isFrontalFace(face);
     }
+    if (step.action == FaceAction.nodHead) {
+      return _matchesHeadMovement(
+        angle: face.headEulerAngleX ?? 0,
+        startDirection: _nodStartDirection,
+        saveStartDirection: (direction) => _nodStartDirection = direction,
+      );
+    }
+    if (step.action == FaceAction.shakeHead) {
+      return _matchesHeadMovement(
+        angle: face.headEulerAngleY ?? 0,
+        startDirection: _shakeStartDirection,
+        saveStartDirection: (direction) => _shakeStartDirection = direction,
+      );
+    }
+    if (step.action == FaceAction.blink) {
+      final left = face.leftEyeOpenProbability ?? 1;
+      final right = face.rightEyeOpenProbability ?? 1;
+      if (left < 0.35 && right < 0.35) {
+        _blinkClosedDetected = true;
+      }
+      if (_blinkClosedDetected && left > 0.75 && right > 0.75) {
+        _blinkClosedDetected = false;
+        return true;
+      }
+      return false;
+    }
+    if (step.action == FaceAction.openMouth) {
+      return _isMouthOpen(face);
+    }
+    return false;
+  }
+
+  /// TODO 动作通过时打印 Google MLKit 返回的人脸关键数据，便于调试动作识别阈值。正式环境删除
+  void _logFaceActionPassed({
+    required Face face,
+    required FaceLivenessStep step,
+    required int stepIndex,
+    bool isFinalCapture = false,
+  }) {
+    AppLogger.debug({
+      'event': 'google_face_action_passed',
+      'action': step.action,
+      'description': step.description,
+      'stepIndex': stepIndex,
+      'isFinalCapture': isFinalCapture,
+      'stableFrameThreshold': step.stableFrameThreshold,
+      'face': _faceDebugInfo(face),
+    });
+  }
+
+  /// 整理 Google MLKit Face 对象中的调试信息，避免日志里出现不可读对象。
+  Map<String, Object?> _faceDebugInfo(Face face) {
+    return {
+      'trackingId': face.trackingId,
+      'boundingBox': {
+        'left': face.boundingBox.left,
+        'top': face.boundingBox.top,
+        'right': face.boundingBox.right,
+        'bottom': face.boundingBox.bottom,
+        'width': face.boundingBox.width,
+        'height': face.boundingBox.height,
+      },
+      'headEulerAngleX': face.headEulerAngleX,
+      'headEulerAngleY': face.headEulerAngleY,
+      'headEulerAngleZ': face.headEulerAngleZ,
+      'leftEyeOpenProbability': face.leftEyeOpenProbability,
+      'rightEyeOpenProbability': face.rightEyeOpenProbability,
+      'smilingProbability': face.smilingProbability,
+      'landmarks': {
+        'leftEye': _landmarkDebugInfo(
+          face.landmarks[FaceLandmarkType.leftEye],
+        ),
+        'rightEye': _landmarkDebugInfo(
+          face.landmarks[FaceLandmarkType.rightEye],
+        ),
+        'leftMouth': _landmarkDebugInfo(
+          face.landmarks[FaceLandmarkType.leftMouth],
+        ),
+        'rightMouth': _landmarkDebugInfo(
+          face.landmarks[FaceLandmarkType.rightMouth],
+        ),
+        'bottomMouth': _landmarkDebugInfo(
+          face.landmarks[FaceLandmarkType.bottomMouth],
+        ),
+        'noseBase': _landmarkDebugInfo(
+          face.landmarks[FaceLandmarkType.noseBase],
+        ),
+      },
+    };
+  }
+
+  Map<String, int>? _landmarkDebugInfo(FaceLandmark? landmark) {
+    if (landmark == null) return null;
+    return {
+      'x': landmark.position.x,
+      'y': landmark.position.y,
+    };
+  }
+
+  /// 检测需要往返动作的头部动作，例如点头和摇头。
+  bool _matchesHeadMovement({
+    required double angle,
+    required int startDirection,
+    required ValueChanged<int> saveStartDirection,
+  }) {
+    const startThreshold = 7.0;
+    const oppositeThreshold = 5.0;
+
+    if (angle.abs() < startThreshold && startDirection == 0) {
+      return false;
+    }
+
+    final direction = angle > 0 ? 1 : -1;
+    if (startDirection == 0) {
+      saveStartDirection(direction);
+      return false;
+    }
+
+    return direction != startDirection && angle.abs() > oppositeThreshold;
+  }
+
+  /// 根据嘴部关键点比例判断是否张嘴。
+  bool _isMouthOpen(Face face) {
+    final leftMouth = face.landmarks[FaceLandmarkType.leftMouth]?.position;
+    final rightMouth = face.landmarks[FaceLandmarkType.rightMouth]?.position;
+    final bottomMouth = face.landmarks[FaceLandmarkType.bottomMouth]?.position;
+    if (leftMouth == null || rightMouth == null || bottomMouth == null) {
+      return false;
+    }
+
+    final mouthWidth = (rightMouth.x - leftMouth.x).abs();
+    if (mouthWidth == 0) return false;
+
+    final mouthCenterY = (leftMouth.y + rightMouth.y) / 2;
+    final mouthHeight = (bottomMouth.y - mouthCenterY).abs();
+    return mouthHeight / mouthWidth > 0.26;
+  }
+
+  void _resetActionProgress() {
+    _stableMatchCount = 0;
+    _stableFrontCount = 0;
+    _blinkClosedDetected = false;
+    _nodStartDirection = 0;
+    _shakeStartDirection = 0;
   }
 
   bool _isFrontalFace(Face face) {
@@ -331,14 +406,14 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     if (_currentStepIndex >= _livenessSteps.length) return;
     setState(() {
       _currentStepIndex += 1;
-      _stableMatchCount = 0;
-      _blinkClosedDetected = false;
+      _resetActionProgress();
       _hintText = _currentStepIndex < _livenessSteps.length
           ? _livenessSteps[_currentStepIndex].description
-          : 'Please look straight at the camera';
+          : FaceVerifyActionConfig.finalCaptureStep.description;
     });
   }
 
+  // TODO 最后一步抓拍由后端下发action：face_front ，根据这个action拍照，整体用户无感。暂时由前端模拟，后续再接入接口
   Future<void> _captureFinalFacePhoto() async {
     if (_hasCapturedFinalImage || _isUploading) return;
     final controller = _cameraController;
@@ -365,21 +440,24 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
           .call(bytes: bytes, filename: 'face_verify.jpg');
       if (!mounted) return;
 
-      if (uploadResult.isSuccess) {
+      final uploadedUrl = uploadResult.data?.trim() ?? '';
+      if (uploadResult.isSuccess && uploadedUrl.isNotEmpty) {
         setState(() {
-          _faceImageUrl = uploadResult.data;
-          _hintText = 'Face capture completed';
+          _hintText = AppStrings.faceVerifyCaptureCompleted;
         });
+        Navigator.of(context).pop(
+          FaceVerifyCaptureResult(imageBytes: bytes, imageUrl: uploadedUrl),
+        );
       } else {
         _hasCapturedFinalImage = false;
         setState(() {
-          _hintText = uploadResult.message ?? '上传失败，请重试';
+          _hintText = uploadResult.message ?? AppStrings.faceVerifyUploadFailed;
         });
       }
     } catch (e) {
       _hasCapturedFinalImage = false;
       if (mounted) {
-        setState(() => _hintText = '拍照失败，请重试');
+        setState(() => _hintText = AppStrings.faceVerifyCaptureFailedRetry);
       }
     } finally {
       if (mounted) {
@@ -433,155 +511,81 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     );
   }
 
-  Future<void> _retakeFace() async {
-    final controller = _cameraController;
-    if (controller == null) return;
-
-    setState(() {
-      _faceImage = null;
-      _faceImageUrl = null;
-      _hasCapturedFinalImage = false;
-      _stableFrontCount = 0;
-      _hintText = 'Please look straight at the camera';
-    });
-
-    if (!controller.value.isStreamingImages) {
-      await controller.startImageStream(_processCameraImage);
-    }
-  }
-
-  Future<void> _onContinue() async {
-    if (!_canContinue ||
-        _isSubmitting ||
-        _stepInfo == null ||
-        _processId == null) {
-      return;
-    }
-    setState(() => _isSubmitting = true);
-
-    try {
-      String? key;
-      for (final entry in _stepInfo!.entries) {
-        final text = '${entry.showContent} ${entry.defaultText}'.toLowerCase();
-        if (text.contains('face')) {
-          key = entry.key;
-          break;
-        }
-      }
-      key ??= _stepInfo!.entries.isNotEmpty
-          ? _stepInfo!.entries.first.key
-          : null;
-      if (key == null) {
-        throw Exception('face verify field missing');
-      }
-
-      final result = await ref
-          .read(submitAcpElementInfoProvider)
-          .call(
-            processId: _processId!,
-            step: _stepInfo!.step,
-            jsonParam: [
-              {'key': key, 'value': _faceImageUrl!},
-            ],
-          );
-
-      if (!mounted) return;
-      if (result.isSuccess) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const HomeShell()),
-          (route) => false,
-        );
-      } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(result.message ?? '提交失败')));
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('提交失败: $e')));
-    } finally {
-      if (mounted) {
-        setState(() => _isSubmitting = false);
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return LoanRoundedPageShell(
+      contentTop: (context) => MediaQuery.of(context).padding.top + 51,
+      contentTopRadius: 0,
       backgroundColor: AppColors.primaryDark,
-      body: Column(
-        children: [
-          buildInformationHeader(
-            context: context,
-            title: '人脸验证',
-            activeStep: InformationStep.face,
-            onBack: () => FundingLimitDialog.showRetainDialog(context),
-          ),
-          Expanded(
-            child: Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      backgroundDecoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: [Color(0xFF216A4A), Color(0xFF288572)],
+        ),
+      ),
+      header: const _FaceVerifyHeader(),
+      content: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+              child: Column(
+                children: [
+                  _buildStatusTitle(),
+                  const SizedBox(height: 9),
+                  _buildActionPrompt(),
+                  const SizedBox(height: 42),
+                  _buildCameraArea(),
+                ],
               ),
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-                      child: Column(
-                        children: [
-                          _buildStatusCard(),
-                          const SizedBox(height: 18),
-                          Expanded(child: _buildCameraArea()),
-                          const SizedBox(height: 18),
-                          _buildStepList(),
-                        ],
-                      ),
-                    ),
             ),
-          ),
-          BottomContinueButton(
-            isEnabled: _canContinue && !_isSubmitting && !_isUploading,
-            onTap: _onContinue,
-            text: _isSubmitting ? '保存中...' : '继续',
-          ),
-        ],
+    );
+  }
+
+  Widget _buildStatusTitle() {
+    return const Text(
+      AppStrings.faceVerifyGuideTitle,
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: Color(0xFF1B222A),
+        height: 21 / 14,
       ),
     );
   }
 
-  Widget _buildStatusCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5FBF9),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFD4EEE5)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Liveness Detection',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF111827),
-            ),
+  Widget _buildActionPrompt() {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 280),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.1),
+            border: Border.all(color: const Color(0xFF216A4A)),
+            borderRadius: BorderRadius.circular(6),
           ),
-          const SizedBox(height: 8),
-          Text(
-            _hintText ?? 'Please face the camera',
-            style: const TextStyle(
-              fontSize: 13,
-              height: 1.5,
-              color: Color(0xFF4B5563),
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Assets.images.dangerCircle.image(width: 30, height: 30),
+              const SizedBox(width: 10),
+              Flexible(
+                child: Text(
+                  _hintText ?? '',
+                  textAlign: TextAlign.left,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF216A4A),
+                    height: 1.2,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -599,52 +603,13 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
           );
         }
 
-        final maxPreviewWidth = constraints.maxWidth.clamp(0.0, 320.0);
-        final maxPreviewHeight = constraints.maxHeight;
+        final circleSize = constraints.biggest.shortestSide.clamp(0.0, 303.0);
 
         if (_faceImage != null) {
-          const actionAreaHeight = 54.0;
-          const spacing = 14.0;
-          final availableImageHeight =
-              (maxPreviewHeight - actionAreaHeight - spacing).clamp(
-                120.0,
-                maxPreviewHeight,
-              );
-          final previewWidth = (availableImageHeight * 3 / 4).clamp(
-            0.0,
-            maxPreviewWidth,
-          );
-
           return Center(
-            child: SizedBox(
-              width: previewWidth,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AspectRatio(
-                    aspectRatio: 3 / 4,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF5F7FA),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(
-                          color: const Color(0xFFCCE7DE),
-                          width: 2,
-                        ),
-                        image: DecorationImage(
-                          image: MemoryImage(_faceImage!),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  TextButton(
-                    onPressed: _isUploading ? null : _retakeFace,
-                    child: const Text('重新拍摄'),
-                  ),
-                ],
-              ),
+            child: _CircularCameraFrame(
+              size: circleSize,
+              child: Image.memory(_faceImage!, fit: BoxFit.cover),
             ),
           );
         }
@@ -657,170 +622,105 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
         }
 
         final previewSize = controller.value.previewSize;
-        final previewWidth = (maxPreviewHeight * 3 / 4).clamp(
-          0.0,
-          maxPreviewWidth,
-        );
-
         return Center(
-          child: SizedBox(
-            width: previewWidth,
-            child: AspectRatio(
-              aspectRatio: 3 / 4,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    if (previewSize != null)
-                      FittedBox(
-                        fit: BoxFit.cover,
-                        child: SizedBox(
-                          width: previewSize.height,
-                          height: previewSize.width,
-                          child: CameraPreview(controller),
-                        ),
-                      )
-                    else
-                      CameraPreview(controller),
-                    Container(color: Colors.black.withValues(alpha: 0.08)),
-                    Center(
-                      child: Container(
-                        width: previewWidth * 0.72,
-                        height: previewWidth * 0.72,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: Colors.white, width: 3),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.16),
-                              blurRadius: 20,
-                              spreadRadius: 12,
-                            ),
-                          ],
-                        ),
-                      ),
+          child: _CircularCameraFrame(
+            size: circleSize,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (previewSize != null)
+                  FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: previewSize.height,
+                      height: previewSize.width,
+                      child: CameraPreview(controller),
                     ),
-                    if (_isUploading)
-                      const Center(
-                        child: CircularProgressIndicator(color: Colors.white),
-                      ),
-                  ],
-                ),
-              ),
+                  )
+                else
+                  CameraPreview(controller),
+                if (_isUploading)
+                  const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
+                  ),
+              ],
             ),
           ),
         );
       },
     );
   }
+}
 
-  Widget _buildStepList() {
-    if (_livenessSteps.isEmpty) {
-      return const SizedBox.shrink();
-    }
+/// 深绿色顶部导航，只保留返回键和居中标题。
+class _FaceVerifyHeader extends StatelessWidget {
+  const _FaceVerifyHeader();
 
-    return Column(
-      children: [
-        for (var index = 0; index < _livenessSteps.length; index++)
-          Padding(
-            padding: EdgeInsets.only(
-              bottom: index == _livenessSteps.length - 1 ? 0 : 10,
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 22,
-                  height: 22,
-                  decoration: BoxDecoration(
-                    color: index < _currentStepIndex
-                        ? const Color(0xFF0E8C6F)
-                        : index == _currentStepIndex
-                        ? const Color(0xFFDBF5EC)
-                        : const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(11),
-                  ),
-                  child: Center(
-                    child: index < _currentStepIndex
-                        ? const Icon(Icons.check, size: 14, color: Colors.white)
-                        : Text(
-                            '${index + 1}',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: index == _currentStepIndex
-                                  ? const Color(0xFF0E8C6F)
-                                  : const Color(0xFF94A3B8),
-                            ),
-                          ),
-                  ),
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      bottom: false,
+      child: SizedBox(
+        width: double.infinity,
+        height: 44,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Positioned(
+              left: 10,
+              child: IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(
+                  Icons.arrow_back_ios_new,
+                  color: Colors.white,
+                  size: 18,
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    _livenessSteps[index].description,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: index == _currentStepIndex
-                          ? FontWeight.w700
-                          : FontWeight.w500,
-                      color: index <= _currentStepIndex
-                          ? const Color(0xFF111827)
-                          : const Color(0xFF94A3B8),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        if (_allActionsCompleted && _faceImage == null)
-          const Padding(
-            padding: EdgeInsets.only(top: 12),
-            child: Text(
-              '动作已完成，请正视镜头，系统将自动抓拍正脸照片',
-              style: TextStyle(fontSize: 12, color: Color(0xFF667085)),
+            const Text(
+              AppStrings.faceVerifyTitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+                height: 20 / 16,
+              ),
             ),
-          ),
-      ],
+          ],
+        ),
+      ),
     );
   }
 }
 
-enum _FaceAction {
-  lookStraight,
-  turnLeft,
-  turnRight,
-  lookUp,
-  lookDown,
-  blink,
-  smile,
-}
+/// 圆形摄像头区域，统一处理裁剪、背景和设计稿圆形描边素材。
+class _CircularCameraFrame extends StatelessWidget {
+  const _CircularCameraFrame({required this.size, required this.child});
 
-class _FaceLivenessStep {
-  final _FaceAction action;
-  final String description;
+  final double size;
+  final Widget child;
 
-  const _FaceLivenessStep({required this.action, required this.description});
-
-  static _FaceLivenessStep? fromBackend({String? key, String? description}) {
-    final normalizedKey = (key ?? '').trim();
-    if (normalizedKey.isEmpty) return null;
-
-    switch (normalizedKey) {
-      case 'frontFaceStep':
-        return _FaceLivenessStep(
-          action: _FaceAction.lookStraight,
-          description: description ?? 'Please look straight at the camera',
-        );
-      case 'smileStep':
-        return _FaceLivenessStep(
-          action: _FaceAction.smile,
-          description: description ?? 'Please smile',
-        );
-      // todo: 上下点头，左右摇头，眨眼，正面，张嘴
-    }
-
-    AppLogger.debug('Unknown face liveness key from backend: $normalizedKey');
-    return null;
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.square(
+      dimension: size,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F7FA),
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFF216A4A)),
+            ),
+            child: ClipOval(child: child),
+          ),
+          IgnorePointer(
+            child: Assets.images.faceVerifyCircle.image(fit: BoxFit.contain),
+          ),
+        ],
+      ),
+    );
   }
 }

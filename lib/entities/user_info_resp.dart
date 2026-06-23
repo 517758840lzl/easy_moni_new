@@ -3,7 +3,7 @@ import 'package:easy_moni/core/utils/app_logger.dart';
 
 class UserInfoResp {
   final int? clientType;
-  final int? customerName;
+  final String? customerName;
   final int? id;
   final int? idCardNumber;
   final int? level;
@@ -50,11 +50,11 @@ class UserInfoResp {
 
       return UserInfoResp(
         clientType: _parseInt(map['clientType']),
-        customerName: _parseInt(map['customerName']),
+        customerName: _parseString(map['customerName']),
         id: _parseInt(map['id']),
         idCardNumber: _parseInt(map['idCardNumber']),
         level: _parseInt(map['level']),
-        nickName: map['nickName'] as String?,
+        nickName: _parseString(map['nickName']),
         phone: _parseInt(map['phone']),
         sex: _parseInt(map['sex']),
         showBankAccountPage: _parseInt(map['showBankAccountPage']),
@@ -62,7 +62,7 @@ class UserInfoResp {
         status: _parseInt(map['status']),
         totalOrderNum: _parseInt(map['totalOrderNum']),
         userId: _parseInt(map['userId']),
-        userName: map['userName'] as String?,
+        userName: _parseString(map['userName']),
       );
     } catch (e, stack) {
       AppLogger.debug('UserInfoResp.fromJson 异常: $e\n$stack');
@@ -78,8 +78,14 @@ class UserInfoResp {
     return null;
   }
 
+  static String? _parseString(dynamic value) {
+    if (value == null) return null;
+    final text = value.toString().trim();
+    return text.isEmpty ? null : text;
+  }
+
   @override
   String toString() {
-    return 'UserInfoResp(nickName: $nickName, userName: $userName, phone: $phone, userId: $userId)';
+    return 'UserInfoResp(customerName: $customerName, nickName: $nickName, userName: $userName, phone: $phone, userId: $userId)';
   }
 }
