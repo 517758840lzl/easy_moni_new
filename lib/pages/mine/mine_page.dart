@@ -130,7 +130,7 @@ class _MinePageState extends ConsumerState<MinePage> {
 
   void _onCustomerServiceTap() {
     AppLogger.debug('点击了客服');
-    // TODO: 打开客服页面
+    context.push(AppRoutePaths.customerService);
   }
 
   void _onPrivacyPolicyTap() {

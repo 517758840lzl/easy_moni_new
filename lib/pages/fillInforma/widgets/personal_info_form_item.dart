@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// 个人信息表单项，统一承载选择项与文本输入项的展示样式。
 class PersonalInfoFormItem extends StatelessWidget {
@@ -12,6 +13,9 @@ class PersonalInfoFormItem extends StatelessWidget {
     this.controller,
     this.onChanged,
     this.keyboardType,
+    this.focusNode,
+    this.textInputAction,
+    this.onSubmitted,
     this.showDivider = true,
     this.isLoading = false,
     this.trailing,
@@ -25,6 +29,9 @@ class PersonalInfoFormItem extends StatelessWidget {
   final TextEditingController? controller;
   final ValueChanged<String>? onChanged;
   final TextInputType? keyboardType;
+  final FocusNode? focusNode;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onSubmitted;
   final bool showDivider;
   final bool isLoading;
   final Widget? trailing;
@@ -33,26 +40,28 @@ class PersonalInfoFormItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final itemContent = GestureDetector(
+      onTap: _isTextInput ? null : _handlePickerTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _FormItemTitle(title: title, isRequired: isRequired),
+            SizedBox(height: _isTextInput ? 10 : 8),
+            Padding(
+              padding: const EdgeInsets.only(left: 20),
+              child: _isTextInput ? _buildTextField() : _buildPickerValue(),
+            ),
+          ],
+        ),
+      ),
+    );
+
     return Column(
       children: [
-        GestureDetector(
-          onTap: _isTextInput ? null : onTap,
-          behavior: HitTestBehavior.opaque,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _FormItemTitle(title: title, isRequired: isRequired),
-                SizedBox(height: _isTextInput ? 10 : 8),
-                Padding(
-                  padding: const EdgeInsets.only(left: 20),
-                  child: _isTextInput ? _buildTextField() : _buildPickerValue(),
-                ),
-              ],
-            ),
-          ),
-        ),
+        _isTextInput ? itemContent : _buildFocusablePicker(itemContent),
         if (showDivider)
           Container(
             margin: EdgeInsets.only(left: _isTextInput ? 0 : 20),
@@ -65,10 +74,40 @@ class PersonalInfoFormItem extends StatelessWidget {
     );
   }
 
+  Widget _buildFocusablePicker(Widget child) {
+    if (focusNode == null) {
+      return child;
+    }
+
+    return Focus(
+      focusNode: focusNode,
+      descendantsAreFocusable: false,
+      onKeyEvent: (node, event) {
+        if (event is! KeyDownEvent) {
+          return KeyEventResult.ignored;
+        }
+        if (event.logicalKey == LogicalKeyboardKey.enter ||
+            event.logicalKey == LogicalKeyboardKey.numpadEnter) {
+          _handlePickerTap();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: child,
+    );
+  }
+
+  void _handlePickerTap() {
+    focusNode?.requestFocus();
+    onTap?.call();
+  }
+
   Widget _buildTextField() {
     return TextField(
       controller: controller,
+      focusNode: focusNode,
       keyboardType: keyboardType,
+      textInputAction: textInputAction,
       decoration: InputDecoration(
         filled: true,
         fillColor: Colors.transparent,
@@ -82,6 +121,7 @@ class PersonalInfoFormItem extends StatelessWidget {
       ),
       style: const TextStyle(fontSize: 14, color: Colors.black),
       onChanged: onChanged,
+      onSubmitted: onSubmitted,
     );
   }
 
@@ -115,8 +155,8 @@ class PersonalInfoFormItem extends StatelessWidget {
   Widget _buildDefaultTrailingIcon() {
     return Icon(
       Icons.chevron_right,
-      size: 12,
-      color: Colors.black.withValues(alpha: 0.3),
+      size: 16,
+      color: Colors.black.withValues(alpha: 0.8),
     );
   }
 }

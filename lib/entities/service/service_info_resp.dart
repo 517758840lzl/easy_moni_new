@@ -1,0 +1,60 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'service_info_resp.freezed.dart';
+part 'service_info_resp.g.dart';
+
+/// ServiceInfoResp 数据模型
+@freezed
+abstract class ServiceInfoResp with _$ServiceInfoResp {
+  const factory ServiceInfoResp({
+    @JsonKey(name: 'code') int? code,
+    @JsonKey(name: 'msg') String? msg,
+    @JsonKey(name: 'data') ServiceInfoRespData? data,
+  }) = _ServiceInfoResp;
+
+  factory ServiceInfoResp.fromJson(Map<String, dynamic> json) =>
+      _$ServiceInfoRespFromJson(json);
+}
+
+/// ServiceInfoRespData 数据模型
+@freezed
+abstract class ServiceInfoRespData with _$ServiceInfoRespData {
+  const factory ServiceInfoRespData({
+    @JsonKey(name: 'showType') int? showType,
+    @JsonKey(name: 'appCustomerServiceInfoResps') List<dynamic>? appCustomerServiceInfoResps,
+    @JsonKey(name: 'appCustomerServiceInfo') ServiceInfoRespDataAppCustomerServiceInfo? appCustomerServiceInfo,
+  }) = _ServiceInfoRespData;
+
+  factory ServiceInfoRespData.fromJson(Map<String, dynamic> json) =>
+      _$ServiceInfoRespDataFromJson(json);
+}
+
+/// ServiceInfoRespDataAppCustomerServiceInfo 数据模型
+@freezed
+abstract class ServiceInfoRespDataAppCustomerServiceInfo with _$ServiceInfoRespDataAppCustomerServiceInfo {
+  const factory ServiceInfoRespDataAppCustomerServiceInfo({
+    @JsonKey(name: 'type') int? type,
+    @JsonKey(name: 'account') String? account,
+    @JsonKey(name: 'title') String? title,
+    @JsonKey(name: 'desc') String? desc,
+    @JsonKey(name: 'accountList') List<ServiceInfoRespDataAppCustomerServiceInfoAccountList>? accountList,
+  }) = _ServiceInfoRespDataAppCustomerServiceInfo;
+
+  factory ServiceInfoRespDataAppCustomerServiceInfo.fromJson(Map<String, dynamic> json) =>
+      _$ServiceInfoRespDataAppCustomerServiceInfoFromJson(json);
+}
+
+/// ServiceInfoRespDataAppCustomerServiceInfoAccountList 数据模型
+@freezed
+abstract class ServiceInfoRespDataAppCustomerServiceInfoAccountList with _$ServiceInfoRespDataAppCustomerServiceInfoAccountList {
+  const factory ServiceInfoRespDataAppCustomerServiceInfoAccountList({
+    @JsonKey(name: 'type') int? type,
+    @JsonKey(name: 'account') String? account,
+    @JsonKey(name: 'title') dynamic? title,
+    @JsonKey(name: 'desc') dynamic? desc,
+    @JsonKey(name: 'accountList') dynamic? accountList,
+  }) = _ServiceInfoRespDataAppCustomerServiceInfoAccountList;
+
+  factory ServiceInfoRespDataAppCustomerServiceInfoAccountList.fromJson(Map<String, dynamic> json) =>
+      _$ServiceInfoRespDataAppCustomerServiceInfoAccountListFromJson(json);
+}

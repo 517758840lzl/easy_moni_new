@@ -43,6 +43,7 @@ class PickerBottomSheet extends StatefulWidget {
     return showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.white,
+      requestFocus: false,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
       ),

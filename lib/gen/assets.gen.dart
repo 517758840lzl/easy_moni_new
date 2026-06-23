@@ -11,13 +11,6 @@
 
 import 'package:flutter/widgets.dart';
 
-class $LibGen {
-  const $LibGen();
-
-  /// Directory path: lib/pages
-  $LibPagesGen get pages => const $LibPagesGen();
-}
-
 class $AssetsImagesGen {
   const $AssetsImagesGen();
 
@@ -48,6 +41,10 @@ class $AssetsImagesGen {
   AssetGenImage get biaoqian =>
       const AssetGenImage('assets/images/biaoqian.png');
 
+  /// File path: assets/images/camera_button.png
+  AssetGenImage get cameraButton =>
+      const AssetGenImage('assets/images/camera_button.png');
+
   /// File path: assets/images/coupon_Icon.svg
   String get couponIcon => 'assets/images/coupon_Icon.svg';
 
@@ -69,6 +66,10 @@ class $AssetsImagesGen {
 
   /// File path: assets/images/dotss.png
   AssetGenImage get dotss => const AssetGenImage('assets/images/dotss.png');
+
+  /// File path: assets/images/id_card_rectangle.png
+  AssetGenImage get idCardRectangle =>
+      const AssetGenImage('assets/images/id_card_rectangle.png');
 
   /// File path: assets/images/inforamtion_bgheader.png
   AssetGenImage get inforamtionBgheader =>
@@ -350,6 +351,14 @@ class $AssetsImagesGen {
   AssetGenImage get rightArrow =>
       const AssetGenImage('assets/images/right_arrow.png');
 
+  /// File path: assets/images/service_right_arrow.png
+  AssetGenImage get serviceRightArrow =>
+      const AssetGenImage('assets/images/service_right_arrow.png');
+
+  /// File path: assets/images/service_safe.png
+  AssetGenImage get serviceSafe =>
+      const AssetGenImage('assets/images/service_safe.png');
+
   /// File path: assets/images/star_icon.png
   AssetGenImage get starIcon =>
       const AssetGenImage('assets/images/star_icon.png');
@@ -367,12 +376,14 @@ class $AssetsImagesGen {
     notebook,
     appLogo512,
     biaoqian,
+    cameraButton,
     couponIcon,
     couponBg,
     couponCardBorder,
     couponSelectedBg,
     customer,
     dotss,
+    idCardRectangle,
     inforamtionBgheader,
     inforamtionF,
     inforamtionIdNormal,
@@ -444,43 +455,17 @@ class $AssetsImagesGen {
     permissionCamera3d,
     permissionSms,
     rightArrow,
+    serviceRightArrow,
+    serviceSafe,
     starIcon,
     takepicture,
   ];
-}
-
-class $LibPagesGen {
-  const $LibPagesGen();
-
-  /// Directory path: lib/pages/repay
-  $LibPagesRepayGen get repay => const $LibPagesRepayGen();
-}
-
-class $LibPagesRepayGen {
-  const $LibPagesRepayGen();
-
-  /// Directory path: lib/pages/repay/mock
-  $LibPagesRepayMockGen get mock => const $LibPagesRepayMockGen();
-}
-
-class $LibPagesRepayMockGen {
-  const $LibPagesRepayMockGen();
-
-  /// File path: lib/pages/repay/mock/repay_detail.json
-  String get repayDetail => 'lib/pages/repay/mock/repay_detail.json';
-
-  /// File path: lib/pages/repay/mock/repay_list.json
-  String get repayList => 'lib/pages/repay/mock/repay_list.json';
-
-  /// List of all assets
-  List<String> get values => [repayDetail, repayList];
 }
 
 class Assets {
   const Assets._();
 
   static const $AssetsImagesGen images = $AssetsImagesGen();
-  static const $LibGen lib = $LibGen();
 }
 
 class AssetGenImage {

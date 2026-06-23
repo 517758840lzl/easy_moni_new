@@ -181,6 +181,12 @@ class MainActivity : FlutterActivity() {
         // ============ 相机/相册服务 ============
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CAMERA_CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
+                "checkCameraPermission" -> {
+                    val hasPermission = ContextCompat.checkSelfPermission(
+                        this, Manifest.permission.CAMERA
+                    ) == PackageManager.PERMISSION_GRANTED
+                    result.success(hasPermission)
+                }
                 "requestCameraPermission" -> {
                     if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                         pendingCameraPermissionResult = result
@@ -191,6 +197,18 @@ class MainActivity : FlutterActivity() {
                         )
                     } else {
                         result.success(true)
+                    }
+                }
+                "openAppSettings" -> {
+                    try {
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.parse("package:$packageName")
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        startActivity(intent)
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error("OPEN_SETTINGS_FAILED", e.message, null)
                     }
                 }
                 "pickFromGallery" -> {

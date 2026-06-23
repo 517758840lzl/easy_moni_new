@@ -47,6 +47,7 @@ class AppStrings {
   static const String contactPlaceholder = '从通讯录中选择';
   static const String needsContacts = '需要通讯录权限';
   static const String needsSms = '需要短信权限';
+  static const String needsCamera = '需要相机权限';
   static const String smsPermissionDesc = '读取存款、还款类交易短信，用作授信评估及风控核验，数据全程加密保护。';
   static const String cancel = '取消';
   static const String goSettings = '前往设置';
@@ -83,6 +84,19 @@ class AppStrings {
   static const String continueIdentifyStr = '开始识别证件信息...';
   static const String continueUploadPicture = '开始上传证件图片...';
   static const String continueOcr = '请根据指引完成人脸验证';
+  static const String identityVerifyCheckInfo = '请仔细核对个人身份信息';
+  static const String identityVerifyConfirmIdNumber = '请再次核对您的身份证号码';
+  static const String identityVerifyConfirmRequired = '请先确认身份证号码';
+  static const String identityVerifyImageNotSelected = '未选择图片';
+  static const String identityVerifyImageNotCaptured = '未获取到图片';
+  static const String identityVerifyImageDecodeFailed = '无法解码图片';
+  static const String identityVerifyCameraPermissionDenied = '未获得相机权限';
+  static const String identityVerifyBackUploadSuccess = '证件背面上传成功';
+  static const String identityVerifyUploadFailed = '图片上传失败';
+  static const String identityVerifyOcrSuccess = '证件识别成功';
+  static const String identityVerifyOcrFailed = 'OCR失败';
+  static const String identityVerifySaveFailed = '提交失败';
+  static const String identityVerifyEdit = 'Edit';
   static const String confirmOwnerData = '请确认本人操作';
   static const String standard = 'Standard shooting';
   static const String toolBright = 'Too bright';
@@ -95,6 +109,7 @@ class AppStrings {
   static const String selectProucts = '请选择你想借的产品';
   static const String takeOcrPictures =
       'Please use landscape mode and place all four corners of your Ghana Card inside the frame.';
+  static String captureFailed(Object error) => '拍照失败: $error';
 
   // ==================== 我的 ====================
   static const String mineCurrentPending = '当前待还';
@@ -102,6 +117,14 @@ class AppStrings {
   static const String mineOtherFeatures = '其他功能';
   static const String mineHistoryOrders = '我的订单';
   static const String mineCustomerService = '客服';
+  static const String mineCustomerServiceEmpty = '暂无客服信息';
+  static const String mineCustomerServiceLoadFailed = '获取客服信息失败';
+  static const String customerServicePhone = 'Phone';
+  static const String customerServiceWhatsApp = 'WhatsApp';
+  static const String customerServiceEmail = 'Email';
+  static const String customerServiceZalo = 'Zalo';
+  static const String customerServiceAntiFraudTitle = '谨慎冒充客服诈骗';
+  static const String customerServiceAntiFraudDesc = '认准官方联系方式，请勿\n轻信陌生来电或消息';
   static const String mineSettings = '设置';
   static const String mineLogout = 'Log out';
   static const String mineOrderHistoryTitle = '历史订单';

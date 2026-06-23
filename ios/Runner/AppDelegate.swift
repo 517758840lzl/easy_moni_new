@@ -27,6 +27,17 @@ import ContactsUI
           switch status {
           case .authorized:
             result(true)
+          case .notDetermined, .denied, .restricted:
+            result(false)
+          @unknown default:
+            result(false)
+          }
+        } else if call.method == "requestCameraPermission" {
+          let status = AVCaptureDevice.authorizationStatus(for: .video)
+
+          switch status {
+          case .authorized:
+            result(true)
           case .notDetermined:
             AVCaptureDevice.requestAccess(for: .video) { granted in
               DispatchQueue.main.async {
@@ -37,6 +48,15 @@ import ContactsUI
             result(false)
           @unknown default:
             result(false)
+          }
+        } else if call.method == "openAppSettings" {
+          guard let url = URL(string: UIApplication.openSettingsURLString) else {
+            result(false)
+            return
+          }
+
+          UIApplication.shared.open(url, options: [:]) { opened in
+            result(opened)
           }
         } else {
           result(FlutterMethodNotImplemented)

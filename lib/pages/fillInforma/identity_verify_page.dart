@@ -1,23 +1,28 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
+import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:easy_moni/entities/acp_element_info_resp.dart';
-import 'package:easy_moni/pages/fillInforma/providers/acp_element_info_provider.dart';
+import 'package:easy_moni/gen/assets.gen.dart';
+import 'package:easy_moni/pages/fillInforma/controllers/identity_verify_form_controller.dart';
 import 'package:easy_moni/pages/fillInforma/id_camera_page.dart';
+import 'package:easy_moni/pages/fillInforma/providers/acp_element_info_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/ocr_verification_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/submit_acp_element_info_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/upload_file_provider.dart';
+import 'package:easy_moni/pages/fillInforma/widgets/identity_verify_widgets.dart';
+import 'package:easy_moni/pages/fillInforma/widgets/picker_bottom_sheet.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/progress_information.dart';
+import 'package:easy_moni/services/platform_service.dart';
+import 'package:easy_moni/utils/widgets/common_bottom_sheet.dart';
+import 'package:easy_moni/utils/widgets/limit_toast.dart';
+import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
+import 'package:easy_moni/utils/widgets/permission_action_buttons.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:easy_moni/core/utils/app_logger.dart';
-
-import '../../gen/assets.gen.dart';
-import '../../services/platform_service.dart';
-import '../../utils/widgets/informationBottomButton.dart';
-import '../../utils/widgets/limit_toast.dart';
 
 class IdentityVerifyPage extends ConsumerStatefulWidget {
   const IdentityVerifyPage({super.key});
@@ -27,19 +32,15 @@ class IdentityVerifyPage extends ConsumerStatefulWidget {
 }
 
 class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
+  final IdentityVerifyFormController _formController =
+      IdentityVerifyFormController();
+
   StepInfo? _stepInfo;
   int? _processId;
   Uint8List? _idCardFrontData;
   Uint8List? _idCardBackData;
-  OcrVerificationResp? _frontOcr;
+  String? _frontImageUrl;
   String? _backImageUrl;
-  final TextEditingController _idNumberController = TextEditingController();
-  final TextEditingController _lastNameController = TextEditingController();
-  final TextEditingController _firstNamesController = TextEditingController();
-  final TextEditingController _genderController = TextEditingController();
-  final TextEditingController _birthdayController = TextEditingController();
-  String? _genderSubmitValue;
-  String? _birthdaySubmitValue;
   bool _isLoading = true;
   bool _isSubmitting = false;
   bool _isOcrLoading = false;
@@ -47,17 +48,21 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   bool get _canContinue =>
       _idCardFrontData != null &&
       _idCardBackData != null &&
-      _frontOcr?.url != null &&
+      _frontImageUrl != null &&
       _backImageUrl != null;
 
-  bool get _allowContinueForFaceTest => true;
+  bool get _shouldShowIdentityForm => _idCardFrontData != null;
 
-  bool get _hasRecognizedIdentityInfo =>
-      (_frontOcr?.idCardNumber?.isNotEmpty ?? false) ||
-      (_frontOcr?.lastName?.isNotEmpty ?? false) ||
-      (_frontOcr?.firstNames?.isNotEmpty ?? false) ||
-      (_frontOcr?.gender?.isNotEmpty ?? false) ||
-      (_frontOcr?.birthday?.isNotEmpty ?? false);
+  bool get _isFormComplete => _formController.areRequiredVisibleEntriesFilled;
+
+  String get _pageTitle {
+    final pageTitle = _stepInfo?.pageTitle.trim() ?? '';
+    return pageTitle.isNotEmpty ? pageTitle : AppStrings.idcardVer;
+  }
+
+  bool get _isActionEnabled {
+    return _canContinue && _isFormComplete && !_isSubmitting && !_isOcrLoading;
+  }
 
   @override
   void initState() {
@@ -67,11 +72,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
 
   @override
   void dispose() {
-    _idNumberController.dispose();
-    _lastNameController.dispose();
-    _firstNamesController.dispose();
-    _genderController.dispose();
-    _birthdayController.dispose();
+    _formController.dispose();
     super.dispose();
   }
 
@@ -79,15 +80,13 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     try {
       final result = await ref.read(acpElementInfoProvider).call(4);
       if (!mounted) return;
+
       if (result.isSuccess && result.data != null) {
         _processId = result.data!.processId;
-        _stepInfo = result.data!.stepInfoList.isNotEmpty
-            ? result.data!.stepInfoList.first
-            : null;
+        _stepInfo = result.data!.stepInfoList.firstOrNull;
+        _formController.applyEntries(_stepInfo?.entries ?? []);
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(result.message ?? '加载失败')));
+        _showSnackBar(result.message ?? AppStrings.errorMessage);
       }
     } finally {
       if (mounted) {
@@ -97,15 +96,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   }
 
   Future<void> _onContinue() async {
-    if (_isSubmitting || _isOcrLoading) {
-      return;
-    }
-
-    if (!_canContinue) {
-      if (!_allowContinueForFaceTest) {
-        return;
-      }
-      context.push(AppRoutePaths.faceVerify);
+    if (!_isActionEnabled) {
       return;
     }
 
@@ -114,6 +105,36 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     }
 
     await _showConfirmIdNumberSheet();
+  }
+
+  Future<void> _showConfirmIdNumberSheet() async {
+    final idNumber = _formController.recognizedIdNumber;
+    if (idNumber.isEmpty) {
+      _showSnackBar(AppStrings.identityVerifyConfirmRequired);
+      return;
+    }
+
+    final confirmed = await CommonBottomSheet.show<bool>(
+      context: context,
+      title: idNumber,
+      description: AppStrings.identityVerifyConfirmIdNumber,
+      image: Assets.images.inforamtionWarn.image(width: 123, height: 123),
+      actions: const [
+        CommonBottomSheetAction<bool>(
+          text: AppStrings.identityVerifyEdit,
+          result: false,
+          isPrimary: false,
+        ),
+        CommonBottomSheetAction<bool>(
+          text: AppStrings.personalInfoPickerConfirm,
+          result: true,
+        ),
+      ],
+    );
+
+    if (confirmed == true) {
+      await _submitIdentityInfo();
+    }
   }
 
   Future<void> _submitIdentityInfo() async {
@@ -126,14 +147,10 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     setState(() => _isSubmitting = true);
 
     try {
-      final jsonParam = <Map<String, dynamic>>[];
-
-      for (final entry in _stepInfo!.entries) {
-        final value = _identitySubmitValueForEntry(entry);
-        if (value != null && value.isNotEmpty) {
-          jsonParam.add({'key': entry.key, 'value': value});
-        }
-      }
+      final jsonParam = _formController.buildSubmitParams(
+        frontImageUrl: _frontImageUrl,
+        backImageUrl: _backImageUrl,
+      );
 
       final result = await ref
           .read(submitAcpElementInfoProvider)
@@ -147,15 +164,11 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
       if (result.isSuccess) {
         context.push(AppRoutePaths.faceVerify);
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(result.message ?? '提交失败')));
+        _showSnackBar(result.message ?? AppStrings.identityVerifySaveFailed);
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('提交失败: $e')));
+      _showSnackBar('${AppStrings.identityVerifySaveFailed}: $e');
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
@@ -163,340 +176,11 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     }
   }
 
-  String _entryIdentityText(FormEntry entry) {
-    return '${entry.key} ${entry.code} ${entry.showContent} ${entry.defaultText}'
-        .toLowerCase()
-        .replaceAll(RegExp(r'[^a-z0-9]+'), '_');
-  }
-
-  bool _hasIdentityToken(String text, String token) {
-    return text == token ||
-        text.startsWith('${token}_') ||
-        text.endsWith('_$token') ||
-        text.contains('_${token}_');
-  }
-
-  String? _identitySubmitValueForEntry(FormEntry entry) {
-    final text = _entryIdentityText(entry);
-    final keyText = entry.key.toLowerCase();
-
-    if (text.contains('id_card_front') ||
-        (text.contains('front') &&
-            (text.contains('image') || text.contains('photo')))) {
-      return _frontOcr?.url;
-    }
-    if (text.contains('id_card_back') ||
-        (text.contains('back') &&
-            (text.contains('image') || text.contains('photo')))) {
-      return _backImageUrl;
-    }
-    if (text.contains('national_id') ||
-        text.contains('id_number') ||
-        text.contains('id_card_number')) {
-      return _idNumberController.text.trim();
-    }
-    if (keyText == 'first_names' ||
-        keyText == 'first_name' ||
-        text.contains('first_name') ||
-        text.contains('given_name') ||
-        text.contains('forename') ||
-        text.contains('father')) {
-      return _firstNamesController.text.trim();
-    }
-    if (keyText == 'last_name' ||
-        text.contains('last_name') ||
-        text.contains('surname') ||
-        text.contains('family_name')) {
-      return _lastNameController.text.trim();
-    }
-    if (_hasIdentityToken(text, 'gender') || _hasIdentityToken(text, 'sex')) {
-      return (_genderSubmitValue ?? _genderController.text).trim();
-    }
-    if (text.contains('date_of_birth') ||
-        text.contains('birthday') ||
-        _hasIdentityToken(text, 'birth')) {
-      return (_birthdaySubmitValue ?? _birthdayController.text).trim();
-    }
-    return null;
-  }
-
-  Future<void> _showConfirmIdNumberSheet() async {
-    final idNumber = _idNumberController.text.trim();
-    if (idNumber.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('请先确认身份证号码')));
-      return;
-    }
-
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.white,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 88,
-                  height: 88,
-                  decoration: BoxDecoration(
-                    color: const Color(0x1A27D3C3),
-                    borderRadius: BorderRadius.circular(28),
-                  ),
-                  child: const Icon(
-                    Icons.priority_high_rounded,
-                    size: 52,
-                    color: Color(0xFF27B7A7),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  idNumber,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF101314),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  '请再次核对您的身份证号码',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, color: Color(0xFF5B646B)),
-                ),
-                const SizedBox(height: 28),
-                Row(
-                  children: [
-                    Expanded(
-                      child: SizedBox(
-                        height: 48,
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFF268470)),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(28),
-                            ),
-                          ),
-                          child: const Text(
-                            'Edit',
-                            style: TextStyle(
-                              color: Color(0xFF268470),
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: SizedBox(
-                        height: 48,
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            Navigator.pop(context);
-                            await _submitIdentityInfo();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF268470),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(28),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: const Text(
-                            'Confirm',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  String _displayGender(String? value) {
-    switch (value?.trim()) {
-      case '1':
-      case 'M':
-      case 'Male':
-        return 'Male';
-      case '2':
-      case 'F':
-      case 'Female':
-        return 'Female';
-      default:
-        return value ?? '';
-    }
-  }
-
-  String _displayBirthday(String? value) {
-    if (value == null || value.isEmpty) return '';
-    final parts = value.split('-');
-    if (parts.length == 3) {
-      return '${parts[2]}-${parts[1]}-${parts[0]}';
-    }
-    return value;
-  }
-
-  void _fillEditableFields(OcrVerificationResp? data) {
-    _idNumberController.text = data?.idCardNumber ?? '';
-    _lastNameController.text = data?.lastName ?? '';
-    _firstNamesController.text = data?.firstNames ?? '';
-    _genderSubmitValue = data?.gender;
-    _birthdaySubmitValue = data?.birthday;
-    _genderController.text = _displayGender(data?.gender);
-    _birthdayController.text = _displayBirthday(data?.birthday);
-  }
-
   void _showUploadOptions({required bool isFront}) {
-    showModalBottomSheet(
+    UploadMethodSheet.show(
       context: context,
-      backgroundColor: const Color(0xFFFDFEFF),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-      ),
-      builder: (context) {
-        final galleryText = AppStrings.selectFormPhotos;
-        final cameraText = AppStrings.takephotos;
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              margin: const EdgeInsets.only(top: 8),
-              width: 32,
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE7E7E7),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  const Text(
-                    AppStrings.chooseUploadMethod,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF101314),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    AppStrings.checkIdCard,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF3F4950),
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            Navigator.pop(context);
-                            _pickFromGallery(isFront: isFront);
-                          },
-                          child: _buildUploadOption(
-                            icon: Assets.images.cameraM.image(
-                              width: 20,
-                              height: 20,
-                              fit: BoxFit.contain,
-                            ),
-                            text: galleryText,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 24),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            Navigator.pop(context);
-                            _takePhoto(isFront: isFront);
-                          },
-                          child: _buildUploadOption(
-                            icon: Stack(
-                              clipBehavior: Clip.none,
-                              alignment: Alignment.center,
-                              children: [
-                                Assets.images.gallerySend.image(
-                                  width: 20,
-                                  height: 20,
-                                  fit: BoxFit.contain,
-                                ),
-                                Positioned(
-                                  top: -11,
-                                  right: -11,
-                                  child: Assets.images.inforamtionStar.image(
-                                    width: 22,
-                                    height: 22,
-                                    fit: BoxFit.contain,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            text: cameraText,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildUploadOption({required Widget icon, required String text}) {
-    return Container(
-      height: 72,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F8F9),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          icon,
-          const SizedBox(height: 4),
-          Text(
-            text,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF1A1A1A),
-            ),
-          ),
-        ],
-      ),
+      onPickFromGallery: () => _pickFromGallery(isFront: isFront),
+      onTakePhoto: () => _takePhoto(isFront: isFront),
     );
   }
 
@@ -504,29 +188,148 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     AppLogger.debug('开始选择身份证图片, isFront=$isFront, isWeb=$kIsWeb');
     final imageData = await CameraService.pickFromGallery();
     if (!mounted) return;
-    if (imageData != null) {
-      AppLogger.debug('已拿到图片数据, bytes=${imageData.length}, isFront=$isFront');
-      await _onImageSelected(imageData, isFront: isFront);
-    } else {
+
+    if (imageData == null) {
       AppLogger.debug('未拿到图片数据, isFront=$isFront');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('未选择图片')));
+      _showSnackBar(AppStrings.identityVerifyImageNotSelected);
+      return;
     }
+
+    AppLogger.debug('已拿到图片数据, bytes=${imageData.length}, isFront=$isFront');
+    await _onImageSelected(imageData, isFront: isFront);
   }
 
   Future<void> _takePhoto({required bool isFront}) async {
+    final canOpenCamera = await _ensureCameraPermission();
+    if (!mounted || !canOpenCamera) {
+      return;
+    }
+
     final imageData = await Navigator.of(context).push<Uint8List>(
       MaterialPageRoute(builder: (context) => IdCameraScreen(isFront: isFront)),
     );
     if (!mounted) return;
-    if (imageData != null) {
-      await _onImageSelected(imageData, isFront: isFront);
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('未获取到图片')));
+
+    if (imageData == null) {
+      _showSnackBar(AppStrings.identityVerifyImageNotCaptured);
+      return;
     }
+
+    await _onImageSelected(imageData, isFront: isFront);
+  }
+
+  /// 拍摄入口统一处理相机权限，避免进入横屏拍摄页后再触发权限弹窗。
+  Future<bool> _ensureCameraPermission() async {
+    final hasPermission = await CameraService.checkPermission();
+    if (!mounted) return false;
+
+    if (hasPermission) {
+      return true;
+    }
+
+    final shouldRequestPermission = await _showCameraPermissionSheet();
+    if (!mounted || !shouldRequestPermission) {
+      return false;
+    }
+
+    // final granted = await CameraService.requestPermission();
+    // if (!mounted) return false;
+
+    // if (granted) {
+    //   return true;
+    // }
+
+    await CameraService.openAppSettings();
+    if (!mounted) return false;
+
+    _showSnackBar(AppStrings.identityVerifyCameraPermissionDenied);
+    return false;
+  }
+
+  Future<bool> _showCameraPermissionSheet() async {
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.6),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (context) {
+        final bottomPadding = MediaQuery.paddingOf(context).bottom;
+        return ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+          child: Material(
+            color: const Color(0xFFFDFEFF),
+            child: Stack(
+              children: [
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Assets.images.permissionCamera3d.image(
+                            width: 115,
+                            height: 120,
+                            fit: BoxFit.contain,
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            AppStrings.needsCamera,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              height: 1.5,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF101314),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            AppStrings.idcardMessage,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14,
+                              height: 1.5,
+                              fontWeight: FontWeight.w400,
+                              color: Color(0xFF3F4950),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    ColoredBox(
+                      color: Colors.white,
+                      child: Padding(
+                        padding: EdgeInsets.only(bottom: bottomPadding),
+                        child: PermissionActionButtons(
+                          secondaryText: AppStrings.cancel,
+                          primaryText: AppStrings.goSettings,
+                          onSecondaryPressed: () =>
+                              Navigator.of(context).pop(false),
+                          onPrimaryPressed: () =>
+                              Navigator.of(context).pop(true),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const Positioned(
+                  top: 5,
+                  left: 0,
+                  right: 0,
+                  child: Center(child: _CameraPermissionDragHandle()),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    return result ?? false;
   }
 
   Future<void> _onImageSelected(
@@ -537,50 +340,49 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     setState(() {
       if (isFront) {
         _idCardFrontData = imageData;
+        _frontImageUrl = null;
       } else {
         _idCardBackData = imageData;
+        _backImageUrl = null;
       }
       _isOcrLoading = true;
     });
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isFront
-                ? AppStrings.continueIdentifyStr
-                : AppStrings.continueUploadPicture,
-          ),
-        ),
-      );
+    _showSnackBar(
+      isFront
+          ? AppStrings.continueIdentifyStr
+          : AppStrings.continueUploadPicture,
+    );
+
+    if (isFront) {
+      await _recognizeFrontImage(imageData);
+    } else {
+      await _uploadBackImage(imageData);
     }
+  }
 
-    if (!isFront) {
-      final uploadResult = await ref
-          .read(uploadFileProvider)
-          .call(bytes: imageData, filename: 'id_card_back.jpg');
+  Future<void> _uploadBackImage(Uint8List imageData) async {
+    final uploadResult = await ref
+        .read(uploadFileProvider)
+        .call(bytes: imageData, filename: 'id_card_back.jpg');
 
-      if (!mounted) return;
+    if (!mounted) return;
 
-      setState(() {
-        if (uploadResult.isSuccess) {
-          _backImageUrl = uploadResult.data;
-        }
-        _isOcrLoading = false;
-      });
-
+    setState(() {
       if (uploadResult.isSuccess) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('证件背面上传成功')));
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(uploadResult.message ?? '图片上传失败')),
-        );
+        _backImageUrl = uploadResult.data;
       }
-      return;
-    }
+      _isOcrLoading = false;
+    });
 
+    _showSnackBar(
+      uploadResult.isSuccess
+          ? AppStrings.identityVerifyBackUploadSuccess
+          : uploadResult.message ?? AppStrings.identityVerifyUploadFailed,
+    );
+  }
+
+  Future<void> _recognizeFrontImage(Uint8List imageData) async {
     final result = await ref
         .read(ocrVerificationProvider)
         .call(bytes: imageData, filename: 'id_card_front.jpg', type: 'FRONT');
@@ -591,23 +393,185 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
 
     if (!mounted) return;
 
+    if (result.isSuccess) {
+      final recognizedUrl = result.data?.url;
+      if (recognizedUrl == null || recognizedUrl.isEmpty) {
+        await _uploadFrontImageAfterOcrFailed(
+          imageData,
+          fallbackMessage: AppStrings.identityVerifyUploadFailed,
+        );
+        return;
+      }
+
+      setState(() {
+        _frontImageUrl = recognizedUrl;
+        _formController.applyOcrResult(result.data);
+        _isOcrLoading = false;
+      });
+
+      _showSnackBar(AppStrings.identityVerifyOcrSuccess);
+      return;
+    }
+
+    await _uploadFrontImageAfterOcrFailed(
+      imageData,
+      fallbackMessage: result.message ?? AppStrings.identityVerifyOcrFailed,
+    );
+  }
+
+  /// OCR 失败时仍上传身份证正面图片，保留手动填写与后续提交能力。
+  Future<void> _uploadFrontImageAfterOcrFailed(
+    Uint8List imageData, {
+    required String fallbackMessage,
+  }) async {
+    final uploadResult = await ref
+        .read(uploadFileProvider)
+        .call(bytes: imageData, filename: 'id_card_front.jpg');
+
+    if (!mounted) return;
+
     setState(() {
-      if (result.isSuccess) {
-        _frontOcr = result.data;
-        _fillEditableFields(result.data);
+      if (uploadResult.isSuccess) {
+        _frontImageUrl = uploadResult.data;
       }
       _isOcrLoading = false;
     });
 
-    if (result.isSuccess) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('证件识别成功')));
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(result.message ?? 'OCR失败')));
+    _showSnackBar(
+      uploadResult.isSuccess
+          ? fallbackMessage
+          : uploadResult.message ?? AppStrings.identityVerifyUploadFailed,
+    );
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _openPickerForEntry(FormEntry entry) async {
+    final options = entry.selectList;
+    if (options == null || options.isEmpty) {
+      return;
     }
+
+    await _focusPickerEntry(entry);
+    if (!mounted) {
+      return;
+    }
+    var isConfirmed = false;
+    await PickerBottomSheet.show(
+      context: context,
+      title: entry.showContent,
+      options: options
+          .map((item) => PickerBottomSheetOption(label: item.value))
+          .toList(),
+      selectedIndex: _formController.selectedIndexFor(entry),
+      onConfirm: (index) {
+        isConfirmed = true;
+        setState(() => _formController.updatePickerValue(entry, index));
+      },
+    );
+    if (!mounted || !isConfirmed) {
+      return;
+    }
+
+    await _focusNextVisibleEntryAfter(entry);
+  }
+
+  Future<void> _openBirthdayPickerForEntry(FormEntry entry) async {
+    await _focusPickerEntry(entry);
+    if (!mounted) {
+      return;
+    }
+    final now = DateTime.now();
+    final firstDate = DateTime(now.year - 100, now.month, now.day);
+    final selectedDate = _formController.dateValueFor(entry);
+    final initialDate = _safeInitialBirthdayDate(
+      selectedDate: selectedDate,
+      firstDate: firstDate,
+      lastDate: now,
+    );
+
+    // 生日字段由系统日期选择器录入，避免用户手输造成日期格式不统一。
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: now,
+      helpText: entry.showContent,
+      cancelText: AppStrings.cancel,
+      confirmText: AppStrings.personalInfoPickerConfirm,
+    );
+    if (pickedDate == null || !mounted) {
+      return;
+    }
+
+    setState(() => _formController.updateBirthdayValue(entry, pickedDate));
+    await _focusNextVisibleEntryAfter(entry);
+  }
+
+  /// 选择类字段确认后按后端表单顺序推进，保证性别后优先进入生日选择器。
+  Future<void> _focusNextVisibleEntryAfter(FormEntry entry) async {
+    final nextEntry = _formController.nextVisibleEntryAfter(entry);
+    if (nextEntry == null) {
+      await _clearFormTextFocus();
+      return;
+    }
+
+    if (_formController.isTextEntry(nextEntry)) {
+      FocusScope.of(
+        context,
+      ).requestFocus(_formController.focusNodeFor(nextEntry));
+      return;
+    }
+
+    await _focusPickerEntry(nextEntry);
+    if (!mounted) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_formController.isBirthdayPickerEntry(nextEntry)) {
+        _openBirthdayPickerForEntry(nextEntry);
+        return;
+      }
+      _openPickerForEntry(nextEntry);
+    });
+  }
+
+  /// 将选择类表单项纳入页面焦点链，并在打开弹窗前稳定收起系统键盘。
+  Future<void> _focusPickerEntry(FormEntry entry) async {
+    FocusScope.of(context).requestFocus(_formController.focusNodeFor(entry));
+    await SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
+  }
+
+  /// 彻底释放页面文本焦点并收起系统键盘，避免弹窗切换时与日期选择器重叠。
+  Future<void> _clearFormTextFocus() async {
+    FocusManager.instance.primaryFocus?.unfocus(
+      disposition: UnfocusDisposition.scope,
+    );
+    _formController.unfocusTextInputs();
+    await SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
+  }
+
+  DateTime _safeInitialBirthdayDate({
+    required DateTime? selectedDate,
+    required DateTime firstDate,
+    required DateTime lastDate,
+  }) {
+    if (selectedDate == null) {
+      return DateTime(lastDate.year - 18, lastDate.month, lastDate.day);
+    }
+    if (selectedDate.isBefore(firstDate)) {
+      return firstDate;
+    }
+    if (selectedDate.isAfter(lastDate)) {
+      return lastDate;
+    }
+    return selectedDate;
   }
 
   @override
@@ -618,90 +582,65 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
         children: [
           buildInformationHeader(
             context: context,
-            title: AppStrings.idcardVer,
+            title: _pageTitle,
             activeStep: InformationStep.identity,
             onBack: () => FundingLimitDialog.showRetainDialog(context),
           ),
           Expanded(
             child: ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
               ),
               child: Container(
                 color: Colors.white,
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : SingleChildScrollView(
-                        padding: const EdgeInsets.only(left: 20, right: 20),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: Column(
                           children: [
                             const SizedBox(height: 16),
-                            const Row(
-                              children: [
-                                Text(
-                                  '*',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.red,
-                                  ),
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  '请仔细核对个人身份信息',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black,
-                                    letterSpacing: 0.4,
-                                  ),
-                                ),
-                              ],
-                            ),
+                            const IdentityCheckNotice(),
                             const SizedBox(height: 16),
-                            _buildIdCardItem(
-                              bgImage: Assets.images.inforamtionIdw,
-                              isFilled: _idCardFrontData != null,
-                              onTap: () => _showUploadOptions(isFront: true),
+                            IdCardUploadItem(
+                              bgImage: _idCardFrontData == null
+                                  ? Assets.images.inforamtionIdw
+                                  : Assets.images.idCardRectangle,
                               imageData: _idCardFrontData,
-                              successText: null,
+                              onTap: () => _showUploadOptions(isFront: true),
                             ),
                             const SizedBox(height: 16),
-                            _buildIdCardItem(
-                              bgImage: Assets.images.inforamtionIdo,
-                              isFilled: _idCardBackData != null,
-                              onTap: () => _showUploadOptions(isFront: false),
+                            IdCardUploadItem(
+                              bgImage: _idCardBackData == null
+                                  ? Assets.images.inforamtionIdo
+                                  : Assets.images.idCardRectangle,
                               imageData: _idCardBackData,
-                              successText: null,
+                              onTap: () => _showUploadOptions(isFront: false),
                             ),
                             if (_isOcrLoading)
                               const Padding(
                                 padding: EdgeInsets.symmetric(vertical: 16),
                                 child: CircularProgressIndicator(),
                               ),
-                            if (_hasRecognizedIdentityInfo) ...[
+                            if (_shouldShowIdentityForm) ...[
                               const SizedBox(height: 8),
-                              _buildInfoItem(
-                                title: '加纳身份证号码',
-                                controller: _idNumberController,
-                              ),
-                              _buildInfoItem(
-                                title: '姓氏',
-                                controller: _lastNameController,
-                              ),
-                              _buildInfoItem(
-                                title: '名字',
-                                controller: _firstNamesController,
-                              ),
-                              _buildInfoItem(
-                                title: '性别',
-                                controller: _genderController,
-                              ),
-                              _buildInfoItem(
-                                title: '生日',
-                                controller: _birthdayController,
-                                showDivider: false,
+                              ..._formController.visibleEntries.map(
+                                (entry) => IdentityFormEntryItem(
+                                  entry: entry,
+                                  formController: _formController,
+                                  onTextChanged: (value) {
+                                    setState(
+                                      () => _formController.updateTextValue(
+                                        entry,
+                                        value,
+                                      ),
+                                    );
+                                  },
+                                  onTextSubmitted: (entry) =>
+                                      _focusNextVisibleEntryAfter(entry),
+                                  onPickerTap: _openPickerForEntry,
+                                  onDatePickerTap: _openBirthdayPickerForEntry,
+                                ),
                               ),
                             ],
                             const SizedBox(height: 20),
@@ -711,146 +650,32 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
               ),
             ),
           ),
-          BottomContinueButton(
-            isEnabled:
-                (_canContinue || _allowContinueForFaceTest) &&
-                !_isSubmitting &&
-                !_isOcrLoading,
-            onTap: _onContinue,
-            text: _isSubmitting ? '保存中...' : '继续',
+          LoanBottomActionButton(
+            enabled: _isActionEnabled,
+            onPressed: _isActionEnabled ? _onContinue : null,
+            text: _isSubmitting
+                ? AppStrings.personalInfoSaving
+                : AppStrings.continueStr,
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildIdCardItem({
-    required AssetGenImage bgImage,
-    required bool isFilled,
-    required VoidCallback onTap,
-    Uint8List? imageData,
-    String? successText,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: (MediaQuery.of(context).size.width - 40) * 683.0 / 1005.0,
-        decoration: BoxDecoration(
-          image: DecorationImage(image: bgImage.provider(), fit: BoxFit.cover),
-        ),
-        child: Stack(
-          children: [
-            if (!isFilled)
-              Center(
-                child: Assets.images.inforamtionScan.image(
-                  width: 40,
-                  height: 40,
-                ),
-              ),
-            if (isFilled && imageData != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(36, 24, 36, 20),
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: const Color(0xFF8FB3B0),
-                            width: 2,
-                            style: BorderStyle.solid,
-                          ),
-                          image: DecorationImage(
-                            image: MemoryImage(imageData),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 10,
-                      right: 10,
-                      child: Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.45),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Icon(
-                          Icons.cached_rounded,
-                          size: 16,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
+/// 相机权限说明弹窗的顶部拖拽提示条。
+class _CameraPermissionDragHandle extends StatelessWidget {
+  const _CameraPermissionDragHandle();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 32,
+      height: 4,
+      decoration: BoxDecoration(
+        color: const Color(0xFFE7E7E7),
+        borderRadius: BorderRadius.circular(100),
       ),
-    );
-  }
-
-  Widget _buildInfoItem({
-    required String title,
-    required TextEditingController controller,
-    bool showDivider = true,
-  }) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '*',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.red,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    TextField(
-                      controller: controller,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF222222),
-                      ),
-                      decoration: const InputDecoration(
-                        isDense: true,
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (showDivider) const Divider(height: 1, color: Color(0xFFEAEAEA)),
-      ],
     );
   }
 }

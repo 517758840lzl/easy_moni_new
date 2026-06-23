@@ -1,8 +1,8 @@
+import 'package:easy_moni/core/constants/api_constants.dart';
+import 'package:easy_moni/core/network/http_provider.dart';
+import 'package:easy_moni/core/network/http_result.dart';
+import 'package:easy_moni/entities/service/service_info_resp.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/network/http_provider.dart';
-import '../../../core/network/http_result.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../../entities/customer_service_info_resp.dart';
 
 final customerServiceInfoProvider = Provider<CustomerServiceInfoApi>((ref) {
   return CustomerServiceInfoApi();
@@ -10,12 +10,22 @@ final customerServiceInfoProvider = Provider<CustomerServiceInfoApi>((ref) {
 
 class CustomerServiceInfoApi {
   /// 获取客服信息
-  Future<HttpResult<CustomerServiceInfoResp>> call() async {
-    final result = await HttpProvider.instance.get<CustomerServiceInfoResp>(
+  Future<HttpResult<ServiceInfoRespData>> call() async {
+    final result = await HttpProvider.instance.get<ServiceInfoRespData>(
       ApiConstants.customerServiceInfo,
       fromJson: (json) =>
-          CustomerServiceInfoResp.fromJson(json as Map<String, dynamic>),
+          ServiceInfoRespData.fromJson(json as Map<String, dynamic>),
     );
     return result;
   }
 }
+
+/// 客服页数据加载状态，供页面直接消费。
+final customerServiceInfoAsyncProvider =
+    FutureProvider.autoDispose<ServiceInfoRespData>((ref) async {
+      final result = await ref.read(customerServiceInfoProvider).call();
+      if (result.isSuccess && result.data != null) {
+        return result.data!;
+      }
+      throw Exception(result.message ?? 'Failed to load customer service info');
+    });

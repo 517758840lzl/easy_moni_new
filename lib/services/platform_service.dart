@@ -193,6 +193,18 @@ class SmsService {
 class CameraService {
   static const MethodChannel _channel = MethodChannel('com.easy_moni/camera');
 
+  /// 检查相机权限；拍摄页只在已授权后进入，避免相机插件再次触发权限流程。
+  static Future<bool> checkPermission() async {
+    try {
+      final bool result = await _channel.invokeMethod('checkCameraPermission');
+      return result;
+    } on PlatformException {
+      return false;
+    } on MissingPluginException {
+      return false;
+    }
+  }
+
   /// 请求相机权限，授权结果只用于记录，不阻塞后续业务流程。
   static Future<bool> requestPermission() async {
     try {
@@ -202,6 +214,18 @@ class CameraService {
       return result;
     } on PlatformException {
       return false;
+    } on MissingPluginException {
+      return false;
+    }
+  }
+
+  static Future<void> openAppSettings() async {
+    try {
+      await _channel.invokeMethod('openAppSettings');
+    } on PlatformException {
+      return;
+    } on MissingPluginException {
+      return;
     }
   }
 
