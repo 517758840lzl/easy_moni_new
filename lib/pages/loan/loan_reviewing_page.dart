@@ -88,10 +88,16 @@ class _LoanReviewingPageState extends ConsumerState<LoanReviewingPage> {
       bottomNavigationBar: LoanBottomActionButton(
         enabled: true,
         text: AppStrings.backToHomeText,
-        onPressed: () => context.go(AppRoutePaths.home),
+        onPressed: () => _goHomeAndRefreshLoan(context),
       ),
     );
   }
+}
+
+void _goHomeAndRefreshLoan(BuildContext context) {
+  context.go(
+    AppRoutePaths.homeWithTab(AppHomeTabs.loan, refreshLoanHome: true),
+  );
 }
 
 class _ReviewingAppBar extends StatelessWidget {
@@ -112,7 +118,7 @@ class _ReviewingAppBar extends StatelessWidget {
             top: 4,
             left: 6,
             child: IconButton(
-              onPressed: () => context.go(AppRoutePaths.home),
+              onPressed: () => _goHomeAndRefreshLoan(context),
               icon: const Icon(
                 Icons.arrow_back_ios_new_rounded,
                 color: Colors.white,

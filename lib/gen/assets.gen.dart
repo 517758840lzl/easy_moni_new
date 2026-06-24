@@ -37,6 +37,10 @@ class $AssetsImagesGen {
   AssetGenImage get notebook =>
       const AssetGenImage('assets/images/Notebook.png');
 
+  /// File path: assets/images/app_icon_black.png
+  AssetGenImage get appIconBlack =>
+      const AssetGenImage('assets/images/app_icon_black.png');
+
   /// File path: assets/images/app_logo_512.png
   AssetGenImage get appLogo512 =>
       const AssetGenImage('assets/images/app_logo_512.png');
@@ -214,6 +218,10 @@ class $AssetsImagesGen {
   AssetGenImage get loanGhs =>
       const AssetGenImage('assets/images/loan_ghs.png');
 
+  /// File path: assets/images/loan_header_rectangle.png
+  AssetGenImage get loanHeaderRectangle =>
+      const AssetGenImage('assets/images/loan_header_rectangle.png');
+
   /// File path: assets/images/loan_home.png
   AssetGenImage get loanHome =>
       const AssetGenImage('assets/images/loan_home.png');
@@ -359,6 +367,26 @@ class $AssetsImagesGen {
   AssetGenImage get permissionSms =>
       const AssetGenImage('assets/images/permission_sms.png');
 
+  /// File path: assets/images/repay_header_rectangle.png
+  AssetGenImage get repayHeaderRectangle =>
+      const AssetGenImage('assets/images/repay_header_rectangle.png');
+
+  /// File path: assets/images/review_1.png
+  AssetGenImage get review1 =>
+      const AssetGenImage('assets/images/review_1.png');
+
+  /// File path: assets/images/review_2.png
+  AssetGenImage get review2 =>
+      const AssetGenImage('assets/images/review_2.png');
+
+  /// File path: assets/images/review_3.png
+  AssetGenImage get review3 =>
+      const AssetGenImage('assets/images/review_3.png');
+
+  /// File path: assets/images/review_banner.png
+  AssetGenImage get reviewBanner =>
+      const AssetGenImage('assets/images/review_banner.png');
+
   /// File path: assets/images/right_arrow.png
   AssetGenImage get rightArrow =>
       const AssetGenImage('assets/images/right_arrow.png');
@@ -391,6 +419,7 @@ class $AssetsImagesGen {
     easyMoniText,
     gallerySend,
     notebook,
+    appIconBlack,
     appLogo512,
     biaoqian,
     cameraButton,
@@ -436,6 +465,7 @@ class $AssetsImagesGen {
     loanDiscovery,
     loanDiscoveryNormal,
     loanGhs,
+    loanHeaderRectangle,
     loanHome,
     loanHomeNormal,
     loanMine,
@@ -473,6 +503,11 @@ class $AssetsImagesGen {
     moban,
     permissionCamera3d,
     permissionSms,
+    repayHeaderRectangle,
+    review1,
+    review2,
+    review3,
+    reviewBanner,
     rightArrow,
     serviceRightArrow,
     serviceSafe,

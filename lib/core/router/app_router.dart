@@ -12,6 +12,7 @@ import 'package:easy_moni/pages/loan/models/loan_order_detail_data.dart';
 import 'package:easy_moni/pages/mine/customer_service_page.dart';
 import 'package:easy_moni/pages/mine/mine_order_history_page.dart';
 import 'package:easy_moni/pages/mine/mine_page.dart';
+import 'package:easy_moni/pages/mine/privacy_policy_page.dart';
 import 'package:easy_moni/pages/mine/settings_page.dart';
 import 'package:easy_moni/entities/repay/repay_detail_resp.dart';
 import 'package:easy_moni/pages/repay/repay_entry_page.dart';
@@ -29,6 +30,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/pages/login/permissionpage.dart';
+import 'package:easy_moni/pages/login/splash_page.dart';
 import 'package:easy_moni/pages/login/loginpage.dart';
 import 'package:easy_moni/pages/home/homesell.dart';
 import 'package:easy_moni/pages/fillInforma/personal_info_page.dart'
@@ -44,7 +46,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: AppRoutePaths.root,
-        name: AppRouteNames.home,
+        name: AppRouteNames.splash,
+        builder: (context, state) => const SplashPage(),
+      ),
+      GoRoute(
+        path: AppRoutePaths.permission,
+        name: AppRouteNames.permission,
         builder: (context, state) => const PermissionPage(),
       ),
       GoRoute(
@@ -64,7 +71,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final initialTab =
               state.uri.queryParameters['tab'] ?? AppHomeTabs.loan;
           final tabRequestId = state.uri.queryParameters['tabRequestId'] ?? '';
-          return HomeShell(initialTab: initialTab, tabRequestId: tabRequestId);
+          final loanHomeRefreshRequestId =
+              state.uri.queryParameters['loanHomeRefreshRequestId'] ?? '';
+          return HomeShell(
+            initialTab: initialTab,
+            tabRequestId: tabRequestId,
+            loanHomeRefreshRequestId: loanHomeRefreshRequestId,
+          );
         },
       ),
       GoRoute(
@@ -203,6 +216,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutePaths.orderHistory,
         name: AppRouteNames.orderHistory,
         builder: (context, state) => const MineOrderHistoryPage(),
+      ),
+      GoRoute(
+        path: AppRoutePaths.privacyPolicy,
+        name: AppRouteNames.privacyPolicy,
+        builder: (context, state) => const PrivacyPolicyPage(),
       ),
       GoRoute(
         path: AppRoutePaths.settings,

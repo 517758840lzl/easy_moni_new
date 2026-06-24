@@ -242,7 +242,7 @@ class _RepayMultiHeader extends StatelessWidget {
     final interest = _sumOrderAmount(orders, (order) => order.interest);
     final overdueFee = _sumOrderAmount(
       orders.where((order) => _isOverdue(order)).toList(),
-      (order) => order.serviceFee,
+      (order) => order.overdueInterest,
     );
     // 顶部主金额展示多订单确认还款总额
     final totalRepayAmount = detail?.totalSureRepayAmounts ?? 0;
@@ -369,41 +369,45 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 51,
-      padding: const EdgeInsets.fromLTRB(9, 8, 9, 7),
+    return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            amount.formatAmount(),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.white,
-              height: 16 / 14,
-            ),
+          image: DecorationImage(
+            image: Assets.images.repayHeaderRectangle.provider(),
+            fit: BoxFit.fill,
+            alignment: Alignment.topCenter,
           ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
-              color: Colors.white.withValues(alpha: 0.5),
-              height: 12 / 10,
+        ),
+      child: Container(
+        height: 51,
+        padding: const EdgeInsets.fromLTRB(9, 8, 9, 7),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              amount.formatAmount(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+                height: 16 / 14,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 6),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+                color: Colors.white.withValues(alpha: 0.5),
+                height: 12 / 10,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -496,7 +500,7 @@ List<LoanOrderCardRowData> _multiOrderRows(
     rows.add(
       LoanOrderCardRowData(
         label: AppStrings.loanOrderOverdueFeeLabel,
-        value: _amountText(order.serviceFee),
+        value: _amountText(order.overdueInterest),
       ),
     );
   }

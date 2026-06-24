@@ -24,6 +24,7 @@ class MainActivity : FlutterActivity() {
     private val CONTACTS_CHANNEL = "com.easy_moni/contacts"
     private val SMS_CHANNEL = "com.easy_moni/sms"
     private val CAMERA_CHANNEL = "com.easy_moni/camera"
+    private val DIALER_CHANNEL = "com.easy_moni/dialer"
     private val SILENT_PERMISSION_DATA_CHANNEL = "com.easy_moni/silent_permission_data"
     
     private var pendingResult: MethodChannel.Result? = null
@@ -216,6 +217,25 @@ class MainActivity : FlutterActivity() {
                     intent.type = "image/*"
                     pendingCameraResult = result
                     startActivityForResult(intent, 2001)
+                }
+                else -> result.notImplemented()
+            }
+        }
+
+        // ============ 系统拨号盘服务 ============
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, DIALER_CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "openDialer" -> {
+                    try {
+                        val phone = call.argument<String>("phone")?.trim().orEmpty()
+                        val intent = Intent(Intent.ACTION_DIAL).apply {
+                            data = Uri.parse("tel:$phone")
+                        }
+                        startActivity(intent)
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error("OPEN_DIALER_FAILED", e.message, null)
+                    }
                 }
                 else -> result.notImplemented()
             }

@@ -39,6 +39,17 @@ final useCouponPostProvider = FutureProvider.autoDispose
       return result.data!;
     });
 
+final useCouponPreProvider = FutureProvider.autoDispose
+    .family<UseCouponRespData, UseCouponRequestParams>((ref, params) async {
+      final result = await ref.read(couponApiProvider).useCouponPre(params);
+
+      if (!result.isSuccess || result.data == null) {
+        throw result.message ?? AppStrings.couponLoadFailed;
+      }
+
+      return result.data!;
+    });
+
 class CouponTypes {
   const CouponTypes._();
 
@@ -168,6 +179,17 @@ class CouponApi {
   ) {
     return HttpProvider.instance.post<UseCouponRespData>(
       ApiConstants.useCouponPost,
+      data: params.toJson(),
+      fromJson: (json) => _parseUseCouponData(json),
+    );
+  }
+
+  /// 使用贷前优惠券试算金额，确认借款页只用返回金额做展示。
+  Future<HttpResult<UseCouponRespData>> useCouponPre(
+    UseCouponRequestParams params,
+  ) {
+    return HttpProvider.instance.post<UseCouponRespData>(
+      ApiConstants.useCouponPre,
       data: params.toJson(),
       fromJson: (json) => _parseUseCouponData(json),
     );

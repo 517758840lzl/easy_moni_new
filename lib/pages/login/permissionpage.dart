@@ -3,16 +3,15 @@ import 'package:easy_moni/core/utils/app_logger.dart';
 
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/network/http_provider.dart';
-import 'package:easy_moni/core/router/acquisition_progress_route_resolver.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
-import 'package:easy_moni/pages/fillInforma/providers/acquisition_progress_provider.dart';
 import 'package:easy_moni/pages/login/providers/auth_provider.dart';
 import 'package:easy_moni/pages/login/widgets/permissionalert.dart';
 import 'package:easy_moni/services/auth_storage.dart';
 import 'package:easy_moni/services/permission_storage.dart';
 import 'package:easy_moni/services/platform_service.dart';
+import 'package:easy_moni/services/saved_session_route_service.dart';
 import 'package:easy_moni/services/upload_data/upload_data_sync_service.dart';
 import 'package:easy_moni/utils/widgets/permission_action_buttons.dart';
 import 'package:flutter/material.dart';
@@ -54,28 +53,14 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
   }
 
   Future<void> _routeAfterPermissionsAccepted() async {
-    final savedToken = await AuthStorage.getToken();
+    final route = await ref
+        .read(savedSessionRouteServiceProvider)
+        .resolveSavedSessionRoute();
     if (!mounted) return;
 
-    if (savedToken == null || savedToken.isEmpty) {
-      context.go(AppRoutePaths.login);
-      return;
-    }
-
-    await HttpProvider.instance.setToken(savedToken);
-    if (!mounted) return;
-
-    final progressResult = await ref.read(acquisitionProgressProvider).call();
-    if (!mounted) return;
-
-    if (progressResult.isSuccess && progressResult.data != null) {
-      final route = AcquisitionProgressRouteResolver.resolve(
-        progressResult.data!,
-      );
+    if (route != null) {
       context.go(route);
     } else {
-      await HttpProvider.instance.clearAuth();
-      if (!mounted) return;
       context.go(AppRoutePaths.login);
     }
   }
@@ -155,7 +140,7 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
     if (savedToken == null || savedToken.isEmpty) return;
 
     try {
-      await HttpProvider.instance.setToken(savedToken);
+      HttpProvider.instance.restoreToken(savedToken);
       final checkDataResult = await checkUploadDataValidApi.call();
       if (checkDataResult.isSuccess) {
         AppLogger.debug(

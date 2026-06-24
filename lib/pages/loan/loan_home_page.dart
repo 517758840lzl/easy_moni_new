@@ -15,14 +15,33 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:easy_moni/core/utils/app_logger.dart';
 
-class LoanHomePage extends ConsumerStatefulWidget {
-  const LoanHomePage({super.key});
+class LoanHomePage extends StatelessWidget {
+  const LoanHomePage({super.key, this.refreshRequestId = ''});
+
+  final String refreshRequestId;
 
   @override
-  ConsumerState<LoanHomePage> createState() => _LoanHomePageState();
+  Widget build(BuildContext context) {
+    return LoanHomeScaffold(refreshRequestId: refreshRequestId);
+  }
 }
 
-class _LoanHomePageState extends ConsumerState<LoanHomePage> {
+// 借款首页通用容器
+class LoanHomeScaffold extends ConsumerStatefulWidget {
+  const LoanHomeScaffold({
+    super.key,
+    this.bottomContent,
+    this.refreshRequestId = '',
+  });
+
+  final Widget? bottomContent;
+  final String refreshRequestId;
+
+  @override
+  ConsumerState<LoanHomeScaffold> createState() => _LoanHomeScaffoldState();
+}
+
+class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
   final Set<int> _selectedProductIndexes = {};
   bool _isLoading = true;
   String? _loadError;
@@ -34,6 +53,18 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
   void initState() {
     super.initState();
     _loadHomeData();
+  }
+
+  @override
+  void didUpdateWidget(covariant LoanHomeScaffold oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.refreshRequestId.isEmpty ||
+        widget.refreshRequestId == oldWidget.refreshRequestId) {
+      return;
+    }
+
+    // 还款完成回到首页时，页面状态可能被 IndexedStack 复用，需要按路由刷新信号重新拉取数据。
+    _refreshHomeData();
   }
 
   Future<void> _loadHomeData({bool showLoading = true}) async {
@@ -243,15 +274,19 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(10, 17, 10, 92),
-          children: const [
-            _SelectionHint(canSelectMultiple: false),
-            SizedBox(height: 24),
-            Center(
+          children: [
+            const _SelectionHint(canSelectMultiple: false),
+            const SizedBox(height: 24),
+            const Center(
               child: Text(
                 AppStrings.noLoanProducts,
                 style: TextStyle(fontSize: 14, color: Color(0xFF909399)),
               ),
             ),
+            if (widget.bottomContent != null) ...[
+              const SizedBox(height: 16),
+              widget.bottomContent!,
+            ],
           ],
         ),
       );
@@ -264,7 +299,10 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(10, 17, 10, 92),
-        itemCount: orderedHomeIndexes.length + 1,
+        itemCount:
+            orderedHomeIndexes.length +
+            1 +
+            (widget.bottomContent == null ? 0 : 1),
         separatorBuilder: (context, index) {
           return SizedBox(height: index == 0 ? 12 : 16);
         },
@@ -274,7 +312,10 @@ class _LoanHomePageState extends ConsumerState<LoanHomePage> {
               canSelectMultiple: _canSelectMultipleProducts,
             );
           }
-          return _buildHomeListItem(orderedHomeIndexes[index - 1]);
+          if (index <= orderedHomeIndexes.length) {
+            return _buildHomeListItem(orderedHomeIndexes[index - 1]);
+          }
+          return widget.bottomContent!;
         },
       ),
     );

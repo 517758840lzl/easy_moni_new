@@ -1,21 +1,29 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
+import 'package:easy_moni/pages/loan/loan_home_review_page.dart';
 import 'package:easy_moni/pages/mine/mine_page.dart';
 import 'package:easy_moni/pages/loan/loan_home_page.dart';
 import 'package:easy_moni/pages/repay/repay_entry_page.dart';
+import 'package:easy_moni/services/auth_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+final reviewAccountHomeProvider = FutureProvider.autoDispose<bool>((ref) {
+  return AuthStorage.isReviewAccount();
+});
 
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({
     super.key,
     this.initialTab = AppHomeTabs.loan,
     this.tabRequestId = '',
+    this.loanHomeRefreshRequestId = '',
   });
 
   final String initialTab;
   final String tabRequestId;
+  final String loanHomeRefreshRequestId;
 
   @override
   ConsumerState<HomeShell> createState() => _HomeShellState();
@@ -23,12 +31,6 @@ class HomeShell extends ConsumerStatefulWidget {
 
 class _HomeShellState extends ConsumerState<HomeShell> {
   late int _currentIndex = _tabIndex(widget.initialTab);
-
-  final List<Widget> _pages = const [
-    LoanHomePage(),
-    RepayEntryPage(),
-    MinePage(),
-  ];
 
   @override
   void didUpdateWidget(covariant HomeShell oldWidget) {
@@ -45,8 +47,22 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
+    final isReviewAccount = ref
+        .watch(reviewAccountHomeProvider)
+        .maybeWhen(data: (value) => value, orElse: () => false);
+    final pages = [
+      // 根据登录接口 cacheData 字段选择贷款首页，审核账号展示审核员版本。
+      isReviewAccount
+          ? LoanHomeReviewPage(
+              refreshRequestId: widget.loanHomeRefreshRequestId,
+            )
+          : LoanHomePage(refreshRequestId: widget.loanHomeRefreshRequestId),
+      const RepayEntryPage(),
+      const MinePage(),
+    ];
+
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _pages),
+      body: IndexedStack(index: _currentIndex, children: pages),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,

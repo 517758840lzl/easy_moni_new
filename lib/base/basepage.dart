@@ -1,7 +1,8 @@
+import 'package:easy_moni/utils/widgets/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
-import '../utils/widgets/toast.dart';
+
 
 abstract class BasePage extends ConsumerStatefulWidget {
   const BasePage({super.key});

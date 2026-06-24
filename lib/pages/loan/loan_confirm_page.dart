@@ -5,6 +5,7 @@ import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/entities/coupon_resp.dart';
 import 'package:easy_moni/entities/loan_confirm/loan_confirm_resp.dart';
+import 'package:easy_moni/entities/use_coupon_resp/use_coupon_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/loan/components/coupon_bottom_sheet_loader.dart';
 import 'package:easy_moni/pages/loan/components/coupon_entry_card.dart';
@@ -20,6 +21,7 @@ import 'package:easy_moni/utils/extensions.dart';
 import 'package:easy_moni/utils/loan_confirm_content_edge.dart';
 import 'package:easy_moni/utils/widgets/common_bottom_sheet.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
+import 'package:easy_moni/utils/widgets/selected_coupon_card.dart';
 import 'package:easy_moni/core/utils/app_logger.dart';
 
 class LoanConfirmPage extends ConsumerStatefulWidget {
@@ -39,6 +41,10 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
   bool _isCouponSheetOpen = false;
   String? _loadError;
   LoanConfirmResp? _loanConfirmResp;
+  CouponItem? _selectedCoupon;
+  UseCouponRespData? _couponAmountPreview;
+  bool _isCouponAmountPreviewLoading = false;
+  int _couponPreviewRequestId = 0;
 
   // 业务数据统一从响应体中取，避免 build 里重复拆 nullable 链。
   LoanConfirmData? get _confirmData => _loanConfirmResp?.data;
@@ -84,6 +90,10 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
       setState(() {
         _isLoading = false;
         _loanConfirmResp = confirmResult.data;
+        _selectedCoupon = null;
+        _couponAmountPreview = null;
+        _isCouponAmountPreviewLoading = false;
+        _couponPreviewRequestId++;
       });
     } catch (_) {
       if (!mounted) return;
@@ -121,7 +131,10 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
 
       final result = await ref
           .read(loanConfirmProvider)
-          .confirmOrder(confirmData: data);
+          .confirmOrder(
+            confirmData: data,
+            couponIds: _selectedCouponIds(_selectedCoupon),
+          );
       if (!mounted) return;
       if (result.isSuccess) {
         context.go(AppRoutePaths.loanReviewing);
@@ -195,17 +208,30 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
     });
 
     try {
-      await CommonBottomSheet.show<void>(
+      CouponItem? tempSelectedCoupon = _selectedCoupon;
+
+      final confirmed = await CommonBottomSheet.show<bool>(
         context: context,
         title: '',
         description: '',
-        content: CouponBottomSheetLoader(future: _loadCoupons(orders)),
+        content: CouponBottomSheetLoader(
+          future: _loadCoupons(orders),
+          initialSelectedCouponId: _selectedCoupon?.couponId,
+          onSelectionChanged: (coupon) {
+            tempSelectedCoupon = coupon;
+          },
+        ),
         actions: const [
-          CommonBottomSheetAction<void>(
+          CommonBottomSheetAction<bool>(
             text: AppStrings.couponConfirmButtonText,
+            result: true,
           ),
         ],
       );
+
+      if (mounted && confirmed == true && _confirmData != null) {
+        _updateSelectedCoupon(data: _confirmData!, coupon: tempSelectedCoupon);
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -229,14 +255,68 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
     );
   }
 
+  // 确认优惠券选择后，刷新贷前优惠券金额试算。
+  void _updateSelectedCoupon({
+    required LoanConfirmData data,
+    required CouponItem? coupon,
+  }) {
+    _couponPreviewRequestId++;
+    final couponId = coupon?.couponId;
+    setState(() {
+      _selectedCoupon = coupon;
+      _couponAmountPreview = null;
+      _isCouponAmountPreviewLoading = couponId != null && couponId > 0;
+    });
+
+    if (couponId == null || couponId <= 0) {
+      return;
+    }
+
+    _loadCouponAmountPreview(data, couponId);
+  }
+
+  Future<void> _loadCouponAmountPreview(
+    LoanConfirmData data,
+    int couponId,
+  ) async {
+    final orders = data.list ?? const <LoanConfirmOrder>[];
+    final requestId = ++_couponPreviewRequestId;
+    try {
+      final preview = await ref.read(
+        useCouponPreProvider(
+          UseCouponRequestParams(
+            appOrderIds: _couponAppOrderIds(orders),
+            couponIds: [couponId],
+            productCodes: _couponProductCodes(orders),
+          ),
+        ).future,
+      );
+      if (!mounted || requestId != _couponPreviewRequestId) return;
+      setState(() {
+        _couponAmountPreview = preview;
+        _isCouponAmountPreviewLoading = false;
+      });
+    } catch (error) {
+      if (!mounted || requestId != _couponPreviewRequestId) return;
+      setState(() {
+        _isCouponAmountPreviewLoading = false;
+      });
+      context.showSnackBar(error.toString(), isError: true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final data = _confirmData;
     final orders = data?.list ?? const <LoanConfirmOrder>[];
     final hasData = data != null && orders.isNotEmpty;
     final topInset = MediaQuery.of(context).padding.top;
-    final cardTop = topInset + 202;
-    final contentTop = topInset + 278;
+    final reserveCouponAmountSpace =
+        _isCouponAmountPreviewLoading ||
+        _shouldShowCouponLoanAmount(_couponAmountPreview);
+    final couponAmountOffset = reserveCouponAmountSpace ? 24.0 : 0.0;
+    final cardTop = topInset + 202 + couponAmountOffset;
+    final contentTop = topInset + 278 + couponAmountOffset;
 
     return Scaffold(
       backgroundColor: const Color(0xFF216A4A),
@@ -261,7 +341,17 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
               ),
             ),
             // 顶部信息层：导航、标题、借款金额和三项汇总数据。
-            Positioned(top: 0, left: 0, right: 0, child: _Hero(data: data)),
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: _Hero(
+                data: data,
+                couponAmountPreview: _couponAmountPreview,
+                isCouponAmountLoading: _isCouponAmountPreviewLoading,
+                couponAmountOffset: couponAmountOffset,
+              ),
+            ),
             if (hasData)
               // 收款账户卡片悬浮在顶部信息区和白色内容区之间。
               Positioned(
@@ -361,7 +451,11 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
       );
     }
 
-    return _LoanConfirmOrderList(orders: orders, onCouponTap: _showCoupons);
+    return _LoanConfirmOrderList(
+      orders: orders,
+      selectedCoupon: _selectedCoupon,
+      onCouponTap: _showCoupons,
+    );
   }
 }
 
@@ -369,10 +463,12 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
 class _LoanConfirmOrderList extends StatelessWidget {
   const _LoanConfirmOrderList({
     required this.orders,
+    required this.selectedCoupon,
     required this.onCouponTap,
   });
 
   final List<LoanConfirmOrder> orders;
+  final CouponItem? selectedCoupon;
   final VoidCallback onCouponTap;
 
   @override
@@ -387,7 +483,14 @@ class _LoanConfirmOrderList extends StatelessWidget {
       child: Column(
         children: [
           // 优惠券入口固定在订单列表最上方。
-          CouponEntryCard(onTap: onCouponTap),
+          if (selectedCoupon == null)
+            CouponEntryCard(onTap: onCouponTap)
+          else
+            SelectedCouponCard(
+              couponName: _couponName(selectedCoupon!),
+              amountText: _couponAmountText(selectedCoupon!),
+              onTap: onCouponTap,
+            ),
           const SizedBox(height: 14),
           ...List.generate(orders.length, (index) {
             final order = orders[index];
@@ -473,9 +576,17 @@ class _LoanConfirmContentClipper extends CustomClipper<Path> {
 
 // 页面头图区域：展示导航、客服入口、借款总额和三项关键确认信息。
 class _Hero extends StatelessWidget {
-  const _Hero({required this.data});
+  const _Hero({
+    required this.data,
+    required this.couponAmountPreview,
+    required this.isCouponAmountLoading,
+    required this.couponAmountOffset,
+  });
 
   final LoanConfirmData? data;
+  final UseCouponRespData? couponAmountPreview;
+  final bool isCouponAmountLoading;
+  final double couponAmountOffset;
 
   @override
   Widget build(BuildContext context) {
@@ -485,9 +596,12 @@ class _Hero extends StatelessWidget {
     final repayTotal = orders.fold<double>(0, (sum, item) {
       return sum + (item.repayAmount ?? 0);
     });
+    final previewAmount = couponAmountPreview?.newLoanAmount;
+    final originalAmount = couponAmountPreview?.loanAmount;
+    final showCouponAmount = _shouldShowCouponLoanAmount(couponAmountPreview);
 
     return SizedBox(
-      height: topInset + 249,
+      height: topInset + 249 + couponAmountOffset,
       child: Stack(
         children: [
           Positioned(
@@ -530,13 +644,36 @@ class _Hero extends StatelessWidget {
             top: topInset + 66,
             left: 20,
             right: 20,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: TotalRepayAmountDisplay(amount: data?.loanAmount ?? 0),
+            child: Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: isCouponAmountLoading
+                    ? const SizedBox(
+                        width: 32,
+                        height: 32,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : showCouponAmount
+                    ? Column(
+                        children: [
+                          TotalRepayAmountDisplay(amount: previewAmount ?? 0),
+                          const SizedBox(height: 4),
+                          TotalRepayAmountDisplay(
+                            amount: originalAmount ?? 0,
+                            currencyStyle: _couponOriginalAmountStyle,
+                            amountStyle: _couponOriginalAmountStyle,
+                          ),
+                        ],
+                      )
+                    : TotalRepayAmountDisplay(amount: data?.loanAmount ?? 0),
+              ),
             ),
           ),
           Positioned(
-            top: topInset + 116,
+            top: topInset + 116 + couponAmountOffset,
             left: 18,
             right: 18,
             child: Row(
@@ -593,47 +730,61 @@ class _SummaryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 72,
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
+    return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+        image: DecorationImage(
+          image: Assets.images.loanHeaderRectangle.provider(),
+          fit: BoxFit.fill,
+          alignment: Alignment.topCenter,
+        ),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          icon,
-          const SizedBox(height: 4),
-          Text(
-            value.formatBackendDate(),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-              height: 14 / 12,
+      child: Container(
+        height: 72,
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            icon,
+            const SizedBox(height: 4),
+            Text(
+              value.formatBackendDate(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+                height: 14 / 12,
+              ),
             ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 10,
-              color: Colors.white.withValues(alpha: 0.82),
-              height: 12 / 10,
+            const SizedBox(height: 3),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 10,
+                color: Colors.white.withValues(alpha: 0.82),
+                height: 12 / 10,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
+
+const TextStyle _couponOriginalAmountStyle = TextStyle(
+  fontSize: 20,
+  fontWeight: FontWeight.w500,
+  color: Color(0xCCFFFFFF),
+  height: 24 / 20,
+  decoration: TextDecoration.lineThrough,
+  decorationColor: Color(0xCCFFFFFF),
+);
 
 // MoMo 收款账户卡：展示实际放款到账的钱包/手机号信息。
 class _MomoAccountCard extends StatelessWidget {
@@ -746,6 +897,29 @@ class _SimIcon extends StatelessWidget {
 // 金额展示统一加 GHS 前缀，并按项目扩展方法格式化小数。
 String _amountText(num? value) {
   return (value ?? 0).formatAmount();
+}
+
+String _couponName(CouponItem coupon) {
+  final title = coupon.title?.trim();
+  return title == null || title.isEmpty ? AppStrings.couponString : title;
+}
+
+String _couponAmountText(CouponItem coupon) {
+  final summary = coupon.summary?.trim();
+  return summary == null || summary.isEmpty
+      ? AppStrings.couponSelectedFallback
+      : summary;
+}
+
+// 贷前优惠券金额试算：选券后顶部展示优惠后借款金额及原始金额。
+bool _shouldShowCouponLoanAmount(UseCouponRespData? preview) {
+  return preview?.newLoanAmount != null && preview?.loanAmount != null;
+}
+
+List<int> _selectedCouponIds(CouponItem? coupon) {
+  final couponId = coupon?.couponId;
+  if (couponId == null || couponId <= 0) return const <int>[];
+  return [couponId];
 }
 
 // 日期字段为空时展示空字符串，避免补充不真实的默认文案。

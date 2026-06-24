@@ -43,6 +43,9 @@ class LoginResp {
     }
   }
 
+  /// cacheData 为 1 时表示审核账号，首页需要展示审核员版本。
+  bool get isReviewAccount => cacheData == 1;
+
   static int? _parseInt(dynamic value) {
     if (value == null) return null;
     if (value is int) return value;

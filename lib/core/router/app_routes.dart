@@ -1,6 +1,7 @@
 /// 路由路径常量，集中维护页面跳转使用的 path，避免页面中散落字符串。
 class AppRoutePaths {
   static const String root = '/';
+  static const String permission = '/permission';
   static const String login = '/login';
   static const String customerService = '/customer-service';
   static const String home = '/home';
@@ -21,6 +22,7 @@ class AppRoutePaths {
   static const String questionnaire = '/questionnaire';
   static const String mine = '/mine';
   static const String orderHistory = '/order-history';
+  static const String privacyPolicy = '/privacy-policy';
   static const String settings = '/settings';
   static const String detail = '/detail/:id';
   static const String repayExtension = '/repay-extension';
@@ -30,10 +32,12 @@ class AppRoutePaths {
   static String detailWithId(String id) => '/detail/$id';
 
   /// 构建首页容器路径，明确指定底部导航需要展示的 tab。
-  static String homeWithTab(String tab) {
+  static String homeWithTab(String tab, {bool refreshLoanHome = false}) {
+    final requestId = DateTime.now().microsecondsSinceEpoch.toString();
     return _withQuery(home, {
       'tab': tab,
-      'tabRequestId': DateTime.now().microsecondsSinceEpoch.toString(),
+      'tabRequestId': requestId,
+      if (refreshLoanHome) 'loanHomeRefreshRequestId': requestId,
     });
   }
 
@@ -89,7 +93,8 @@ class AppHomeTabs {
 
 /// 路由名称常量，供 GoRouter 的 name 和后续 goNamed/pushNamed 统一复用。
 class AppRouteNames {
-  static const String home = 'home';
+  static const String splash = 'splash';
+  static const String permission = 'permission';
   static const String login = 'login';
   static const String customerService = 'customerService';
   static const String homeShell = 'homeShell';
@@ -111,6 +116,7 @@ class AppRouteNames {
   static const String questionnaire = 'questionnaire';
   static const String mine = 'mine';
   static const String orderHistory = 'orderHistory';
+  static const String privacyPolicy = 'privacyPolicy';
   static const String settings = 'settings';
   static const String detail = 'detail';
   static const String repayExtension = 'repayExtension';

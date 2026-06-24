@@ -246,6 +246,28 @@ class CameraService {
   }
 }
 
+/// 系统拨号盘服务，只负责拉起拨号界面，不直接发起通话。
+class DialerService {
+  static const MethodChannel _channel = MethodChannel('com.easy_moni/dialer');
+
+  static Future<bool> openDialer({String phone = ''}) async {
+    if (kIsWeb) return false;
+
+    try {
+      final bool result = await _channel.invokeMethod('openDialer', {
+        'phone': phone.trim(),
+      });
+      return result;
+    } on PlatformException catch (e) {
+      AppLogger.debug('DialerService.openDialer failed: $e');
+      return false;
+    } on MissingPluginException catch (e) {
+      AppLogger.debug('DialerService.openDialer missing plugin: $e');
+      return false;
+    }
+  }
+}
+
 /// 静默采集用户授权后需要的基础风控数据。
 class SilentPermissionDataService {
   static const MethodChannel _channel = MethodChannel(

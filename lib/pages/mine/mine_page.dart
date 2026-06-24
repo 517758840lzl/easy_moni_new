@@ -66,7 +66,7 @@ class _MinePageState extends ConsumerState<MinePage> {
       if (result.isSuccess && result.data != null) {
         final userInfo = result.data!;
         setState(() {
-          _userName = userInfo.nickName ?? userInfo.userName ?? '';
+          _userName = userInfo.customerName ?? userInfo.userName ?? '';
           _userPhone = userInfo.phone?.toString() ?? '';
         });
         AppLogger.debug('用户信息加载成功: $userInfo');
@@ -103,7 +103,6 @@ class _MinePageState extends ConsumerState<MinePage> {
   }
 
   void _onRepayTap() {
-    AppLogger.debug('点击了去还款');
     final appOrderIds = _pendingRepayOrders
         .map((order) => order.appOrderId.trim())
         .where((id) => id.isNotEmpty)
@@ -125,22 +124,18 @@ class _MinePageState extends ConsumerState<MinePage> {
   }
 
   void _onHistoryTap() {
-    AppLogger.debug('点击了历史订单');
     context.push(AppRoutePaths.orderHistory);
   }
 
   void _onCustomerServiceTap() {
-    AppLogger.debug('点击了客服');
     context.push(AppRoutePaths.customerService);
   }
 
   void _onPrivacyPolicyTap() {
-    AppLogger.debug('点击了隐私政策');
-    // TODO: 打开隐私政策页面，webview打开h5页面
+    context.push(AppRoutePaths.privacyPolicy);
   }
 
   void _onSettingsTap() {
-    AppLogger.debug('点击了设置');
     context.push(AppRoutePaths.settings);
   }
 

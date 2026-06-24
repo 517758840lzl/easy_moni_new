@@ -7,18 +7,12 @@ import 'package:easy_moni/core/network/http_provider.dart';
 import 'package:easy_moni/core/router/app_router.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:easy_moni/core/utils/app_logger.dart';
-import 'package:easy_moni/services/auth_storage.dart';
 import 'package:easy_moni/utils/widgets/toast.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
   final talker = AppLogger.instance;
   HttpProvider.init(talker: talker);
-
-  final savedToken = await AuthStorage.getToken();
-  if (savedToken != null && savedToken.isNotEmpty) {
-    await HttpProvider.instance.setToken(savedToken);
-  }
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(

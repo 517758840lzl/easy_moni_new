@@ -46,6 +46,7 @@ class LoanOrderDetailCards extends StatelessWidget {
         _DetailRowData.amount(AppStrings.loanOrderInterestLabel, data.interest),
         _DetailRowData.amount(
           AppStrings.loanOrderOverdueFeeLabel,
+          // TODO 展示逾期费overdueInterest，后端缺少字段
           data.serviceFee,
         ),
         _DetailRowData.amount(

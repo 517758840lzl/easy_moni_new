@@ -444,7 +444,7 @@ List<LoanOrderCardRowData> _repayOrderRows(
     if (isOverdue) ...[
       LoanOrderCardRowData(
         label: AppStrings.loanOrderOverdueFeeLabel,
-        value: _amountText(order.serviceFee),
+        value: _amountText(order.overdueInterest),
       ),
       LoanOrderCardRowData(
         label: AppStrings.loanOrderOverdueDaysLabel,

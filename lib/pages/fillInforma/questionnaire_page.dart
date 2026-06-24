@@ -5,7 +5,7 @@ import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/fillInforma/providers/questionnaire_provider.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/personal_info_form_item.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/picker_bottom_sheet.dart';
-import 'package:easy_moni/utils/widgets/informationBottomButton.dart';
+import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -208,9 +208,9 @@ class _QuestionnairePageState extends ConsumerState<QuestionnairePage> {
           ),
         ],
       ),
-      bottomNavigationBar: BottomContinueButton(
-        isEnabled: formState?.canSubmit ?? false,
-        onTap: _onSubmit,
+      bottomNavigationBar: LoanBottomActionButton(
+        enabled: formState?.canSubmit ?? false,
+        onPressed: _onSubmit,
         text: (formState?.isSubmitting ?? false)
             ? AppStrings.questionnaireSaving
             : AppStrings.questionnaireSubmitButton,
@@ -226,6 +226,7 @@ class _QuestionnairePageState extends ConsumerState<QuestionnairePage> {
         child: Row(
           children: [
             GestureDetector(
+              // TODO 弹出统一的挽留弹窗 limit_toast
               onTap: () => Navigator.of(context).pop(),
               behavior: HitTestBehavior.opaque,
               child: const SizedBox(

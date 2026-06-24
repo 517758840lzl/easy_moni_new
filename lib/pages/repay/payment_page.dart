@@ -122,7 +122,9 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
   void _handleJsMessage(JavaScriptMessage message) {
     AppLogger.debug('Payment H5 message: ${message.message}');
     if (message.message == _goHomeMessage) {
-      context.go(AppRoutePaths.homeWithTab(AppHomeTabs.loan));
+      context.go(
+        AppRoutePaths.homeWithTab(AppHomeTabs.loan, refreshLoanHome: true),
+      );
     } else {
       AppLogger.debug('Unsupported payment H5 message: ${message.message}');
     }

@@ -56,6 +56,11 @@ class HttpProvider {
 
   EnvironmentConfig get config => _config;
 
+  /// 恢复本地登录态到请求头，避免启动或页面分流时重复写入本地存储。
+  void restoreToken(String? token) {
+    _headerInterceptor.setToken(token);
+  }
+
   Future<void> setToken(String? token) async {
     _headerInterceptor.setToken(token);
     if (token != null && token.isNotEmpty) {

@@ -5,6 +5,7 @@ class AppStrings {
 
   // ==================== App ====================
   static const String appTitle = 'Easy moni';
+  static const String splashTagline = 'YOUR MONI、MADE EASY';
   static const String appinstrunctions = '权限收集说明';
   static const String decline = '拒绝';
   static const String agrees = '同意';
@@ -197,6 +198,13 @@ class AppStrings {
   static const String homeAvailableString = '可借产品：';
   static const String homeMultiSelectHint = '可多选';
   static const String backToHomeText = '回到首页';
+  static const String reviewFeatureTitle = '产品特色';
+  static const String reviewFeatureApplyTitle = '申请便捷';
+  static const String reviewFeatureApplyDesc = '3步申请、快速审核';
+  static const String reviewFeatureDisburseTitle = '快速放款';
+  static const String reviewFeatureDisburseDesc = '最快仅需10分钟';
+  static const String reviewFeatureFlexibleTitle = '灵活借还';
+  static const String reviewFeatureFlexibleDesc = '随借随还、在线服务';
 
   // ==================== 贷款详情 ====================
   static const String loanDetailTitle = '贷款详情';

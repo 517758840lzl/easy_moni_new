@@ -1,9 +1,11 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
+import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:easy_moni/entities/service/service_info_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
 import 'package:easy_moni/pages/mine/providers/customer_service_provider.dart';
+import 'package:easy_moni/services/platform_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -351,47 +353,60 @@ class _CustomerServiceContactCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Container(
-        padding: const EdgeInsets.all(21),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: const Color(0xFFE1E3E4),
-          ),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x08000000),
-              blurRadius: 6,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
+    return GestureDetector(
+      onTap: () =>_handleTap(context),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+            child: Container(
+              padding: const EdgeInsets.all(21),
               decoration: BoxDecoration(
-                color: const Color(0xFFE9EDFF),
-                borderRadius: BorderRadius.circular(8),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFFE1E3E4),
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x08000000),
+                    blurRadius: 6,
+                    offset: Offset(0, 4),
+                  ),
+                ],
               ),
-              child: Icon(
-                contact.icon,
-                size: 20,
-                color: const Color(0xFF006C49),
+              child: Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE9EDFF),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      contact.icon,
+                      size: 20,
+                      color: const Color(0xFF006C49),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(child: _CustomerServiceContactText(contact: contact)),
+                  const SizedBox(width: 12),
+                  Assets.images.serviceRightArrow.image(width: 8, height: 12),
+                ],
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(child: _CustomerServiceContactText(contact: contact)),
-            const SizedBox(width: 12),
-            Assets.images.serviceRightArrow.image(width: 8, height: 12),
-          ],
-        ),
-      ),
+          ),
     );
+  }
+
+  void _handleTap(BuildContext context) {
+    if (contact.type == CustomerServiceContactType.phone) {
+      AppLogger.debug('phone');
+      DialerService.openDialer(phone: contact.account);
+      return;
+    }
+
+    // TODO: 其他客服联系方式跳转规则待产品确认后接入。
   }
 }
 
