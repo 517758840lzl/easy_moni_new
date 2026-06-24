@@ -87,12 +87,24 @@ class _CropRect {
 
 /// Ghana Card 横屏拍摄页，返回框内裁剪后的图片 bytes。
 class IdCameraScreen extends StatefulWidget {
-  const IdCameraScreen({super.key, this.camera, this.isFront = true});
+  const IdCameraScreen({
+    super.key,
+    this.camera,
+    this.isFront = true,
+    this.restorePortraitOnDispose = true,
+    this.entryToastMessage,
+  });
 
   final CameraDescription? camera;
 
   /// true=身份证正面，false=身份证反面。
   final bool isFront;
+
+  /// 连续拍摄下一面时保持横屏，避免中途恢复竖屏导致第二个拍摄页布局错乱。
+  final bool restorePortraitOnDispose;
+
+  /// 进入拍摄页后展示的一次性提示文案。
+  final String? entryToastMessage;
 
   @override
   State<IdCameraScreen> createState() => _IdCameraScreenState();
@@ -116,6 +128,15 @@ class _IdCameraScreenState extends State<IdCameraScreen> {
     ]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     _initializeControllerFuture = _initCamera();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final message = widget.entryToastMessage?.trim();
+      if (!mounted || message == null || message.isEmpty) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    });
   }
 
   Future<void> _initCamera() async {
@@ -147,9 +168,11 @@ class _IdCameraScreenState extends State<IdCameraScreen> {
 
   @override
   void dispose() {
-    // 离开拍摄页后恢复主流程竖屏显示。
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    if (widget.restorePortraitOnDispose) {
+      // 离开完整拍摄流程后恢复主流程竖屏显示。
+      SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
     _controller?.dispose();
     super.dispose();
   }

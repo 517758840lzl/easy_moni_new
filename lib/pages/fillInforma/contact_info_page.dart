@@ -11,6 +11,7 @@ import 'package:easy_moni/pages/fillInforma/providers/acp_element_info_provider.
 import 'package:easy_moni/pages/fillInforma/providers/submit_acp_element_info_provider.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/personal_info_form_item.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/progress_information.dart';
+import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
 import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/utils/widgets/limit_toast.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
@@ -26,6 +27,10 @@ class ContactInfoPage extends ConsumerStatefulWidget {
 }
 
 class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
+  static const double _headerTitleBarHeight = 44;
+  static const double _headerTopGap = 16;
+  static const double _stepIndicatorHeight = 56;
+  static const double _headerBottomGap = 16;
   static const String _codePrimaryRelation = '30051';
   static const String _codePrimaryName = '30052';
   static const String _codePrimaryPhone = '30053';
@@ -299,71 +304,69 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
     return showContent.isNotEmpty ? showContent : fallback;
   }
 
+  /// 按信息采集流程 header 比例计算白色内容区起点。
+  double _contentTop(BuildContext context) {
+    return MediaQuery.of(context).padding.top +
+        _headerTitleBarHeight +
+        _headerTopGap +
+        _stepIndicatorHeight +
+        _headerBottomGap;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return LoanRoundedPageShell(
+      contentTop: _contentTop,
+      contentTopRadius: 12,
       backgroundColor: AppColors.primaryDark,
-      body: Column(
-        children: [
-          buildInformationHeader(
-            context: context,
-            title: _pageTitle,
-            activeStep: InformationStep.personal,
-            onBack: () => FundingLimitDialog.showRetainDialog(context),
-          ),
-          Expanded(
-            child: Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-              ),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: _isLoading
-                    ? const Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 40),
-                          child: CircularProgressIndicator(),
-                        ),
-                      )
-                    : Column(
-                        children: [
-                          const SizedBox(height: 16),
+      header: buildInformationHeader(
+        context: context,
+        title: _pageTitle,
+        activeStep: InformationStep.personal,
+        onBack: () => FundingLimitDialog.showRetainDialog(context),
+      ),
+      content: _buildContent(),
+      bottomNavigationBar: LoanBottomActionButton(
+        enabled: _canContinue && !_isSubmitting,
+        onPressed: () => _onContinue(),
+        text: _isSubmitting
+            ? AppStrings.personalInfoSaving
+            : AppStrings.continueStr,
+      ),
+    );
+  }
 
-                          _buildContactItem(
-                            title: _entryTitle(
-                              _codePrimaryRelation,
-                              AppStrings.chooseContactsPhone,
-                            ),
-                            value: _buildContactDisplayValue(
-                              _parentSpouseName,
-                              _parentSpouseContact,
-                            ),
-                            onTap: () => _pickContact(isParentSpouse: true),
-                          ),
-                          _buildContactItem(
-                            title: _entryTitle(
-                              _codeSecondaryRelation,
-                              AppStrings.contactInfoFriendColleaguePhone,
-                            ),
-                            value: _buildContactDisplayValue(
-                              _friendColleagueName,
-                              _friendColleagueContact,
-                            ),
-                            onTap: () => _pickContact(isParentSpouse: false),
-                            showDivider: false,
-                          ),
-                        ],
-                      ),
-              ),
+  Widget _buildContent() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          const SizedBox(height: 16),
+          _buildContactItem(
+            title: _entryTitle(
+              _codePrimaryRelation,
+              AppStrings.chooseContactsPhone,
             ),
+            value: _buildContactDisplayValue(
+              _parentSpouseName,
+              _parentSpouseContact,
+            ),
+            onTap: () => _pickContact(isParentSpouse: true),
           ),
-          LoanBottomActionButton(
-            enabled: _canContinue && !_isSubmitting,
-            onPressed: () => _onContinue(),
-            text: _isSubmitting
-                ? AppStrings.personalInfoSaving
-                : AppStrings.continueStr,
+          _buildContactItem(
+            title: _entryTitle(
+              _codeSecondaryRelation,
+              AppStrings.contactInfoFriendColleaguePhone,
+            ),
+            value: _buildContactDisplayValue(
+              _friendColleagueName,
+              _friendColleagueContact,
+            ),
+            onTap: () => _pickContact(isParentSpouse: false),
           ),
         ],
       ),
@@ -381,7 +384,6 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
     return '$contactName-$phone';
   }
 
-  /// 复用个人信息表单项，仅替换右侧图标为通讯录图标。
   Widget _buildContactItem({
     required String title,
     required String? value,

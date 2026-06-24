@@ -42,6 +42,13 @@ class AppStrings {
   static const String codestr = '输入短信中的验证码';
   static const String gainCode = '获取验证码';
   static const String login = 'Log in';
+  static const String loginPhoneRequired = '请输入手机号';
+  static const String loginPhoneInvalid = '请输入正确手机号';
+  static const String loginCodeRequired = '请输入验证码';
+  static const String loginCodeSent = '验证码已发送';
+  static const String loginSendCodeFailed = '发送失败，请重试';
+  static const String loginFailed = '登录失败，请重试';
+  static const String loginTokenMissing = '登录失败，Token获取异常';
   // ================ 联系人流程 ========================
   static const String chooseContacts = '选择父母/配偶联系人';
   static const String chooseFriends = '选择朋友/同事联系人';
@@ -128,6 +135,7 @@ class AppStrings {
   static const String identityVerifyImageNotCaptured = '未获取到图片';
   static const String identityVerifyImageDecodeFailed = '无法解码图片';
   static const String identityVerifyCameraPermissionDenied = '未获得相机权限';
+  static const String identityVerifyFlipCardAndContinue = '请将身份证翻面，并继续拍摄';
   static const String identityVerifyBackUploadSuccess = '证件背面上传成功';
   static const String identityVerifyUploadFailed = '图片上传失败';
   static const String identityVerifyOcrSuccess = '证件识别成功';

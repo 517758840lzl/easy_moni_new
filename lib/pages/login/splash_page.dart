@@ -29,11 +29,11 @@ class _SplashPageState extends State<SplashPage> {
       setState(() {
         _isVisible = true;
       });
+      unawaited(_goToNextPage());
     });
-    unawaited(_goToNextPage());
   }
 
-  /// 启动页展示完成后进入权限页，由权限页统一处理授权状态和登录态分流。
+  /// 启动页首帧可见后再开始计时，避免启动期掉帧吃掉展示时长。
   Future<void> _goToNextPage() async {
     await Future<void>.delayed(_displayDuration);
     if (!mounted) return;
@@ -93,13 +93,21 @@ class _SplashBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: Assets.images.loginBg.provider(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+        final cacheWidth = (constraints.maxWidth * devicePixelRatio).round();
+        final cacheHeight = (constraints.maxHeight * devicePixelRatio).round();
+
+        return Assets.images.loginBg.image(
+          width: double.infinity,
+          height: double.infinity,
           fit: BoxFit.cover,
-        ),
-      ),
+          filterQuality: FilterQuality.low,
+          cacheWidth: cacheWidth > 0 ? cacheWidth : null,
+          cacheHeight: cacheHeight > 0 ? cacheHeight : null,
+        );
+      },
     );
   }
 }

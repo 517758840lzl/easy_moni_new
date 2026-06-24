@@ -6,6 +6,7 @@ import 'package:easy_moni/pages/fillInforma/providers/questionnaire_provider.dar
 import 'package:easy_moni/pages/fillInforma/widgets/personal_info_form_item.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/picker_bottom_sheet.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
+import 'package:easy_moni/utils/widgets/limit_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -226,8 +227,8 @@ class _QuestionnairePageState extends ConsumerState<QuestionnairePage> {
         child: Row(
           children: [
             GestureDetector(
-              // TODO 弹出统一的挽留弹窗 limit_toast
-              onTap: () => Navigator.of(context).pop(),
+              // 返回时展示统一挽留弹窗，避免直接弹空 GoRouter 页面栈。
+              onTap: () => FundingLimitDialog.showRetainDialog(context),
               behavior: HitTestBehavior.opaque,
               child: const SizedBox(
                 width: 44,

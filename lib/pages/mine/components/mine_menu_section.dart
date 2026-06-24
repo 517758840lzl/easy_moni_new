@@ -29,7 +29,7 @@ class MineMenuSection extends StatelessWidget {
               AppStrings.mineOtherFeatures,
               style: TextStyle(
                 fontSize: 14,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
                 color: Color(0xFF1A1A1A),
               ),
             ),

@@ -15,6 +15,7 @@ import 'package:easy_moni/pages/fillInforma/providers/submit_acp_element_info_pr
 import 'package:easy_moni/pages/fillInforma/widgets/personal_info_form_item.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/picker_bottom_sheet.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/progress_information.dart';
+import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
 import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:easy_moni/utils/widgets/limit_toast.dart';
@@ -31,6 +32,10 @@ class PersonalInfoPage extends ConsumerStatefulWidget {
 }
 
 class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
+  static const double _headerTitleBarHeight = 44;
+  static const double _headerTopGap = 16;
+  static const double _stepIndicatorHeight = 56;
+  static const double _headerBottomGap = 16;
   static const String _codeEmail = '10003';
   static const String _codeRegionCity = '10004';
 
@@ -353,6 +358,17 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
         .firstOrNull;
   }
 
+  String get _pageTitle => _stepInfo?.pageTitle.trim() ?? '';
+
+  /// 按信息采集流程 header 比例计算白色内容区起点。
+  double _contentTop(BuildContext context) {
+    return MediaQuery.of(context).padding.top +
+        _headerTitleBarHeight +
+        _headerTopGap +
+        _stepIndicatorHeight +
+        _headerBottomGap;
+  }
+
   Future<void> _checkInitialLocationPermission() async {
     try {
       final hasPermission = await LocationService.checkPermission();
@@ -663,52 +679,36 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return LoanRoundedPageShell(
+      contentTop: _contentTop,
+      contentTopRadius: 12,
       backgroundColor: AppColors.primaryDark,
-      body: Column(
-        children: [
-          buildInformationHeader(
-            context: context,
-            title: _stepInfo?.pageTitle ?? '',
-            activeStep: InformationStep.personal,
-            onBack: () => FundingLimitDialog.showRetainDialog(context),
-          ),
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-              ),
-              child: Container(
-                color: Colors.white,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: _isLoading
-                      ? const Center(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 40),
-                            child: CircularProgressIndicator(),
-                          ),
-                        )
-                      : Column(
-                          children:
-                              _stepInfo?.entries
-                                  .map(_buildEntryItem)
-                                  .toList() ??
-                              [],
-                        ),
-                ),
-              ),
-            ),
-          ),
-          LoanBottomActionButton(
-            enabled: _canContinue && !_isSubmitting,
-            onPressed: _canContinue && !_isSubmitting ? _onContinue : null,
-            text: _isSubmitting
-                ? AppStrings.personalInfoSaving
-                : AppStrings.continueStr,
-          ),
-        ],
+      header: buildInformationHeader(
+        context: context,
+        title: _pageTitle,
+        activeStep: InformationStep.personal,
+        onBack: () => FundingLimitDialog.showRetainDialog(context),
+      ),
+      content: _buildContent(),
+      bottomNavigationBar: LoanBottomActionButton(
+        enabled: _canContinue && !_isSubmitting,
+        onPressed: _canContinue && !_isSubmitting ? _onContinue : null,
+        text: _isSubmitting
+            ? AppStrings.personalInfoSaving
+            : AppStrings.continueStr,
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: _stepInfo?.entries.map(_buildEntryItem).toList() ?? [],
       ),
     );
   }

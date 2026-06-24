@@ -25,6 +25,7 @@ class LoginPage extends ConsumerStatefulWidget {
 }
 
 class _LoginPageState extends ConsumerState<LoginPage> {
+  // TODO 正式环境去掉默认手机号
   static const String _defaultPhone = '0504684567';
   static const String _defaultCode = '1234';
   static const Color _backgroundFallbackColor = Color(0xFF20754F);
@@ -107,7 +108,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   void _showLoginErrorToast(String? message) {
     final errorMessage = message?.trim();
     if (errorMessage == null || errorMessage.isEmpty) {
-      showToast('登录失败，请重试', context: context);
+      showToast(AppStrings.loginFailed, context: context);
       return;
     }
 
@@ -187,18 +188,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     final phone = _normalizedPhone();
     if (phone.isEmpty) {
-      showToast('请输入手机号');
+      showToast(AppStrings.loginPhoneRequired);
       return;
     }
     if (!_isValidPhoneInput(_phoneController.text)) {
-      showToast('请输入正确手机号');
+      showToast(AppStrings.loginPhoneInvalid);
       return;
     }
-    // if (phone.length != 9) {
-    //   showToast('请输入9位手机号');
-    //   return;
-    // }
-
     try {
       setState(() => _isSendingCode = true);
 
@@ -206,14 +202,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
       if (!mounted) return;
       if (result.isSuccess) {
-        showToast('验证码已发送');
+        showToast(AppStrings.loginCodeSent);
         _startCountdown();
       } else {
-        showToast(result.message ?? '发送失败，请重试');
+        showToast(result.message ?? AppStrings.loginSendCodeFailed);
       }
     } catch (e) {
       if (!mounted) return;
-      showToast('发送失败，请重试');
+      showToast(AppStrings.loginSendCodeFailed);
       AppLogger.debug('发送验证码异常: $e');
     } finally {
       if (mounted) {
@@ -230,15 +226,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final phone = _normalizedPhone();
     final code = _codeController.text.trim();
     if (phone.isEmpty) {
-      showToast('请输入手机号');
+      showToast(AppStrings.loginPhoneRequired);
       return;
     }
     if (!_isValidPhoneInput(_phoneController.text)) {
-      showToast('请输入正确手机号');
+      showToast(AppStrings.loginPhoneInvalid);
       return;
     }
     if (code.isEmpty) {
-      showToast('请输入验证码');
+      showToast(AppStrings.loginCodeRequired);
       return;
     }
 
@@ -337,7 +333,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           }
         } else {
           AppLogger.debug('Token为空!');
-          showToast('登录失败，Token获取异常');
+          showToast(AppStrings.loginTokenMissing);
         }
       } else {
         AppLogger.debug('登录失败: ${result.message}');
@@ -345,7 +341,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       }
     } catch (e, stackTrace) {
       if (!mounted) return;
-      showToast('登录失败，请重试');
+      showToast(AppStrings.errorMessage);
       AppLogger.debug('登录异常: $e');
       AppLogger.debug('堆栈: $stackTrace');
     } finally {

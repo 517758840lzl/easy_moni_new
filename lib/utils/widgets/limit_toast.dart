@@ -1,8 +1,14 @@
+import 'dart:async';
+
 import 'package:easy_moni/core/constants/app_strings.dart';
+import 'package:easy_moni/core/network/http_provider.dart';
+import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
-import 'package:easy_moni/pages/login/loginpage.dart';
+import 'package:easy_moni/pages/fillInforma/providers/questionnaire_provider.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// 借款流程挽留弹窗，用于提示用户继续完成借款资料。
 class FundingLimitDialog extends StatelessWidget {
@@ -23,12 +29,21 @@ class FundingLimitDialog extends StatelessWidget {
     show(
       context,
       onGiveUp: () {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const LoginPage()),
-          (route) => false,
-        );
+        unawaited(_clearAuthAndNavigateToLogin(context));
       },
     );
+  }
+
+  /// 清理本地登录态后进入登录页，确保后续请求不再携带旧 token。
+  static Future<void> _clearAuthAndNavigateToLogin(BuildContext context) async {
+    // 放弃资料流程时同步释放问卷状态，避免退出登录后旧请求继续重试。
+    final container = ProviderScope.containerOf(context, listen: false);
+    container.invalidate(questionnaireProvider);
+
+    await HttpProvider.instance.clearAuth();
+    if (!context.mounted) return;
+
+    context.go(AppRoutePaths.login);
   }
 
   @override

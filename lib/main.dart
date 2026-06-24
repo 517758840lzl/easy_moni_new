@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,25 +25,26 @@ void main() {
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
-  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]).then((
-    _,
-  ) {
-    runApp(
-      EasyToast(
-        child: ProviderScope(
-          observers: [
-            TalkerRiverpodObserver(
-              talker: talker,
-              settings: const TalkerRiverpodLoggerSettings(
-                printProviderDisposed: true,
-              ),
+  // 启动首帧优先展示，方向锁定通过平台通道异步执行，避免阻塞 Dart 启动页可见时间。
+  unawaited(
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]),
+  );
+
+  runApp(
+    EasyToast(
+      child: ProviderScope(
+        observers: [
+          TalkerRiverpodObserver(
+            talker: talker,
+            settings: const TalkerRiverpodLoggerSettings(
+              printProviderDisposed: true,
             ),
-          ],
-          child: const MainApp(),
-        ),
+          ),
+        ],
+        child: const MainApp(),
       ),
-    );
-  });
+    ),
+  );
 }
 
 class MainApp extends ConsumerWidget {

@@ -14,12 +14,12 @@ import 'package:easy_moni/pages/fillInforma/providers/upload_file_provider.dart'
 import 'package:easy_moni/pages/fillInforma/widgets/identity_verify_widgets.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/picker_bottom_sheet.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/progress_information.dart';
+import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
 import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/utils/widgets/common_bottom_sheet.dart';
 import 'package:easy_moni/utils/widgets/limit_toast.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:easy_moni/utils/widgets/permission_action_buttons.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,6 +33,11 @@ class IdentityVerifyPage extends ConsumerStatefulWidget {
 }
 
 class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
+  static const double _headerTitleBarHeight = 44;
+  static const double _headerTopGap = 16;
+  static const double _stepIndicatorHeight = 56;
+  static const double _headerBottomGap = 16;
+
   final IdentityVerifyFormController _formController =
       IdentityVerifyFormController();
 
@@ -190,46 +195,101 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     }
   }
 
-  void _showUploadOptions({required bool isFront}) {
-    UploadMethodSheet.show(
-      context: context,
-      onPickFromGallery: () => _pickFromGallery(isFront: isFront),
-      onTakePhoto: () => _takePhoto(isFront: isFront),
-    );
-  }
-
-  Future<void> _pickFromGallery({required bool isFront}) async {
-    AppLogger.debug('开始选择身份证图片, isFront=$isFront, isWeb=$kIsWeb');
-    final imageData = await CameraService.pickFromGallery();
-    if (!mounted) return;
-
-    if (imageData == null) {
-      AppLogger.debug('未拿到图片数据, isFront=$isFront');
-      _showSnackBar(AppStrings.identityVerifyImageNotSelected);
-      return;
-    }
-
-    AppLogger.debug('已拿到图片数据, bytes=${imageData.length}, isFront=$isFront');
-    await _onImageSelected(imageData, isFront: isFront);
-  }
-
   Future<void> _takePhoto({required bool isFront}) async {
     final canOpenCamera = await _ensureCameraPermission();
     if (!mounted || !canOpenCamera) {
       return;
     }
 
-    final imageData = await Navigator.of(context).push<Uint8List>(
-      MaterialPageRoute(builder: (context) => IdCameraScreen(isFront: isFront)),
-    );
+    final capturedImages = await _captureIdCardImages(startWithFront: isFront);
     if (!mounted) return;
 
-    if (imageData == null) {
+    if (!capturedImages.hasAnyImage) {
       _showSnackBar(AppStrings.identityVerifyImageNotCaptured);
       return;
     }
 
-    await _onImageSelected(imageData, isFront: isFront);
+    await _onImagesCaptured(capturedImages);
+  }
+
+  /// 按用户点击的证件面开始拍照，若另一面缺失则连续跳转补拍另一面。
+  Future<_CapturedIdCardImages> _captureIdCardImages({
+    required bool startWithFront,
+  }) async {
+    Uint8List? frontImageData;
+    Uint8List? backImageData;
+    final shouldCaptureOpposite = startWithFront
+        ? _idCardBackData == null
+        : _idCardFrontData == null;
+
+    final firstImageData = await _captureIdCardImage(
+      isFront: startWithFront,
+      restorePortraitOnDispose: !shouldCaptureOpposite,
+    );
+    if (!mounted || firstImageData == null) {
+      if (shouldCaptureOpposite) {
+        await _restoreIdentityPageOrientation();
+      }
+      return const _CapturedIdCardImages();
+    }
+
+    if (startWithFront) {
+      frontImageData = firstImageData;
+    } else {
+      backImageData = firstImageData;
+    }
+
+    if (!shouldCaptureOpposite) {
+      return _CapturedIdCardImages(
+        frontImageData: frontImageData,
+        backImageData: backImageData,
+      );
+    }
+
+    final oppositeImageData = await _captureIdCardImage(
+      isFront: !startWithFront,
+      entryToastMessage: AppStrings.identityVerifyFlipCardAndContinue,
+    );
+    if (!mounted || oppositeImageData == null) {
+      return _CapturedIdCardImages(
+        frontImageData: frontImageData,
+        backImageData: backImageData,
+      );
+    }
+
+    if (startWithFront) {
+      backImageData = oppositeImageData;
+    } else {
+      frontImageData = oppositeImageData;
+    }
+
+    return _CapturedIdCardImages(
+      frontImageData: frontImageData,
+      backImageData: backImageData,
+    );
+  }
+
+  /// 打开指定证件面的横屏拍摄页，返回裁剪后的图片数据。
+  Future<Uint8List?> _captureIdCardImage({
+    required bool isFront,
+    bool restorePortraitOnDispose = true,
+    String? entryToastMessage,
+  }) {
+    return Navigator.of(context).push<Uint8List>(
+      MaterialPageRoute(
+        builder: (context) => IdCameraScreen(
+          isFront: isFront,
+          restorePortraitOnDispose: restorePortraitOnDispose,
+          entryToastMessage: entryToastMessage,
+        ),
+      ),
+    );
+  }
+
+  /// 连续拍摄首张取消时，手动恢复身份认证主页面方向。
+  Future<void> _restoreIdentityPageOrientation() async {
+    await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
 
   /// 拍摄入口统一处理相机权限，避免进入横屏拍摄页后再触发权限弹窗。
@@ -346,36 +406,54 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     return result ?? false;
   }
 
-  Future<void> _onImageSelected(
-    Uint8List imageData, {
-    required bool isFront,
-  }) async {
-    AppLogger.debug('准备处理身份证图片, isFront=$isFront, bytes=${imageData.length}');
+  Future<void> _onImagesCaptured(_CapturedIdCardImages capturedImages) async {
+    final frontImageData = capturedImages.frontImageData;
+    final backImageData = capturedImages.backImageData;
+    AppLogger.debug(
+      '准备处理身份证图片, hasFront=${frontImageData != null}, hasBack=${backImageData != null}',
+    );
+
     setState(() {
-      if (isFront) {
-        _idCardFrontData = imageData;
+      if (frontImageData != null) {
+        _idCardFrontData = frontImageData;
         _frontImageUrl = null;
-      } else {
-        _idCardBackData = imageData;
+      }
+      if (backImageData != null) {
+        _idCardBackData = backImageData;
         _backImageUrl = null;
       }
       _isOcrLoading = true;
     });
 
     _showSnackBar(
-      isFront
+      frontImageData != null
           ? AppStrings.continueIdentifyStr
           : AppStrings.continueUploadPicture,
     );
 
-    if (isFront) {
-      await _recognizeFrontImage(imageData);
-    } else {
-      await _uploadBackImage(imageData);
+    if (frontImageData != null && backImageData != null) {
+      await Future.wait([
+        _recognizeFrontImage(frontImageData, shouldUpdateLoading: false),
+        _uploadBackImage(backImageData, shouldUpdateLoading: false),
+      ]);
+      if (mounted) {
+        setState(() => _isOcrLoading = false);
+      }
+      return;
     }
+
+    if (frontImageData != null) {
+      await _recognizeFrontImage(frontImageData);
+      return;
+    }
+
+    await _uploadBackImage(backImageData!);
   }
 
-  Future<void> _uploadBackImage(Uint8List imageData) async {
+  Future<void> _uploadBackImage(
+    Uint8List imageData, {
+    bool shouldUpdateLoading = true,
+  }) async {
     final uploadResult = await ref
         .read(uploadFileProvider)
         .call(bytes: imageData, filename: 'id_card_back.jpg');
@@ -386,7 +464,9 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
       if (uploadResult.isSuccess) {
         _backImageUrl = uploadResult.data;
       }
-      _isOcrLoading = false;
+      if (shouldUpdateLoading) {
+        _isOcrLoading = false;
+      }
     });
 
     _showSnackBar(
@@ -396,7 +476,10 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     );
   }
 
-  Future<void> _recognizeFrontImage(Uint8List imageData) async {
+  Future<void> _recognizeFrontImage(
+    Uint8List imageData, {
+    bool shouldUpdateLoading = true,
+  }) async {
     final result = await ref
         .read(ocrVerificationProvider)
         .call(bytes: imageData, filename: 'id_card_front.jpg', type: 'FRONT');
@@ -413,6 +496,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
         await _uploadFrontImageAfterOcrFailed(
           imageData,
           fallbackMessage: AppStrings.identityVerifyUploadFailed,
+          shouldUpdateLoading: shouldUpdateLoading,
         );
         return;
       }
@@ -420,7 +504,9 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
       setState(() {
         _frontImageUrl = recognizedUrl;
         _formController.applyOcrResult(result.data);
-        _isOcrLoading = false;
+        if (shouldUpdateLoading) {
+          _isOcrLoading = false;
+        }
       });
 
       _showSnackBar(AppStrings.identityVerifyOcrSuccess);
@@ -430,6 +516,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     await _uploadFrontImageAfterOcrFailed(
       imageData,
       fallbackMessage: result.message ?? AppStrings.identityVerifyOcrFailed,
+      shouldUpdateLoading: shouldUpdateLoading,
     );
   }
 
@@ -437,6 +524,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   Future<void> _uploadFrontImageAfterOcrFailed(
     Uint8List imageData, {
     required String fallbackMessage,
+    bool shouldUpdateLoading = true,
   }) async {
     final uploadResult = await ref
         .read(uploadFileProvider)
@@ -448,7 +536,9 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
       if (uploadResult.isSuccess) {
         _frontImageUrl = uploadResult.data;
       }
-      _isOcrLoading = false;
+      if (shouldUpdateLoading) {
+        _isOcrLoading = false;
+      }
     });
 
     _showSnackBar(
@@ -517,6 +607,26 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
       helpText: entry.showContent,
       cancelText: AppStrings.cancel,
       confirmText: AppStrings.personalInfoPickerConfirm,
+      builder: (context, child) {
+        final theme = Theme.of(context);
+        return Theme(
+          data: theme.copyWith(
+            colorScheme: theme.colorScheme.copyWith(
+              primary: AppColors.primaryDark,
+              onPrimary: Colors.white,
+              surface: const Color(0xFFFDFEFF),
+              onSurface: AppColors.textPrimary,
+            ),
+            datePickerTheme: const DatePickerThemeData(
+              backgroundColor: Color(0xFFFDFEFF),
+              headerBackgroundColor: AppColors.primaryDark,
+              headerForegroundColor: Colors.white,
+              surfaceTintColor: Colors.transparent,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
     if (pickedDate == null || !mounted) {
       return;
@@ -588,93 +698,97 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     return selectedDate;
   }
 
+  /// 计算白色内容区起点，与资料采集流程的进度头部保持一致。
+  double _contentTop(BuildContext context) {
+    return MediaQuery.of(context).padding.top +
+        _headerTitleBarHeight +
+        _headerTopGap +
+        _stepIndicatorHeight +
+        _headerBottomGap;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return LoanRoundedPageShell(
+      contentTop: _contentTop,
+      contentTopRadius: 12,
       backgroundColor: AppColors.primaryDark,
-      body: Column(
-        children: [
-          buildInformationHeader(
-            context: context,
-            title: _pageTitle,
-            activeStep: InformationStep.identity,
-            onBack: () => FundingLimitDialog.showRetainDialog(context),
-          ),
-          Expanded(
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(12),
-              ),
-              child: Container(
-                color: Colors.white,
-                child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 16),
-                            const IdentityCheckNotice(),
-                            const SizedBox(height: 16),
-                            IdCardUploadItem(
-                              bgImage: _idCardFrontData == null
-                                  ? Assets.images.inforamtionIdw
-                                  : Assets.images.idCardRectangle,
-                              imageData: _idCardFrontData,
-                              onTap: () => _showUploadOptions(isFront: true),
-                            ),
-                            const SizedBox(height: 16),
-                            IdCardUploadItem(
-                              bgImage: _idCardBackData == null
-                                  ? Assets.images.inforamtionIdo
-                                  : Assets.images.idCardRectangle,
-                              imageData: _idCardBackData,
-                              onTap: () => _showUploadOptions(isFront: false),
-                            ),
-                            if (_isOcrLoading)
-                              const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 16),
-                                child: CircularProgressIndicator(),
-                              ),
-                            if (_shouldShowIdentityForm) ...[
-                              const SizedBox(height: 8),
-                              ..._formController.visibleEntries.map(
-                                (entry) => IdentityFormEntryItem(
-                                  entry: entry,
-                                  formController: _formController,
-                                  onTextChanged: (value) {
-                                    setState(
-                                      () => _formController.updateTextValue(
-                                        entry,
-                                        value,
-                                      ),
-                                    );
-                                  },
-                                  onTextSubmitted: (entry) =>
-                                      _focusNextVisibleEntryAfter(entry),
-                                  onPickerTap: _openPickerForEntry,
-                                  onDatePickerTap: _openBirthdayPickerForEntry,
-                                ),
-                              ),
-                            ],
-                            const SizedBox(height: 20),
-                          ],
-                        ),
+      header: buildInformationHeader(
+        context: context,
+        title: _pageTitle,
+        activeStep: InformationStep.identity,
+        onBack: () => FundingLimitDialog.showRetainDialog(context),
+      ),
+      content: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                children: [
+                  const SizedBox(height: 16),
+                  const IdentityCheckNotice(),
+                  const SizedBox(height: 16),
+                  IdCardUploadItem(
+                    bgImage: _idCardFrontData == null
+                        ? Assets.images.inforamtionIdw
+                        : Assets.images.idCardRectangle,
+                    imageData: _idCardFrontData,
+                    onTap: () => _takePhoto(isFront: true),
+                  ),
+                  const SizedBox(height: 16),
+                  IdCardUploadItem(
+                    bgImage: _idCardBackData == null
+                        ? Assets.images.inforamtionIdo
+                        : Assets.images.idCardRectangle,
+                    imageData: _idCardBackData,
+                    onTap: () => _takePhoto(isFront: false),
+                  ),
+                  if (_isOcrLoading)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      child: CircularProgressIndicator(),
+                    ),
+                  if (_shouldShowIdentityForm) ...[
+                    const SizedBox(height: 8),
+                    ..._formController.visibleEntries.map(
+                      (entry) => IdentityFormEntryItem(
+                        entry: entry,
+                        formController: _formController,
+                        onTextChanged: (value) {
+                          setState(
+                            () => _formController.updateTextValue(entry, value),
+                          );
+                        },
+                        onTextSubmitted: (entry) =>
+                            _focusNextVisibleEntryAfter(entry),
+                        onPickerTap: _openPickerForEntry,
+                        onDatePickerTap: _openBirthdayPickerForEntry,
                       ),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                ],
               ),
             ),
-          ),
-          LoanBottomActionButton(
-            enabled: _isActionEnabled,
-            onPressed: _isActionEnabled ? _onContinue : null,
-            text: _isSubmitting
-                ? AppStrings.personalInfoSaving
-                : AppStrings.continueStr,
-          ),
-        ],
+      bottomNavigationBar: LoanBottomActionButton(
+        enabled: _isActionEnabled,
+        onPressed: _isActionEnabled ? _onContinue : null,
+        text: _isSubmitting
+            ? AppStrings.personalInfoSaving
+            : AppStrings.continueStr,
       ),
     );
   }
+}
+
+/// 本轮连续拍摄得到的身份证正反面图片。
+class _CapturedIdCardImages {
+  const _CapturedIdCardImages({this.frontImageData, this.backImageData});
+
+  final Uint8List? frontImageData;
+  final Uint8List? backImageData;
+
+  bool get hasAnyImage => frontImageData != null || backImageData != null;
 }
 
 /// 相机权限说明弹窗的顶部拖拽提示条。
