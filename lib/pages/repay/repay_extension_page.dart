@@ -13,6 +13,7 @@ import 'package:easy_moni/pages/repay/models/payment_request_params.dart';
 import 'package:easy_moni/pages/repay/models/repay_extension_request_data.dart';
 import 'package:easy_moni/pages/repay/providers/repay_extension_provider.dart';
 import 'package:easy_moni/utils/extensions.dart';
+import 'package:easy_moni/utils/widgets/app_state_view.dart';
 import 'package:easy_moni/utils/widgets/common_bottom_sheet.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:easy_moni/utils/widgets/selected_coupon_card.dart';
@@ -70,15 +71,11 @@ class _RepayExtensionPageState extends ConsumerState<RepayExtensionPage> {
           selectedCoupon: _selectedCoupon,
           onCouponTap: () => _showCoupons(),
         ),
-        error: (_, _) => _RepayExtensionStateView(
-          icon: Icons.error_outline_rounded,
+        error: (_, _) => AppErrorStateView(
           text: AppStrings.repayExtensionLoadFailed,
-          actionText: AppStrings.repayEntryRetry,
-          onActionTap: () =>
-              ref.invalidate(repayExtensionProvider(detailQuery)),
+          onReload: () => ref.invalidate(repayExtensionProvider(detailQuery)),
         ),
-        loading: () =>
-            const _RepayExtensionStateView(child: CircularProgressIndicator()),
+        loading: () => const AppStateView(child: CircularProgressIndicator()),
       ),
       bottomNavigationBar: LoanBottomActionButton(
         enabled: detail != null,
@@ -112,10 +109,7 @@ class _RepayExtensionPageState extends ConsumerState<RepayExtensionPage> {
           },
         ),
         actions: const [
-          CommonBottomSheetAction<bool>(
-            text: AppStrings.couponConfirmButtonText,
-            result: true,
-          ),
+          CommonBottomSheetAction<bool>(text: AppStrings.confirm, result: true),
         ],
       );
 
@@ -274,10 +268,7 @@ class _RepayExtensionAmountLoading extends StatelessWidget {
         child: SizedBox(
           width: 22,
           height: 22,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: Colors.white,
-          ),
+          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
         ),
       ),
     );
@@ -453,56 +444,6 @@ class _RepayExtensionInfoRow extends StatelessWidget {
   }
 }
 
-class _RepayExtensionStateView extends StatelessWidget {
-  const _RepayExtensionStateView({
-    this.child,
-    this.icon,
-    this.text = '',
-    this.actionText = '',
-    this.onActionTap,
-  });
-
-  final Widget? child;
-  final IconData? icon;
-  final String text;
-  final String actionText;
-  final VoidCallback? onActionTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final customChild = child;
-    if (customChild != null) {
-      return Center(child: customChild);
-    }
-
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null)
-            Icon(icon, size: 54, color: const Color(0xFFACACAC)),
-          if (text.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              text,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF787878),
-                height: 20 / 14,
-              ),
-            ),
-          ],
-          if (actionText.isNotEmpty && onActionTap != null) ...[
-            const SizedBox(height: 16),
-            TextButton(onPressed: onActionTap, child: Text(actionText)),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
 String _amountText(num? value) {
   return (value ?? 0).formatAmount(showCurrencySymbol: true);
 }
@@ -519,9 +460,7 @@ String _couponAmountText(CouponItem coupon) {
       : summary;
 }
 
-List<int> _couponAppOrderIds(
-  List<RepayDetailRespDataLoanOrderDetails> orders,
-) {
+List<int> _couponAppOrderIds(List<RepayDetailRespDataLoanOrderDetails> orders) {
   return orders
       .map((item) => int.tryParse(item.appOrderId?.trim() ?? ''))
       .whereType<int>()

@@ -6,6 +6,7 @@ import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
 import 'package:easy_moni/pages/mine/providers/customer_service_provider.dart';
 import 'package:easy_moni/services/platform_service.dart';
+import 'package:easy_moni/utils/widgets/app_state_view.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -48,10 +49,10 @@ class CustomerServicePage extends ConsumerWidget {
       loading: () =>
           const _CustomerServiceStatePage(child: CircularProgressIndicator()),
       error: (error, _) => _CustomerServiceStatePage(
-        icon: Icons.error_outline_rounded,
-        text: AppStrings.mineCustomerServiceLoadFailed,
-        actionText: AppStrings.mineOrderHistoryRetry,
-        onActionTap: () => ref.invalidate(customerServiceInfoAsyncProvider),
+        child: AppErrorStateView(
+          text: AppStrings.mineCustomerServiceLoadFailed,
+          onReload: () => ref.invalidate(customerServiceInfoAsyncProvider),
+        ),
       ),
     );
   }
@@ -94,7 +95,7 @@ class _CustomerServiceTextPage extends StatelessWidget {
             _AntiFraudCard(),
             const SizedBox(height: 24),
             if (contacts.isEmpty)
-              const _CustomerServiceEmptyView()
+              const AppEmptyStateView(text: AppStrings.mineCustomerServiceEmpty)
             else
               ...contacts.map(_CustomerServiceContactCard.new),
           ],
@@ -262,7 +263,7 @@ class _CustomerServiceWebViewPageState
       body: SafeArea(
         top: false,
         child: source == null
-            ? const _CustomerServiceEmptyView()
+            ? const AppEmptyStateView(text: AppStrings.mineCustomerServiceEmpty)
             : Stack(
                 children: [
                   WebViewWidget(
@@ -354,48 +355,46 @@ class _CustomerServiceContactCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () =>_handleTap(context),
+      onTap: () => _handleTap(context),
       child: Padding(
         padding: const EdgeInsets.only(bottom: 12),
-            child: Container(
-              padding: const EdgeInsets.all(21),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color(0xFFE1E3E4),
-                ),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x08000000),
-                    blurRadius: 6,
-                    offset: Offset(0, 4),
-                  ),
-                ],
+        child: Container(
+          padding: const EdgeInsets.all(21),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE1E3E4)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x08000000),
+                blurRadius: 6,
+                offset: Offset(0, 4),
               ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE9EDFF),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      contact.icon,
-                      size: 20,
-                      color: const Color(0xFF006C49),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(child: _CustomerServiceContactText(contact: contact)),
-                  const SizedBox(width: 12),
-                  Assets.images.serviceRightArrow.image(width: 8, height: 12),
-                ],
-              ),
-            ),
+            ],
           ),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE9EDFF),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  contact.icon,
+                  size: 20,
+                  color: const Color(0xFF006C49),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(child: _CustomerServiceContactText(contact: contact)),
+              const SizedBox(width: 12),
+              Assets.images.serviceRightArrow.image(width: 8, height: 12),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -466,107 +465,16 @@ class _CustomerServiceContactText extends StatelessWidget {
 }
 
 class _CustomerServiceStatePage extends StatelessWidget {
-  const _CustomerServiceStatePage({
-    this.child,
-    this.icon,
-    this.text = '',
-    this.actionText = '',
-    this.onActionTap,
-  });
+  const _CustomerServiceStatePage({required this.child});
 
-  final Widget? child;
-  final IconData? icon;
-  final String text;
-  final String actionText;
-  final VoidCallback? onActionTap;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(title: const Text(AppStrings.mineCustomerService)),
-      body: _CustomerServiceStateView(
-        icon: icon,
-        text: text,
-        actionText: actionText,
-        onActionTap: onActionTap,
-        child: child,
-      ),
-    );
-  }
-}
-
-class _CustomerServiceStateView extends StatelessWidget {
-  const _CustomerServiceStateView({
-    this.child,
-    this.icon,
-    this.text = '',
-    this.actionText = '',
-    this.onActionTap,
-  });
-
-  final Widget? child;
-  final IconData? icon;
-  final String text;
-  final String actionText;
-  final VoidCallback? onActionTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final customChild = child;
-    if (customChild != null) {
-      return Center(child: customChild);
-    }
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null)
-              Icon(icon, size: 54, color: const Color(0xFFACACAC)),
-            if (text.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Text(
-                text,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF787878),
-                  height: 20 / 14,
-                ),
-              ),
-            ],
-            if (actionText.isNotEmpty && onActionTap != null) ...[
-              const SizedBox(height: 16),
-              TextButton(onPressed: onActionTap, child: Text(actionText)),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CustomerServiceEmptyView extends StatelessWidget {
-  const _CustomerServiceEmptyView();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.all(24),
-        child: Text(
-          AppStrings.mineCustomerServiceEmpty,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 14,
-            color: Color(0xFF787878),
-            height: 20 / 14,
-          ),
-        ),
-      ),
+      body: AppStateView(child: child),
     );
   }
 }

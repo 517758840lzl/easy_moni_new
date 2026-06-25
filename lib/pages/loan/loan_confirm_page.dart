@@ -18,6 +18,8 @@ import 'package:easy_moni/pages/repay/components/total_repay_amount_display.dart
 import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/services/upload_data/upload_data_sync_service.dart';
 import 'package:easy_moni/utils/extensions.dart';
+import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
+import 'package:easy_moni/utils/af_tracker/track_events.dart';
 import 'package:easy_moni/utils/loan_confirm_content_edge.dart';
 import 'package:easy_moni/utils/widgets/common_bottom_sheet.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
@@ -137,6 +139,8 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
           );
       if (!mounted) return;
       if (result.isSuccess) {
+        await AfTracker.logActionEvent(TrackEvents.withdrawSuccess);
+        if (!mounted) return;
         context.go(AppRoutePaths.loanReviewing);
       } else {
         context.showSnackBar(
@@ -223,7 +227,7 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
         ),
         actions: const [
           CommonBottomSheetAction<bool>(
-            text: AppStrings.couponConfirmButtonText,
+            text: AppStrings.confirm,
             result: true,
           ),
         ],

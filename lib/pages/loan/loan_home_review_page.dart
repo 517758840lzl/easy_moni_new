@@ -13,6 +13,7 @@ class LoanHomeReviewPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return LoanHomeScaffold(
       refreshRequestId: refreshRequestId,
+      showAvailableProductCount: false,
       bottomContent: const _ReviewFeatureSection(),
     );
   }

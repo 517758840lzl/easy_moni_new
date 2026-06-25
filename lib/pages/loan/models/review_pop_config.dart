@@ -20,9 +20,9 @@ class ReviewPopConfig {
 
   bool get shouldPop => isPop == 1;
 
-  int get initialScore => (lowScoreLimit + 1).clamp(1, 5).toInt();
+  int get initialScore => (lowScoreLimit).clamp(1, 5).toInt();
 
-  bool isLowScore(int score) => score <= lowScoreLimit;
+  bool isLowScore(int score) => score < lowScoreLimit;
 
   factory ReviewPopConfig.fromJson(dynamic json) {
     if (json is! Map) {

@@ -19,8 +19,7 @@ class HeaderInterrepter extends Interceptor {
     _deviceId = deviceId;
   }
 
-  Map<String, String> get _commonHeader =>
-      _config.commonHeaders(token: _token, deviceId: _deviceId);
+  Map<String, String> get _commonHeader => _config.commonHeaders(token: _token);
 
   void clearAuth() {
     _token = null;

@@ -6,6 +6,8 @@ import 'package:easy_moni/entities/check_upload_data_valid_resp.dart';
 import 'package:easy_moni/entities/login_resp.dart';
 import 'package:easy_moni/entities/startup_config_resp.dart';
 import 'package:easy_moni/core/utils/app_logger.dart';
+import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
+import 'package:easy_moni/utils/af_tracker/track_events.dart';
 
 final sendVerifyCodeProvider = Provider<SendVerifyCodeApi>((ref) {
   return SendVerifyCodeApi();
@@ -26,11 +28,24 @@ final startupConfigProvider = Provider<StartupConfigApi>((ref) {
 class SendVerifyCodeApi {
   /// 发送验证码
   Future<HttpResult<dynamic>> call(String phone) async {
+    final requestBody = {'phone': phone, 'type': 'phone'};
+    final requestHeaders = HttpProvider.instance.config.commonHeaders();
+
+    await AfTracker.logActionEvent(
+      TrackEvents.registerApply,
+      body: requestBody,
+      heads: requestHeaders,
+    );
+
     final result = await HttpProvider.instance.post<dynamic>(
       ApiConstants.sendVerifyCode,
-      data: {'phone': phone, 'type': 'phone'},
+      data: requestBody,
       includeToken: false,
       fromJson: (json) => json,
+    );
+    await AfTracker.logActionEvent(
+      TrackEvents.registerApplyResult,
+      msg: _httpResultLogValue(result),
     );
     return result;
   }
@@ -42,13 +57,16 @@ class LoginApi {
     required String code,
   }) async {
     final config = HttpProvider.instance.config;
+    final requestBody = await config.loginParams(
+      phone: phone,
+      authCode: code,
+      deviceId: HttpProvider.instance.deviceId,
+    );
+    await AfTracker.logActionEvent(TrackEvents.otpApply, body: requestBody);
+
     final result = await HttpProvider.instance.post<LoginResp>(
       ApiConstants.login,
-      data: config.loginParams(
-        phone: phone,
-        authCode: code,
-        deviceId: HttpProvider.instance.deviceId,
-      ),
+      data: requestBody,
       includeToken: false,
       fromJson: (json) {
         // 调试：打印原始数据
@@ -60,8 +78,24 @@ class LoginApi {
     AppLogger.debug(
       'LoginApi 返回: status=${result.status}, data=${result.data}, message=${result.message}',
     );
+    await AfTracker.logActionEvent(
+      TrackEvents.otpApplyResult,
+      msg: {
+        ..._httpResultLogValue(result),
+        if (result.data != null) 'data': result.data!.toJson(),
+      },
+    );
     return result;
   }
+}
+
+Map<String, dynamic> _httpResultLogValue(HttpResult<dynamic> result) {
+  return {
+    'isSuccess': result.isSuccess,
+    'status': result.status,
+    'statusCode': result.statusCode,
+    'message': result.message,
+  };
 }
 
 class CheckUploadDataValidApi {

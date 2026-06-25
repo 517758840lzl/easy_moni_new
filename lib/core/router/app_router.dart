@@ -29,9 +29,9 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
-import 'package:easy_moni/pages/login/permissionpage.dart';
+import 'package:easy_moni/pages/login/permission_page.dart';
 import 'package:easy_moni/pages/login/splash_page.dart';
-import 'package:easy_moni/pages/login/loginpage.dart';
+import 'package:easy_moni/pages/login/login_page.dart';
 import 'package:easy_moni/pages/home/homesell.dart';
 import 'package:easy_moni/pages/fillInforma/personal_info_page.dart'
     as fill_info;

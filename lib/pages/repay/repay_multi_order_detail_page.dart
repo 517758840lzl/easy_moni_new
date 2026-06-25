@@ -14,6 +14,7 @@ import 'package:easy_moni/pages/repay/models/payment_request_params.dart';
 import 'package:easy_moni/pages/repay/models/repay_multi_order_detail_request_data.dart';
 import 'package:easy_moni/pages/repay/providers/repay_detail_provider.dart';
 import 'package:easy_moni/utils/extensions.dart';
+import 'package:easy_moni/utils/widgets/app_state_view.dart';
 import 'package:easy_moni/utils/widgets/common_bottom_sheet.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:easy_moni/utils/widgets/selected_coupon_card.dart';
@@ -80,15 +81,11 @@ class _RepayMultiOrderDetailPageState
           selectedCoupon: _selectedCoupon,
           onCouponTap: () => _showCoupons(data),
         ),
-        error: (_, _) => _RepayMultiStateView(
-          icon: Icons.error_outline_rounded,
+        error: (_, _) => AppErrorStateView(
           text: AppStrings.orderDetailLoadFailed,
-          actionText: AppStrings.repayEntryRetry,
-          onActionTap: () =>
-              ref.invalidate(repayOrderDetailProvider(detailQuery)),
+          onReload: () => ref.invalidate(repayOrderDetailProvider(detailQuery)),
         ),
-        loading: () =>
-            const _RepayMultiStateView(child: CircularProgressIndicator()),
+        loading: () => const AppStateView(child: CircularProgressIndicator()),
       ),
       bottomNavigationBar: LoanBottomActionButton(
         enabled: detail != null,
@@ -134,10 +131,7 @@ class _RepayMultiOrderDetailPageState
           },
         ),
         actions: const [
-          CommonBottomSheetAction<bool>(
-            text: AppStrings.couponConfirmButtonText,
-            result: true,
-          ),
+          CommonBottomSheetAction<bool>(text: AppStrings.confirm, result: true),
         ],
       );
 
@@ -371,12 +365,12 @@ class _SummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-          image: DecorationImage(
-            image: Assets.images.repayHeaderRectangle.provider(),
-            fit: BoxFit.fill,
-            alignment: Alignment.topCenter,
-          ),
+        image: DecorationImage(
+          image: Assets.images.repayHeaderRectangle.provider(),
+          fit: BoxFit.fill,
+          alignment: Alignment.topCenter,
         ),
+      ),
       child: Container(
         height: 51,
         padding: const EdgeInsets.fromLTRB(9, 8, 9, 7),
@@ -457,10 +451,7 @@ class _RepayMultiContent extends StatelessWidget {
             ),
           const SizedBox(height: 12),
           if (orders.isEmpty)
-            const _RepayMultiStateView(
-              icon: Icons.receipt_long_outlined,
-              text: AppStrings.orderDetailNoOrderData,
-            )
+            const AppEmptyStateView(text: AppStrings.orderDetailNoOrderData)
           else
             ...List.generate(orders.length, (index) {
               final order = orders[index];
@@ -530,54 +521,6 @@ LoanOrderCardStatusBadgeData? _overdueStatusBadge(
     text: AppStrings.loanOrderStatusOverdue,
     gradient: [Color(0xFFEA4335), Color(0xFFFF8A65)],
   );
-}
-
-class _RepayMultiStateView extends StatelessWidget {
-  const _RepayMultiStateView({
-    this.child,
-    this.icon,
-    this.text = '',
-    this.actionText = '',
-    this.onActionTap,
-  });
-
-  final Widget? child;
-  final IconData? icon;
-  final String text;
-  final String actionText;
-  final VoidCallback? onActionTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final customChild = child;
-    if (customChild != null) return Center(child: customChild);
-
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null)
-            Icon(icon, size: 54, color: const Color(0xFFACACAC)),
-          if (text.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              text,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF787878),
-                height: 20 / 14,
-              ),
-            ),
-          ],
-          if (actionText.isNotEmpty && onActionTap != null) ...[
-            const SizedBox(height: 16),
-            TextButton(onPressed: onActionTap, child: Text(actionText)),
-          ],
-        ],
-      ),
-    );
-  }
 }
 
 num _sumOrderAmount(

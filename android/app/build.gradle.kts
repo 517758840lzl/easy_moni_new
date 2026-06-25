@@ -46,4 +46,6 @@ flutter {
 
 dependencies {
     implementation("com.google.android.gms:play-services-location:21.0.1")
+    implementation("com.google.android.gms:play-services-ads-identifier:18.2.0")
+    implementation("com.android.installreferrer:installreferrer:2.2")
 }

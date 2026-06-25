@@ -9,6 +9,8 @@ import 'package:easy_moni/pages/fillInforma/providers/acquisition_progress_provi
 import 'package:easy_moni/services/auth_storage.dart';
 import 'package:easy_moni/services/saved_session_route_service.dart';
 import 'package:easy_moni/services/upload_data/upload_data_sync_service.dart';
+import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
+import 'package:easy_moni/utils/af_tracker/track_events.dart';
 import 'package:easy_moni/utils/widgets/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,12 +28,12 @@ class LoginPage extends ConsumerStatefulWidget {
 
 class _LoginPageState extends ConsumerState<LoginPage> {
   // TODO 正式环境去掉默认手机号
-  static const String _defaultPhone = '0504684567';
-  static const String _defaultCode = '1234';
+  // static const String _defaultPhone = '0504684567';
+  // static const String _defaultCode = '1234';
   static const Color _backgroundFallbackColor = Color(0xFF20754F);
 
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _codeController = TextEditingController();
+  late final TextEditingController _phoneController;
+  late final TextEditingController _codeController;
   Timer? _countdownTimer;
   int _countdownSeconds = 0;
   bool _isSendingCode = false;
@@ -42,8 +44,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _phoneController.text = _defaultPhone;
-    _codeController.text = _defaultCode;
+    _phoneController = TextEditingController();
+    _codeController = TextEditingController();
+    // _phoneController.text = _defaultPhone;
+    // _codeController.text = _defaultCode;
     _phoneController.addListener(_onPhoneChanged);
     _codeController.addListener(_onCodeChanged);
     unawaited(_routeBySavedSession());
@@ -163,8 +167,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     }
 
     setState(() {});
-
-    // 验证码输入只负责清洗和刷新状态，登录请求只能由 Login 按钮触发。
   }
 
   void _startCountdown() {
@@ -209,6 +211,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       }
     } catch (e) {
       if (!mounted) return;
+      await AfTracker.logActionEvent(
+        TrackEvents.registerErr,
+        msg: {'message': 'send code failed', 'error': e.toString()},
+      );
       showToast(AppStrings.loginSendCodeFailed);
       AppLogger.debug('发送验证码异常: $e');
     } finally {
@@ -255,8 +261,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         '登录响应 - status: ${result.status}, message: ${result.message}',
       );
       AppLogger.debug('登录响应数据是否为空: ${result.data == null}');
-      if (result.data?.isFirstRegister == 1) {
-      } else {}
       if (result.isSuccess) {
         final loginData = result.data;
         AppLogger.debug(
@@ -264,9 +268,19 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         );
         AppLogger.debug('loginData.cacheData: ${loginData?.cacheData}');
 
-        if (loginData?.token != null) {
-          await HttpProvider.instance.setToken(loginData!.token);
-          await AuthStorage.saveReviewAccountFlag(loginData.isReviewAccount);
+        final authenticatedLoginData = loginData;
+        if (authenticatedLoginData != null &&
+            authenticatedLoginData.token != null) {
+          if (authenticatedLoginData.isFirstRegister == 1) {
+            await AfTracker.logActionEvent(
+              TrackEvents.registerSuccess,
+              msg: authenticatedLoginData.toJson(),
+            );
+          }
+          await HttpProvider.instance.setToken(authenticatedLoginData.token);
+          await AuthStorage.saveReviewAccountFlag(
+            authenticatedLoginData.isReviewAccount,
+          );
           AppLogger.debug('登录成功，Token 已保存');
 
           // 登录后请求 startup/config 接口
@@ -499,11 +513,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 style: const TextStyle(fontSize: 14, color: Colors.white),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.transparent,
                   hintText: AppStrings.phoneStr,
-                  hintStyle: TextStyle(color: Colors.white, fontSize: 14),
+                  hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 14),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
@@ -557,11 +571,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       controller: _codeController,
                       keyboardType: TextInputType.number,
                       style: const TextStyle(fontSize: 14, color: Colors.white),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: AppStrings.codestr,
                         filled: true,
                         fillColor: Colors.transparent,
-                        hintStyle: TextStyle(color: Colors.white, fontSize: 14),
+                        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 14),
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,

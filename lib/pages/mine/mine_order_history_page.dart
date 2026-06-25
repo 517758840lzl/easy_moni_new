@@ -7,6 +7,7 @@ import 'package:easy_moni/pages/loan/models/loan_order_detail_data.dart';
 import 'package:easy_moni/pages/mine/components/mine_order_summary_card.dart';
 import 'package:easy_moni/pages/mine/providers/mine_order_history_provider.dart';
 import 'package:easy_moni/utils/extensions.dart';
+import 'package:easy_moni/utils/widgets/app_state_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -112,17 +113,15 @@ class _MineOrderHistoryPageState extends ConsumerState<MineOrderHistoryPage> {
 
   Widget _buildContent() {
     if (_isLoading) {
-      return const _MineOrderHistoryScrollableStateView(
-        child: CircularProgressIndicator(),
-      );
+      return const AppScrollableStateView(child: CircularProgressIndicator());
     }
 
     if (_loadError.isNotEmpty) {
-      return _MineOrderHistoryScrollableStateView(
-        icon: Icons.error_outline_rounded,
-        text: AppStrings.mineOrderHistoryLoadFailed,
-        actionText: AppStrings.mineOrderHistoryRetry,
-        onActionTap: _loadOrders,
+      return AppScrollableStateView(
+        child: AppErrorStateView(
+          text: AppStrings.mineOrderHistoryLoadFailed,
+          onReload: _loadOrders,
+        ),
       );
     }
 
@@ -166,7 +165,7 @@ class _MineOrderHistoryHeader extends StatelessWidget {
       decoration: BoxDecoration(
         image: DecorationImage(
           image: Assets.images.mineAnthBg.provider(),
-           fit: BoxFit.cover,
+          fit: BoxFit.cover,
           alignment: Alignment.topCenter,
         ),
       ),
@@ -206,7 +205,10 @@ class _MineOrderHistoryHeader extends StatelessWidget {
                     child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onTap: () => context.push(AppRoutePaths.customerService),
-                      child: Assets.images.customer.image(width: 32, height: 32),
+                      child: Assets.images.customer.image(
+                        width: 32,
+                        height: 32,
+                      ),
                     ),
                   ),
                 ],
@@ -218,7 +220,7 @@ class _MineOrderHistoryHeader extends StatelessWidget {
               itemCounts: itemCounts,
               onTap: onTap,
             ),
-            const SizedBox(height: 8,)
+            const SizedBox(height: 8),
           ],
         ),
       ),
@@ -346,9 +348,8 @@ class _MineOrderHistoryList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (orders.isEmpty) {
-      return const _MineOrderHistoryScrollableStateView(
-        icon: Icons.receipt_long_outlined,
-        text: AppStrings.mineOrderHistoryEmpty,
+      return const AppScrollableStateView(
+        child: AppEmptyStateView(text: AppStrings.mineOrderHistoryEmpty),
       );
     }
 
@@ -462,86 +463,6 @@ List<MineOrderSummaryCardColumnData> _buildDisbursementColumns(
       value: _formatDate(order.createTime),
     ),
   ];
-}
-
-class _MineOrderHistoryScrollableStateView extends StatelessWidget {
-  const _MineOrderHistoryScrollableStateView({
-    this.child,
-    this.icon,
-    this.text = '',
-    this.actionText = '',
-    this.onActionTap,
-  });
-
-  final Widget? child;
-  final IconData? icon;
-  final String text;
-  final String actionText;
-  final VoidCallback? onActionTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: Center(
-              child:
-                  child ??
-                  _MineOrderHistoryStateView(
-                    icon: icon,
-                    text: text,
-                    actionText: actionText,
-                    onActionTap: onActionTap,
-                  ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _MineOrderHistoryStateView extends StatelessWidget {
-  const _MineOrderHistoryStateView({
-    this.icon,
-    this.text = '',
-    this.actionText = '',
-    this.onActionTap,
-  });
-
-  final IconData? icon;
-  final String text;
-  final String actionText;
-  final VoidCallback? onActionTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (icon != null) Icon(icon, size: 54, color: const Color(0xFFACACAC)),
-        if (text.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          Text(
-            text,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF787878),
-              height: 20 / 14,
-            ),
-          ),
-        ],
-        if (actionText.isNotEmpty && onActionTap != null) ...[
-          const SizedBox(height: 16),
-          TextButton(onPressed: onActionTap, child: Text(actionText)),
-        ],
-      ],
-    );
-  }
 }
 
 String _valueOrEmpty(String? value) {

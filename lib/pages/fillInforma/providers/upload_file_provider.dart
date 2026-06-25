@@ -25,11 +25,7 @@ class UploadFileApi {
       final config = HttpProvider.instance.config;
       final dio = Dio();
       final uploadUrl = config.resolveApiPath(ApiConstants.uploadFile);
-      final headers = config.commonHeaders(
-        token: token,
-        deviceId: HttpProvider.instance.deviceId,
-        includeContentType: false,
-      );
+      final headers = config.commonHeaders(token: token);
 
       AppLogger.debug(
         '上传文件开始: url=$uploadUrl, '

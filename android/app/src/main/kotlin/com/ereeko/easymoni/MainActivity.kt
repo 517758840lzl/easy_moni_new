@@ -12,12 +12,17 @@ import android.provider.Settings
 import android.provider.MediaStore
 import android.provider.Telephony
 import android.util.Base64
+import com.android.installreferrer.api.InstallReferrerClient
+import com.android.installreferrer.api.InstallReferrerStateListener
+import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.security.MessageDigest
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 class MainActivity : FlutterActivity() {
     private val LOCATION_CHANNEL = "com.easy_moni/location"
@@ -25,6 +30,7 @@ class MainActivity : FlutterActivity() {
     private val SMS_CHANNEL = "com.easy_moni/sms"
     private val CAMERA_CHANNEL = "com.easy_moni/camera"
     private val DIALER_CHANNEL = "com.easy_moni/dialer"
+    private val ATTRIBUTION_CHANNEL = "com.easy_moni/attribution"
     private val SILENT_PERMISSION_DATA_CHANNEL = "com.easy_moni/silent_permission_data"
     
     private var pendingResult: MethodChannel.Result? = null
@@ -236,6 +242,23 @@ class MainActivity : FlutterActivity() {
                     } catch (e: Exception) {
                         result.error("OPEN_DIALER_FAILED", e.message, null)
                     }
+                }
+                else -> result.notImplemented()
+            }
+        }
+
+        // ============ 归因设备信息服务 ============
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, ATTRIBUTION_CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "getAttributionData" -> {
+                    Thread {
+                        try {
+                            val data = getAttributionData()
+                            runOnUiThread { result.success(data) }
+                        } catch (e: Exception) {
+                            runOnUiThread { result.error("GET_ATTRIBUTION_FAILED", e.message, null) }
+                        }
+                    }.start()
                 }
                 else -> result.notImplemented()
             }
@@ -500,6 +523,64 @@ class MainActivity : FlutterActivity() {
             "androidId" to (Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: ""),
             "packageName" to packageName
         )
+    }
+
+    private fun getAttributionData(): Map<String, Any> {
+        val gaid = getAdvertisingId()
+        return mapOf(
+            "gaid" to gaid,
+            "advId" to gaid,
+            "referrer" to getInstallReferrer(),
+            "deviceId" to (Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: ""),
+            "userAgent" to "${Build.MANUFACTURER} ${Build.MODEL}",
+            "androidVersion" to Build.VERSION.RELEASE,
+            "sdkInt" to Build.VERSION.SDK_INT,
+            "packageName" to packageName
+        )
+    }
+
+    private fun getAdvertisingId(): String {
+        return try {
+            val info = AdvertisingIdClient.getAdvertisingIdInfo(this)
+            info?.id ?: ""
+        } catch (e: Exception) {
+            ""
+        }
+    }
+
+    private fun getInstallReferrer(): String {
+        val client = InstallReferrerClient.newBuilder(this).build()
+        val latch = CountDownLatch(1)
+        var referrer = ""
+
+        return try {
+            client.startConnection(object : InstallReferrerStateListener {
+                override fun onInstallReferrerSetupFinished(responseCode: Int) {
+                    try {
+                        if (responseCode == InstallReferrerClient.InstallReferrerResponse.OK) {
+                            referrer = client.installReferrer.installReferrer ?: ""
+                        }
+                    } catch (_: Exception) {
+                        referrer = ""
+                    } finally {
+                        latch.countDown()
+                    }
+                }
+
+                override fun onInstallReferrerServiceDisconnected() {
+                    latch.countDown()
+                }
+            })
+            latch.await(3, TimeUnit.SECONDS)
+            referrer
+        } catch (e: Exception) {
+            ""
+        } finally {
+            try {
+                client.endConnection()
+            } catch (_: Exception) {
+            }
+        }
     }
 
     private fun getInAppActivityData(): Map<String, Any> {

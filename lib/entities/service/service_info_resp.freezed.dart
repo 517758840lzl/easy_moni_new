@@ -308,7 +308,7 @@ $ServiceInfoRespDataCopyWith<$Res>? get data {
 /// @nodoc
 mixin _$ServiceInfoRespData {
 
-@JsonKey(name: 'showType') int? get showType;@JsonKey(name: 'appCustomerServiceInfoResps') List<dynamic>? get appCustomerServiceInfoResps;@JsonKey(name: 'appCustomerServiceInfo') ServiceInfoRespDataAppCustomerServiceInfo? get appCustomerServiceInfo;
+@JsonKey(name: 'showType') int? get showType;@JsonKey(name: 'appCustomerServiceInfoResps') List<ServiceInfoRespDataAppCustomerServiceInfo>? get appCustomerServiceInfoResps;@JsonKey(name: 'appCustomerServiceInfo') ServiceInfoRespDataAppCustomerServiceInfo? get appCustomerServiceInfo;
 /// Create a copy of ServiceInfoRespData
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -341,7 +341,7 @@ abstract mixin class $ServiceInfoRespDataCopyWith<$Res>  {
   factory $ServiceInfoRespDataCopyWith(ServiceInfoRespData value, $Res Function(ServiceInfoRespData) _then) = _$ServiceInfoRespDataCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'showType') int? showType,@JsonKey(name: 'appCustomerServiceInfoResps') List<dynamic>? appCustomerServiceInfoResps,@JsonKey(name: 'appCustomerServiceInfo') ServiceInfoRespDataAppCustomerServiceInfo? appCustomerServiceInfo
+@JsonKey(name: 'showType') int? showType,@JsonKey(name: 'appCustomerServiceInfoResps') List<ServiceInfoRespDataAppCustomerServiceInfo>? appCustomerServiceInfoResps,@JsonKey(name: 'appCustomerServiceInfo') ServiceInfoRespDataAppCustomerServiceInfo? appCustomerServiceInfo
 });
 
 
@@ -362,7 +362,7 @@ class _$ServiceInfoRespDataCopyWithImpl<$Res>
   return _then(_self.copyWith(
 showType: freezed == showType ? _self.showType : showType // ignore: cast_nullable_to_non_nullable
 as int?,appCustomerServiceInfoResps: freezed == appCustomerServiceInfoResps ? _self.appCustomerServiceInfoResps : appCustomerServiceInfoResps // ignore: cast_nullable_to_non_nullable
-as List<dynamic>?,appCustomerServiceInfo: freezed == appCustomerServiceInfo ? _self.appCustomerServiceInfo : appCustomerServiceInfo // ignore: cast_nullable_to_non_nullable
+as List<ServiceInfoRespDataAppCustomerServiceInfo>?,appCustomerServiceInfo: freezed == appCustomerServiceInfo ? _self.appCustomerServiceInfo : appCustomerServiceInfo // ignore: cast_nullable_to_non_nullable
 as ServiceInfoRespDataAppCustomerServiceInfo?,
   ));
 }
@@ -460,7 +460,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'showType')  int? showType, @JsonKey(name: 'appCustomerServiceInfoResps')  List<dynamic>? appCustomerServiceInfoResps, @JsonKey(name: 'appCustomerServiceInfo')  ServiceInfoRespDataAppCustomerServiceInfo? appCustomerServiceInfo)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'showType')  int? showType, @JsonKey(name: 'appCustomerServiceInfoResps')  List<ServiceInfoRespDataAppCustomerServiceInfo>? appCustomerServiceInfoResps, @JsonKey(name: 'appCustomerServiceInfo')  ServiceInfoRespDataAppCustomerServiceInfo? appCustomerServiceInfo)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ServiceInfoRespData() when $default != null:
 return $default(_that.showType,_that.appCustomerServiceInfoResps,_that.appCustomerServiceInfo);case _:
@@ -481,7 +481,7 @@ return $default(_that.showType,_that.appCustomerServiceInfoResps,_that.appCustom
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'showType')  int? showType, @JsonKey(name: 'appCustomerServiceInfoResps')  List<dynamic>? appCustomerServiceInfoResps, @JsonKey(name: 'appCustomerServiceInfo')  ServiceInfoRespDataAppCustomerServiceInfo? appCustomerServiceInfo)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'showType')  int? showType, @JsonKey(name: 'appCustomerServiceInfoResps')  List<ServiceInfoRespDataAppCustomerServiceInfo>? appCustomerServiceInfoResps, @JsonKey(name: 'appCustomerServiceInfo')  ServiceInfoRespDataAppCustomerServiceInfo? appCustomerServiceInfo)  $default,) {final _that = this;
 switch (_that) {
 case _ServiceInfoRespData():
 return $default(_that.showType,_that.appCustomerServiceInfoResps,_that.appCustomerServiceInfo);case _:
@@ -501,7 +501,7 @@ return $default(_that.showType,_that.appCustomerServiceInfoResps,_that.appCustom
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'showType')  int? showType, @JsonKey(name: 'appCustomerServiceInfoResps')  List<dynamic>? appCustomerServiceInfoResps, @JsonKey(name: 'appCustomerServiceInfo')  ServiceInfoRespDataAppCustomerServiceInfo? appCustomerServiceInfo)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'showType')  int? showType, @JsonKey(name: 'appCustomerServiceInfoResps')  List<ServiceInfoRespDataAppCustomerServiceInfo>? appCustomerServiceInfoResps, @JsonKey(name: 'appCustomerServiceInfo')  ServiceInfoRespDataAppCustomerServiceInfo? appCustomerServiceInfo)?  $default,) {final _that = this;
 switch (_that) {
 case _ServiceInfoRespData() when $default != null:
 return $default(_that.showType,_that.appCustomerServiceInfoResps,_that.appCustomerServiceInfo);case _:
@@ -516,12 +516,12 @@ return $default(_that.showType,_that.appCustomerServiceInfoResps,_that.appCustom
 @JsonSerializable()
 
 class _ServiceInfoRespData implements ServiceInfoRespData {
-  const _ServiceInfoRespData({@JsonKey(name: 'showType') this.showType, @JsonKey(name: 'appCustomerServiceInfoResps') final  List<dynamic>? appCustomerServiceInfoResps, @JsonKey(name: 'appCustomerServiceInfo') this.appCustomerServiceInfo}): _appCustomerServiceInfoResps = appCustomerServiceInfoResps;
+  const _ServiceInfoRespData({@JsonKey(name: 'showType') this.showType, @JsonKey(name: 'appCustomerServiceInfoResps') final  List<ServiceInfoRespDataAppCustomerServiceInfo>? appCustomerServiceInfoResps, @JsonKey(name: 'appCustomerServiceInfo') this.appCustomerServiceInfo}): _appCustomerServiceInfoResps = appCustomerServiceInfoResps;
   factory _ServiceInfoRespData.fromJson(Map<String, dynamic> json) => _$ServiceInfoRespDataFromJson(json);
 
 @override@JsonKey(name: 'showType') final  int? showType;
- final  List<dynamic>? _appCustomerServiceInfoResps;
-@override@JsonKey(name: 'appCustomerServiceInfoResps') List<dynamic>? get appCustomerServiceInfoResps {
+ final  List<ServiceInfoRespDataAppCustomerServiceInfo>? _appCustomerServiceInfoResps;
+@override@JsonKey(name: 'appCustomerServiceInfoResps') List<ServiceInfoRespDataAppCustomerServiceInfo>? get appCustomerServiceInfoResps {
   final value = _appCustomerServiceInfoResps;
   if (value == null) return null;
   if (_appCustomerServiceInfoResps is EqualUnmodifiableListView) return _appCustomerServiceInfoResps;
@@ -564,7 +564,7 @@ abstract mixin class _$ServiceInfoRespDataCopyWith<$Res> implements $ServiceInfo
   factory _$ServiceInfoRespDataCopyWith(_ServiceInfoRespData value, $Res Function(_ServiceInfoRespData) _then) = __$ServiceInfoRespDataCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'showType') int? showType,@JsonKey(name: 'appCustomerServiceInfoResps') List<dynamic>? appCustomerServiceInfoResps,@JsonKey(name: 'appCustomerServiceInfo') ServiceInfoRespDataAppCustomerServiceInfo? appCustomerServiceInfo
+@JsonKey(name: 'showType') int? showType,@JsonKey(name: 'appCustomerServiceInfoResps') List<ServiceInfoRespDataAppCustomerServiceInfo>? appCustomerServiceInfoResps,@JsonKey(name: 'appCustomerServiceInfo') ServiceInfoRespDataAppCustomerServiceInfo? appCustomerServiceInfo
 });
 
 
@@ -585,7 +585,7 @@ class __$ServiceInfoRespDataCopyWithImpl<$Res>
   return _then(_ServiceInfoRespData(
 showType: freezed == showType ? _self.showType : showType // ignore: cast_nullable_to_non_nullable
 as int?,appCustomerServiceInfoResps: freezed == appCustomerServiceInfoResps ? _self._appCustomerServiceInfoResps : appCustomerServiceInfoResps // ignore: cast_nullable_to_non_nullable
-as List<dynamic>?,appCustomerServiceInfo: freezed == appCustomerServiceInfo ? _self.appCustomerServiceInfo : appCustomerServiceInfo // ignore: cast_nullable_to_non_nullable
+as List<ServiceInfoRespDataAppCustomerServiceInfo>?,appCustomerServiceInfo: freezed == appCustomerServiceInfo ? _self.appCustomerServiceInfo : appCustomerServiceInfo // ignore: cast_nullable_to_non_nullable
 as ServiceInfoRespDataAppCustomerServiceInfo?,
   ));
 }
@@ -609,7 +609,7 @@ $ServiceInfoRespDataAppCustomerServiceInfoCopyWith<$Res>? get appCustomerService
 /// @nodoc
 mixin _$ServiceInfoRespDataAppCustomerServiceInfo {
 
-@JsonKey(name: 'type') int? get type;@JsonKey(name: 'account') String? get account;@JsonKey(name: 'title') String? get title;@JsonKey(name: 'desc') String? get desc;@JsonKey(name: 'accountList') List<ServiceInfoRespDataAppCustomerServiceInfoAccountList>? get accountList;
+@JsonKey(name: 'type') int? get type;@JsonKey(name: 'account') String? get account;@JsonKey(name: 'title') String? get title;@JsonKey(name: 'desc') String? get desc;@JsonKey(name: 'accountList') List<ServiceInfoRespDataAppCustomerServiceInfo>? get accountList;
 /// Create a copy of ServiceInfoRespDataAppCustomerServiceInfo
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -642,7 +642,7 @@ abstract mixin class $ServiceInfoRespDataAppCustomerServiceInfoCopyWith<$Res>  {
   factory $ServiceInfoRespDataAppCustomerServiceInfoCopyWith(ServiceInfoRespDataAppCustomerServiceInfo value, $Res Function(ServiceInfoRespDataAppCustomerServiceInfo) _then) = _$ServiceInfoRespDataAppCustomerServiceInfoCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'type') int? type,@JsonKey(name: 'account') String? account,@JsonKey(name: 'title') String? title,@JsonKey(name: 'desc') String? desc,@JsonKey(name: 'accountList') List<ServiceInfoRespDataAppCustomerServiceInfoAccountList>? accountList
+@JsonKey(name: 'type') int? type,@JsonKey(name: 'account') String? account,@JsonKey(name: 'title') String? title,@JsonKey(name: 'desc') String? desc,@JsonKey(name: 'accountList') List<ServiceInfoRespDataAppCustomerServiceInfo>? accountList
 });
 
 
@@ -666,7 +666,7 @@ as int?,account: freezed == account ? _self.account : account // ignore: cast_nu
 as String?,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String?,desc: freezed == desc ? _self.desc : desc // ignore: cast_nullable_to_non_nullable
 as String?,accountList: freezed == accountList ? _self.accountList : accountList // ignore: cast_nullable_to_non_nullable
-as List<ServiceInfoRespDataAppCustomerServiceInfoAccountList>?,
+as List<ServiceInfoRespDataAppCustomerServiceInfo>?,
   ));
 }
 
@@ -751,7 +751,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'type')  int? type, @JsonKey(name: 'account')  String? account, @JsonKey(name: 'title')  String? title, @JsonKey(name: 'desc')  String? desc, @JsonKey(name: 'accountList')  List<ServiceInfoRespDataAppCustomerServiceInfoAccountList>? accountList)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'type')  int? type, @JsonKey(name: 'account')  String? account, @JsonKey(name: 'title')  String? title, @JsonKey(name: 'desc')  String? desc, @JsonKey(name: 'accountList')  List<ServiceInfoRespDataAppCustomerServiceInfo>? accountList)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ServiceInfoRespDataAppCustomerServiceInfo() when $default != null:
 return $default(_that.type,_that.account,_that.title,_that.desc,_that.accountList);case _:
@@ -772,7 +772,7 @@ return $default(_that.type,_that.account,_that.title,_that.desc,_that.accountLis
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'type')  int? type, @JsonKey(name: 'account')  String? account, @JsonKey(name: 'title')  String? title, @JsonKey(name: 'desc')  String? desc, @JsonKey(name: 'accountList')  List<ServiceInfoRespDataAppCustomerServiceInfoAccountList>? accountList)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'type')  int? type, @JsonKey(name: 'account')  String? account, @JsonKey(name: 'title')  String? title, @JsonKey(name: 'desc')  String? desc, @JsonKey(name: 'accountList')  List<ServiceInfoRespDataAppCustomerServiceInfo>? accountList)  $default,) {final _that = this;
 switch (_that) {
 case _ServiceInfoRespDataAppCustomerServiceInfo():
 return $default(_that.type,_that.account,_that.title,_that.desc,_that.accountList);case _:
@@ -792,7 +792,7 @@ return $default(_that.type,_that.account,_that.title,_that.desc,_that.accountLis
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'type')  int? type, @JsonKey(name: 'account')  String? account, @JsonKey(name: 'title')  String? title, @JsonKey(name: 'desc')  String? desc, @JsonKey(name: 'accountList')  List<ServiceInfoRespDataAppCustomerServiceInfoAccountList>? accountList)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'type')  int? type, @JsonKey(name: 'account')  String? account, @JsonKey(name: 'title')  String? title, @JsonKey(name: 'desc')  String? desc, @JsonKey(name: 'accountList')  List<ServiceInfoRespDataAppCustomerServiceInfo>? accountList)?  $default,) {final _that = this;
 switch (_that) {
 case _ServiceInfoRespDataAppCustomerServiceInfo() when $default != null:
 return $default(_that.type,_that.account,_that.title,_that.desc,_that.accountList);case _:
@@ -807,15 +807,15 @@ return $default(_that.type,_that.account,_that.title,_that.desc,_that.accountLis
 @JsonSerializable()
 
 class _ServiceInfoRespDataAppCustomerServiceInfo implements ServiceInfoRespDataAppCustomerServiceInfo {
-  const _ServiceInfoRespDataAppCustomerServiceInfo({@JsonKey(name: 'type') this.type, @JsonKey(name: 'account') this.account, @JsonKey(name: 'title') this.title, @JsonKey(name: 'desc') this.desc, @JsonKey(name: 'accountList') final  List<ServiceInfoRespDataAppCustomerServiceInfoAccountList>? accountList}): _accountList = accountList;
+  const _ServiceInfoRespDataAppCustomerServiceInfo({@JsonKey(name: 'type') this.type, @JsonKey(name: 'account') this.account, @JsonKey(name: 'title') this.title, @JsonKey(name: 'desc') this.desc, @JsonKey(name: 'accountList') final  List<ServiceInfoRespDataAppCustomerServiceInfo>? accountList}): _accountList = accountList;
   factory _ServiceInfoRespDataAppCustomerServiceInfo.fromJson(Map<String, dynamic> json) => _$ServiceInfoRespDataAppCustomerServiceInfoFromJson(json);
 
 @override@JsonKey(name: 'type') final  int? type;
 @override@JsonKey(name: 'account') final  String? account;
 @override@JsonKey(name: 'title') final  String? title;
 @override@JsonKey(name: 'desc') final  String? desc;
- final  List<ServiceInfoRespDataAppCustomerServiceInfoAccountList>? _accountList;
-@override@JsonKey(name: 'accountList') List<ServiceInfoRespDataAppCustomerServiceInfoAccountList>? get accountList {
+ final  List<ServiceInfoRespDataAppCustomerServiceInfo>? _accountList;
+@override@JsonKey(name: 'accountList') List<ServiceInfoRespDataAppCustomerServiceInfo>? get accountList {
   final value = _accountList;
   if (value == null) return null;
   if (_accountList is EqualUnmodifiableListView) return _accountList;
@@ -857,7 +857,7 @@ abstract mixin class _$ServiceInfoRespDataAppCustomerServiceInfoCopyWith<$Res> i
   factory _$ServiceInfoRespDataAppCustomerServiceInfoCopyWith(_ServiceInfoRespDataAppCustomerServiceInfo value, $Res Function(_ServiceInfoRespDataAppCustomerServiceInfo) _then) = __$ServiceInfoRespDataAppCustomerServiceInfoCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'type') int? type,@JsonKey(name: 'account') String? account,@JsonKey(name: 'title') String? title,@JsonKey(name: 'desc') String? desc,@JsonKey(name: 'accountList') List<ServiceInfoRespDataAppCustomerServiceInfoAccountList>? accountList
+@JsonKey(name: 'type') int? type,@JsonKey(name: 'account') String? account,@JsonKey(name: 'title') String? title,@JsonKey(name: 'desc') String? desc,@JsonKey(name: 'accountList') List<ServiceInfoRespDataAppCustomerServiceInfo>? accountList
 });
 
 
@@ -881,282 +881,7 @@ as int?,account: freezed == account ? _self.account : account // ignore: cast_nu
 as String?,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String?,desc: freezed == desc ? _self.desc : desc // ignore: cast_nullable_to_non_nullable
 as String?,accountList: freezed == accountList ? _self._accountList : accountList // ignore: cast_nullable_to_non_nullable
-as List<ServiceInfoRespDataAppCustomerServiceInfoAccountList>?,
-  ));
-}
-
-
-}
-
-
-/// @nodoc
-mixin _$ServiceInfoRespDataAppCustomerServiceInfoAccountList {
-
-@JsonKey(name: 'type') int? get type;@JsonKey(name: 'account') String? get account;@JsonKey(name: 'title') dynamic? get title;@JsonKey(name: 'desc') dynamic? get desc;@JsonKey(name: 'accountList') dynamic? get accountList;
-/// Create a copy of ServiceInfoRespDataAppCustomerServiceInfoAccountList
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$ServiceInfoRespDataAppCustomerServiceInfoAccountListCopyWith<ServiceInfoRespDataAppCustomerServiceInfoAccountList> get copyWith => _$ServiceInfoRespDataAppCustomerServiceInfoAccountListCopyWithImpl<ServiceInfoRespDataAppCustomerServiceInfoAccountList>(this as ServiceInfoRespDataAppCustomerServiceInfoAccountList, _$identity);
-
-  /// Serializes this ServiceInfoRespDataAppCustomerServiceInfoAccountList to a JSON map.
-  Map<String, dynamic> toJson();
-
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServiceInfoRespDataAppCustomerServiceInfoAccountList&&(identical(other.type, type) || other.type == type)&&(identical(other.account, account) || other.account == account)&&const DeepCollectionEquality().equals(other.title, title)&&const DeepCollectionEquality().equals(other.desc, desc)&&const DeepCollectionEquality().equals(other.accountList, accountList));
-}
-
-@JsonKey(includeFromJson: false, includeToJson: false)
-@override
-int get hashCode => Object.hash(runtimeType,type,account,const DeepCollectionEquality().hash(title),const DeepCollectionEquality().hash(desc),const DeepCollectionEquality().hash(accountList));
-
-@override
-String toString() {
-  return 'ServiceInfoRespDataAppCustomerServiceInfoAccountList(type: $type, account: $account, title: $title, desc: $desc, accountList: $accountList)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $ServiceInfoRespDataAppCustomerServiceInfoAccountListCopyWith<$Res>  {
-  factory $ServiceInfoRespDataAppCustomerServiceInfoAccountListCopyWith(ServiceInfoRespDataAppCustomerServiceInfoAccountList value, $Res Function(ServiceInfoRespDataAppCustomerServiceInfoAccountList) _then) = _$ServiceInfoRespDataAppCustomerServiceInfoAccountListCopyWithImpl;
-@useResult
-$Res call({
-@JsonKey(name: 'type') int? type,@JsonKey(name: 'account') String? account,@JsonKey(name: 'title') dynamic? title,@JsonKey(name: 'desc') dynamic? desc,@JsonKey(name: 'accountList') dynamic? accountList
-});
-
-
-
-
-}
-/// @nodoc
-class _$ServiceInfoRespDataAppCustomerServiceInfoAccountListCopyWithImpl<$Res>
-    implements $ServiceInfoRespDataAppCustomerServiceInfoAccountListCopyWith<$Res> {
-  _$ServiceInfoRespDataAppCustomerServiceInfoAccountListCopyWithImpl(this._self, this._then);
-
-  final ServiceInfoRespDataAppCustomerServiceInfoAccountList _self;
-  final $Res Function(ServiceInfoRespDataAppCustomerServiceInfoAccountList) _then;
-
-/// Create a copy of ServiceInfoRespDataAppCustomerServiceInfoAccountList
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? type = freezed,Object? account = freezed,Object? title = freezed,Object? desc = freezed,Object? accountList = freezed,}) {
-  return _then(_self.copyWith(
-type: freezed == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
-as int?,account: freezed == account ? _self.account : account // ignore: cast_nullable_to_non_nullable
-as String?,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
-as dynamic?,desc: freezed == desc ? _self.desc : desc // ignore: cast_nullable_to_non_nullable
-as dynamic?,accountList: freezed == accountList ? _self.accountList : accountList // ignore: cast_nullable_to_non_nullable
-as dynamic?,
-  ));
-}
-
-}
-
-
-/// Adds pattern-matching-related methods to [ServiceInfoRespDataAppCustomerServiceInfoAccountList].
-extension ServiceInfoRespDataAppCustomerServiceInfoAccountListPatterns on ServiceInfoRespDataAppCustomerServiceInfoAccountList {
-/// A variant of `map` that fallback to returning `orElse`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ServiceInfoRespDataAppCustomerServiceInfoAccountList value)?  $default,{required TResult orElse(),}){
-final _that = this;
-switch (_that) {
-case _ServiceInfoRespDataAppCustomerServiceInfoAccountList() when $default != null:
-return $default(_that);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// Callbacks receives the raw object, upcasted.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case final Subclass2 value:
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ServiceInfoRespDataAppCustomerServiceInfoAccountList value)  $default,){
-final _that = this;
-switch (_that) {
-case _ServiceInfoRespDataAppCustomerServiceInfoAccountList():
-return $default(_that);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `map` that fallback to returning `null`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ServiceInfoRespDataAppCustomerServiceInfoAccountList value)?  $default,){
-final _that = this;
-switch (_that) {
-case _ServiceInfoRespDataAppCustomerServiceInfoAccountList() when $default != null:
-return $default(_that);case _:
-  return null;
-
-}
-}
-/// A variant of `when` that fallback to an `orElse` callback.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'type')  int? type, @JsonKey(name: 'account')  String? account, @JsonKey(name: 'title')  dynamic? title, @JsonKey(name: 'desc')  dynamic? desc, @JsonKey(name: 'accountList')  dynamic? accountList)?  $default,{required TResult orElse(),}) {final _that = this;
-switch (_that) {
-case _ServiceInfoRespDataAppCustomerServiceInfoAccountList() when $default != null:
-return $default(_that.type,_that.account,_that.title,_that.desc,_that.accountList);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// As opposed to `map`, this offers destructuring.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case Subclass2(:final field2):
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'type')  int? type, @JsonKey(name: 'account')  String? account, @JsonKey(name: 'title')  dynamic? title, @JsonKey(name: 'desc')  dynamic? desc, @JsonKey(name: 'accountList')  dynamic? accountList)  $default,) {final _that = this;
-switch (_that) {
-case _ServiceInfoRespDataAppCustomerServiceInfoAccountList():
-return $default(_that.type,_that.account,_that.title,_that.desc,_that.accountList);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `when` that fallback to returning `null`
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'type')  int? type, @JsonKey(name: 'account')  String? account, @JsonKey(name: 'title')  dynamic? title, @JsonKey(name: 'desc')  dynamic? desc, @JsonKey(name: 'accountList')  dynamic? accountList)?  $default,) {final _that = this;
-switch (_that) {
-case _ServiceInfoRespDataAppCustomerServiceInfoAccountList() when $default != null:
-return $default(_that.type,_that.account,_that.title,_that.desc,_that.accountList);case _:
-  return null;
-
-}
-}
-
-}
-
-/// @nodoc
-@JsonSerializable()
-
-class _ServiceInfoRespDataAppCustomerServiceInfoAccountList implements ServiceInfoRespDataAppCustomerServiceInfoAccountList {
-  const _ServiceInfoRespDataAppCustomerServiceInfoAccountList({@JsonKey(name: 'type') this.type, @JsonKey(name: 'account') this.account, @JsonKey(name: 'title') this.title, @JsonKey(name: 'desc') this.desc, @JsonKey(name: 'accountList') this.accountList});
-  factory _ServiceInfoRespDataAppCustomerServiceInfoAccountList.fromJson(Map<String, dynamic> json) => _$ServiceInfoRespDataAppCustomerServiceInfoAccountListFromJson(json);
-
-@override@JsonKey(name: 'type') final  int? type;
-@override@JsonKey(name: 'account') final  String? account;
-@override@JsonKey(name: 'title') final  dynamic? title;
-@override@JsonKey(name: 'desc') final  dynamic? desc;
-@override@JsonKey(name: 'accountList') final  dynamic? accountList;
-
-/// Create a copy of ServiceInfoRespDataAppCustomerServiceInfoAccountList
-/// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-_$ServiceInfoRespDataAppCustomerServiceInfoAccountListCopyWith<_ServiceInfoRespDataAppCustomerServiceInfoAccountList> get copyWith => __$ServiceInfoRespDataAppCustomerServiceInfoAccountListCopyWithImpl<_ServiceInfoRespDataAppCustomerServiceInfoAccountList>(this, _$identity);
-
-@override
-Map<String, dynamic> toJson() {
-  return _$ServiceInfoRespDataAppCustomerServiceInfoAccountListToJson(this, );
-}
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServiceInfoRespDataAppCustomerServiceInfoAccountList&&(identical(other.type, type) || other.type == type)&&(identical(other.account, account) || other.account == account)&&const DeepCollectionEquality().equals(other.title, title)&&const DeepCollectionEquality().equals(other.desc, desc)&&const DeepCollectionEquality().equals(other.accountList, accountList));
-}
-
-@JsonKey(includeFromJson: false, includeToJson: false)
-@override
-int get hashCode => Object.hash(runtimeType,type,account,const DeepCollectionEquality().hash(title),const DeepCollectionEquality().hash(desc),const DeepCollectionEquality().hash(accountList));
-
-@override
-String toString() {
-  return 'ServiceInfoRespDataAppCustomerServiceInfoAccountList(type: $type, account: $account, title: $title, desc: $desc, accountList: $accountList)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class _$ServiceInfoRespDataAppCustomerServiceInfoAccountListCopyWith<$Res> implements $ServiceInfoRespDataAppCustomerServiceInfoAccountListCopyWith<$Res> {
-  factory _$ServiceInfoRespDataAppCustomerServiceInfoAccountListCopyWith(_ServiceInfoRespDataAppCustomerServiceInfoAccountList value, $Res Function(_ServiceInfoRespDataAppCustomerServiceInfoAccountList) _then) = __$ServiceInfoRespDataAppCustomerServiceInfoAccountListCopyWithImpl;
-@override @useResult
-$Res call({
-@JsonKey(name: 'type') int? type,@JsonKey(name: 'account') String? account,@JsonKey(name: 'title') dynamic? title,@JsonKey(name: 'desc') dynamic? desc,@JsonKey(name: 'accountList') dynamic? accountList
-});
-
-
-
-
-}
-/// @nodoc
-class __$ServiceInfoRespDataAppCustomerServiceInfoAccountListCopyWithImpl<$Res>
-    implements _$ServiceInfoRespDataAppCustomerServiceInfoAccountListCopyWith<$Res> {
-  __$ServiceInfoRespDataAppCustomerServiceInfoAccountListCopyWithImpl(this._self, this._then);
-
-  final _ServiceInfoRespDataAppCustomerServiceInfoAccountList _self;
-  final $Res Function(_ServiceInfoRespDataAppCustomerServiceInfoAccountList) _then;
-
-/// Create a copy of ServiceInfoRespDataAppCustomerServiceInfoAccountList
-/// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? type = freezed,Object? account = freezed,Object? title = freezed,Object? desc = freezed,Object? accountList = freezed,}) {
-  return _then(_ServiceInfoRespDataAppCustomerServiceInfoAccountList(
-type: freezed == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
-as int?,account: freezed == account ? _self.account : account // ignore: cast_nullable_to_non_nullable
-as String?,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
-as dynamic?,desc: freezed == desc ? _self.desc : desc // ignore: cast_nullable_to_non_nullable
-as dynamic?,accountList: freezed == accountList ? _self.accountList : accountList // ignore: cast_nullable_to_non_nullable
-as dynamic?,
+as List<ServiceInfoRespDataAppCustomerServiceInfo>?,
   ));
 }
 

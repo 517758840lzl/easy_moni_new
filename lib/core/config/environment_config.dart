@@ -1,4 +1,5 @@
 import 'package:easy_moni/core/config/app_environment.dart';
+import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
 
 /// 单个运行环境的网络、渠道、登录归因等参数配置。
 class EnvironmentConfig {
@@ -10,6 +11,7 @@ class EnvironmentConfig {
     required this.acqChannel,
     required this.acqChannelIndex,
     required this.disableEncBody,
+    required this.appInstanceId,
     required this.appVersion,
     required this.clientType,
     required this.defaultDeviceId,
@@ -30,6 +32,7 @@ class EnvironmentConfig {
   final String acqChannel;
   final String acqChannelIndex;
   final String disableEncBody;
+  final String appInstanceId;
   final String appVersion;
   final String clientType;
   final String defaultDeviceId;
@@ -44,44 +47,38 @@ class EnvironmentConfig {
 
   static EnvironmentConfig get current => EnvironmentConfigs.current;
 
-  /// 构建每次请求都会携带的公共请求头。
-  Map<String, String> commonHeaders({
-    String? token,
-    String? deviceId,
-    bool includeContentType = true,
-  }) {
+  /// 构建每次请求都会携带的公共请求头，仅保留后端要求的业务头字段。
+  Map<String, String> commonHeaders({String? token}) {
     return {
-      if (includeContentType) 'Content-Type': 'application/json',
-      'Accept': 'application/json',
       'acqChannel': acqChannel,
       'acqChannelIndex': acqChannelIndex,
       'disableEncBody': disableEncBody,
-      'appVersion': appVersion,
-      'clientType': clientType,
-      'advId': advId,
-      'deviceId': deviceId ?? defaultDeviceId,
       if (token != null && token.isNotEmpty) 'token': token,
     };
   }
 
-  /// 构建登录接口需要的环境和渠道参数。
-  Map<String, dynamic> loginParams({
+  /// 构建登录接口需要的环境和渠道参数，优先使用运行时真实归因与设备值。
+  Future<Map<String, dynamic>> loginParams({
     required String phone,
     required String authCode,
     String? deviceId,
-  }) {
+  }) async {
+    final runtimeAttribution = await AfTracker.getLoginAttributionData();
+
     return {
-      'phone': phone,
-      'authCode': authCode,
-      'afid': afid,
+      'afid': runtimeAttribution['afid'] ?? afid,
+      // TODO 确认参数
+      'appInstanceId': runtimeAttribution['appInstanceId'] ?? appInstanceId,
       'appVersion': appVersion,
+      'authCode': authCode,
       'clientType': clientType,
-      'deviceId': deviceId ?? defaultDeviceId,
-      'gaid': gaid,
-      'mediaSource': mediaSource,
+      'deviceId': runtimeAttribution['deviceId'] ?? deviceId ?? defaultDeviceId,
+      'gaid': runtimeAttribution['gaid'] ?? gaid,
+      'mediaSource': runtimeAttribution['mediaSource'] ?? mediaSource,
       'onlyLogin': onlyLogin,
-      'referrer': referrer,
-      'userAgent': userAgent,
+      'phone': phone,
+      'referrer': runtimeAttribution['referrer'] ?? referrer,
+      'userAgent': runtimeAttribution['userAgent'] ?? userAgent,
     };
   }
 
@@ -98,20 +95,21 @@ class EnvironmentConfigs {
   static const EnvironmentConfig test = EnvironmentConfig(
     name: AppEnvironment.test,
     baseUrl: 'https://www.zzyd.click/',
-    connectTimeout: Duration(seconds: 30),
-    receiveTimeout: Duration(seconds: 30),
+    connectTimeout: Duration(seconds: 10),
+    receiveTimeout: Duration(seconds: 10),
     acqChannel: 'GHPM',
     acqChannelIndex: '0',
     disableEncBody: 'false',
+    appInstanceId: '',
     appVersion: '10',
     clientType: 'android',
     defaultDeviceId: '7da8118f936659a7',
     advId: 'be1089a1-dc4b-4684-9882-2d670a214784',
-    afid: '1779953073476-180350146959368781',
-    gaid: 'be1089a1-dc4b-4684-9882-2d670a214784',
+    afid: '',
+    gaid: '',
     mediaSource: '',
-    referrer: 'utm_source=google-play&utm_medium=organic',
-    userAgent: 'SM-A136U',
+    referrer: '',
+    userAgent: '', 
     onlyLogin: 0,
     enableNetworkLog: true,
   );
@@ -123,16 +121,17 @@ class EnvironmentConfigs {
     receiveTimeout: Duration(seconds: 30),
     acqChannel: 'GHPM',
     acqChannelIndex: '0',
-    disableEncBody: 'false',
-    appVersion: '10',
+    disableEncBody: 'true',
+    appInstanceId: '',
+    appVersion: '',
     clientType: 'android',
-    defaultDeviceId: '7da8118f936659a7',
-    advId: 'be1089a1-dc4b-4684-9882-2d670a214784',
-    afid: '1779953073476-180350146959368781',
-    gaid: 'be1089a1-dc4b-4684-9882-2d670a214784',
+    defaultDeviceId: '',
+    advId: '',
+    afid: '',
+    gaid: '',
     mediaSource: '',
-    referrer: 'utm_source=google-play&utm_medium=organic',
-    userAgent: 'SM-A136U',
+    referrer: '',
+    userAgent: '',
     onlyLogin: 0,
     enableNetworkLog: false,
   );

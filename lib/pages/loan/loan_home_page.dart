@@ -9,6 +9,7 @@ import 'package:easy_moni/entities/home_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/utils/extensions.dart';
 import 'package:easy_moni/utils/loan_order_status_visual.dart';
+import 'package:easy_moni/utils/widgets/app_state_view.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,10 +33,12 @@ class LoanHomeScaffold extends ConsumerStatefulWidget {
     super.key,
     this.bottomContent,
     this.refreshRequestId = '',
+    this.showAvailableProductCount = true,
   });
 
   final Widget? bottomContent;
   final String refreshRequestId;
+  final bool showAvailableProductCount;
 
   @override
   ConsumerState<LoanHomeScaffold> createState() => _LoanHomeScaffoldState();
@@ -83,13 +86,16 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
         _applyHomeData(result.data!);
       } else {
         _handleHomeLoadFailed(
-          result.message ?? '加载失败，请重试',
+          result.message ?? AppStrings.errorMessage,
           showErrorPage: showLoading,
         );
       }
     } catch (e) {
       if (!mounted) return;
-      _handleHomeLoadFailed('加载失败，请重试', showErrorPage: showLoading);
+      _handleHomeLoadFailed(
+        AppStrings.errorMessage,
+        showErrorPage: showLoading,
+      );
     }
   }
 
@@ -182,22 +188,16 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
     if (_isLoading) {
       return const Scaffold(
         backgroundColor: Colors.white,
-        body: Center(child: CircularProgressIndicator()),
+        body: AppStateView(child: CircularProgressIndicator()),
       );
     }
 
     if (_loadError != null) {
       return Scaffold(
         backgroundColor: Colors.white,
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(_loadError!, style: const TextStyle(color: Colors.grey)),
-              const SizedBox(height: 16),
-              TextButton(onPressed: _loadHomeData, child: const Text('重试')),
-            ],
-          ),
+        body: AppErrorStateView(
+          text: _loadError!,
+          onReload: () => _loadHomeData(),
         ),
       );
     }
@@ -277,12 +277,7 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
           children: [
             const _SelectionHint(canSelectMultiple: false),
             const SizedBox(height: 24),
-            const Center(
-              child: Text(
-                AppStrings.noLoanProducts,
-                style: TextStyle(fontSize: 14, color: Color(0xFF909399)),
-              ),
-            ),
+            const AppEmptyStateView(text: AppStrings.noLoanProducts),
             if (widget.bottomContent != null) ...[
               const SizedBox(height: 16),
               widget.bottomContent!,
@@ -456,39 +451,44 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
                 ),
               ),
             ),
-            Positioned(
-              top: topInset + 107,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: const Color(0xFFDDDDDD)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Assets.images.loanCheck.image(width: 22.5, height: 22.5),
-                      const SizedBox(width: 10),
-                      Text(
-                        '${AppStrings.homeAvailableString} $_availableProductCount',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
+            // 审核首页复用普通首页时，需要隐藏顶部可借产品数量提示。
+            if (widget.showAvailableProductCount)
+              Positioned(
+                top: topInset + 107,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFFDDDDDD)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Assets.images.loanCheck.image(
+                          width: 22.5,
+                          height: 22.5,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 10),
+                        Text(
+                          '${AppStrings.homeAvailableString} $_availableProductCount',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
           ],
         ),
       ),

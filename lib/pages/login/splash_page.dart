@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
+import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -29,6 +30,7 @@ class _SplashPageState extends State<SplashPage> {
       setState(() {
         _isVisible = true;
       });
+      unawaited(AfTracker.logFirstOpenIfNeeded());
       unawaited(_goToNextPage());
     });
   }

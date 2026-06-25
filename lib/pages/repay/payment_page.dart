@@ -3,6 +3,7 @@ import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:easy_moni/pages/repay/models/payment_request_params.dart';
 import 'package:easy_moni/pages/repay/providers/payment_provider.dart';
+import 'package:easy_moni/utils/widgets/app_state_view.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -87,15 +88,12 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
             ],
           );
         },
-        error: (error, _) => _PaymentStateView(
-          icon: Icons.error_outline_rounded,
+        error: (error, _) => AppErrorStateView(
           text: error.toString(),
-          actionText: AppStrings.repayEntryRetry,
-          onActionTap: () =>
+          onReload: () =>
               ref.invalidate(paymentUrlProvider(widget.requestParams)),
         ),
-        loading: () =>
-            const _PaymentStateView(child: CircularProgressIndicator()),
+        loading: () => const AppStateView(child: CircularProgressIndicator()),
       ),
     );
   }
@@ -128,58 +126,5 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
     } else {
       AppLogger.debug('Unsupported payment H5 message: ${message.message}');
     }
-  }
-}
-
-class _PaymentStateView extends StatelessWidget {
-  const _PaymentStateView({
-    this.child,
-    this.icon,
-    this.text = '',
-    this.actionText = '',
-    this.onActionTap,
-  });
-
-  final Widget? child;
-  final IconData? icon;
-  final String text;
-  final String actionText;
-  final VoidCallback? onActionTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final customChild = child;
-    if (customChild != null) {
-      return Center(child: customChild);
-    }
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null)
-              Icon(icon, size: 54, color: const Color(0xFFACACAC)),
-            if (text.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Text(
-                text,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF787878),
-                  height: 20 / 14,
-                ),
-              ),
-            ],
-            if (actionText.isNotEmpty && onActionTap != null) ...[
-              const SizedBox(height: 16),
-              TextButton(onPressed: onActionTap, child: Text(actionText)),
-            ],
-          ],
-        ),
-      ),
-    );
   }
 }

@@ -155,7 +155,7 @@ class _MinePageState extends ConsumerState<MinePage> {
               Navigator.pop(context);
               await _executeLogout();
             },
-            child: const Text(AppStrings.mineLogoutDialogConfirm),
+            child: const Text(AppStrings.confirm),
           ),
         ],
       ),

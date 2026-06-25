@@ -51,7 +51,6 @@ class AcquisitionProgressRouteResolver {
     return pendingSteps.isEmpty ? null : pendingSteps.first;
   }
 
-  /// TODO: 如后端新增采集步骤，需要在这里补充 step 与页面路由的映射。
   static String _routeForStep(int step) {
     switch (step) {
       case 1:

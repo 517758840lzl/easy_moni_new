@@ -4,12 +4,15 @@ class AppStrings {
   AppStrings._();
 
   // ==================== App ====================
-  static const String appTitle = 'Easy moni';
+  static const String appTitle = 'Easy Moni';
   static const String splashTagline = 'YOUR MONI、MADE EASY';
   static const String appinstrunctions = '权限收集说明';
   static const String decline = '拒绝';
+  static const String continueStr = '继续';
   static const String agrees = '同意';
   static const String receives = '接受';
+  static const String cancel = 'cancel';
+  static const String confirm = 'Confirm';
   static const String messageReceive = '短信数据收集';
   static const String messageReceiveDetail =
       'Reads financial transaction messages (deposit alerts, repayment reminders) for credit assessment and risk control. All data is encrypted.';
@@ -57,7 +60,6 @@ class AppStrings {
   static const String needsSms = '需要短信权限';
   static const String needsCamera = '需要相机权限';
   static const String smsPermissionDesc = '读取存款、还款类交易短信，用作授信评估及风控核验，数据全程加密保护。';
-  static const String cancel = 'cancel';
   static const String goSettings = '前往设置';
   static const String contactsEmpty = '通讯录为空';
   static const String chooseContactsPhone = '父母/配偶联系电话';
@@ -81,7 +83,6 @@ class AppStrings {
   static const String informationFaceStep = '人脸验证';
   static const String personalInfoSaving = '保存中...';
   static const String personalInfoRegionCityTitle = '居住地区与城市';
-  static const String personalInfoPickerConfirm = 'Confirm';
   static const String questionnaireDefaultTitle = '';
   static const String questionnaireDescription =
       'Complete this questionnaire to help us better evaluate your credit profile.';
@@ -97,7 +98,6 @@ class AppStrings {
   static const String homeTab = '首页';
   static const String repayTab = '还款';
   static const String mineTab = '我的';
-  static const String continueStr = '继续';
   static const String continueIdentifyStr = '开始识别证件信息...';
   static const String continueUploadPicture = '开始上传证件图片...';
   static const String continueOcr = '请根据指引完成人脸验证';
@@ -181,7 +181,6 @@ class AppStrings {
   static const String mineDeleteAccountDialogTitle = 'Delete Account';
   static const String mineDeleteAccountDialogContent =
       'Are you sure you want to delete your account?';
-  static const String mineDeleteAccountConfirm = 'Confirm';
   static const String mineDeleteAccountSuccess = 'Account deleted';
   static const String mineDeleteAccountFailed = 'Delete failed, please retry';
   static const String mineOrderHistoryTitle = '历史订单';
@@ -195,7 +194,6 @@ class AppStrings {
   static const String mineOrderLoanDateLabel = '借款日期';
   static const String mineLogoutDialogTitle = '退出登录';
   static const String mineLogoutDialogContent = '确定要退出登录吗？';
-  static const String mineLogoutDialogConfirm = '确定';
   static const String mineLogoutSuccess = '已退出登录';
   static const String mineLogoutFailed = '退出失败，请重试';
 
@@ -286,7 +284,6 @@ class AppStrings {
   static const String orderDetailMomoAccountLabel = 'MOMO账户';
   static const String orderDetailWalletTypeLabel = '钱包类型';
   static const String orderDetailRepayNow = '立即还款';
-  static const String orderDetailRepayLog = '点击了立即还款';
   static const String orderDetailCurrencyCode = 'GHS';
   static const String orderDetailZeroAmount = '0.00';
 
@@ -306,7 +303,6 @@ class AppStrings {
   static const String repayDetailApplyExtension = '申请展期';
   static const String repayDetailRepayNow = '立即还款';
   static const String repayDetailOrderInfoTitle = '订单信息';
-  static const String repayDetailCouponUnavailable = '暂无可用优惠券';
   static const String repayDetailPaymentPending = '还款页面待接入';
   static const String repayDetailExtensionPending = '展期页面待接入';
   static const String paymentTitle = '付款';
@@ -351,7 +347,6 @@ class AppStrings {
   // ===================== 优惠券 ========================
   static const String couponEmptyDesc = '无可用优惠券，按时还款，后续可解锁优惠券';
   static const String couponString = '优惠券';
-  static const String couponConfirmButtonText = 'Confirm';
   static const String couponLoadFailed = '优惠券加载失败，请重试';
   static const String couponTypePre = '提额券';
   static const String couponTypePost = '减免券';
@@ -368,4 +363,5 @@ class AppStrings {
 
   // ==================== 状态 =====================
   static const String errorMessage = '加载失败，请重试';
+  static const String stateReloadAction = '重新加载';
 }

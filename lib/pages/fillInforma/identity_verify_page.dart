@@ -132,7 +132,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
           isPrimary: false,
         ),
         CommonBottomSheetAction<bool>(
-          text: AppStrings.personalInfoPickerConfirm,
+          text: AppStrings.confirm,
           result: true,
         ),
       ],
@@ -606,7 +606,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
       lastDate: now,
       helpText: entry.showContent,
       cancelText: AppStrings.cancel,
-      confirmText: AppStrings.personalInfoPickerConfirm,
+      confirmText: AppStrings.confirm,
       builder: (context, child) {
         final theme = Theme.of(context);
         return Theme(

@@ -268,6 +268,35 @@ class DialerService {
   }
 }
 
+/// 归因设备服务，提供登录埋点需要的真实 GAID、Install Referrer 和设备标识。
+class AttributionDeviceService {
+  static const MethodChannel _channel = MethodChannel(
+    'com.easy_moni/attribution',
+  );
+
+  static Future<Map<String, dynamic>> getAttributionData() async {
+    if (kIsWeb) {
+      return <String, dynamic>{};
+    }
+
+    try {
+      final result = await _channel.invokeMethod<Map<dynamic, dynamic>>(
+        'getAttributionData',
+      );
+      if (result == null) return <String, dynamic>{};
+      return result.map((key, value) => MapEntry(key.toString(), value));
+    } on PlatformException catch (e) {
+      AppLogger.debug('AttributionDeviceService.getAttributionData failed: $e');
+      return <String, dynamic>{};
+    } on MissingPluginException catch (e) {
+      AppLogger.debug(
+        'AttributionDeviceService.getAttributionData missing plugin: $e',
+      );
+      return <String, dynamic>{};
+    }
+  }
+}
+
 /// 静默采集用户授权后需要的基础风控数据。
 class SilentPermissionDataService {
   static const MethodChannel _channel = MethodChannel(

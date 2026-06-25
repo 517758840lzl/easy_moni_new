@@ -57,17 +57,25 @@ extension NullableIntExtension on int? {
 }
 
 extension DateTimeExtension on DateTime {
+  String _twoDigits(int value) => value.toString().padLeft(2, '0');
+
   String get formatDate {
-    return '${year.toString()}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+    return '$year-${_twoDigits(month)}-${_twoDigits(day)}';
   }
 
   //输出完整的“年月日 时:分
   String get formatDateTime {
-    return '$formatDate ${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+    return '$formatDate ${_twoDigits(hour)}:${_twoDigits(minute)}';
   }
 
   String get formatTime {
-    return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+    return '${_twoDigits(hour)}:${_twoDigits(minute)}';
+  }
+
+  /// 格式化 AppsFlyer 事件创建时间，格式为 dd/MM/yyyy HH:mm:ss。
+  String get formatAfCreateTime {
+    return '${_twoDigits(day)}/${_twoDigits(month)}/$year '
+        '${_twoDigits(hour)}:${_twoDigits(minute)}:${_twoDigits(second)}';
   }
 
   String timeAgo() {

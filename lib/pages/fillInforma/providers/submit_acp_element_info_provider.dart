@@ -1,8 +1,12 @@
 import 'dart:convert';
 
 import 'package:easy_moni/core/constants/api_constants.dart';
+import 'package:easy_moni/core/router/acquisition_progress_route_resolver.dart';
+import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:easy_moni/entities/submit_acp_info_resp.dart';
+import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
+import 'package:easy_moni/utils/af_tracker/track_events.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_moni/core/network/http_provider.dart';
 import 'package:easy_moni/core/network/http_result.dart';
@@ -44,6 +48,13 @@ class SubmitAcpElementInfoApi {
       data: requestBody,
       fromJson: SubmitAcpInfoResp.fromJson,
     );
+    final submitData = result.data;
+    if (result.isSuccess &&
+        submitData != null &&
+        AcquisitionProgressRouteResolver.resolveSubmitResult(submitData) ==
+            AppRoutePaths.home) {
+      await AfTracker.logActionEvent(TrackEvents.autoOrder);
+    }
     return result;
   }
 }

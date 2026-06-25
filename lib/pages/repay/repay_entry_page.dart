@@ -6,6 +6,7 @@ import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
 import 'package:easy_moni/pages/repay/components/repay_bill_card.dart';
 import 'package:easy_moni/pages/repay/components/total_repay_amount_display.dart';
 import 'package:easy_moni/pages/repay/providers/repay_list_provider.dart';
+import 'package:easy_moni/utils/widgets/app_state_view.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,20 +25,26 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
   String _billListSignature = '';
 
   double _totalAmount(List<RepayResp> bills) {
-    return bills.fold<double>(
-      0,
-      (sum, bill) => sum + (bill.repayAmount ?? 0),
-    );
+    return bills.fold<double>(0, (sum, bill) => sum + (bill.repayAmount ?? 0));
   }
 
-  String _billKey(RepayResp bill) {
-    return bill.appOrderId!;
+  String _billKey(RepayResp bill, [int? index]) {
+    final appOrderId = bill.appOrderId?.trim();
+    if (appOrderId != null && appOrderId.isNotEmpty) return appOrderId;
+
+    return Object.hash(
+      index,
+      bill.productSetCode,
+      bill.createTime,
+      bill.repayDateStr,
+      bill.repayAmount,
+    ).toString();
   }
 
   void _syncSelectedBills(List<RepayResp> bills) {
     final signature = List.generate(
       bills.length,
-      (index) => _billKey(bills[index]),
+      (index) => _billKey(bills[index], index),
     ).join('|');
 
     if (signature == _billListSignature) return;
@@ -46,20 +53,20 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
     _selectedBillKeys
       ..clear()
       ..addAll(
-        List.generate(bills.length, (index) => _billKey(bills[index])),
+        List.generate(bills.length, (index) => _billKey(bills[index], index)),
       );
   }
 
   List<RepayResp> _selectedBills(List<RepayResp> bills) {
     return [
       for (var index = 0; index < bills.length; index++)
-        if (_selectedBillKeys.contains(_billKey(bills[index])))
+        if (_selectedBillKeys.contains(_billKey(bills[index], index)))
           bills[index],
     ];
   }
 
   void _toggleBill(RepayResp bill, int index) {
-    final key = _billKey(bill);
+    final key = _billKey(bill, index);
     setState(() {
       if (_selectedBillKeys.contains(key)) {
         _selectedBillKeys.remove(key);
@@ -71,7 +78,12 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
 
   /// 下拉刷新复用还款入口待还账单 Provider，确保重新发起首页数据请求。
   Future<void> _refreshBills() async {
-    await ref.refresh(repayEntryBillsProvider.future).then<void>((_) {});
+    try {
+      final refreshFuture = ref.refresh(repayEntryBillsProvider.future);
+      await refreshFuture;
+    } catch (_) {
+      // 网络异常交给页面错误态展示，避免刷新 Future 抛错导致页面崩溃。
+    }
   }
 
   @override
@@ -87,6 +99,14 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
 
     final selectedBills = _selectedBills(bills);
     final showTotalAmount = bills.length > 1;
+    final stateChild = billsAsync.when<Widget?>(
+      data: (_) => null,
+      error: (_, _) => AppErrorStateView(
+        text: AppStrings.repayEntryLoadFailed,
+        onReload: _refreshBills,
+      ),
+      loading: () => const CircularProgressIndicator(),
+    );
 
     return LoanRoundedPageShell(
       contentTop: (_) => topInset + (showTotalAmount ? 113 : 52),
@@ -104,23 +124,13 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
       ),
       content: RefreshIndicator(
         onRefresh: _refreshBills,
-        child: billsAsync.when(
-          data: (items) => _RepayEntryContent(
-            bills: items,
-            selectedBillKeys: _selectedBillKeys,
-            billKeyBuilder: _billKey,
-            onSelectionTap: _toggleBill,
-            onRepayTap: (bill) => _openBillDetail(context, bill),
-          ),
-          error: (_, _) => _RepayEntryScrollableStateView(
-            icon: Icons.error_outline_rounded,
-            text: AppStrings.repayEntryLoadFailed,
-            actionText: AppStrings.repayEntryRetry,
-            onActionTap: () => ref.invalidate(repayEntryBillsProvider),
-          ),
-          loading: () => const _RepayEntryScrollableStateView(
-            child: CircularProgressIndicator(),
-          ),
+        child: _RepayEntryContent(
+          bills: bills,
+          selectedBillKeys: _selectedBillKeys,
+          billKeyBuilder: _billKey,
+          stateChild: stateChild,
+          onSelectionTap: _toggleBill,
+          onRepayTap: (bill) => _openBillDetail(context, bill),
         ),
       ),
       // 待还订单只有一个不展示全部按钮
@@ -210,7 +220,7 @@ class _RepayEntryHeader extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                TotalRepayAmountDisplay(amount: totalAmount,),
+                TotalRepayAmountDisplay(amount: totalAmount),
                 const SizedBox(width: 6),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
@@ -229,13 +239,15 @@ class _RepayEntryContent extends StatelessWidget {
     required this.bills,
     required this.selectedBillKeys,
     required this.billKeyBuilder,
+    this.stateChild,
     required this.onSelectionTap,
     required this.onRepayTap,
   });
 
   final List<RepayResp> bills;
   final Set<String> selectedBillKeys;
-  final String Function(RepayResp bill) billKeyBuilder;
+  final String Function(RepayResp bill, int index) billKeyBuilder;
+  final Widget? stateChild;
   final void Function(RepayResp bill, int index) onSelectionTap;
   final ValueChanged<RepayResp> onRepayTap;
 
@@ -259,10 +271,11 @@ class _RepayEntryContent extends StatelessWidget {
           ),
         ),
         Expanded(
-          child: bills.isEmpty
-              ? const _RepayEntryScrollableStateView(
-                  icon: Icons.receipt_long_outlined,
-                  text: AppStrings.repayEntryEmpty,
+          child: stateChild != null
+              ? AppScrollableStateView(child: stateChild!)
+              : bills.isEmpty
+              ? const AppScrollableStateView(
+                  child: AppEmptyStateView(text: AppStrings.repayEntryEmpty),
                 )
               : ListView.separated(
                   physics: const AlwaysScrollableScrollPhysics(),
@@ -276,7 +289,7 @@ class _RepayEntryContent extends StatelessWidget {
                   separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final bill = bills[index];
-                    final billKey = billKeyBuilder(bill);
+                    final billKey = billKeyBuilder(bill, index);
                     return RepayBillCard(
                       bill: bill,
                       showSelection: showSelection,
@@ -288,93 +301,6 @@ class _RepayEntryContent extends StatelessWidget {
                 ),
         ),
       ],
-    );
-  }
-}
-
-class _RepayEntryScrollableStateView extends StatelessWidget {
-  const _RepayEntryScrollableStateView({
-    this.child,
-    this.icon,
-    this.text = '',
-    this.actionText = '',
-    this.onActionTap,
-  });
-
-  final Widget? child;
-  final IconData? icon;
-  final String text;
-  final String actionText;
-  final VoidCallback? onActionTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: _RepayEntryStateView(
-              icon: icon,
-              text: text,
-              actionText: actionText,
-              onActionTap: onActionTap,
-              child: child,
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _RepayEntryStateView extends StatelessWidget {
-  const _RepayEntryStateView({
-    this.child,
-    this.icon,
-    this.text = '',
-    this.actionText = '',
-    this.onActionTap,
-  });
-
-  final Widget? child;
-  final IconData? icon;
-  final String text;
-  final String actionText;
-  final VoidCallback? onActionTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final customChild = child;
-    if (customChild != null) {
-      return Center(child: customChild);
-    }
-
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null)
-            Icon(icon, size: 54, color: const Color(0xFFACACAC)),
-          if (text.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              text,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF787878),
-                height: 20 / 14,
-              ),
-            ),
-          ],
-          if (actionText.isNotEmpty && onActionTap != null) ...[
-            const SizedBox(height: 16),
-            TextButton(onPressed: onActionTap, child: Text(actionText)),
-          ],
-        ],
-      ),
     );
   }
 }

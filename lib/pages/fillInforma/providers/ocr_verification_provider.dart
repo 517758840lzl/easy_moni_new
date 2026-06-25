@@ -40,11 +40,7 @@ class OcrVerificationApi {
         data: formData,
         queryParameters: {'type': type},
         options: Options(
-          headers: config.commonHeaders(
-            token: token,
-            deviceId: HttpProvider.instance.deviceId,
-            includeContentType: false,
-          ),
+          headers: config.commonHeaders(token: token),
         ),
       );
 

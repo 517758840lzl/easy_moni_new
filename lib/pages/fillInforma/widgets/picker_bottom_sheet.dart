@@ -18,7 +18,7 @@ class PickerBottomSheet extends StatefulWidget {
     required this.options,
     required this.initialIndex,
     required this.onConfirm,
-    this.confirmText = AppStrings.personalInfoPickerConfirm,
+    this.confirmText = AppStrings.confirm,
   });
 
   final String title;
@@ -33,7 +33,7 @@ class PickerBottomSheet extends StatefulWidget {
     required List<PickerBottomSheetOption> options,
     required int selectedIndex,
     required ValueChanged<int> onConfirm,
-    String confirmText = AppStrings.personalInfoPickerConfirm,
+    String confirmText = AppStrings.confirm,
   }) {
     if (options.isEmpty) {
       return Future.value();

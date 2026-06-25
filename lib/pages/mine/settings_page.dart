@@ -35,7 +35,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text(AppStrings.mineDeleteAccountConfirm),
+            child: const Text(AppStrings.confirm),
           ),
         ],
       ),

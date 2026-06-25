@@ -453,7 +453,6 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
   }
 
   String _matchRegionByCoordinates(double lat, double lng) {
-    // TODO: 当前原生定位只返回经纬度，需接入地理编码或后端匹配接口后精确匹配地区数据。
     if (lng < -1.5) {
       return 'Ashanti';
     } else if (lng > -0.2 && lng < 0.3 && lat > 5.5 && lat < 6.3) {

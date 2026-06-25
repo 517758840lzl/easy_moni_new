@@ -46,6 +46,17 @@ class LoginResp {
   /// cacheData 为 1 时表示审核账号，首页需要展示审核员版本。
   bool get isReviewAccount => cacheData == 1;
 
+  /// 转换为完整登录响应结构，供加密埋点和调试日志统一使用。
+  Map<String, dynamic> toJson() {
+    return {
+      'token': token,
+      'cacheData': cacheData,
+      'isFirstRegister': isFirstRegister,
+      'userId': userId,
+      'uuid': uuid,
+    };
+  }
+
   static int? _parseInt(dynamic value) {
     if (value == null) return null;
     if (value is int) return value;

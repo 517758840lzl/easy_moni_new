@@ -16,6 +16,7 @@ import 'package:easy_moni/pages/repay/models/repay_extension_request_data.dart';
 import 'package:easy_moni/pages/repay/models/repay_order_detail_request_data.dart';
 import 'package:easy_moni/pages/repay/providers/repay_detail_provider.dart';
 import 'package:easy_moni/utils/extensions.dart';
+import 'package:easy_moni/utils/widgets/app_state_view.dart';
 import 'package:easy_moni/utils/widgets/common_bottom_sheet.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:easy_moni/utils/widgets/permission_action_buttons.dart';
@@ -83,15 +84,11 @@ class _RepayOrderDetailPageState extends ConsumerState<RepayOrderDetailPage> {
           selectedCoupon: _selectedCoupon,
           onCouponTap: () => _showCoupons(data),
         ),
-        error: (_, _) => _RepayDetailStateView(
-          icon: Icons.error_outline_rounded,
+        error: (_, _) => AppErrorStateView(
           text: AppStrings.orderDetailLoadFailed,
-          actionText: AppStrings.repayEntryRetry,
-          onActionTap: () =>
-              ref.invalidate(repayOrderDetailProvider(detailQuery)),
+          onReload: () => ref.invalidate(repayOrderDetailProvider(detailQuery)),
         ),
-        loading: () =>
-            const _RepayDetailStateView(child: CircularProgressIndicator()),
+        loading: () => const AppStateView(child: CircularProgressIndicator()),
       ),
       bottomNavigationBar: _RepayDetailActions(
         showExtensionButton: showExtensionButton,
@@ -125,10 +122,7 @@ class _RepayOrderDetailPageState extends ConsumerState<RepayOrderDetailPage> {
           },
         ),
         actions: const [
-          CommonBottomSheetAction<bool>(
-            text: AppStrings.couponConfirmButtonText,
-            result: true,
-          ),
+          CommonBottomSheetAction<bool>(text: AppStrings.confirm, result: true),
         ],
       );
 
@@ -316,25 +310,29 @@ class _RepayDetailHeader extends StatelessWidget {
                         children: [
                           TotalRepayAmountDisplay(amount: previewAmount ?? 0),
                           const SizedBox(height: 4),
-                          TotalRepayAmountDisplay(amount: originalAmount ?? 0,currencyStyle:  const TextStyle(
+                          TotalRepayAmountDisplay(
+                            amount: originalAmount ?? 0,
+                            currencyStyle: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w500,
                               color: Color(0xCCFFFFFF),
                               height: 24 / 20,
                               decoration: TextDecoration.lineThrough,
                               decorationColor: Color(0xCCFFFFFF),
-                            ),amountStyle:  const TextStyle(
+                            ),
+                            amountStyle: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w500,
                               color: Color(0xCCFFFFFF),
                               height: 24 / 20,
                               decoration: TextDecoration.lineThrough,
                               decorationColor: Color(0xCCFFFFFF),
-                            ),),
+                            ),
+                          ),
                         ],
                       )
                     else
-                    TotalRepayAmountDisplay(amount: repaymentAmount,),
+                      TotalRepayAmountDisplay(amount: repaymentAmount),
                   ],
                 ),
               ],
@@ -398,10 +396,7 @@ class _RepayDetailContent extends StatelessWidget {
             ),
           const SizedBox(height: 12),
           if (orders.isEmpty)
-            const _RepayDetailStateView(
-              icon: Icons.receipt_long_outlined,
-              text: AppStrings.orderDetailNoOrderData,
-            )
+            const AppEmptyStateView(text: AppStrings.orderDetailNoOrderData)
           else
             ...List.generate(orders.length, (index) {
               final order = orders[index];
@@ -541,8 +536,7 @@ PaymentRequestParams? _buildPaymentParams(
       .toList();
   if (allocations.isEmpty) return null;
 
-  final repayAmount =
-      detail?.totalSureRepayAmounts ?? 0;
+  final repayAmount = detail?.totalSureRepayAmounts ?? 0;
 
   return PaymentRequestParams(
     allocations: allocations,
@@ -625,56 +619,6 @@ class _RepayDetailActions extends StatelessWidget {
       enabled: true,
       text: AppStrings.repayDetailRepayNow,
       onPressed: onRepayTap,
-    );
-  }
-}
-
-class _RepayDetailStateView extends StatelessWidget {
-  const _RepayDetailStateView({
-    this.child,
-    this.icon,
-    this.text = '',
-    this.actionText = '',
-    this.onActionTap,
-  });
-
-  final Widget? child;
-  final IconData? icon;
-  final String text;
-  final String actionText;
-  final VoidCallback? onActionTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final customChild = child;
-    if (customChild != null) {
-      return Center(child: customChild);
-    }
-
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null)
-            Icon(icon, size: 54, color: const Color(0xFFACACAC)),
-          if (text.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              text,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF787878),
-                height: 20 / 14,
-              ),
-            ),
-          ],
-          if (actionText.isNotEmpty && onActionTap != null) ...[
-            const SizedBox(height: 16),
-            TextButton(onPressed: onActionTap, child: Text(actionText)),
-          ],
-        ],
-      ),
     );
   }
 }
