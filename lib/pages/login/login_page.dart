@@ -27,9 +27,6 @@ class LoginPage extends ConsumerStatefulWidget {
 }
 
 class _LoginPageState extends ConsumerState<LoginPage> {
-  // TODO 正式环境去掉默认手机号
-  // static const String _defaultPhone = '0504684567';
-  // static const String _defaultCode = '1234';
   static const Color _backgroundFallbackColor = Color(0xFF20754F);
 
   late final TextEditingController _phoneController;
@@ -46,8 +43,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     super.initState();
     _phoneController = TextEditingController();
     _codeController = TextEditingController();
-    // _phoneController.text = _defaultPhone;
-    // _codeController.text = _defaultCode;
     _phoneController.addListener(_onPhoneChanged);
     _codeController.addListener(_onCodeChanged);
     unawaited(_routeBySavedSession());
@@ -517,7 +512,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   filled: true,
                   fillColor: Colors.transparent,
                   hintText: AppStrings.phoneStr,
-                  hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 14),
+                  hintStyle: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.6),
+                    fontSize: 14,
+                  ),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
@@ -575,7 +573,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         hintText: AppStrings.codestr,
                         filled: true,
                         fillColor: Colors.transparent,
-                        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 14),
+                        hintStyle: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.6),
+                          fontSize: 14,
+                        ),
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,

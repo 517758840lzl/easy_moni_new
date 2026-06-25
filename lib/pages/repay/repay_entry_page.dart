@@ -194,16 +194,27 @@ class _RepayEntryHeader extends StatelessWidget {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                const Text(
-                  AppStrings.repayEntryHeaderTitle,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
-                    height: 20 / 16,
-                  ),
-                ),
+                showTotalAmount
+                    ? const Text(
+                        AppStrings.repayEntryHeaderTitle,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                          height: 20 / 16,
+                        ),
+                      )
+                    : Text(
+                        AppStrings.repayDefaultTitle,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                          height: 20 / 16,
+                        ),
+                      ),
                 Positioned(
                   right: 20,
                   child: GestureDetector(

@@ -7,6 +7,7 @@ import 'package:easy_moni/pages/loan/models/loan_order_detail_data.dart';
 import 'package:easy_moni/pages/loan/providers/home_provider.dart';
 import 'package:easy_moni/entities/home_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
+import 'package:easy_moni/pages/repay/components/total_repay_amount_display.dart';
 import 'package:easy_moni/utils/extensions.dart';
 import 'package:easy_moni/utils/loan_order_status_visual.dart';
 import 'package:easy_moni/utils/widgets/app_state_view.dart';
@@ -382,9 +383,6 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
 
   Widget _buildTopHero() {
     final selectedLoanAmount = _selectedLoanAmount;
-    final amountText = selectedLoanAmount > 0
-        ? selectedLoanAmount.formatAmount()
-        : '0.00';
     final topInset = MediaQuery.of(context).padding.top;
     final heroHeight = topInset + 172 < 216 ? 216.0 : topInset + 172;
 
@@ -429,27 +427,7 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
               top: topInset + 63,
               left: 20,
               right: 20,
-              child: Text.rich(
-                TextSpan(
-                  children: [
-                    const TextSpan(
-                      text: 'GHS',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    TextSpan(text: amountText),
-                  ],
-                ),
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  height: 1,
-                ),
-              ),
+              child: TotalRepayAmountDisplay(amount: selectedLoanAmount),
             ),
             // 审核首页复用普通首页时，需要隐藏顶部可借产品数量提示。
             if (widget.showAvailableProductCount)
@@ -552,18 +530,53 @@ VoidCallback? _homeOrderFooterTap(BuildContext context, HomeProductItem item) {
 List<LoanOrderCardRowData> _homeOrderRows(HomeProductItem item) {
   final dueDate = _resolveHomeDueDate(item);
 
-  return [
+  final baseRows = <LoanOrderCardRowData>[
     LoanOrderCardRowData(
       label: AppStrings.loanOrderLoanAmountLabel,
       value: _amountText(item.loanAmount),
     ),
+  ];
+
+  // 首页订单摘要按订单状态展示不同的金额与还款字段。
+  if (item.appOrderStatus == 4 &&
+      item.remainingDays != null &&
+      item.remainingDays! < 0) {
+    return [
+      ...baseRows,
+      LoanOrderCardRowData(
+        label: AppStrings.loanOrderRepayAmountLabel,
+        value: _amountText(item.repayAmount),
+      ),
+      LoanOrderCardRowData(
+        label: AppStrings.loanOrderOverdueDaysLabel,
+        value: _daysText(item.remainingDays!.abs()),
+      ),
+      LoanOrderCardRowData(
+        label: AppStrings.loanOrderOverdueFeeLabel,
+        value: _amountText(item.overdueInterest),
+      ),
+    ];
+  }
+
+  if (item.appOrderStatus == 4) {
+    return [
+      ...baseRows,
+      LoanOrderCardRowData(
+        label: AppStrings.loanOrderRepayAmountLabel,
+        value: _amountText(item.repayAmount),
+      ),
+      LoanOrderCardRowData(
+        label: AppStrings.loanOrderDueDateLabel,
+        value: dueDate,
+      ),
+    ];
+  }
+
+  return [
+    ...baseRows,
     LoanOrderCardRowData(
       label: AppStrings.loanOrderReceiptAmountLabel,
       value: _amountText(item.receiptAmount),
-    ),
-    LoanOrderCardRowData(
-      label: AppStrings.loanOrderRepayAmountLabel,
-      value: _amountText(item.repayAmount),
     ),
     LoanOrderCardRowData(
       label: AppStrings.loanOrderDueDateLabel,
@@ -622,6 +635,10 @@ LoanOrderCardFooterData _homeOrderFooter(
 
 String _amountText(num? value) {
   return (value ?? 0).formatAmount(showCurrencySymbol: true);
+}
+
+String _daysText(int days) {
+  return '$days ${AppStrings.loanOrderDaysUnit}';
 }
 
 class _LoanProduct {

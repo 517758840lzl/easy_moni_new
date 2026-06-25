@@ -183,7 +183,7 @@ class AppStrings {
       'Are you sure you want to delete your account?';
   static const String mineDeleteAccountSuccess = 'Account deleted';
   static const String mineDeleteAccountFailed = 'Delete failed, please retry';
-  static const String mineOrderHistoryTitle = '历史订单';
+  static const String mineOrderHistoryTitle = '我的订单';
   static const String mineOrderHistoryAllTab = '全部';
   static const String mineOrderHistoryDisbursingTab = '借款中';
   static const String mineOrderHistoryRepayingTab = '待还款';
@@ -288,7 +288,9 @@ class AppStrings {
   static const String orderDetailZeroAmount = '0.00';
 
   // ==================== 还款卡片 ====================
+
   static const String repayEntryHeaderTitle = '待还总额';
+  static const String repayDefaultTitle = '还款';
   static const String repayEntryBillTitle = '待还账单';
   static const String repayEntryRepayAll = '全部还款';
   static const String repayEntryEmpty = '暂无待还账单';

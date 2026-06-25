@@ -112,6 +112,7 @@ class HomeProductItem {
   final double? loanAmount;
   final double? loanLimitFrom;
   final double? loanLimitTo;
+  final double? overdueInterest;
   final int? productAccount;
   final String? productCode;
   final double? productInterest;
@@ -149,6 +150,7 @@ class HomeProductItem {
     this.loanAmount,
     this.loanLimitFrom,
     this.loanLimitTo,
+    this.overdueInterest,
     this.productAccount,
     this.productCode,
     this.productInterest,
@@ -189,6 +191,7 @@ class HomeProductItem {
       loanAmount: _parseDouble(map['loanAmount']),
       loanLimitFrom: _parseDouble(map['loanLimitFrom']),
       loanLimitTo: _parseDouble(map['loanLimitTo']),
+      overdueInterest: _parseDouble(map['overdueInterest']),
       productAccount: _parseInt(map['productAccount']),
       productCode: map['productCode'] as String?,
       productInterest: _parseDouble(map['productInterest']),
