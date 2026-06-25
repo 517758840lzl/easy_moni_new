@@ -16,7 +16,7 @@ android {
 
     defaultConfig {
         // 测试的
-        applicationId = "com.app.easymoni"
+        applicationId = "com.ereeko.easymoni"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 24
@@ -26,6 +26,10 @@ android {
     }
 
     buildTypes {
+        //   release {
+        //     isMinifyEnabled = false
+        //     signingConfig = signingConfigs.getByName("release")
+        // }
         release {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.

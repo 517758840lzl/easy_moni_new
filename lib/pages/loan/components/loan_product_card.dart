@@ -121,7 +121,13 @@ class LoanProductCard extends StatelessWidget {
     );
   }
 
-  BoxBorder? get _border => null;
+  BoxBorder? get _border {
+    if (state == LoanProductCardState.rejected) {
+      return Border.all(color: const Color(0xFFFF4D4F), width: 1);
+    }
+
+    return null;
+  }
 
   Widget _buildHeader(_LoanProductCardColors colors) {
     return SizedBox(
