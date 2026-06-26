@@ -345,7 +345,6 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          const SizedBox(height: 16),
           _buildContactItem(
             title: _entryTitle(
               _codePrimaryRelation,

@@ -13,6 +13,7 @@ import 'package:easy_moni/services/permission_storage.dart';
 import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/services/saved_session_route_service.dart';
 import 'package:easy_moni/services/upload_data/upload_data_sync_service.dart';
+import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
 import 'package:easy_moni/utils/widgets/permission_action_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -41,6 +42,10 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
 
     if (!mounted) return;
 
+    if (privacyAgreed) {
+      _startPrivacyAwareTracking();
+    }
+
     if (privacyAgreed && permissionsAccepted) {
       // Permissions are already accepted, so route by saved token state.
       unawaited(_runPrivacyAwareStartupSync());
@@ -63,6 +68,17 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
     } else {
       context.go(AppRoutePaths.login);
     }
+  }
+
+  /// 用户同意隐私政策后再初始化归因 SDK 和首次打开上报，避免同意前采集数据。
+  void _startPrivacyAwareTracking() {
+    unawaited(
+      AfTracker.init()
+          .then((_) => AfTracker.logFirstOpenIfNeeded())
+          .catchError((Object error, StackTrace stackTrace) {
+            AppLogger.debug('隐私同意后归因初始化异常: $error\n$stackTrace');
+          }),
+    );
   }
 
   /// 用户接受授权后，后台静默采集风控所需数据，不阻塞后续页面跳转。
@@ -104,6 +120,8 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
         // 保存用户同意状态
         await PermissionStorage.setPrivacyAgreed(true);
         if (!mounted) return;
+
+        _startPrivacyAwareTracking();
 
         // 关掉隐私确认弹窗
         Navigator.of(context).pop();

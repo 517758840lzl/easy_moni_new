@@ -42,10 +42,10 @@ abstract class OrderListItem with _$OrderListItem {
     @JsonKey(name: 'createTime') String? createTime,
     @JsonKey(name: 'acqChannel') String? acqChannel,
     @JsonKey(name: 'closeTime') String? closeTime,
-    @JsonKey(name: 'rejectTime') String? rejectTime,
+    @JsonKey(name: 'rejectTime') int? rejectTime,
     @JsonKey(name: 'sort') int? sort,
     @JsonKey(name: 'isExtensionSwitch') bool? isExtensionSwitch,
-    @JsonKey(name: 'countdownTime') String? countdownTime,
+    @JsonKey(name: 'countdownTime') int? countdownTime,
   }) = _OrderListItem;
 
   factory OrderListItem.fromJson(Map<String, dynamic> json) =>

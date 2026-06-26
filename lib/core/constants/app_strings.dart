@@ -121,6 +121,7 @@ class AppStrings {
   static const String faceVerifyOpenMouth = 'Please open your mouth';
   static const String faceVerifySmile = 'Please smile';
   static const String faceVerifyCaptureCompleted = 'Face capture completed';
+  static const String faceVerifyActionTimeout = '动作检测已超时，请重新进行人脸验证';
   static const String faceVerifyUploadFailed = '上传失败，请重试';
   static const String faceVerifyCaptureFailedRetry = '拍照失败，请重试';
   static const String faceVerifyUnsupportedWeb =
@@ -232,6 +233,7 @@ class AppStrings {
   // ==================== 贷款订单状态 ====================
   static const String loanOrderStatusOverdue = '已逾期';
   static const String loanOrderStatusReviewing = '借款审核中';
+  static const String loanOrderStatusReviewFailed = '审核拒绝';
   static const String loanOrderStatusDisbursing = '放款中';
   static const String loanOrderStatusDisbursingv2 = '放款中（至MoMo）';
   static const String loanOrderStatusWaitingRepayment = '等待还款';

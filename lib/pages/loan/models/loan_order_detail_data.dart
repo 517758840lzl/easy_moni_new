@@ -196,6 +196,11 @@ class LoanOrderDetailStatusVisual {
           title: AppStrings.loanOrderStatusWaitingRepayment,
           kind: LoanOrderDetailStatusKind.waiting,
         );
+      case 22:
+        return const LoanOrderDetailStatusVisual(
+          title: AppStrings.loanOrderStatusReviewFailed,
+          kind: LoanOrderDetailStatusKind.failed,
+        );
       case 5:
         return const LoanOrderDetailStatusVisual(
           title: AppStrings.loanOrderStatusTransferFailed,

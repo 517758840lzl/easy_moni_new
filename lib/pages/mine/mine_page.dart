@@ -248,8 +248,8 @@ class _MineHeader extends StatelessWidget {
                       behavior: HitTestBehavior.opaque,
                       onTap: onCustomerServiceTap,
                       child: Assets.images.customer.image(
-                        width: 28,
-                        height: 28,
+                        width: 32,
+                        height: 32,
                       ),
                     ),
                   ],

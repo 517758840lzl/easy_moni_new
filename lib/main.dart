@@ -9,14 +9,12 @@ import 'package:easy_moni/core/network/http_provider.dart';
 import 'package:easy_moni/core/router/app_router.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:easy_moni/core/utils/app_logger.dart';
-import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
 import 'package:easy_moni/utils/widgets/toast.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   final talker = AppLogger.instance;
   HttpProvider.init(talker: talker);
-  unawaited(AfTracker.init());
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(

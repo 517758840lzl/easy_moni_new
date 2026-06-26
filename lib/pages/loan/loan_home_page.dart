@@ -416,7 +416,7 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
             ),
             Positioned(
               top: topInset + 11,
-              right: 21,
+              right: 20,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () => context.push(AppRoutePaths.customerService),
@@ -553,6 +553,7 @@ List<LoanOrderCardRowData> _homeOrderRows(HomeProductItem item) {
       ),
       LoanOrderCardRowData(
         label: AppStrings.loanOrderOverdueFeeLabel,
+        // TODO 确认后端逾期费是否下发
         value: _amountText(item.overdueInterest),
       ),
     ];

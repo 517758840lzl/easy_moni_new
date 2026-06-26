@@ -91,7 +91,7 @@ class _OrderDetailHeader extends StatelessWidget {
                   ),
                 ),
                 Positioned(
-                  right: 18,
+                  right: 20,
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onTap: () => context.push(AppRoutePaths.customerService),

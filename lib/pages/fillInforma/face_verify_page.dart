@@ -57,10 +57,13 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
   bool _isUploading = false;
   bool _isProcessingImage = false;
   bool _hasCapturedFinalImage = false;
+  bool _hasActionTimedOut = false;
 
   int _currentStepIndex = 0;
   int _stableMatchCount = 0;
   int _stableFrontCount = 0;
+  int _actionTimeoutToken = 0;
+  Timer? _actionTimeoutTimer;
   bool _blinkClosedDetected = false;
   int _nodStartDirection = 0;
   int _shakeStartDirection = 0;
@@ -77,6 +80,7 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
 
   @override
   void dispose() {
+    _cancelActionTimeout();
     unawaited(_cameraController?.dispose());
     unawaited(_faceDetector.close());
     super.dispose();
@@ -158,6 +162,7 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
       _cameraController = controller;
       _isCameraReady = true;
     });
+    _startCurrentActionTimeout();
   }
 
   Future<void> _processCameraImage(CameraImage image) async {
@@ -165,6 +170,7 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
         _isProcessingImage ||
         _isUploading ||
         _hasCapturedFinalImage ||
+        _hasActionTimedOut ||
         _cameraController == null) {
       return;
     }
@@ -175,7 +181,7 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     _isProcessingImage = true;
     try {
       final faces = await _faceDetector.processImage(inputImage);
-      if (!mounted || faces.isEmpty) {
+      if (!mounted || _hasActionTimedOut || faces.isEmpty) {
         _resetActionProgress();
         return;
       }
@@ -411,6 +417,62 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
           ? _livenessSteps[_currentStepIndex].description
           : FaceVerifyActionConfig.finalCaptureStep.description;
     });
+    _startCurrentActionTimeout();
+  }
+
+  /// 为当前动作启动超时计时，动作切换或页面退出时会重置。
+  void _startCurrentActionTimeout() {
+    if (!mounted ||
+        !_isCameraReady ||
+        _cameraError != null ||
+        _isUploading ||
+        _hasCapturedFinalImage ||
+        _hasActionTimedOut) {
+      return;
+    }
+
+    _cancelActionTimeout();
+    final timeoutToken = ++_actionTimeoutToken;
+    final timeout = _allActionsCompleted
+        ? FaceVerifyActionConfig.finalCaptureStep.timeout
+        : _livenessSteps[_currentStepIndex].timeout;
+
+    _actionTimeoutTimer = Timer(timeout, () {
+      if (timeoutToken != _actionTimeoutToken) return;
+      unawaited(_handleActionTimeout());
+    });
+  }
+
+  void _cancelActionTimeout() {
+    _actionTimeoutTimer?.cancel();
+    _actionTimeoutTimer = null;
+    _actionTimeoutToken += 1;
+  }
+
+  /// 当前动作长时间未通过时提示用户，并退回入口页重新开始检测。
+  Future<void> _handleActionTimeout() async {
+    if (!mounted || _hasActionTimedOut || _hasCapturedFinalImage) return;
+
+    _hasActionTimedOut = true;
+    _cancelActionTimeout();
+    _resetActionProgress();
+
+    setState(() => _hintText = AppStrings.faceVerifyActionTimeout);
+
+    final controller = _cameraController;
+    try {
+      if (controller?.value.isStreamingImages == true) {
+        await controller!.stopImageStream();
+      }
+    } catch (e) {
+      AppLogger.debug('动作检测超时后停止相机流失败: $e');
+    }
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text(AppStrings.faceVerifyActionTimeout)),
+    );
+    Navigator.of(context).pop();
   }
 
   // TODO 最后一步抓拍由后端下发action：face_front ，根据这个action拍照，整体用户无感。暂时由前端模拟，后续再接入接口
@@ -420,6 +482,7 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     if (controller == null || !controller.value.isInitialized) return;
 
     _hasCapturedFinalImage = true;
+    _cancelActionTimeout();
     setState(() => _isUploading = true);
 
     try {
@@ -714,7 +777,10 @@ class _CircularCameraFrame extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(color: const Color(0xFF216A4A)),
             ),
-            child: ClipOval(child: child),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ClipOval(child: child),
+            ),
           ),
           IgnorePointer(
             child: Assets.images.faceVerifyCircle.image(fit: BoxFit.contain),

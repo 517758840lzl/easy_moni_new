@@ -35,11 +35,13 @@ class FaceLivenessStep {
     required this.action,
     required this.prompt,
     required this.stableFrameThreshold,
+    required this.timeout,
   });
 
   final String action;
   final FaceActionPrompt prompt;
   final int stableFrameThreshold;
+  final Duration timeout;
 
   String get description => prompt.description;
 
@@ -57,6 +59,7 @@ class FaceLivenessStep {
       stableFrameThreshold: FaceVerifyActionConfig.stableFrameThresholdFor(
         normalizedAction,
       ),
+      timeout: FaceVerifyActionConfig.timeoutFor(normalizedAction),
     );
   }
 }
@@ -74,6 +77,8 @@ class FaceVerifyActionConfig {
 
   static const String finalCaptureAction = FaceAction.faceFront;
   static const int finalCaptureStableFrameThreshold = 4;
+  // TODO: 后续接入后端动作配置时，确认动作超时阈值是否由接口下发。
+  static const Duration defaultActionTimeout = Duration(seconds: 15);
 
   static List<FaceLivenessStep> mockBackendSteps() {
     final actions = mockBackendActionKeys
@@ -122,5 +127,9 @@ class FaceVerifyActionConfig {
       FaceAction.openMouth => 3,
       _ => 1,
     };
+  }
+
+  static Duration timeoutFor(String action) {
+    return defaultActionTimeout;
   }
 }

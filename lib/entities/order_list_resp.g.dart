@@ -48,10 +48,10 @@ _OrderListItem _$OrderListItemFromJson(Map<String, dynamic> json) =>
       createTime: json['createTime'] as String?,
       acqChannel: json['acqChannel'] as String?,
       closeTime: json['closeTime'] as String?,
-      rejectTime: json['rejectTime'] as String?,
+      rejectTime: (json['rejectTime'] as num?)?.toInt(),
       sort: (json['sort'] as num?)?.toInt(),
       isExtensionSwitch: json['isExtensionSwitch'] as bool?,
-      countdownTime: json['countdownTime'] as String?,
+      countdownTime: (json['countdownTime'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$OrderListItemToJson(_OrderListItem instance) =>

@@ -95,8 +95,8 @@ class EnvironmentConfigs {
   static const EnvironmentConfig test = EnvironmentConfig(
     name: AppEnvironment.test,
     baseUrl: 'https://www.zzyd.click/',
-    connectTimeout: Duration(seconds: 10),
-    receiveTimeout: Duration(seconds: 10),
+    connectTimeout: Duration(seconds: 30),
+    receiveTimeout: Duration(seconds: 30),
     acqChannel: 'GHPM',
     acqChannelIndex: '0',
     disableEncBody: 'false',

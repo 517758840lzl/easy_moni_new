@@ -45,6 +45,12 @@ class LoanOrderStatusVisual {
           gradient: [Color(0xFFF9B072), Color(0xFFFF843F)],
           footerText: AppStrings.loanOrderFooterWaitingRepayment,
         );
+      case 22:
+       return const LoanOrderStatusVisual(
+          label: AppStrings.loanOrderStatusReviewFailed,
+          gradient: [Color(0xFFC1C3C6), Color(0xFFC1C3C6)],
+          footerText: AppStrings.loanOrderFooterTransferFailed,
+        );
       case 5:
         return const LoanOrderStatusVisual(
           label: AppStrings.loanOrderStatusTransferFailed,

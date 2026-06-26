@@ -52,8 +52,10 @@ class _PrivacyPolicyDialogState extends State<PrivacyPolicyDialog> {
 
   void _handleDecline() {
     AppLogger.debug('点击了 Decline 按钮');
-    widget.onDecline?.call();
+    final onDecline = widget.onDecline;
+    // 先关闭弹窗，再交给页面执行退出，避免 Activity 退出后继续操作 Navigator。
     Navigator.of(context).pop();
+    onDecline?.call();
   }
 
   @override

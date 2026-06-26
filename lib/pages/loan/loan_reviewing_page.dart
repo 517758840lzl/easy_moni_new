@@ -44,6 +44,8 @@ class _LoanReviewingPageState extends ConsumerState<LoanReviewingPage> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
         return LoanReviewRatingSheet(
@@ -66,7 +68,14 @@ class _LoanReviewingPageState extends ConsumerState<LoanReviewingPage> {
       return;
     }
 
-    await InAppReview.instance.openStoreListing();
+    // 高分用户优先触发系统应用内评分，不可用时退回到商店评分页。
+    final inAppReview = InAppReview.instance;
+    if (await inAppReview.isAvailable()) {
+      await inAppReview.requestReview();
+      return;
+    }
+
+    await inAppReview.openStoreListing();
   }
 
   @override
