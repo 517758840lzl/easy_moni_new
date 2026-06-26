@@ -596,10 +596,10 @@ class _Hero extends StatelessWidget {
   Widget build(BuildContext context) {
     final topInset = MediaQuery.of(context).padding.top;
     final orders = data?.list ?? const <LoanConfirmOrder>[];
-    // 应还金额来自所有待确认订单的 repayAmount 汇总。
-    final repayTotal = orders.fold<double>(0, (sum, item) {
-      return sum + (item.repayAmount ?? 0);
-    });
+    final repayTotal = _previewRepayTotal(
+      orders: orders,
+      preview: couponAmountPreview,
+    );
     final previewAmount = couponAmountPreview?.newLoanAmount;
     final originalAmount = couponAmountPreview?.loanAmount;
     final showCouponAmount = _shouldShowCouponLoanAmount(couponAmountPreview);
@@ -918,6 +918,21 @@ String _couponAmountText(CouponItem coupon) {
 // 贷前优惠券金额试算：选券后顶部展示优惠后借款金额及原始金额。
 bool _shouldShowCouponLoanAmount(UseCouponRespData? preview) {
   return preview?.newLoanAmount != null && preview?.loanAmount != null;
+}
+
+// 贷前优惠券试算后的应还总额：优先使用接口返回的新应还金额，缺失时按费用字段兜底补算。
+num _previewRepayTotal({
+  required List<LoanConfirmOrder> orders,
+  required UseCouponRespData? preview,
+}) {
+  final originalRepayTotal = orders.fold<num>(0, (sum, item) {
+    return sum + (item.repayAmount ?? 0);
+  });
+  final newRepaymentAmount = preview?.newRepaymentAmount;
+  if (newRepaymentAmount != null) return newRepaymentAmount;
+  if (preview == null) return originalRepayTotal;
+
+  return originalRepayTotal + (preview.rent ?? 0) + (preview.serviceFee ?? 0);
 }
 
 List<int> _selectedCouponIds(CouponItem? coupon) {
