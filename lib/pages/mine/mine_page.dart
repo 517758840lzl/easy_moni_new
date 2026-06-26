@@ -3,26 +3,18 @@ import 'package:easy_moni/core/network/http_provider.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:easy_moni/core/utils/app_logger.dart';
-import 'package:easy_moni/entities/user_repayment_resp.dart';
+import 'package:easy_moni/entities/repay/repay_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
 import 'package:easy_moni/pages/mine/components/mine_menu_section.dart';
 import 'package:easy_moni/pages/mine/components/pending_repay_card.dart';
 import 'package:easy_moni/pages/mine/providers/sign_out_provider.dart';
 import 'package:easy_moni/pages/mine/providers/user_info_provider.dart';
-import 'package:easy_moni/pages/mine/providers/user_repayment_provider.dart';
+import 'package:easy_moni/pages/repay/providers/repay_list_provider.dart';
 import 'package:easy_moni/utils/widgets/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
-/// 我的页待还订单状态定义，当前仅查询待还款中的订单。
-class MineRepayOrderStatus {
-  MineRepayOrderStatus._();
-
-  static const int repaying = 4;
-  static const List<int> pendingStatusList = <int>[repaying];
-}
 
 /// 我的页面，负责用户信息加载、入口事件和页面结构组装。
 class MinePage extends ConsumerStatefulWidget {
@@ -35,27 +27,11 @@ class MinePage extends ConsumerStatefulWidget {
 class _MinePageState extends ConsumerState<MinePage> {
   String _userName = '';
   String _userPhone = '';
-  List<UserRepaymentResp> _pendingRepayOrders = const <UserRepaymentResp>[];
-  bool _showPendingRepayCard = false;
-
-  /// 当前待还金额为所有待还订单 repayAmount 之和。
-  double get _totalRepayAmount {
-    return _pendingRepayOrders.fold<double>(
-      0,
-      (sum, order) => sum + order.repayAmount,
-    );
-  }
-
-  /// 任一待还订单已逾期时，卡片展示逾期标识。
-  bool get _isOverdue {
-    return _pendingRepayOrders.any((order) => order.remainingDays < 0);
-  }
 
   @override
   void initState() {
     super.initState();
     _loadUserInfo();
-    _loadPendingRepayOrders();
   }
 
   Future<void> _loadUserInfo() async {
@@ -79,41 +55,14 @@ class _MinePageState extends ConsumerState<MinePage> {
     }
   }
 
-  /// 初始化待还卡片数据，复用用户还款列表接口。
-  Future<void> _loadPendingRepayOrders() async {
-    try {
-      final result = await ref
-          .read(userRepaymentProvider)
-          .call(statusList: MineRepayOrderStatus.pendingStatusList);
-      if (!mounted) return;
-
-      if (result.isSuccess) {
-        setState(() {
-          _pendingRepayOrders = result.data ?? const <UserRepaymentResp>[];
-          _showPendingRepayCard = _pendingRepayOrders.isNotEmpty;
-        });
-        AppLogger.debug('待还订单加载成功: ${_pendingRepayOrders.length}');
-      } else {
-        AppLogger.debug('获取待还订单失败: ${result.message}');
-      }
-    } catch (e) {
-      if (!mounted) return;
-      AppLogger.debug('获取待还订单异常: $e');
-    }
-  }
-
-  void _onRepayTap() {
-    final appOrderIds = _pendingRepayOrders
-        .map((order) => order.appOrderId.trim())
+  void _onRepayTap(List<RepayResp> pendingRepayOrders) {
+    final appOrderIds = pendingRepayOrders
+        .map((order) => order.appOrderId?.trim())
+        .whereType<String>()
         .where((id) => id.isNotEmpty)
         .toList();
 
-    if (appOrderIds.isEmpty) {
-      setState(() {
-        _showPendingRepayCard = false;
-      });
-      return;
-    }
+    if (appOrderIds.isEmpty) return;
 
     if (appOrderIds.length == 1) {
       context.push(AppRoutePaths.repayOrderDetailWithIds(appOrderIds));
@@ -186,6 +135,21 @@ class _MinePageState extends ConsumerState<MinePage> {
   @override
   Widget build(BuildContext context) {
     final topInset = MediaQuery.of(context).padding.top;
+    final pendingRepayOrders = ref
+        .watch(repayEntryBillsProvider)
+        .when(
+          data: (items) => items,
+          error: (_, _) => const <RepayResp>[],
+          loading: () => const <RepayResp>[],
+        );
+    final totalRepayAmount = pendingRepayOrders.fold<double>(
+      0,
+      (sum, order) => sum + (order.repayAmount ?? 0),
+    );
+    // 任一待还订单已逾期时，卡片展示逾期标识。
+    final isOverdue = pendingRepayOrders.any(
+      (order) => (order.remainingDays ?? 0) < 0,
+    );
 
     return LoanRoundedPageShell(
       contentTop: (_) => topInset + 212,
@@ -197,10 +161,10 @@ class _MinePageState extends ConsumerState<MinePage> {
         onCustomerServiceTap: _onCustomerServiceTap,
       ),
       content: _MineContent(
-        showPendingRepayCard: _showPendingRepayCard,
-        pendingAmount: _totalRepayAmount,
-        isOverdue: _isOverdue,
-        onRepayTap: _onRepayTap,
+        showPendingRepayCard: pendingRepayOrders.isNotEmpty,
+        pendingAmount: totalRepayAmount,
+        isOverdue: isOverdue,
+        onRepayTap: () => _onRepayTap(pendingRepayOrders),
         onHistoryTap: _onHistoryTap,
         onCustomerServiceTap: _onCustomerServiceTap,
         onPrivacyPolicyTap: _onPrivacyPolicyTap,
@@ -257,8 +221,8 @@ class _MineHeader extends StatelessWidget {
               ),
             ),
             const SizedBox(
-              width: 91,
-              height: 91,
+              width: 94,
+              height: 94,
               child: CircleAvatar(
                 backgroundColor: Color(0xFF268470),
                 radius: 40,

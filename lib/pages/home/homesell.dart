@@ -31,6 +31,13 @@ class HomeShell extends ConsumerStatefulWidget {
 
 class _HomeShellState extends ConsumerState<HomeShell> {
   late int _currentIndex = _tabIndex(widget.initialTab);
+  final Set<int> _visitedTabIndexes = <int>{};
+
+  @override
+  void initState() {
+    super.initState();
+    _visitedTabIndexes.add(_currentIndex);
+  }
 
   @override
   void didUpdateWidget(covariant HomeShell oldWidget) {
@@ -42,24 +49,20 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
     setState(() {
       _currentIndex = _tabIndex(widget.initialTab);
+      _visitedTabIndexes.add(_currentIndex);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final isReviewAccount = ref
-        .watch(reviewAccountHomeProvider)
-        .maybeWhen(data: (value) => value, orElse: () => false);
-    final pages = [
-      // 根据登录接口 cacheData 字段选择贷款首页，审核账号展示审核员版本。
-      isReviewAccount
-          ? LoanHomeReviewPage(
-              refreshRequestId: widget.loanHomeRefreshRequestId,
-            )
-          : LoanHomePage(refreshRequestId: widget.loanHomeRefreshRequestId),
-      const RepayEntryPage(),
-      const MinePage(),
-    ];
+    final reviewAccountAsync = ref.watch(reviewAccountHomeProvider);
+    final pages = List<Widget>.generate(3, (index) {
+      // 底部 Tab 首次访问时再挂载，避免进入首页时同时触发三个页面接口。
+      if (!_visitedTabIndexes.contains(index)) {
+        return const SizedBox.shrink();
+      }
+      return _buildPage(index, reviewAccountAsync);
+    });
 
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: pages),
@@ -126,6 +129,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       onTap: () {
         setState(() {
           _currentIndex = index;
+          _visitedTabIndexes.add(index);
         });
       },
       behavior: HitTestBehavior.opaque,
@@ -152,6 +156,41 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildPage(int index, AsyncValue<bool> reviewAccountAsync) {
+    switch (index) {
+      case 0:
+        // 根据登录接口 cacheData 字段选择贷款首页，审核账号展示审核员版本。
+        return reviewAccountAsync.when(
+          data: (isReviewAccount) => isReviewAccount
+              ? LoanHomeReviewPage(
+                  refreshRequestId: widget.loanHomeRefreshRequestId,
+                )
+              : LoanHomePage(refreshRequestId: widget.loanHomeRefreshRequestId),
+          error: (_, _) =>
+              LoanHomePage(refreshRequestId: widget.loanHomeRefreshRequestId),
+          loading: () => const _HomeTabLoadingPage(),
+        );
+      case 1:
+        return const RepayEntryPage();
+      case 2:
+        return const MinePage();
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+}
+
+class _HomeTabLoadingPage extends StatelessWidget {
+  const _HomeTabLoadingPage();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(child: CircularProgressIndicator()),
     );
   }
 }

@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -51,7 +54,8 @@ android {
 
     buildTypes {
           release {
-            isMinifyEnabled = false
+            // isShrinkResources = false
+            // isMinifyEnabled = false
             signingConfig = signingConfigs.getByName("release")
         }
     }
