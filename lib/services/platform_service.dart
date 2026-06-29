@@ -144,12 +144,18 @@ class SmsService {
     }
   }
 
-  /// 读取本机短信记录；调用前需已通过 checkPermission 确认授权。
-  static Future<List<Map<String, dynamic>>?> getSmsRecords() async {
+  /// 读取本机短信记录；关键词和条数限制交由 Android 原生查询处理。
+  static Future<List<Map<String, dynamic>>?> getSmsRecords({
+    required List<String> keywords,
+    required int limit,
+  }) async {
     if (!_isSupportedPlatform) return null;
 
     try {
-      final List<dynamic> result = await _channel.invokeMethod('getSmsRecords');
+      final List<dynamic> result = await _channel.invokeMethod(
+        'getSmsRecords',
+        {'keywords': keywords, 'limit': limit},
+      );
       return result.map((item) {
         final map = item as Map<dynamic, dynamic>;
         return map.map((key, value) => MapEntry(key.toString(), value));

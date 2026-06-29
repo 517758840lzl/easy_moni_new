@@ -48,64 +48,19 @@ class UserUploadDataCollector {
         return null;
       }
 
-      final smsRecords = await SmsService.getSmsRecords();
+      final smsRecords = await SmsService.getSmsRecords(
+        keywords: await smsKeywordProvider.fetchKeywords(),
+        limit: SmsKeywordProvider.maxFilteredSmsCount,
+      );
       if (smsRecords == null || smsRecords.isEmpty) {
         AppLogger.debug('UserUploadDataCollector: 短信记录为空，跳过上传');
         return null;
       }
 
-      final keywords = _normalizeSmsBodyKeywords(
-        await smsKeywordProvider.fetchKeywords(),
-      );
-      final filteredSms = smsRecords
-          .where((sms) {
-            return _shouldUploadSmsWithNormalizedKeywords(
-              sms: sms,
-              keywords: keywords,
-            );
-          })
-          .take(SmsKeywordProvider.maxFilteredSmsCount)
-          .toList();
-
-      return filteredSms.isEmpty ? null : filteredSms;
+      return smsRecords;
     } catch (error, stackTrace) {
       AppLogger.debug('短信记录采集异常: $error\n$stackTrace');
       return null;
     }
-  }
-
-  /// 根据短信正文关键词筛选短信；关键词为空时不过滤。
-  bool shouldUploadSms({
-    required Map<String, dynamic> sms,
-    required List<String> keywords,
-  }) {
-    return _shouldUploadSmsWithNormalizedKeywords(
-      sms: sms,
-      keywords: _normalizeSmsBodyKeywords(keywords),
-    );
-  }
-
-  bool _shouldUploadSmsWithNormalizedKeywords({
-    required Map<String, dynamic> sms,
-    required List<String> keywords,
-  }) {
-    if (keywords.isEmpty) {
-      return true;
-    }
-
-    final body = (sms['body'] ?? '').toString().toLowerCase();
-    if (body.isEmpty) {
-      return false;
-    }
-
-    return keywords.any(body.contains);
-  }
-
-  /// 统一清洗短信正文关键词，避免采集时重复处理大小写和空白字符。
-  List<String> _normalizeSmsBodyKeywords(List<String> keywords) {
-    return keywords
-        .map((item) => item.trim().toLowerCase())
-        .where((item) => item.isNotEmpty)
-        .toList();
   }
 }
