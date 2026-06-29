@@ -4,15 +4,17 @@ class AppStrings {
   AppStrings._();
 
   // ==================== App ====================
+  // ==================== 通用组件文本 ====================
   static const String appTitle = 'Easy Moni';
-  static const String splashTagline = 'YOUR MONI、MADE EASY';
   static const String appinstrunctions = '权限收集说明';
-  static const String decline = '拒绝';
+  static const String decline = 'Decline';
   static const String continueStr = '继续';
   static const String agrees = '同意';
   static const String receives = '接受';
   static const String cancel = 'cancel';
   static const String confirm = 'Confirm';
+  static const String goSettings = '前往设置';
+  // ==================== KYC流程 ====================
   static const String messageReceive = '短信数据收集';
   static const String messageReceiveDetail =
       'Reads financial transaction messages (deposit alerts, repayment reminders) for credit assessment and risk control. All data is encrypted.';
@@ -30,7 +32,6 @@ class AppStrings {
   static const String receiveData = '点击「接受」，即表示您已阅读、理解并同意上述声明内容。';
   static const String deviceinformation = '设备信息';
   static const String campaign = '应用内活动';
-  static const String declineBtn = 'Decline';
   static const String agreeandContinue = 'Agree & Continue';
   static const String campaignDetail =
       'Logs app usage data (error logs, crash reports) to improve stability, monitor security, and fix issues.';
@@ -60,7 +61,6 @@ class AppStrings {
   static const String needsSms = '需要短信权限';
   static const String needsCamera = '需要相机权限';
   static const String smsPermissionDesc = '读取存款、还款类交易短信，用作授信评估及风控核验，数据全程加密保护。';
-  static const String goSettings = '前往设置';
   static const String contactsEmpty = '通讯录为空';
   static const String chooseContactsPhone = '父母/配偶联系电话';
   static const String contactInfoTitle = 'Contact information';

@@ -126,7 +126,7 @@ class _PrivacyPolicyDialogState extends State<PrivacyPolicyDialog> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 9),
                 child: PermissionActionButtons(
-                  secondaryText: AppStrings.declineBtn,
+                  secondaryText: AppStrings.decline,
                   primaryText: AppStrings.agreeandContinue,
                   onSecondaryPressed: _handleDecline,
                   onPrimaryPressed: _handleAgree,

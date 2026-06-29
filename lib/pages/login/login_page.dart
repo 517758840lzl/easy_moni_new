@@ -81,6 +81,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         (digits.length == 10 && digits.startsWith('0'));
   }
 
+  /// 判断登录必填输入是否完整，用于控制按钮是否可提交。
+  bool _hasRequiredLoginInput() {
+    return _normalizedPhone().isNotEmpty &&
+        _codeController.text.trim().isNotEmpty;
+  }
+
   void _navigateByProgress(AcquisitionProgressResp progressData) {
     final route = AcquisitionProgressRouteResolver.resolve(progressData);
     AppLogger.debug('登录态分流目标: $route');
@@ -649,13 +655,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   /// 登录按钮展示 loading 态，并在登录中阻止重复提交。
   Widget _buildLoginButton() {
+    final isLoginButtonDisabled = _isLoggingIn || !_hasRequiredLoginInput();
+
     return GestureDetector(
-      onTap: _isLoggingIn ? null : _onLogin,
+      onTap: isLoginButtonDisabled ? null : _onLogin,
       child: Container(
         width: double.infinity,
         height: 40,
         decoration: BoxDecoration(
-          color: const Color(0xFF45F3A6),
+          color: isLoginButtonDisabled
+              ? const Color(0xFFbdbdbd)
+              : const Color(0xFF45F3A6),
           borderRadius: BorderRadius.circular(30),
         ),
         child: Center(
@@ -666,6 +676,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
                     color: Color(0xFF104440),
+                  ),
+                )
+              : isLoginButtonDisabled
+              ? const Text(
+                  AppStrings.login,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
                   ),
                 )
               : const Text(

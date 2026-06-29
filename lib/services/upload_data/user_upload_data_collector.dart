@@ -54,10 +54,18 @@ class UserUploadDataCollector {
         return null;
       }
 
-      final keywords = await smsKeywordProvider.fetchKeywords();
-      final filteredSms = smsRecords.where((sms) {
-        return shouldUploadSms(sms: sms, keywords: keywords);
-      }).toList();
+      final keywords = _normalizeSmsBodyKeywords(
+        await smsKeywordProvider.fetchKeywords(),
+      );
+      final filteredSms = smsRecords
+          .where((sms) {
+            return _shouldUploadSmsWithNormalizedKeywords(
+              sms: sms,
+              keywords: keywords,
+            );
+          })
+          .take(SmsKeywordProvider.maxFilteredSmsCount)
+          .toList();
 
       return filteredSms.isEmpty ? null : filteredSms;
     } catch (error, stackTrace) {
@@ -66,25 +74,38 @@ class UserUploadDataCollector {
     }
   }
 
-  /// 根据后端关键词筛选短信；关键词为空时不过滤。
+  /// 根据短信正文关键词筛选短信；关键词为空时不过滤。
   bool shouldUploadSms({
     required Map<String, dynamic> sms,
     required List<String> keywords,
   }) {
-    final normalizedKeywords = keywords
-        .map((item) => item.trim().toLowerCase())
-        .where((item) => item.isNotEmpty)
-        .toList();
+    return _shouldUploadSmsWithNormalizedKeywords(
+      sms: sms,
+      keywords: _normalizeSmsBodyKeywords(keywords),
+    );
+  }
 
-    if (normalizedKeywords.isEmpty) {
+  bool _shouldUploadSmsWithNormalizedKeywords({
+    required Map<String, dynamic> sms,
+    required List<String> keywords,
+  }) {
+    if (keywords.isEmpty) {
       return true;
     }
 
     final body = (sms['body'] ?? '').toString().toLowerCase();
-    final phone = (sms['phone'] ?? '').toString().toLowerCase();
+    if (body.isEmpty) {
+      return false;
+    }
 
-    return normalizedKeywords.any((keyword) {
-      return body.contains(keyword) || phone.contains(keyword);
-    });
+    return keywords.any(body.contains);
+  }
+
+  /// 统一清洗短信正文关键词，避免采集时重复处理大小写和空白字符。
+  List<String> _normalizeSmsBodyKeywords(List<String> keywords) {
+    return keywords
+        .map((item) => item.trim().toLowerCase())
+        .where((item) => item.isNotEmpty)
+        .toList();
   }
 }
