@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:appsflyer_sdk/appsflyer_sdk.dart';
+import 'package:easy_moni/core/config/request_security_config.dart';
 import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:easy_moni/core/utils/request_security_util.dart';
 import 'package:easy_moni/services/platform_service.dart';
@@ -13,10 +14,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AppsFlyerTracker {
   AppsFlyerTracker._();
 
-  // TODO 正式环境替换_devKey 、_eventAesKey
+  // TODO 正式环境替换_devKey
   static const String _tag = 'AF_HELPER';
   static const String _devKey = 'easy_moni_af_dev_key';
-  static const String _eventAesKey = 'EasyMoniAfEventKey2026Secure2026';
   static const String _keyUid = 'af_tracker_uid';
   static const String _keyMediaSource = 'af_tracker_media_source';
   static const String _keyFirstOpenTracked = 'af_tracker_first_open_tracked';
@@ -243,7 +243,10 @@ class AppsFlyerTracker {
   }
 
   static Map<String, dynamic> _encryptValue(dynamic value) {
-    final result = RequestSecurityUtil.encryptJson(value, aesKey: _eventAesKey);
+    final result = RequestSecurityUtil.encryptJson(
+      value,
+      aesKey: RequestSecurityConfig.requestAesKey,
+    );
     return result.toRequestBody();
   }
 }

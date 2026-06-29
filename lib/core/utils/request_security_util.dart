@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:easy_moni/core/config/request_security_config.dart';
 import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 
@@ -9,21 +10,22 @@ import 'package:encrypt/encrypt.dart' as encrypt;
 class RequestSecurityUtil {
   RequestSecurityUtil._();
 
-  static const int _aesBlockSize = 16;
-  static const String requestAesKey = 'q7aeAEHhH2T77qiuBrFR7IHgkof3Qd2L';
-  static final String requestIvKey = _takeFirstUtf8Text(requestAesKey);
+  static const int _aesBlockSize = RequestSecurityConfig.aesBlockSize;
   static const Set<int> _validKeyLengths = {16, 24, 32};
 
-  static Uint8List get secretBytes => _secretBytesForKey(requestAesKey);
+  static Uint8List get secretBytes =>
+      _secretBytesForKey(RequestSecurityConfig.requestAesKey);
 
-  static encrypt.IV get _nonceBlock => _nonceBlockForKey(requestAesKey);
+  static encrypt.IV get _nonceBlock =>
+      _nonceBlockForKey(RequestSecurityConfig.requestAesKey);
 
-  static encrypt.Encrypter get _encrypter => _encrypterForKey(requestAesKey);
+  static encrypt.Encrypter get _encrypter =>
+      _encrypterForKey(RequestSecurityConfig.requestAesKey);
 
   /// 将普通 JSON 数据加密为后端可接收的顶层请求体字符串。
   static String encryptRequestBody(
     Object? data, {
-    String aesKey = requestAesKey,
+    String aesKey = RequestSecurityConfig.requestAesKey,
     String? ivText,
     String? ivBase64,
   }) {
@@ -39,23 +41,23 @@ class RequestSecurityUtil {
   /// 判断数据是否为后端约定的加密传输包。
   static bool isEncryptedTransportBody(
     Map<dynamic, dynamic> data, {
-    String bodyKey = requestAesKey,
+    String bodyKey = RequestSecurityConfig.requestAesKey,
     String? ivKey,
   }) {
-    final effectiveIvKey = ivKey ?? requestIvKey;
+    final effectiveIvKey = ivKey ?? RequestSecurityConfig.requestIvKey;
     return data[bodyKey] is String && data[effectiveIvKey] is String;
   }
 
   /// 解密整个响应体；后端正式响应为 String 密文，Map 加密包用于兼容本地测试。
   static dynamic decryptResponseBody(
     Object? data, {
-    String aesKey = requestAesKey,
+    String aesKey = RequestSecurityConfig.requestAesKey,
     String? ivText,
-    String bodyKey = requestAesKey,
+    String bodyKey = RequestSecurityConfig.requestAesKey,
     String? ivKey,
   }) {
-    final effectiveIvText = ivText ?? requestIvKey;
-    final effectiveIvKey = ivKey ?? requestIvKey;
+    final effectiveIvText = ivText ?? RequestSecurityConfig.requestIvKey;
+    final effectiveIvKey = ivKey ?? RequestSecurityConfig.requestIvKey;
 
     if (data is String) {
       final plainText = openPayload(
@@ -155,13 +157,13 @@ class RequestSecurityUtil {
   /// 按后端契约加密明文载荷，失败时返回原文，避免中断调用链。
   static String sealPayload(
     String plainText, {
-    String aesKey = requestAesKey,
+    String aesKey = RequestSecurityConfig.requestAesKey,
     String? ivText,
     String? ivBase64,
   }) {
     // AppLogger.debug('encryptData: $plainText');
     try {
-      final encrypter = aesKey == requestAesKey
+      final encrypter = aesKey == RequestSecurityConfig.requestAesKey
           ? _encrypter
           : _encrypterForKey(aesKey);
       final encrypted = encrypter.encrypt(
@@ -178,13 +180,13 @@ class RequestSecurityUtil {
   /// 按后端契约解密密文载荷，失败时返回原密文。
   static String openPayload(
     String? cipherText, {
-    String aesKey = requestAesKey,
+    String aesKey = RequestSecurityConfig.requestAesKey,
     String? ivBase64,
     String? ivText,
   }) {
     // AppLogger.debug('decryptData: $cipherText');
     try {
-      final encrypter = aesKey == requestAesKey
+      final encrypter = aesKey == RequestSecurityConfig.requestAesKey
           ? _encrypter
           : _encrypterForKey(aesKey);
       return encrypter.decrypt(
@@ -240,18 +242,6 @@ class RequestSecurityUtil {
     return encrypt.IV(Uint8List.fromList(bytes.sublist(0, _aesBlockSize)));
   }
 
-  static String _takeFirstUtf8Text(String text) {
-    final bytes = utf8.encode(text);
-    if (bytes.length < _aesBlockSize) {
-      throw ArgumentError.value(
-        text,
-        'text',
-        'Text must contain at least $_aesBlockSize UTF-8 bytes.',
-      );
-    }
-    return utf8.decode(bytes.take(_aesBlockSize).toList());
-  }
-
   static encrypt.IV _buildIv(
     String? ivBase64, {
     String? ivText,
@@ -270,7 +260,9 @@ class RequestSecurityUtil {
     }
 
     if (ivText == null || ivText.isEmpty) {
-      return aesKey == requestAesKey ? _nonceBlock : _nonceBlockForKey(aesKey);
+      return aesKey == RequestSecurityConfig.requestAesKey
+          ? _nonceBlock
+          : _nonceBlockForKey(aesKey);
     }
 
     final ivBytes = utf8.encode(ivText);
@@ -306,10 +298,10 @@ class RequestEncryptionResult {
 
   /// 转换为 Map 加密包，供事件字段加密和本地兼容测试使用。
   Map<String, dynamic> toRequestBody({
-    String bodyKey = RequestSecurityUtil.requestAesKey,
+    String bodyKey = RequestSecurityConfig.requestAesKey,
     String? ivKey,
   }) {
-    final effectiveIvKey = ivKey ?? RequestSecurityUtil.requestIvKey;
+    final effectiveIvKey = ivKey ?? RequestSecurityConfig.requestIvKey;
     return {bodyKey: cipherText, effectiveIvKey: ivBase64};
   }
 }

@@ -116,8 +116,38 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
   }
 
   List<FaceLivenessStep> _buildLivenessSteps() {
-    // TODO: 当前模拟后端动作配置，后续改为读取接口下发的 2-3 个 action。
-    return FaceVerifyActionConfig.mockBackendSteps();
+    final legacyFaceSteps = _startupConfig?.faceStep;
+    if (legacyFaceSteps == null || legacyFaceSteps.isEmpty) {
+      return FaceVerifyActionConfig.mockBackendSteps();
+    }
+
+    // TODO: 新人脸配置接口接入后，替换旧 startup config 的 key 映射逻辑。
+    final steps = legacyFaceSteps
+        .map(_buildStepFromLegacyFaceStep)
+        .whereType<FaceLivenessStep>()
+        .toList(growable: false);
+
+    return steps.isNotEmpty ? steps : FaceVerifyActionConfig.mockBackendSteps();
+  }
+
+  /// 将旧接口 faceStep.key 映射为当前前端已支持的人脸动作。
+  FaceLivenessStep? _buildStepFromLegacyFaceStep(FaceStep step) {
+    return FaceLivenessStep.fromAction(
+      _legacyFaceActionFor(step.key),
+      description: step.description,
+    );
+  }
+
+  /// 旧接口仅下发步骤 key，前端临时复用当前 mock 动作能力完成检测。
+  String _legacyFaceActionFor(String? key) {
+    final normalizedKey = key?.trim();
+    if (normalizedKey == 'frontFaceStep') {
+      return FaceAction.faceFront;
+    }
+    if (normalizedKey == 'sideFaceStep') {
+      return FaceAction.shakeHead;
+    }
+    return FaceAction.openMouth;
   }
 
   Future<void> _initializeCamera() async {
@@ -198,11 +228,6 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
         if (matched) {
           _stableMatchCount += 1;
           if (_stableMatchCount >= currentStep.stableFrameThreshold) {
-            _logFaceActionPassed(
-              face: face,
-              step: currentStep,
-              stepIndex: _currentStepIndex,
-            );
             _completeCurrentStep();
           }
         } else {
@@ -216,12 +241,6 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
         _stableFrontCount += 1;
         if (_stableFrontCount >=
             FaceVerifyActionConfig.finalCaptureStableFrameThreshold) {
-          _logFaceActionPassed(
-            face: face,
-            step: finalCaptureStep,
-            stepIndex: _currentStepIndex,
-            isFinalCapture: true,
-          );
           await _captureFinalFacePhoto();
         }
       } else {
@@ -283,73 +302,6 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
       return _isMouthOpen(face);
     }
     return false;
-  }
-
-  /// TODO 动作通过时打印 Google MLKit 返回的人脸关键数据，便于调试动作识别阈值。正式环境删除
-  void _logFaceActionPassed({
-    required Face face,
-    required FaceLivenessStep step,
-    required int stepIndex,
-    bool isFinalCapture = false,
-  }) {
-    AppLogger.debug({
-      'event': 'google_face_action_passed',
-      'action': step.action,
-      'description': step.description,
-      'stepIndex': stepIndex,
-      'isFinalCapture': isFinalCapture,
-      'stableFrameThreshold': step.stableFrameThreshold,
-      'face': _faceDebugInfo(face),
-    });
-  }
-
-  /// 整理 Google MLKit Face 对象中的调试信息，避免日志里出现不可读对象。
-  Map<String, Object?> _faceDebugInfo(Face face) {
-    return {
-      'trackingId': face.trackingId,
-      'boundingBox': {
-        'left': face.boundingBox.left,
-        'top': face.boundingBox.top,
-        'right': face.boundingBox.right,
-        'bottom': face.boundingBox.bottom,
-        'width': face.boundingBox.width,
-        'height': face.boundingBox.height,
-      },
-      'headEulerAngleX': face.headEulerAngleX,
-      'headEulerAngleY': face.headEulerAngleY,
-      'headEulerAngleZ': face.headEulerAngleZ,
-      'leftEyeOpenProbability': face.leftEyeOpenProbability,
-      'rightEyeOpenProbability': face.rightEyeOpenProbability,
-      'smilingProbability': face.smilingProbability,
-      'landmarks': {
-        'leftEye': _landmarkDebugInfo(
-          face.landmarks[FaceLandmarkType.leftEye],
-        ),
-        'rightEye': _landmarkDebugInfo(
-          face.landmarks[FaceLandmarkType.rightEye],
-        ),
-        'leftMouth': _landmarkDebugInfo(
-          face.landmarks[FaceLandmarkType.leftMouth],
-        ),
-        'rightMouth': _landmarkDebugInfo(
-          face.landmarks[FaceLandmarkType.rightMouth],
-        ),
-        'bottomMouth': _landmarkDebugInfo(
-          face.landmarks[FaceLandmarkType.bottomMouth],
-        ),
-        'noseBase': _landmarkDebugInfo(
-          face.landmarks[FaceLandmarkType.noseBase],
-        ),
-      },
-    };
-  }
-
-  Map<String, int>? _landmarkDebugInfo(FaceLandmark? landmark) {
-    if (landmark == null) return null;
-    return {
-      'x': landmark.position.x,
-      'y': landmark.position.y,
-    };
   }
 
   /// 检测需要往返动作的头部动作，例如点头和摇头。
