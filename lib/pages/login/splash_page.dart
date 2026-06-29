@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:flutter/material.dart';
@@ -144,16 +143,10 @@ class _SplashBrandFooter extends StatelessWidget {
           filterQuality: FilterQuality.high,
         ),
         const SizedBox(height: 18),
-        const Text(
-          AppStrings.splashTagline,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            height: 16 / 14,
-            letterSpacing: 1.4,
-          ),
+        Assets.images.splashBottomText.image(
+          width: 203,
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.high,
         ),
       ],
     );

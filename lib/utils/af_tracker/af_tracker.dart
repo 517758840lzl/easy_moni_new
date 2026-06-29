@@ -10,8 +10,8 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// AppsFlyer 埋点工具，负责 SDK 初始化、归因缓存和统一事件上报。
-class AfTracker {
-  AfTracker._();
+class AppsFlyerTracker {
+  AppsFlyerTracker._();
 
   // TODO 正式环境替换_devKey 、_eventAesKey
   static const String _tag = 'AF_HELPER';
@@ -27,17 +27,17 @@ class AfTracker {
   static Future<void>? _initFuture;
 
   /// 初始化 AppsFlyer SDK，并异步缓存 AFID 与安装归因数据。
-  static Future<void> init() async {
+  static Future<void> initializeAppsFlyerTracker() async {
     final runningInit = _initFuture;
     if (runningInit != null) {
       return runningInit;
     }
 
-    _initFuture = _doInit();
+    _initFuture = _initializeAppsFlyerSdk();
     return _initFuture!;
   }
 
-  static Future<void> _doInit() async {
+  static Future<void> _initializeAppsFlyerSdk() async {
     try {
       final options = AppsFlyerOptions(
         afDevKey: _devKey,
@@ -51,16 +51,16 @@ class AfTracker {
         registerOnAppOpenAttributionCallback: true,
         registerOnDeepLinkingCallback: true,
       );
-      _listenInstallConversionData();
+      _listenAppsFlyerInstallConversionData();
       await _cacheAppsFlyerUid();
-      await refreshRuntimeAttribution();
+      await refreshAppsFlyerRuntimeAttribution();
     } catch (e, stackTrace) {
       AppLogger.error('$_tag init failed', e, stackTrace);
     }
   }
 
   /// 获取 AppsFlyer UID，优先使用内存和本地缓存。
-  static Future<String> getId() async {
+  static Future<String> getAppsFlyerId() async {
     final cachedUid = _uid;
     if (cachedUid != null && cachedUid.isNotEmpty) {
       return cachedUid;
@@ -81,11 +81,11 @@ class AfTracker {
   }
 
   /// 运行时归因数据，供登录参数使用真实 AFID、GAID、referrer 等设备参数。
-  static Future<Map<String, dynamic>> getLoginAttributionData() async {
+  static Future<Map<String, dynamic>> getAppsFlyerLoginAttributionData() async {
     final attribution =
-        _runtimeAttribution ?? await refreshRuntimeAttribution();
-    final afid = await getId();
-    final mediaSource = await getMediaSource();
+        _runtimeAttribution ?? await refreshAppsFlyerRuntimeAttribution();
+    final afid = await getAppsFlyerId();
+    final mediaSource = await getAppsFlyerMediaSource();
     AppLogger.debug('mediaSource $mediaSource');
 
     return {
@@ -96,48 +96,51 @@ class AfTracker {
   }
 
   /// 刷新 Android 原生侧获取的 GAID、Install Referrer 与设备信息。
-  static Future<Map<String, dynamic>> refreshRuntimeAttribution() async {
+  static Future<Map<String, dynamic>>
+  refreshAppsFlyerRuntimeAttribution() async {
     try {
       final attribution = await AttributionDeviceService.getAttributionData();
       _runtimeAttribution = attribution;
       return attribution;
     } catch (e) {
-      AppLogger.debug('$_tag refreshRuntimeAttribution failed: $e');
+      AppLogger.debug('$_tag refreshAppsFlyerRuntimeAttribution failed: $e');
       _runtimeAttribution = <String, dynamic>{};
       return _runtimeAttribution!;
     }
   }
 
   /// 首次打开事件，每台设备只上报一次。
-  static Future<void> logFirstOpenIfNeeded() async {
+  static Future<void> logAppsFlyerFirstOpenIfNeeded() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final hasTracked = prefs.getBool(_keyFirstOpenTracked) ?? false;
       if (hasTracked) return;
 
-      final tracked = await logActionEvent(TrackEvents.firstOpen);
+      final tracked = await logAppsFlyerActionEvent(
+        AppsFlyerEventNames.firstOpen,
+      );
       if (tracked) {
         await prefs.setBool(_keyFirstOpenTracked, true);
       }
     } catch (e) {
-      AppLogger.debug('$_tag logFirstOpenIfNeeded failed: $e');
+      AppLogger.debug('$_tag logAppsFlyerFirstOpenIfNeeded failed: $e');
     }
   }
 
   /// 获取缓存的归因渠道。
-  static Future<String> getMediaSource() async {
+  static Future<String> getAppsFlyerMediaSource() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final mediaSource = prefs.getString(_keyMediaSource) ?? '';
       return mediaSource;
     } catch (e) {
-      AppLogger.debug('$_tag getMediaSource failed: $e');
+      AppLogger.debug('$_tag getAppsFlyerMediaSource failed: $e');
       return '';
     }
   }
 
   /// 统一事件上报入口，body 与 msg 使用 AES 加密后再上送。
-  static Future<bool> logActionEvent(
+  static Future<bool> logAppsFlyerActionEvent(
     String eventName, {
     dynamic body,
     dynamic heads,
@@ -145,7 +148,7 @@ class AfTracker {
   }) async {
     try {
       if (_sdk == null) {
-        await init();
+        await initializeAppsFlyerTracker();
       }
       final eventValueMap = <String, dynamic>{
         'create_time': DateTime.now().formatAfCreateTime,
@@ -170,14 +173,14 @@ class AfTracker {
     }
   }
 
-  static void _listenInstallConversionData() {
+  static void _listenAppsFlyerInstallConversionData() {
     _sdk?.onInstallConversionData((res) async {
       try {
         AppLogger.debug('$_tag onInstallConversionData res: $res');
         final sourceMap = res is Map ? Map<String, dynamic>.from(res) : null;
         final payload = sourceMap?['payload'];
         if (sourceMap?['status'] == 'success' && payload is Map) {
-          final mediaSource = parseMediaSource(
+          final mediaSource = parseAppsFlyerMediaSource(
             Map<String, dynamic>.from(payload),
           );
           await _saveMediaSourceIfNeeded(mediaSource);
@@ -189,7 +192,9 @@ class AfTracker {
   }
 
   /// 按示例优先级解析安装归因渠道。
-  static String parseMediaSource(Map<String, dynamic>? conversionData) {
+  static String parseAppsFlyerMediaSource(
+    Map<String, dynamic>? conversionData,
+  ) {
     if (conversionData == null) return '';
 
     final status = conversionData['af_status']?.toString() ?? '';

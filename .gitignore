@@ -49,9 +49,3 @@ app.*.map.json
 
 # development docs
 docs/
-
-
-android/key.properties
-android/keystore/
-*.jks
-*.keystore

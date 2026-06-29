@@ -15,7 +15,6 @@ class SignOutApi {
       ApiConstants.signOut,
       fromJson: (json) {
         AppLogger.debug('SignOutApi fromJson 原始数据: $json');
-        AppLogger.debug('数据类型: ${json.runtimeType}');
         return SignOutResp.fromJson(json);
       },
     );

@@ -15,7 +15,7 @@ dependencies:
   riverpod_annotation: 4.0.3-dev.2
   # Routing
   go_router: 17.2.3
-  webview_flutter: ^4.13.0
+  webview_flutter: 4.13.0
 
   # Networking
   dio: 5.9.2
@@ -28,7 +28,7 @@ dependencies:
 
   # UI Components
   pull_to_refresh: 2.0.0
-  flutter_svg: ^2.2.3
+  flutter_svg: 2.2.3
 
   # Utils
   freezed_annotation: 3.1.0
@@ -39,10 +39,12 @@ dependencies:
   
 
   appsflyer_sdk: 6.17.8
-  in_app_review: ^2.0.12
-  encrypt: ^5.0.3
+  in_app_review: 2.0.12
+  encrypt: 5.0.3
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+  integration_test:
     sdk: flutter
   flutter_lints: 6.0.0
   build_runner: 2.15.0

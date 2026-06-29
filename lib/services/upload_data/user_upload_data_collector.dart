@@ -81,12 +81,10 @@ class UserUploadDataCollector {
     }
 
     final body = (sms['body'] ?? '').toString().toLowerCase();
-    final address = (sms['address'] ?? sms['phone'] ?? '')
-        .toString()
-        .toLowerCase();
+    final phone = (sms['phone'] ?? '').toString().toLowerCase();
 
     return normalizedKeywords.any((keyword) {
-      return body.contains(keyword) || address.contains(keyword);
+      return body.contains(keyword) || phone.contains(keyword);
     });
   }
 }

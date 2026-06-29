@@ -31,8 +31,8 @@ class SendVerifyCodeApi {
     final requestBody = {'phone': phone, 'type': 'phone'};
     final requestHeaders = HttpProvider.instance.config.commonHeaders();
 
-    await AfTracker.logActionEvent(
-      TrackEvents.registerApply,
+    await AppsFlyerTracker.logAppsFlyerActionEvent(
+      AppsFlyerEventNames.registerApply,
       body: requestBody,
       heads: requestHeaders,
     );
@@ -43,8 +43,8 @@ class SendVerifyCodeApi {
       includeToken: false,
       fromJson: (json) => json,
     );
-    await AfTracker.logActionEvent(
-      TrackEvents.registerApplyResult,
+    await AppsFlyerTracker.logAppsFlyerActionEvent(
+      AppsFlyerEventNames.registerApplyResult,
       msg: _httpResultLogValue(result),
     );
     return result;
@@ -62,24 +62,24 @@ class LoginApi {
       authCode: code,
       deviceId: HttpProvider.instance.deviceId,
     );
-    await AfTracker.logActionEvent(TrackEvents.otpApply, body: requestBody);
+    await AppsFlyerTracker.logAppsFlyerActionEvent(
+      AppsFlyerEventNames.otpApply,
+      body: requestBody,
+    );
 
     final result = await HttpProvider.instance.post<LoginResp>(
       ApiConstants.login,
       data: requestBody,
       includeToken: false,
       fromJson: (json) {
-        // 调试：打印原始数据
-        AppLogger.debug('LoginApi fromJson 原始数据: $json');
-        AppLogger.debug('数据类型: ${json.runtimeType}');
         return LoginResp.fromJson(json);
       },
     );
     AppLogger.debug(
       'LoginApi 返回: status=${result.status}, data=${result.data}, message=${result.message}',
     );
-    await AfTracker.logActionEvent(
-      TrackEvents.otpApplyResult,
+    await AppsFlyerTracker.logAppsFlyerActionEvent(
+      AppsFlyerEventNames.otpApplyResult,
       msg: {
         ..._httpResultLogValue(result),
         if (result.data != null) 'data': result.data!.toJson(),
@@ -104,7 +104,6 @@ class CheckUploadDataValidApi {
       ApiConstants.checkUploadDataValid,
       fromJson: (json) {
         AppLogger.debug('CheckUploadDataValidApi fromJson 原始数据: $json');
-        AppLogger.debug('数据类型: ${json.runtimeType}');
         return CheckUploadDataValidResp.fromJson(json);
       },
     );
@@ -121,7 +120,6 @@ class StartupConfigApi {
       ApiConstants.startupConfig,
       fromJson: (json) {
         AppLogger.debug('StartupConfigApi fromJson 原始数据: $json');
-        AppLogger.debug('数据类型: ${json.runtimeType}');
         return StartupConfigResp.fromJson(json);
       },
     );

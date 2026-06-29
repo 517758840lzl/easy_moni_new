@@ -7,12 +7,14 @@ import 'package:easy_moni/core/network/interrepters/header_interrepter.dart';
 import 'package:easy_moni/core/network/interrepters/logging_interrepter.dart';
 import 'package:easy_moni/core/router/app_router.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
+import 'package:easy_moni/core/utils/request_security_util.dart';
 import 'package:easy_moni/entities/base_result.dart';
 import 'package:easy_moni/services/auth_storage.dart';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:talker/talker.dart';
 
+/// 统一网络请求入口，负责请求配置、加密请求体、响应解析和登录态失效处理。
 class HttpProvider {
   final Dio _dio;
   final Talker _talker;
@@ -165,7 +167,9 @@ class HttpProvider {
         options: Options(extra: {'skipToken': !includeToken}),
       );
 
-      if (response.data == null) {
+      final responseData = _decryptResponseDataIfNeeded(response.data);
+
+      if (responseData == null) {
         return HttpResult.error(
           HttpResultStatus.error,
           'Response data is null',
@@ -174,11 +178,11 @@ class HttpProvider {
       }
 
       Map<String, dynamic>? map;
-      final dataType = response.data.runtimeType.toString();
+      final dataType = responseData.runtimeType.toString();
       _talker.debug('GET response.data type: $dataType');
 
       try {
-        final sourceMap = response.data as Map;
+        final sourceMap = responseData as Map;
         map = {};
         for (final key in sourceMap.keys) {
           map[key.toString()] = sourceMap[key];
@@ -195,7 +199,7 @@ class HttpProvider {
 
       try {
         if (map.containsKey('code')) {
-          _talker.debug('调用 BaseResult.fromJson, map=$map');
+          // _talker.debug('调用 BaseResult.fromJson, map=$map');
           final result = BaseResult.fromJson(map, fromJson);
           _talker.debug(
             'BaseResult 结果: code=${result.code}, isSuccess=${result.isSuccess}, data=${result.data}',
@@ -245,16 +249,20 @@ class HttpProvider {
     bool includeToken = true,
   }) async {
     try {
+      final requestData = _encryptPostDataIfNeeded(data);
+
       // 使用 dynamic 而不是 T，避免 Dio 自动转换失败
       final response = await _dio.post<dynamic>(
         path,
-        data: data,
+        data: requestData,
         queryParameters: params,
         cancelToken: cancelToken,
         options: Options(extra: {'skipToken': !includeToken}),
       );
 
-      if (response.data == null) {
+      final responseData = _decryptResponseDataIfNeeded(response.data);
+
+      if (responseData == null) {
         return HttpResult.error(
           HttpResultStatus.error,
           'Response data is null',
@@ -263,14 +271,14 @@ class HttpProvider {
       }
 
       Map<String, dynamic>? map;
-      final dataType = response.data.runtimeType.toString();
+      final dataType = responseData.runtimeType.toString();
       _talker.debug('POST response.data type: $dataType');
 
       try {
         // 使用 Map.from 来确保正确转换
-        _talker.debug('POST response.data before cast: ${response.data}');
-        _talker.debug('POST response.data type: ${response.data.runtimeType}');
-        final sourceMap = response.data as Map;
+        _talker.debug('POST response.data before cast: $responseData');
+        _talker.debug('POST response.data type: ${responseData.runtimeType}');
+        final sourceMap = responseData as Map;
         map = {};
         for (final key in sourceMap.keys) {
           map[key.toString()] = sourceMap[key];
@@ -345,6 +353,38 @@ class HttpProvider {
     }
   }
 
+  /// 按配置统一加密 POST 请求体，上传表单和空请求体保持原样。
+  dynamic _encryptPostDataIfNeeded(dynamic data) {
+    if (!_shouldEncryptPostData(data)) {
+      if (data is Map && RequestSecurityUtil.isEncryptedTransportBody(data)) {
+        _talker.debug('POST encrypted request body: $data');
+      }
+      return data;
+    }
+
+    final encryptedData = RequestSecurityUtil.encryptRequestBody(data);
+    _talker.debug('POST encrypted request body: $encryptedData');
+    return encryptedData;
+  }
+
+  /// 解密后端返回的整体响应体，再交给统一解析流程处理。
+  dynamic _decryptResponseDataIfNeeded(dynamic data) {
+    return RequestSecurityUtil.decryptResponseBody(data);
+  }
+
+  bool _shouldEncryptPostData(dynamic data) {
+    if (_config.disableEncBody.toLowerCase() == 'true') {
+      return true;
+    }
+    if (data == null || data is FormData) {
+      return false;
+    }
+    if (data is Map && RequestSecurityUtil.isEncryptedTransportBody(data)) {
+      return false;
+    }
+    return true;
+  }
+
   Future<HttpListResult<T>> getList<T>(
     String path, {
     Map<String, dynamic>? params,
@@ -358,7 +398,9 @@ class HttpProvider {
         cancelToken: cancelToken,
       );
 
-      if (response.data == null) {
+      final responseData = _decryptResponseDataIfNeeded(response.data);
+
+      if (responseData == null) {
         return HttpListResult.error(
           HttpResultStatus.error,
           'Response data is null',
@@ -367,8 +409,8 @@ class HttpProvider {
       }
 
       // List
-      if (response.data is List) {
-        final list = (response.data as List)
+      if (responseData is List) {
+        final list = responseData
             .map((e) => fromJson(e as Map<String, dynamic>))
             .toList();
 
@@ -380,7 +422,7 @@ class HttpProvider {
       }
 
       final result = ListResult.fromJson(
-        response.data as Map<String, dynamic>,
+        responseData as Map<String, dynamic>,
         fromJson,
       );
       if (result.isSuccess) {
@@ -438,7 +480,7 @@ class HttpProvider {
           cancelToken: cancelToken,
         );
       case DioExceptionType.badResponse:
-        final respData = e.response?.data;
+        final respData = _decryptResponseDataIfNeeded(e.response?.data);
         final serverMsg = (respData is Map)
             ? (respData['message'] ?? respData['msg'] ?? 'Server error')
             : 'Server error';
@@ -484,7 +526,7 @@ class HttpProvider {
           cancelToken: cancelToken,
         );
       case DioExceptionType.badResponse:
-        final respData = e.response?.data;
+        final respData = _decryptResponseDataIfNeeded(e.response?.data);
         final serverMsg = (respData is Map)
             ? (respData['message'] ?? respData['msg'] ?? 'Server error')
             : 'Server error';

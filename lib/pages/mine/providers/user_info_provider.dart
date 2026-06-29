@@ -15,7 +15,6 @@ class UserInfoApi {
       ApiConstants.userInfoStr,
       fromJson: (json) {
         AppLogger.debug('UserInfoApi fromJson 原始数据: $json');
-        AppLogger.debug('数据类型: ${json.runtimeType}');
         return UserInfoResp.fromJson(json);
       },
     );

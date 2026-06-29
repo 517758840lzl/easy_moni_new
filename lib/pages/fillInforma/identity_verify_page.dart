@@ -131,10 +131,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
           result: false,
           isPrimary: false,
         ),
-        CommonBottomSheetAction<bool>(
-          text: AppStrings.confirm,
-          result: true,
-        ),
+        CommonBottomSheetAction<bool>(text: AppStrings.confirm, result: true),
       ],
     );
 
@@ -195,6 +192,31 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     }
   }
 
+  /// 身份证区域点击入口：授权通过后让用户选择拍照或相册上传。
+  Future<void> _openUploadMethodSheet({required bool isFront}) async {
+    final canChooseUploadMethod = await _ensureCameraPermission();
+    if (!mounted || !canChooseUploadMethod) {
+      return;
+    }
+
+    bool? shouldPickFromGallery;
+    await UploadMethodSheet.show(
+      context: context,
+      onPickFromGallery: () => shouldPickFromGallery = true,
+      onTakePhoto: () => shouldPickFromGallery = false,
+    );
+    if (!mounted || shouldPickFromGallery == null) {
+      return;
+    }
+
+    if (shouldPickFromGallery == true) {
+      await _pickFromGallery(isFront: isFront);
+      return;
+    }
+
+    await _takePhoto(isFront: isFront);
+  }
+
   Future<void> _takePhoto({required bool isFront}) async {
     final canOpenCamera = await _ensureCameraPermission();
     if (!mounted || !canOpenCamera) {
@@ -210,6 +232,31 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     }
 
     await _onImagesCaptured(capturedImages);
+  }
+
+  /// 从系统相册读取用户选择的身份证图片，并按点击的证件面进入上传流程。
+  Future<void> _pickFromGallery({required bool isFront}) async {
+    Uint8List? imageData;
+    try {
+      imageData = await CameraService.pickFromGallery();
+    } catch (e) {
+      AppLogger.debug('相册选择失败: $e');
+    }
+    if (!mounted) {
+      return;
+    }
+
+    if (imageData == null) {
+      _showSnackBar(AppStrings.identityVerifyImageNotSelected);
+      return;
+    }
+
+    await _onImagesCaptured(
+      _CapturedIdCardImages(
+        frontImageData: isFront ? imageData : null,
+        backImageData: isFront ? null : imageData,
+      ),
+    );
   }
 
   /// 按用户点击的证件面开始拍照，若另一面缺失则连续跳转补拍另一面。
@@ -305,13 +352,6 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     if (!mounted || !shouldRequestPermission) {
       return false;
     }
-
-    // final granted = await CameraService.requestPermission();
-    // if (!mounted) return false;
-
-    // if (granted) {
-    //   return true;
-    // }
 
     await CameraService.openAppSettings();
     if (!mounted) return false;
@@ -733,7 +773,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
                         ? Assets.images.inforamtionIdw
                         : Assets.images.idCardRectangle,
                     imageData: _idCardFrontData,
-                    onTap: () => _takePhoto(isFront: true),
+                    onTap: () => _openUploadMethodSheet(isFront: true),
                   ),
                   const SizedBox(height: 16),
                   IdCardUploadItem(
@@ -741,7 +781,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
                         ? Assets.images.inforamtionIdo
                         : Assets.images.idCardRectangle,
                     imageData: _idCardBackData,
-                    onTap: () => _takePhoto(isFront: false),
+                    onTap: () => _openUploadMethodSheet(isFront: false),
                   ),
                   if (_isOcrLoading)
                     const Padding(

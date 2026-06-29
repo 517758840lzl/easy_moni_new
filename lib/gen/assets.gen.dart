@@ -403,6 +403,10 @@ class $AssetsImagesGen {
   AssetGenImage get settingsDeleteAccount =>
       const AssetGenImage('assets/images/settings_delete_account.png');
 
+  /// File path: assets/images/splash_bottom_text.png
+  AssetGenImage get splashBottomText =>
+      const AssetGenImage('assets/images/splash_bottom_text.png');
+
   /// File path: assets/images/star_icon.png
   AssetGenImage get starIcon =>
       const AssetGenImage('assets/images/star_icon.png');
@@ -512,6 +516,7 @@ class $AssetsImagesGen {
     serviceRightArrow,
     serviceSafe,
     settingsDeleteAccount,
+    splashBottomText,
     starIcon,
     takepicture,
   ];

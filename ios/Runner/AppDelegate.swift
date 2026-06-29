@@ -2,6 +2,7 @@ import UIKit
 import Flutter
 import AVFoundation
 import ContactsUI
+import CoreLocation
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, CNContactPickerDelegate {
@@ -14,6 +15,40 @@ import ContactsUI
     GeneratedPluginRegistrant.register(with: self)
 
     if let rvc = window?.rootViewController as? FlutterViewController {
+      let locationChannel = FlutterMethodChannel(
+        name: "com.easy_moni/location",
+        binaryMessenger: rvc.binaryMessenger
+      )
+
+      locationChannel.setMethodCallHandler({
+        (call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
+        if call.method == "checkLocationPermission" {
+          let status = CLLocationManager.authorizationStatus()
+
+          switch status {
+          case .authorizedAlways, .authorizedWhenInUse:
+            result(true)
+          case .notDetermined, .denied, .restricted:
+            result(false)
+          @unknown default:
+            result(false)
+          }
+        } else if call.method == "isLocationServiceEnabled" {
+          result(CLLocationManager.locationServicesEnabled())
+        } else if call.method == "openAppSettings" {
+          guard let url = URL(string: UIApplication.openSettingsURLString) else {
+            result(false)
+            return
+          }
+
+          UIApplication.shared.open(url, options: [:]) { opened in
+            result(opened)
+          }
+        } else {
+          result(FlutterMethodNotImplemented)
+        }
+      })
+
       let cameraChannel = FlutterMethodChannel(
         name: "com.easy_moni/camera",
         binaryMessenger: rvc.binaryMessenger

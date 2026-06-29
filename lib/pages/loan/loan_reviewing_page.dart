@@ -64,18 +64,24 @@ class _LoanReviewingPageState extends ConsumerState<LoanReviewingPage> {
     Navigator.of(sheetContext).pop();
 
     if (config.isLowScore(score)) {
-      showToast(AppStrings.scoreSuccess, context: context);
+      _showScoreSuccessToast();
       return;
     }
 
-    // 高分用户优先触发系统应用内评分，不可用时退回到商店评分页。
     final inAppReview = InAppReview.instance;
     if (await inAppReview.isAvailable()) {
       await inAppReview.requestReview();
+      _showScoreSuccessToast();
       return;
     }
 
     await inAppReview.openStoreListing();
+    _showScoreSuccessToast();
+  }
+
+  void _showScoreSuccessToast() {
+    if (!mounted) return;
+    showToast(AppStrings.scoreSuccess, context: context);
   }
 
   @override

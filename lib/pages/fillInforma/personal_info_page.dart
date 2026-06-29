@@ -333,7 +333,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     return true;
   }
 
-  /// 页面初始化后处理定位权限：已授权则自动定位，未授权则先展示业务说明弹窗。
+  /// 页面初始化后处理定位权限：已授权直接定位，未授权才展示业务说明弹窗。
   void _scheduleInitialLocationCheck() {
     if (_hasHandledInitialLocation || !_hasRegionEntryToFill) {
       return;
@@ -371,27 +371,21 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
 
   Future<void> _checkInitialLocationPermission() async {
     try {
-      final hasPermission = await LocationService.checkPermission();
+      // 仅检查系统授权状态，避免已授权用户再次看到位置权限引导弹窗。
+      final isLocationPermissionGranted =
+          await LocationService.checkPermission();
       if (!mounted) return;
 
-      if (hasPermission) {
+      if (isLocationPermissionGranted) {
         await _detectLocationAndFillRegion();
         return;
       }
 
-      final shouldRequestPermission = await _showLocationPermissionDialog();
-      if (!mounted) return;
+      // 未授权时先展示业务说明弹窗，用户确认后直接进入系统权限设置页。
+      final shouldOpenSettings = await _showLocationPermissionDialog();
+      if (!mounted || !shouldOpenSettings) return;
 
-      if (!shouldRequestPermission) {
-        return;
-      }
-
-      final granted = await LocationService.requestPermission();
-      if (!mounted) return;
-
-      if (granted) {
-        await _detectLocationAndFillRegion();
-      }
+      await LocationService.openAppSettings();
     } catch (e) {
       AppLogger.debug('初始化定位权限检查失败: $e');
     }

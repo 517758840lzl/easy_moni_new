@@ -184,6 +184,10 @@ class AppStrings {
       'Are you sure you want to delete your account?';
   static const String mineDeleteAccountSuccess = 'Account deleted';
   static const String mineDeleteAccountFailed = 'Delete failed, please retry';
+  static const String mineTestUploadData = 'Test upload data';
+  static const String mineTestUploadDataSuccess = 'Upload data success';
+  static const String mineTestUploadDataFailed = 'Upload data failed';
+  static const String mineTestUploadDataNoTrackId = 'No valid trackId';
   static const String mineOrderHistoryTitle = '我的订单';
   static const String mineOrderHistoryAllTab = '全部';
   static const String mineOrderHistoryDisbursingTab = '借款中';
@@ -361,6 +365,7 @@ class AppStrings {
   static const String loanConfirmEmptyText = '暂无可确认借款';
   static const String loanConfirmButtonLoadingText = '提交中...';
   static const String loanConfirmErrorText = '提交失败，请重试';
+  static const String loanConfirmUploadDataFailedText = '数据上传失败，请重试';
   static const String loanConfirmActualAmountLabel = '到账金额';
   static const String loanConfirmRepayAmountLabel = '应还金额';
   static const String loanConfirmRepaymentDateLabel = '还款日期';

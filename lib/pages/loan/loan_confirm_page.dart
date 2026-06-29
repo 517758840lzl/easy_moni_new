@@ -128,8 +128,8 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
     });
 
     try {
-      await _checkUploadDataValidBeforeSubmit();
-      if (!mounted) return;
+      final uploadDataReady = await _checkUploadDataValidBeforeSubmit();
+      if (!mounted || !uploadDataReady) return;
 
       final result = await ref
           .read(loanConfirmProvider)
@@ -139,7 +139,9 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
           );
       if (!mounted) return;
       if (result.isSuccess) {
-        await AfTracker.logActionEvent(TrackEvents.withdrawSuccess);
+        await AppsFlyerTracker.logAppsFlyerActionEvent(
+          AppsFlyerEventNames.withdrawSuccess,
+        );
         if (!mounted) return;
         context.go(AppRoutePaths.loanReviewing);
       } else {
@@ -160,8 +162,8 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
     }
   }
 
-  // 提交借款申请前，检查本地采集数据是否仍然有效。
-  Future<void> _checkUploadDataValidBeforeSubmit() async {
+  // 提交借款申请前检查风控采集数据；如有无效数据，必须先补传成功。
+  Future<bool> _checkUploadDataValidBeforeSubmit() async {
     try {
       final checkDataResult = await ref
           .read(checkUploadDataValidProvider)
@@ -170,16 +172,31 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
         AppLogger.debug(
           'loanConfirm checkUploadDataValid 成功: ${checkDataResult.data}',
         );
-        ref
+        await ref
             .read(uploadDataSyncServiceProvider)
-            .handleCheckResult(checkDataResult.data);
-      } else {
-        AppLogger.debug(
-          'loanConfirm checkUploadDataValid 失败: ${checkDataResult.message}',
+            .uploadInvalidDataBeforeSubmit(checkDataResult.data);
+        return true;
+      }
+
+      AppLogger.debug(
+        'loanConfirm checkUploadDataValid 失败: ${checkDataResult.message}',
+      );
+      if (mounted) {
+        context.showSnackBar(
+          checkDataResult.message ?? AppStrings.loanConfirmUploadDataFailedText,
+          isError: true,
         );
       }
+      return false;
     } catch (e) {
       AppLogger.debug('loanConfirm checkUploadDataValid 请求异常: $e');
+      if (mounted) {
+        context.showSnackBar(
+          AppStrings.loanConfirmUploadDataFailedText,
+          isError: true,
+        );
+      }
+      return false;
     }
   }
 
@@ -226,10 +243,7 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
           },
         ),
         actions: const [
-          CommonBottomSheetAction<bool>(
-            text: AppStrings.confirm,
-            result: true,
-          ),
+          CommonBottomSheetAction<bool>(text: AppStrings.confirm, result: true),
         ],
       );
 
@@ -920,7 +934,7 @@ bool _shouldShowCouponLoanAmount(UseCouponRespData? preview) {
   return preview?.newLoanAmount != null && preview?.loanAmount != null;
 }
 
-// 贷前优惠券试算后的应还总额：优先使用接口返回的新应还金额，缺失时按费用字段兜底补算。
+// 贷前优惠券试算后的应还总额：未选券时取订单应还总和，选券后按新借款金额加租金计算。
 num _previewRepayTotal({
   required List<LoanConfirmOrder> orders,
   required UseCouponRespData? preview,
@@ -928,11 +942,8 @@ num _previewRepayTotal({
   final originalRepayTotal = orders.fold<num>(0, (sum, item) {
     return sum + (item.repayAmount ?? 0);
   });
-  final newRepaymentAmount = preview?.newRepaymentAmount;
-  if (newRepaymentAmount != null) return newRepaymentAmount;
   if (preview == null) return originalRepayTotal;
-
-  return originalRepayTotal + (preview.rent ?? 0) + (preview.serviceFee ?? 0);
+  return (preview.newLoanAmount ?? 0) + (preview.rent ?? 0);
 }
 
 List<int> _selectedCouponIds(CouponItem? coupon) {

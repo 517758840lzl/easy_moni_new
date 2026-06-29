@@ -5,6 +5,7 @@ import 'package:easy_moni/core/constants/api_constants.dart';
 import 'package:easy_moni/core/network/http_provider.dart';
 import 'package:easy_moni/core/network/http_result.dart';
 import 'package:easy_moni/core/utils/app_logger.dart';
+import 'package:easy_moni/utils/image_compress_tool.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final uploadFileProvider = Provider<UploadFileApi>((ref) {
@@ -26,14 +27,19 @@ class UploadFileApi {
       final dio = Dio();
       final uploadUrl = config.resolveApiPath(ApiConstants.uploadFile);
       final headers = config.commonHeaders(token: token);
+      final uploadBytes = await ImageCompressTool.compressForUpload(bytes);
 
       AppLogger.debug(
         '上传文件开始: url=$uploadUrl, '
-        'filename=$filename, bytes=${bytes.length}, headers=$headers',
+        'filename=$filename, originalBytes=${bytes.length}, '
+        'uploadBytes=${uploadBytes.length}, headers=$headers',
       );
 
       final formData = FormData.fromMap({
-        'multipartFile': MultipartFile.fromBytes(bytes, filename: filename),
+        'multipartFile': MultipartFile.fromBytes(
+          uploadBytes,
+          filename: filename,
+        ),
       });
 
       final response = await dio.post<dynamic>(

@@ -20,20 +20,18 @@ extension StringExtension on String {
         : this;
   }
 
-  /// 将后端 yyyy-MM-dd 日期格式转换为 dd/MM/yyyy，格式不匹配时保留原值。
+  /// 将后端 yyyy-MM-dd 或 yyyy-MM-dd hh:mm:ss 日期格式转换为 dd/MM/yyyy。
   String formatBackendDate() {
     if (isEmpty) return this;
 
-    final parts = split('-');
-    if (parts.length != 3) return this;
+    final match = RegExp(
+      r'^(\d{4})-(\d{2})-(\d{2})(?: \d{2}:\d{2}:\d{2})?$',
+    ).firstMatch(this);
+    if (match == null) return this;
 
-    final year = parts[0];
-    final month = parts[1];
-    final day = parts[2];
-    if (year.length != 4 || month.length != 2 || day.length != 2) {
-      return this;
-    }
-
+    final year = match.group(1)!;
+    final month = match.group(2)!;
+    final day = match.group(3)!;
     return '$day/$month/$year';
   }
 

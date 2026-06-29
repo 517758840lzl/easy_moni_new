@@ -1,92 +1,138 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 
-/// 请求安全工具，集中处理请求体 AES 加密和后续混淆扩展。
+/// 请求安全工具，集中处理请求体 AES 加密、解密和压缩。
 class RequestSecurityUtil {
   RequestSecurityUtil._();
 
-  static const String algorithm = 'AES/CBC/PKCS7';
   static const int _aesBlockSize = 16;
+  static const String requestAesKey = 'q7aeAEHhH2T77qiuBrFR7IHgkof3Qd2L';
+  static final String requestIvKey = _takeFirstUtf8Text(requestAesKey);
   static const Set<int> _validKeyLengths = {16, 24, 32};
 
-  /// 将普通 JSON 数据加密为后端可接收的请求体结构。
-  static Map<String, dynamic> encryptRequestBody(
+  static Uint8List get secretBytes => _secretBytesForKey(requestAesKey);
+
+  static encrypt.IV get _nonceBlock => _nonceBlockForKey(requestAesKey);
+
+  static encrypt.Encrypter get _encrypter => _encrypterForKey(requestAesKey);
+
+  /// 将普通 JSON 数据加密为后端可接收的顶层请求体字符串。
+  static String encryptRequestBody(
     Object? data, {
-    required String aesKey,
-    String bodyKey = 'body',
-    String ivKey = 'iv',
-    String algorithmKey = 'algorithm',
+    String aesKey = requestAesKey,
+    String? ivText,
     String? ivBase64,
-    bool enableObfuscation = false,
   }) {
     final result = encryptJson(
       data,
       aesKey: aesKey,
+      ivText: ivText,
       ivBase64: ivBase64,
-      enableObfuscation: enableObfuscation,
     );
-    // TODO: 与后端确认最终加密请求体字段名和是否需要上送 algorithm。
-    return result.toRequestBody(
-      bodyKey: bodyKey,
-      ivKey: ivKey,
-      algorithmKey: algorithmKey,
+    return result.cipherText;
+  }
+
+  /// 判断数据是否为后端约定的加密传输包。
+  static bool isEncryptedTransportBody(
+    Map<dynamic, dynamic> data, {
+    String bodyKey = requestAesKey,
+    String? ivKey,
+  }) {
+    final effectiveIvKey = ivKey ?? requestIvKey;
+    return data[bodyKey] is String && data[effectiveIvKey] is String;
+  }
+
+  /// 解密整个响应体；后端正式响应为 String 密文，Map 加密包用于兼容本地测试。
+  static dynamic decryptResponseBody(
+    Object? data, {
+    String aesKey = requestAesKey,
+    String? ivText,
+    String bodyKey = requestAesKey,
+    String? ivKey,
+  }) {
+    final effectiveIvText = ivText ?? requestIvKey;
+    final effectiveIvKey = ivKey ?? requestIvKey;
+
+    if (data is String) {
+      final plainText = openPayload(
+        data,
+        aesKey: aesKey,
+        ivText: effectiveIvText,
+      );
+      return _tryDecodeJson(plainText, fallback: data);
+    }
+
+    if (data is! Map ||
+        !isEncryptedTransportBody(
+          data,
+          bodyKey: bodyKey,
+          ivKey: effectiveIvKey,
+        )) {
+      return data;
+    }
+
+    final plainText = openPayload(
+      data[bodyKey] as String?,
+      aesKey: aesKey,
+      ivBase64: data[effectiveIvKey] as String?,
+      ivText: effectiveIvText,
     );
+    return _tryDecodeJson(plainText, fallback: data);
   }
 
   /// 将 JSON 数据序列化后使用 AES-CBC 加密。
   static RequestEncryptionResult encryptJson(
     Object? data, {
     required String aesKey,
+    String? ivText,
     String? ivBase64,
-    bool enableObfuscation = false,
   }) {
-    return encryptText(
-      jsonEncode(data),
+    final plainText = jsonEncode(data);
+    final cipherText = sealPayload(
+      plainText,
       aesKey: aesKey,
+      ivText: ivText,
       ivBase64: ivBase64,
-      enableObfuscation: enableObfuscation,
     );
+    final iv = _buildIv(ivBase64, ivText: ivText, aesKey: aesKey);
+
+    return RequestEncryptionResult(cipherText: cipherText, ivBase64: iv.base64);
   }
 
-  /// 加密字符串内容，返回密文、IV 和算法信息。
+  /// 加密字符串内容，返回密文和 IV。
   static RequestEncryptionResult encryptText(
     String plainText, {
     required String aesKey,
+    String? ivText,
     String? ivBase64,
-    bool enableObfuscation = false,
   }) {
-    final key = _buildKey(aesKey);
-    final iv = _buildIv(ivBase64);
-    final encrypter = encrypt.Encrypter(
-      encrypt.AES(key, mode: encrypt.AESMode.cbc, padding: 'PKCS7'),
+    final cipherText = sealPayload(
+      plainText,
+      aesKey: aesKey,
+      ivText: ivText,
+      ivBase64: ivBase64,
     );
-    final encrypted = encrypter.encrypt(plainText, iv: iv);
-    final cipherText = _protectText(
-      encrypted.base64,
-      enableObfuscation: enableObfuscation,
-    );
+    final iv = _buildIv(ivBase64, ivText: ivText, aesKey: aesKey);
 
-    return RequestEncryptionResult(
-      cipherText: cipherText,
-      ivBase64: iv.base64,
-      algorithm: algorithm,
-      isObfuscated: enableObfuscation,
-    );
+    return RequestEncryptionResult(cipherText: cipherText, ivBase64: iv.base64);
   }
 
   /// 解密 JSON 密文，便于本地测试和排查加密链路。
   static dynamic decryptJson({
     required String cipherText,
     required String aesKey,
-    required String ivBase64,
-    bool enableObfuscation = false,
+    String? ivBase64,
+    String? ivText,
   }) {
-    final plainText = decryptText(
-      cipherText: cipherText,
+    final plainText = openPayload(
+      cipherText,
       aesKey: aesKey,
       ivBase64: ivBase64,
-      enableObfuscation: enableObfuscation,
+      ivText: ivText,
     );
     return jsonDecode(plainText);
   }
@@ -95,89 +141,156 @@ class RequestSecurityUtil {
   static String decryptText({
     required String cipherText,
     required String aesKey,
-    required String ivBase64,
-    bool enableObfuscation = false,
+    String? ivBase64,
+    String? ivText,
   }) {
-    final key = _buildKey(aesKey);
-    final iv = _buildIv(ivBase64);
-    final encrypter = encrypt.Encrypter(
-      encrypt.AES(key, mode: encrypt.AESMode.cbc, padding: 'PKCS7'),
-    );
-    final normalizedCipherText = _restoreText(
+    return openPayload(
       cipherText,
-      enableObfuscation: enableObfuscation,
+      aesKey: aesKey,
+      ivBase64: ivBase64,
+      ivText: ivText,
     );
-
-    return encrypter.decrypt64(normalizedCipherText, iv: iv);
   }
 
-  /// 处理请求头混淆；测试阶段默认保持原样。
-  static Map<String, String> protectHeaders(
-    Map<String, String> headers, {
-    bool enableObfuscation = false,
+  /// 按后端契约加密明文载荷，失败时返回原文，避免中断调用链。
+  static String sealPayload(
+    String plainText, {
+    String aesKey = requestAesKey,
+    String? ivText,
+    String? ivBase64,
   }) {
-    if (!enableObfuscation) {
-      return Map<String, String>.from(headers);
+    // AppLogger.debug('encryptData: $plainText');
+    try {
+      final encrypter = aesKey == requestAesKey
+          ? _encrypter
+          : _encrypterForKey(aesKey);
+      final encrypted = encrypter.encrypt(
+        plainText,
+        iv: _buildIv(ivBase64, ivText: ivText, aesKey: aesKey),
+      );
+      return encrypted.base64;
+    } catch (e) {
+      AppLogger.debug('encryption failed: $e');
+      return plainText;
     }
-
-    // TODO: 与后端确认请求头混淆规则后替换当前占位实现。
-    return headers.map(
-      (key, value) => MapEntry(
-        _protectText(key, enableObfuscation: true),
-        _protectText(value, enableObfuscation: true),
-      ),
-    );
   }
 
-  /// 处理接口地址混淆；测试阶段默认保持原样。
-  static String protectUrl(String url, {bool enableObfuscation = false}) {
-    if (!enableObfuscation) {
-      return url;
+  /// 按后端契约解密密文载荷，失败时返回原密文。
+  static String openPayload(
+    String? cipherText, {
+    String aesKey = requestAesKey,
+    String? ivBase64,
+    String? ivText,
+  }) {
+    // AppLogger.debug('decryptData: $cipherText');
+    try {
+      final encrypter = aesKey == requestAesKey
+          ? _encrypter
+          : _encrypterForKey(aesKey);
+      return encrypter.decrypt(
+        encrypt.Encrypted.fromBase64(cipherText ?? ''),
+        iv: _buildIv(ivBase64, ivText: ivText, aesKey: aesKey),
+      );
+    } catch (e) {
+      AppLogger.debug('decryption failed: $e');
+      return cipherText ?? '';
     }
-
-    // TODO: 与后端确认接口地址混淆规则后替换当前占位实现。
-    return _protectText(url, enableObfuscation: true);
   }
 
-  static encrypt.Key _buildKey(String aesKey) {
-    final keyBytes = utf8.encode(aesKey);
+  /// 将业务数据 JSON 序列化后执行 zlib 压缩。
+  static Uint8List deflateBytes(dynamic payload) {
+    try {
+      final jsonText = jsonEncode(payload);
+      AppLogger.debug('Data to compress: $jsonText');
+      final originalBytes = utf8.encode(jsonText);
+      final compressedBytes = ZLibEncoder(level: 6).convert(originalBytes);
+      return Uint8List.fromList(compressedBytes);
+    } catch (e) {
+      AppLogger.debug('Compression failed: $e');
+      rethrow;
+    }
+  }
+
+  static Uint8List _secretBytesForKey(String aesKey) {
+    return Uint8List.fromList(utf8.encode(aesKey));
+  }
+
+  static encrypt.Encrypter _encrypterForKey(String aesKey) {
+    final keyBytes = _secretBytesForKey(aesKey);
     if (!_validKeyLengths.contains(keyBytes.length)) {
       throw ArgumentError('AES key must be 16, 24, or 32 UTF-8 bytes.');
     }
-    return encrypt.Key.fromUtf8(aesKey);
+
+    final keySpec = encrypt.Key(Uint8List.fromList(keyBytes));
+    return encrypt.Encrypter(
+      encrypt.AES(keySpec, mode: encrypt.AESMode.cbc, padding: 'PKCS7'),
+    );
   }
 
-  static encrypt.IV _buildIv(String? ivBase64) {
-    if (ivBase64 == null || ivBase64.isEmpty) {
-      return encrypt.IV.fromSecureRandom(_aesBlockSize);
+  /// 按后端约定从 AES key 中截取前 16 个 UTF-8 字节作为默认 IV。
+  static encrypt.IV _nonceBlockForKey(String aesKey) {
+    final bytes = _secretBytesForKey(aesKey);
+    if (bytes.length < _aesBlockSize) {
+      throw ArgumentError.value(
+        aesKey,
+        'aesKey',
+        'AES key must contain at least $_aesBlockSize UTF-8 bytes.',
+      );
+    }
+    return encrypt.IV(Uint8List.fromList(bytes.sublist(0, _aesBlockSize)));
+  }
+
+  static String _takeFirstUtf8Text(String text) {
+    final bytes = utf8.encode(text);
+    if (bytes.length < _aesBlockSize) {
+      throw ArgumentError.value(
+        text,
+        'text',
+        'Text must contain at least $_aesBlockSize UTF-8 bytes.',
+      );
+    }
+    return utf8.decode(bytes.take(_aesBlockSize).toList());
+  }
+
+  static encrypt.IV _buildIv(
+    String? ivBase64, {
+    String? ivText,
+    required String aesKey,
+  }) {
+    if (ivBase64 != null && ivBase64.isNotEmpty) {
+      final ivBytes = base64Decode(ivBase64);
+      if (ivBytes.length != _aesBlockSize) {
+        throw ArgumentError.value(
+          ivBase64,
+          'ivBase64',
+          'AES CBC IV must be 16 bytes.',
+        );
+      }
+      return encrypt.IV(ivBytes);
     }
 
-    final ivBytes = base64Decode(ivBase64);
+    if (ivText == null || ivText.isEmpty) {
+      return aesKey == requestAesKey ? _nonceBlock : _nonceBlockForKey(aesKey);
+    }
+
+    final ivBytes = utf8.encode(ivText);
     if (ivBytes.length != _aesBlockSize) {
       throw ArgumentError.value(
-        ivBase64,
-        'ivBase64',
+        ivText,
+        'ivText',
         'AES CBC IV must be 16 bytes.',
       );
     }
     return encrypt.IV(ivBytes);
   }
 
-  static String _protectText(String text, {required bool enableObfuscation}) {
-    if (!enableObfuscation) {
-      return text;
+  static dynamic _tryDecodeJson(String plainText, {required Object? fallback}) {
+    try {
+      return jsonDecode(plainText);
+    } catch (e) {
+      AppLogger.debug('JSON decode failed after decryption: $e');
+      return fallback;
     }
-
-    final bytes = utf8.encode(text);
-    return base64UrlEncode(bytes);
-  }
-
-  static String _restoreText(String text, {required bool enableObfuscation}) {
-    if (!enableObfuscation) {
-      return text;
-    }
-
-    return utf8.decode(base64Url.decode(text));
   }
 }
 
@@ -186,21 +299,17 @@ class RequestEncryptionResult {
   const RequestEncryptionResult({
     required this.cipherText,
     required this.ivBase64,
-    required this.algorithm,
-    required this.isObfuscated,
   });
 
   final String cipherText;
   final String ivBase64;
-  final String algorithm;
-  final bool isObfuscated;
 
-  /// 转换为请求体 Map，方便 HttpProvider 后续统一接入。
+  /// 转换为 Map 加密包，供事件字段加密和本地兼容测试使用。
   Map<String, dynamic> toRequestBody({
-    String bodyKey = 'body',
-    String ivKey = 'iv',
-    String algorithmKey = 'algorithm',
+    String bodyKey = RequestSecurityUtil.requestAesKey,
+    String? ivKey,
   }) {
-    return {bodyKey: cipherText, ivKey: ivBase64, algorithmKey: algorithm};
+    final effectiveIvKey = ivKey ?? RequestSecurityUtil.requestIvKey;
+    return {bodyKey: cipherText, effectiveIvKey: ivBase64};
   }
 }

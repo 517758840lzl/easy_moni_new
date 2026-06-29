@@ -27,6 +27,7 @@ class MinePage extends ConsumerStatefulWidget {
 class _MinePageState extends ConsumerState<MinePage> {
   String _userName = '';
   String _userPhone = '';
+  bool _isUserInfoLoading = true;
 
   @override
   void initState() {
@@ -52,6 +53,12 @@ class _MinePageState extends ConsumerState<MinePage> {
     } catch (e) {
       if (!mounted) return;
       AppLogger.debug('获取用户信息异常: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUserInfoLoading = false;
+        });
+      }
     }
   }
 
@@ -135,13 +142,14 @@ class _MinePageState extends ConsumerState<MinePage> {
   @override
   Widget build(BuildContext context) {
     final topInset = MediaQuery.of(context).padding.top;
-    final pendingRepayOrders = ref
-        .watch(repayEntryBillsProvider)
-        .when(
-          data: (items) => items,
-          error: (_, _) => const <RepayResp>[],
-          loading: () => const <RepayResp>[],
-        );
+    final pendingRepayOrdersState = ref.watch(repayEntryBillsProvider);
+    final pendingRepayOrders = pendingRepayOrdersState.when(
+      data: (items) => items,
+      error: (_, _) => const <RepayResp>[],
+      loading: () => const <RepayResp>[],
+    );
+    final isPageLoading =
+        _isUserInfoLoading || pendingRepayOrdersState.isLoading;
     final totalRepayAmount = pendingRepayOrders.fold<double>(
       0,
       (sum, order) => sum + (order.repayAmount ?? 0),
@@ -151,26 +159,30 @@ class _MinePageState extends ConsumerState<MinePage> {
       (order) => (order.remainingDays ?? 0) < 0,
     );
 
-    return LoanRoundedPageShell(
-      contentTop: (_) => topInset + 212,
-      contentTopRadius: 16,
-      backgroundColor: AppColors.primaryDark,
-      header: _MineHeader(
-        userName: _userName,
-        userPhone: _userPhone,
-        onCustomerServiceTap: _onCustomerServiceTap,
-      ),
-      content: _MineContent(
-        showPendingRepayCard: pendingRepayOrders.isNotEmpty,
-        pendingAmount: totalRepayAmount,
-        isOverdue: isOverdue,
-        onRepayTap: () => _onRepayTap(pendingRepayOrders),
-        onHistoryTap: _onHistoryTap,
-        onCustomerServiceTap: _onCustomerServiceTap,
-        onPrivacyPolicyTap: _onPrivacyPolicyTap,
-        onSettingsTap: _onSettingsTap,
-        onLogoutTap: _onLogoutTap,
-      ),
+    return Stack(
+      children: [
+        LoanRoundedPageShell(
+          contentTop: (_) => topInset + 212,
+          contentTopRadius: 16,
+          backgroundColor: AppColors.primaryDark,
+          header: _MineHeader(
+            userName: _userName,
+            userPhone: _userPhone,
+            onCustomerServiceTap: _onCustomerServiceTap,
+          ),
+          content:isPageLoading? Center(child: CircularProgressIndicator()) : _MineContent(
+            showPendingRepayCard: pendingRepayOrders.isNotEmpty,
+            pendingAmount: totalRepayAmount,
+            isOverdue: isOverdue,
+            onRepayTap: () => _onRepayTap(pendingRepayOrders),
+            onHistoryTap: _onHistoryTap,
+            onCustomerServiceTap: _onCustomerServiceTap,
+            onPrivacyPolicyTap: _onPrivacyPolicyTap,
+            onSettingsTap: _onSettingsTap,
+            onLogoutTap: _onLogoutTap,
+          ),
+        ),
+      ],
     );
   }
 }

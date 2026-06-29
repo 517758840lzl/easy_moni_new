@@ -73,8 +73,8 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
   /// 用户同意隐私政策后再初始化归因 SDK 和首次打开上报，避免同意前采集数据。
   void _startPrivacyAwareTracking() {
     unawaited(
-      AfTracker.init()
-          .then((_) => AfTracker.logFirstOpenIfNeeded())
+      AppsFlyerTracker.initializeAppsFlyerTracker()
+          .then((_) => AppsFlyerTracker.logAppsFlyerFirstOpenIfNeeded())
           .catchError((Object error, StackTrace stackTrace) {
             AppLogger.debug('隐私同意后归因初始化异常: $error\n$stackTrace');
           }),

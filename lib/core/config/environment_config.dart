@@ -63,12 +63,11 @@ class EnvironmentConfig {
     required String authCode,
     String? deviceId,
   }) async {
-    final runtimeAttribution = await AfTracker.getLoginAttributionData();
+    final runtimeAttribution =
+        await AppsFlyerTracker.getAppsFlyerLoginAttributionData();
 
     return {
       'afid': runtimeAttribution['afid'] ?? afid,
-      // TODO 确认参数
-      'appInstanceId': runtimeAttribution['appInstanceId'] ?? appInstanceId,
       'appVersion': appVersion,
       'authCode': authCode,
       'clientType': clientType,
@@ -109,7 +108,7 @@ class EnvironmentConfigs {
     gaid: '',
     mediaSource: '',
     referrer: '',
-    userAgent: '', 
+    userAgent: '',
     onlyLogin: 0,
     enableNetworkLog: true,
   );
@@ -133,7 +132,7 @@ class EnvironmentConfigs {
     referrer: '',
     userAgent: '',
     onlyLogin: 0,
-    enableNetworkLog: false,
+    enableNetworkLog: true,
   );
 
   static EnvironmentConfig get current {

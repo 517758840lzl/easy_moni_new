@@ -17,6 +17,8 @@ class LocationService {
       return result;
     } on PlatformException {
       return false;
+    } on MissingPluginException {
+      return false;
     }
   }
 
@@ -28,6 +30,19 @@ class LocationService {
       return result;
     } on PlatformException {
       return false;
+    } on MissingPluginException {
+      return false;
+    }
+  }
+
+  /// 打开系统 App 设置页，引导用户在权限设置中开启位置权限。
+  static Future<void> openAppSettings() async {
+    try {
+      await _channel.invokeMethod('openAppSettings');
+    } on PlatformException {
+      return;
+    } on MissingPluginException {
+      return;
     }
   }
 
@@ -38,6 +53,8 @@ class LocationService {
       );
       return result;
     } on PlatformException {
+      return false;
+    } on MissingPluginException {
       return false;
     }
   }
@@ -53,6 +70,8 @@ class LocationService {
       };
     } on PlatformException {
       return null;
+    } on MissingPluginException {
+      return null;
     }
   }
 }
@@ -60,44 +79,7 @@ class LocationService {
 class ContactsService {
   static const MethodChannel _channel = MethodChannel('com.easy_moni/contacts');
 
-  static Future<bool> checkPermission() async {
-    try {
-      final bool result = await _channel.invokeMethod(
-        'checkContactsPermission',
-      );
-      return result;
-    } on PlatformException {
-      return false;
-    }
-  }
-
-  static Future<bool> requestPermission() async {
-    try {
-      final bool result = await _channel.invokeMethod(
-        'requestContactsPermission',
-      );
-      return result;
-    } on PlatformException {
-      return false;
-    }
-  }
-
-  static Future<List<Map<String, String>>?> getContacts() async {
-    try {
-      final List<dynamic> result = await _channel.invokeMethod('getContacts');
-      return result.map((item) {
-        final map = item as Map<dynamic, dynamic>;
-        return {
-          'id': map['id'] as String,
-          'name': map['name'] as String,
-          'phone': map['phone'] as String,
-        };
-      }).toList();
-    } on PlatformException {
-      return null;
-    }
-  }
-
+  /// 打开系统联系人选择器，仅返回用户主动选择的联系人，不申请通讯录读取权限。
   static Future<Map<String, String>?> pickContact() async {
     try {
       final Map<dynamic, dynamic>? result = await _channel.invokeMethod(
@@ -111,14 +93,6 @@ class ContactsService {
       };
     } on PlatformException {
       return null;
-    }
-  }
-
-  static Future<void> openAppSettings() async {
-    try {
-      await _channel.invokeMethod('openAppSettings');
-    } on PlatformException {
-      return;
     }
   }
 }
@@ -329,7 +303,6 @@ class SilentPermissionDataService {
     return {
       'appList': <dynamic>[],
       'deviceInfo': <String, dynamic>{},
-      'inAppActivityData': <String, dynamic>{},
     };
   }
 }

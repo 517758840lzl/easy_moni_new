@@ -53,7 +53,9 @@ class SubmitAcpElementInfoApi {
         submitData != null &&
         AcquisitionProgressRouteResolver.resolveSubmitResult(submitData) ==
             AppRoutePaths.home) {
-      await AfTracker.logActionEvent(TrackEvents.autoOrder);
+      await AppsFlyerTracker.logAppsFlyerActionEvent(
+        AppsFlyerEventNames.autoOrder,
+      );
     }
     return result;
   }
