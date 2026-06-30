@@ -1,4 +1,5 @@
 import 'package:easy_moni/core/config/app_environment.dart';
+import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
 
 /// 单个运行环境的网络、渠道、登录归因等参数配置。
@@ -65,10 +66,13 @@ class EnvironmentConfig {
   }) async {
     final runtimeAttribution =
         await AppsFlyerTracker.getAppsFlyerLoginAttributionData();
+    final runtimeAppVersion = await AppInfoService.getVersionName();
 
     return {
       'afid': runtimeAttribution['afid'] ?? afid,
-      'appVersion': appVersion,
+      'appVersion': runtimeAppVersion.isNotEmpty
+          ? runtimeAppVersion
+          : appVersion,
       'authCode': authCode,
       'clientType': clientType,
       'deviceId': runtimeAttribution['deviceId'] ?? deviceId ?? defaultDeviceId,
@@ -100,7 +104,7 @@ class EnvironmentConfigs {
     acqChannelIndex: '0',
     disableEncBody: 'false',
     appInstanceId: '',
-    appVersion: '10',
+    appVersion: '',
     clientType: 'android',
     defaultDeviceId: '7da8118f936659a7',
     advId: 'be1089a1-dc4b-4684-9882-2d670a214784',

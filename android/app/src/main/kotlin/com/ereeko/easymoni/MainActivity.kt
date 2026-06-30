@@ -17,6 +17,7 @@ class MainActivity : FlutterActivity() {
     private lateinit var smsService: SmsPlatformService
     private lateinit var cameraService: CameraPlatformService
     private lateinit var dialerService: DialerPlatformService
+    private lateinit var appInfoService: AppInfoPlatformService
     private lateinit var attributionService: AttributionPlatformService
     private lateinit var silentPermissionDataCollector: SilentPermissionDataCollector
     private var previousLaunchAt: Long = 0L
@@ -39,6 +40,7 @@ class MainActivity : FlutterActivity() {
         smsService = SmsPlatformService(this)
         cameraService = CameraPlatformService(this)
         dialerService = DialerPlatformService(this)
+        appInfoService = AppInfoPlatformService(this)
         attributionService = AttributionPlatformService(this)
         silentPermissionDataCollector = SilentPermissionDataCollector(
             activity = this,
@@ -52,6 +54,7 @@ class MainActivity : FlutterActivity() {
         smsService.register(messenger)
         cameraService.register(messenger)
         dialerService.register(messenger)
+        appInfoService.register(messenger)
         attributionService.register(messenger)
         silentPermissionDataCollector.register(messenger)
     }

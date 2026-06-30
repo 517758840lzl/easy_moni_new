@@ -5,12 +5,14 @@ import 'package:easy_moni/entities/service/service_info_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
 import 'package:easy_moni/pages/mine/providers/customer_service_provider.dart';
+import 'package:easy_moni/services/external_source.dart';
 import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/utils/widgets/app_state_view.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 /// 客服展示方式，和后端 showType 保持一致。
@@ -355,7 +357,7 @@ class _CustomerServiceContactCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => _handleTap(context),
+      onTap: _handleTap,
       child: Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: Container(
@@ -398,14 +400,57 @@ class _CustomerServiceContactCard extends StatelessWidget {
     );
   }
 
-  void _handleTap(BuildContext context) {
+  Future<void> _handleTap() async {
     if (contact.type == CustomerServiceContactType.phone) {
       AppLogger.debug('phone');
       DialerService.openDialer(phone: contact.account);
       return;
     }
 
-    // TODO: 其他客服联系方式跳转规则待产品确认后接入。
+    await _CustomerServiceContactLauncher.open(contact);
+  }
+}
+
+/// 客服联系方式跳转服务，集中处理外部 App 和浏览器兜底规则。
+class _CustomerServiceContactLauncher {
+  _CustomerServiceContactLauncher._();
+
+  static Future<void> open(_CustomerServiceContact contact) async {
+    switch (contact.type) {
+      case CustomerServiceContactType.whatsapp:
+        await _openWhatsApp(contact.account);
+      case CustomerServiceContactType.email:
+        await _openEmail(contact.account);
+      default:
+        AppLogger.debug(
+          'Unsupported customer service contact type: ${contact.type}',
+        );
+    }
+  }
+
+  /// 使用 WhatsApp 官方短链跳转，由系统处理 App Link 或浏览器兜底。
+  static Future<void> _openWhatsApp(String account) async {
+    final whatsAppAccount = account.trim();
+    if (whatsAppAccount.isEmpty) {
+      AppLogger.debug('Invalid customer service WhatsApp account: $account');
+      return;
+    }
+
+    await ExternalSource.instance.openUrl('https://wa.me/$whatsAppAccount');
+  }
+
+  /// 通过 mailto 协议拉起系统邮箱应用。
+  static Future<void> _openEmail(String account) async {
+    final email = account.trim();
+    if (email.isEmpty) {
+      AppLogger.debug('Invalid customer service email: $account');
+      return;
+    }
+
+    await ExternalSource.instance.openUrl(
+      'mailto:$email',
+      mode: LaunchMode.externalNonBrowserApplication,
+    );
   }
 }
 

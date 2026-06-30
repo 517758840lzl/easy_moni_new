@@ -248,6 +248,26 @@ class DialerService {
   }
 }
 
+/// 应用信息服务，统一从原生安装包信息读取版本名等基础信息。
+class AppInfoService {
+  static const MethodChannel _channel = MethodChannel('com.easy_moni/app_info');
+
+  static Future<String> getVersionName() async {
+    if (kIsWeb) return '';
+
+    try {
+      final String? result = await _channel.invokeMethod('getVersionName');
+      return result ?? '';
+    } on PlatformException catch (e) {
+      AppLogger.debug('AppInfoService.getVersionName failed: $e');
+      return '';
+    } on MissingPluginException catch (e) {
+      AppLogger.debug('AppInfoService.getVersionName missing plugin: $e');
+      return '';
+    }
+  }
+}
+
 /// 归因设备服务，提供登录埋点需要的真实 GAID、Install Referrer 和设备标识。
 class AttributionDeviceService {
   static const MethodChannel _channel = MethodChannel(

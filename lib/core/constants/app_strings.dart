@@ -82,6 +82,7 @@ class AppStrings {
   static const String informationIdentityStep = '身份验证';
   static const String informationFaceStep = '人脸验证';
   static const String personalInfoSaving = '保存中...';
+  static const String personalInfoLoadFailed = '加载个人信息失败，请重试';
   static const String personalInfoRegionCityTitle = '居住地区与城市';
   static const String questionnaireDefaultTitle = '';
   static const String questionnaireDescription =

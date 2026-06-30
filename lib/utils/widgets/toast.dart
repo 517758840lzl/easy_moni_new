@@ -66,6 +66,7 @@ const TextStyle _defaultTextStyle = TextStyle(
   fontSize: 15,
   fontWeight: FontWeight.normal,
   color: Colors.white,
+  decoration: TextDecoration.none,
 );
 
 BuildContext _defaultContextPredicate(Iterable<BuildContext> list) {
@@ -257,6 +258,11 @@ ToastFuture showToast(
   textMaxLines ??= theme.textMaxLines;
   textOverflow ??= theme.textOverflow;
 
+  // Toast 文本明确关闭装饰线，避免 Overlay 中继承到 fallback 的黄色下划线。
+  final TextStyle effectiveTextStyle = textStyle.copyWith(
+    decoration: TextDecoration.none,
+  );
+
   final Widget widget = Container(
     constraints: constraints,
     margin: margin,
@@ -268,7 +274,7 @@ ToastFuture showToast(
     child: ClipRect(
       child: Text(
         msg,
-        style: textStyle,
+        style: effectiveTextStyle,
         textAlign: textAlign,
         maxLines: textMaxLines,
         overflow: textOverflow,

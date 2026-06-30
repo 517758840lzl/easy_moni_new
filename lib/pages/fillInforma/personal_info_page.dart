@@ -8,6 +8,7 @@ import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:easy_moni/entities/acp_element_info_resp.dart';
 import 'package:easy_moni/entities/provinces_cities_area_resp.dart';
+import 'package:easy_moni/pages/fillInforma/providers/acquisition_progress_provider.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/fillInforma/providers/acp_element_info_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/provinces_cities_area_provider.dart';
@@ -17,6 +18,7 @@ import 'package:easy_moni/pages/fillInforma/widgets/picker_bottom_sheet.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/progress_information.dart';
 import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
 import 'package:easy_moni/services/platform_service.dart';
+import 'package:easy_moni/utils/widgets/app_state_view.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:easy_moni/utils/widgets/limit_toast.dart';
 import 'package:easy_moni/utils/widgets/permission_action_buttons.dart';
@@ -41,6 +43,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
 
   StepInfo? _stepInfo;
   bool _isLoading = true;
+  bool _hasLoadError = false;
   bool _isSubmitting = false;
   int? _processId;
   final Map<String, TextEditingController> _textControllers = {};
@@ -171,6 +174,14 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
 
   Future<void> _fetchData() async {
     AppLogger.debug('_fetchData 开始...');
+    if (mounted) {
+      setState(() {
+        _resetLoadedData();
+        _isLoading = true;
+        _hasLoadError = false;
+      });
+    }
+
     try {
       // 并行获取表单配置与地区数据
       final formFuture = ref.read(acpElementInfoProvider).call(1);
@@ -180,16 +191,108 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
 
       if (!mounted) return;
 
+      if (!_isValidFormResult(formResult) || !_isValidAreaResult(areaResult)) {
+        setState(() {
+          _isLoading = false;
+          _hasLoadError = true;
+        });
+        return;
+      }
+
       _applyFormResult(formResult);
       _applyAreaResult(areaResult);
-
-      AppLogger.debug('_fetchData 完成, _isLoading 设置为 false');
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = false;
+        _hasLoadError = false;
+      });
       _scheduleInitialLocationCheck();
-    } catch (e, stack) {
+    } catch (e) {
       AppLogger.debug('获取数据失败: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _hasLoadError = true;
+        });
+      }
+    }
+  }
+
+  /// 重试前清理旧表单状态，避免失败后再次加载时混入残留数据。
+  void _resetLoadedData() {
+    for (final controller in _textControllers.values) {
+      controller.dispose();
+    }
+    _stepInfo = null;
+    _processId = null;
+    _textControllers.clear();
+    _selectedIndices.clear();
+    _selectedValues.clear();
+    _selectedSubmitValues.clear();
+    _provinces = [];
+    _cities = [];
+    _regionCityData.clear();
+    _selectedRegionIndex = 0;
+    _isLoadingLocation = false;
+    _hasHandledInitialLocation = false;
+  }
+
+  bool _isValidFormResult(HttpResult<AcpElementInfoResp> result) {
+    final stepInfo = result.data?.stepInfoList.firstOrNull;
+    return result.isSuccess && stepInfo != null && stepInfo.entries.isNotEmpty;
+  }
+
+  bool _isValidAreaResult(HttpResult<ProvincesCitiesAreaResp> result) {
+    return result.isSuccess && result.data != null;
+  }
+
+  /// 网络错误态重试只查询采集进度，按登录后相同规则恢复到下一步或首页。
+  Future<void> _retryByProgress() async {
+    if (_isLoading) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _hasLoadError = false;
+    });
+
+    try {
+      final progressResult = await ref.read(acquisitionProgressProvider).call();
+      if (!mounted) return;
+
+      AppLogger.debug('个人信息页重试进度查询 isSuccess: ${progressResult.isSuccess}');
+      if (progressResult.isSuccess && progressResult.data != null) {
+        final progressData = progressResult.data!;
+        AppLogger.debug(
+          '个人信息页重试进度: filledStep=${progressData.filledStep ?? 0}, '
+          'totalStep=${progressData.totalStep}',
+        );
+        final route = AcquisitionProgressRouteResolver.resolve(progressData);
+        AppLogger.debug('个人信息页重试分流目标: $route');
+        if (route == AppRoutePaths.personalInfo) {
+          setState(() {
+            _isLoading = false;
+            _hasLoadError = true;
+          });
+          return;
+        }
+
+        context.go(route);
+        return;
+      }
+
+      setState(() {
+        _isLoading = false;
+        _hasLoadError = true;
+      });
+    } catch (e, stack) {
+      AppLogger.debug('个人信息页重试进度查询失败: $e');
       AppLogger.debug('堆栈: $stack');
-      if (mounted) setState(() => _isLoading = false);
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _hasLoadError = true;
+      });
     }
   }
 
@@ -683,19 +786,20 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
         onBack: () => FundingLimitDialog.showRetainDialog(context),
       ),
       content: _buildContent(),
-      bottomNavigationBar: LoanBottomActionButton(
-        enabled: _canContinue && !_isSubmitting,
-        onPressed: _canContinue && !_isSubmitting ? _onContinue : null,
-        text: _isSubmitting
-            ? AppStrings.personalInfoSaving
-            : AppStrings.continueStr,
-      ),
+      bottomNavigationBar: _buildBottomAction(),
     );
   }
 
   Widget _buildContent() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const AppStateView(child: CircularProgressIndicator());
+    }
+
+    if (_hasLoadError) {
+      return AppErrorStateView(
+        text: AppStrings.personalInfoLoadFailed,
+        onReload: () => _retryByProgress(),
+      );
     }
 
     return SingleChildScrollView(
@@ -703,6 +807,20 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
       child: Column(
         children: _stepInfo?.entries.map(_buildEntryItem).toList() ?? [],
       ),
+    );
+  }
+
+  Widget? _buildBottomAction() {
+    if (_isLoading || _hasLoadError) {
+      return null;
+    }
+
+    return LoanBottomActionButton(
+      enabled: _canContinue && !_isSubmitting,
+      onPressed: _canContinue && !_isSubmitting ? _onContinue : null,
+      text: _isSubmitting
+          ? AppStrings.personalInfoSaving
+          : AppStrings.continueStr,
     );
   }
 

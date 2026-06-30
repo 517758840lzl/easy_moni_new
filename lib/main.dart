@@ -31,18 +31,16 @@ void main() {
   );
 
   runApp(
-    EasyToast(
-      child: ProviderScope(
-        observers: [
-          TalkerRiverpodObserver(
-            talker: talker,
-            settings: const TalkerRiverpodLoggerSettings(
-              printProviderDisposed: true,
-            ),
+    ProviderScope(
+      observers: [
+        TalkerRiverpodObserver(
+          talker: talker,
+          settings: const TalkerRiverpodLoggerSettings(
+            printProviderDisposed: true,
           ),
-        ],
-        child: const MainApp(),
-      ),
+        ),
+      ],
+      child: const MainApp(),
     ),
   );
 }
@@ -59,11 +57,14 @@ class MainApp extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       routerConfig: router,
       builder: (context, child) {
-        return MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: TextScaler.noScaling),
-          child: child ?? const SizedBox(),
+        // Toast 的 Overlay 需要位于 MaterialApp 本地化上下文内，避免文本选择工具栏缺少 MaterialLocalizations。
+        return EasyToast(
+          child: MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.noScaling),
+            child: child ?? const SizedBox(),
+          ),
         );
       },
     );

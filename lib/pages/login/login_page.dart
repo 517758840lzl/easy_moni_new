@@ -37,10 +37,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   bool _isLoggingIn = false;
   bool _isCheckingSavedSession = true;
   bool _hasPrecachedBackground = false;
+  String? _lastAutoCodePhone;
 
   @override
   void initState() {
     super.initState();
+
     _phoneController = TextEditingController();
     _codeController = TextEditingController();
     _phoneController.addListener(_onPhoneChanged);
@@ -77,8 +79,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   bool _isValidPhoneInput(String digits) {
-    return (digits.length == 9 && !digits.startsWith('0')) ||
-        (digits.length == 10 && digits.startsWith('0'));
+    final phoneDigits = digits.replaceAll(RegExp(r'[^0-9]'), '');
+    return phoneDigits.length == 10 && phoneDigits.startsWith('0');
   }
 
   /// 判断登录必填输入是否完整，用于控制按钮是否可提交。
@@ -124,8 +126,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   void _onPhoneChanged() {
     String text = _phoneController.text;
 
-    // 过滤非数字字符
+    // 手机号只保留数字；首位不是 0 时按加纳本地号码格式自动补 0。
     text = text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (text.isNotEmpty && !text.startsWith('0')) {
+      text = '0$text';
+    }
 
     if (text.length > 10) {
       text = text.substring(0, 10);
@@ -142,7 +147,27 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       return;
     }
 
+    if (text.length < 10) {
+      _lastAutoCodePhone = null;
+    }
+
     setState(() {});
+
+    if (text.length == 10) {
+      _sendCodeAfterPhoneCompleted(text);
+    }
+  }
+
+  /// 手机号达到 10 位后自动发送验证码，并避免同一号码重复触发。
+  void _sendCodeAfterPhoneCompleted(String phoneText) {
+    if (_lastAutoCodePhone == phoneText ||
+        _isSendingCode ||
+        _countdownSeconds > 0) {
+      return;
+    }
+
+    _lastAutoCodePhone = phoneText;
+    unawaited(_onGetCode());
   }
 
   /// 验证码输入变化监听
@@ -483,7 +508,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 
-  /// 手机号输入区域只负责视觉和数字过滤，发送验证码只能由按钮触发。
+  /// 手机号输入区域展示本地号码格式，完整输入后会自动触发验证码发送。
   Widget _buildPhoneInput() {
     return SizedBox(
       height: 48,
@@ -528,9 +553,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   isDense: true,
                   contentPadding: EdgeInsets.zero,
                 ),
-                onChanged: (value) {
-                  setState(() {});
-                },
               ),
             ),
             Text(

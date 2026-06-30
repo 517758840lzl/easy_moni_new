@@ -114,6 +114,21 @@ import CoreLocation
           result(FlutterMethodNotImplemented)
         }
       })
+
+      let appInfoChannel = FlutterMethodChannel(
+        name: "com.easy_moni/app_info",
+        binaryMessenger: rvc.binaryMessenger
+      )
+
+      appInfoChannel.setMethodCallHandler({
+        (call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
+        if call.method == "getVersionName" {
+          let versionName = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+          result(versionName)
+        } else {
+          result(FlutterMethodNotImplemented)
+        }
+      })
     }
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
