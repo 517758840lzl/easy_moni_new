@@ -174,7 +174,7 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
 
     final controller = CameraController(
       targetCamera,
-      ResolutionPreset.veryHigh,
+      ResolutionPreset.high,
       enableAudio: false,
       imageFormatGroup: imageFormatGroup,
     );
@@ -310,8 +310,8 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     required int startDirection,
     required ValueChanged<int> saveStartDirection,
   }) {
-    const startThreshold = 7.0;
-    const oppositeThreshold = 5.0;
+    const startThreshold = 5.0;
+    const oppositeThreshold = 3.0;
 
     if (angle.abs() < startThreshold && startDirection == 0) {
       return false;
