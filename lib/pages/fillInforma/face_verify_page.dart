@@ -174,7 +174,7 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
 
     final controller = CameraController(
       targetCamera,
-      ResolutionPreset.medium,
+      ResolutionPreset.veryHigh,
       enableAudio: false,
       imageFormatGroup: imageFormatGroup,
     );

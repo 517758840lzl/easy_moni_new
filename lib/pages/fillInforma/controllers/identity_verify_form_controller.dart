@@ -12,6 +12,19 @@ class IdentityImageSide {
   static const String unknown = '';
 }
 
+/// 身份认证表单字段编码，按后端配置与 OCR 响应字段建立稳定映射。
+class IdentityVerifyFieldCode {
+  IdentityVerifyFieldCode._();
+
+  static const String gender = '40001';
+  static const String idCardNumber = '40002';
+  static const String fatherName = '40003';
+  static const String name = '40004';
+  static const String birthday = '40006';
+  static const String idCardFrontImage = '40007';
+  static const String idCardBackImage = '40008';
+}
+
 /// 身份认证表单控制器，负责后端表单项、OCR 数据和提交参数之间的映射。
 class IdentityVerifyFormController {
   final Map<String, TextEditingController> _textControllers = {};
@@ -168,26 +181,15 @@ class IdentityVerifyFormController {
     return imageSideFor(entry) == IdentityImageSide.back;
   }
 
-  /// 识别证件图片字段的正反面；后端暂未提供独立 side 字段时使用 key/文案和顺序兜底。
+  /// 识别证件图片字段的正反面，按后端下发字段编码建立稳定映射。
   String imageSideFor(FormEntry entry) {
     if (!FormEntryInputTypeHelper.isIdCardImage(entry)) {
       return IdentityImageSide.unknown;
     }
-    if (_looksLikeFrontImageEntry(entry)) {
+    if (entry.code == IdentityVerifyFieldCode.idCardFrontImage) {
       return IdentityImageSide.front;
     }
-    if (_looksLikeBackImageEntry(entry)) {
-      return IdentityImageSide.back;
-    }
-
-    final index = idCardImageEntries.indexWhere(
-      (imageEntry) => imageEntry.key == entry.key,
-    );
-    // TODO: 后端若支持明确 side 字段，应替换当前按 order 推断正反面的兜底逻辑。
-    if (index == 0) {
-      return IdentityImageSide.front;
-    }
-    if (index == 1) {
+    if (entry.code == IdentityVerifyFieldCode.idCardBackImage) {
       return IdentityImageSide.back;
     }
     return IdentityImageSide.unknown;
@@ -334,18 +336,34 @@ class IdentityVerifyFormController {
   String? _ocrSubmitValueForEntry(FormEntry entry, OcrVerificationResp data) {
     final text = _entryIdentityText(entry);
     final keyText = entry.key.toLowerCase();
+    final fieldCodeValue = _ocrSubmitValueForFieldCode(entry.code, data);
+    if (fieldCodeValue != null) {
+      return fieldCodeValue;
+    }
 
     if (_isIdNumberEntry(text)) {
       return data.idCardNumber;
     }
+    if (_isDocumentNumberEntry(text)) {
+      return data.documentNumber;
+    }
+    if (_isFatherNameEntry(text, keyText)) {
+      return data.fatherName;
+    }
+    if (_isMotherNameEntry(text, keyText)) {
+      return data.motherName;
+    }
     if (_isFirstNameEntry(text, keyText)) {
-      return data.firstNames;
+      return data.name;
     }
     if (_isLastNameEntry(text, keyText)) {
-      return data.lastName;
+      return data.name;
+    }
+    if (_isFullNameEntry(text, keyText)) {
+      return data.name;
     }
     if (_hasIdentityToken(text, 'gender') || _hasIdentityToken(text, 'sex')) {
-      return data.gender;
+      return data.gender?.toString();
     }
     if (_isBirthdayEntry(text)) {
       return data.birthday;
@@ -355,8 +373,15 @@ class IdentityVerifyFormController {
 
   String? _ocrDisplayValueForEntry(FormEntry entry, OcrVerificationResp data) {
     final text = _entryIdentityText(entry);
+    if (entry.code == IdentityVerifyFieldCode.gender) {
+      return _displayGender(data.gender?.toString());
+    }
+    if (entry.code == IdentityVerifyFieldCode.birthday) {
+      final birthday = _parseBirthdayDate(data.birthday);
+      return birthday == null ? data.birthday : _formatDisplayDate(birthday);
+    }
     if (_hasIdentityToken(text, 'gender') || _hasIdentityToken(text, 'sex')) {
-      return _displayGender(data.gender);
+      return _displayGender(data.gender?.toString());
     }
     if (_isBirthdayEntry(text)) {
       final birthday = _parseBirthdayDate(data.birthday);
@@ -365,24 +390,33 @@ class IdentityVerifyFormController {
     return null;
   }
 
-  bool _looksLikeFrontImageEntry(FormEntry entry) {
-    final text = _entryIdentityText(entry);
-    return text.contains('id_card_front') ||
-        (text.contains('front') &&
-            (text.contains('image') || text.contains('photo')));
-  }
-
-  bool _looksLikeBackImageEntry(FormEntry entry) {
-    final text = _entryIdentityText(entry);
-    return text.contains('id_card_back') ||
-        (text.contains('back') &&
-            (text.contains('image') || text.contains('photo')));
+  /// 优先按后端字段编码映射 OCR 数据，避免多语言展示文案影响回填。
+  String? _ocrSubmitValueForFieldCode(String code, OcrVerificationResp data) {
+    switch (code) {
+      case IdentityVerifyFieldCode.idCardNumber:
+        return data.idCardNumber;
+      case IdentityVerifyFieldCode.fatherName:
+        return data.fatherName;
+      case IdentityVerifyFieldCode.name:
+        return data.name;
+      case IdentityVerifyFieldCode.gender:
+        return data.gender?.toString();
+      case IdentityVerifyFieldCode.birthday:
+        return data.birthday;
+      default:
+        return null;
+    }
   }
 
   bool _isIdNumberEntry(String text) {
     return text.contains('national_id') ||
         text.contains('id_number') ||
-        text.contains('id_card_number');
+        text.contains('id_card_number') ||
+        text.contains(IdentityVerifyFieldCode.idCardNumber);
+  }
+
+  bool _isDocumentNumberEntry(String text) {
+    return text.contains('document_number');
   }
 
   bool _isRecognizedIdNumberEntry(FormEntry entry) {
@@ -398,6 +432,21 @@ class IdentityVerifyFormController {
         text.contains('last_name') ||
         text.contains('surname') ||
         text.contains('family_name');
+  }
+
+  bool _isFullNameEntry(String text, String keyText) {
+    return keyText == 'name' ||
+        keyText == 'full_name' ||
+        text.contains('full_name') ||
+        _hasIdentityToken(text, 'name');
+  }
+
+  bool _isFatherNameEntry(String text, String keyText) {
+    return keyText == 'father_name' || text.contains('father_name');
+  }
+
+  bool _isMotherNameEntry(String text, String keyText) {
+    return keyText == 'mother_name' || text.contains('mother_name');
   }
 
   bool _isBirthdayEntry(String text) {

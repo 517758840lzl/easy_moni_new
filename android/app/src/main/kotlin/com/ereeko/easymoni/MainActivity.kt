@@ -2,6 +2,7 @@ package com.ereeko.easymoni
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -23,6 +24,8 @@ class MainActivity : FlutterActivity() {
     private var previousLaunchAt: Long = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // 原生启动阶段先锁定竖屏，避免 Flutter 首帧前短暂横屏。
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         super.onCreate(savedInstanceState)
 
         // 风控设备信息需要上一次启动时间，用于计算距上次启动的小时数。

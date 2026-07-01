@@ -28,6 +28,7 @@ class LoginPage extends ConsumerStatefulWidget {
 
 class _LoginPageState extends ConsumerState<LoginPage> {
   static const Color _backgroundFallbackColor = Color(0xFF20754F);
+  static const int _verifyCodeLength = 4;
 
   late final TextEditingController _phoneController;
   late final TextEditingController _codeController;
@@ -177,8 +178,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     // 过滤非数字字符
     text = text.replaceAll(RegExp(r'[^0-9]'), '');
 
-    if (text.length > 4) {
-      text = text.substring(0, 4);
+    if (text.length > _verifyCodeLength) {
+      text = text.substring(0, _verifyCodeLength);
     }
 
     // 更新文本
@@ -193,6 +194,19 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     }
 
     setState(() {});
+    if (text.length == _verifyCodeLength) {
+      _submitLoginAfterCodeCompleted();
+    }
+  }
+
+  /// 验证码达到当前长度后自动提交登录，复用登录入口的校验与防重复提交逻辑。
+  void _submitLoginAfterCodeCompleted() {
+    if (_isLoggingIn) {
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+    unawaited(_onLogin());
   }
 
   void _startCountdown() {
@@ -596,6 +610,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     child: TextField(
                       controller: _codeController,
                       keyboardType: TextInputType.number,
+                      textInputAction: TextInputAction.done,
                       style: const TextStyle(fontSize: 14, color: Colors.white),
                       decoration: InputDecoration(
                         hintText: AppStrings.codestr,

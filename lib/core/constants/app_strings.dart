@@ -139,6 +139,7 @@ class AppStrings {
   static const String identityVerifyCameraPermissionDenied = '未获得相机权限';
   static const String identityVerifyFlipCardAndContinue = '请将身份证翻面，并继续拍摄';
   static const String identityVerifyPhotoProcessing = '已拍摄，正在处理照片';
+  static const String identityVerifyCameraReturning = 'please waite...';
   static const String identityVerifyPhotoUploading = '图片上传中...';
   static const String identityVerifyBackUploadSuccess = '证件背面上传成功';
   static const String identityVerifyUploadFailed = '图片上传失败';

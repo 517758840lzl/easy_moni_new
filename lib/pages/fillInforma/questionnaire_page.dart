@@ -148,73 +148,75 @@ class _QuestionnairePageState extends ConsumerState<QuestionnairePage> {
         ? formState!.stepInfo!.pageTitle
         : AppStrings.questionnaireDefaultTitle;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Image(
-              image: Assets.images.loanBg.provider(),
-              fit: BoxFit.cover,
-              alignment: Alignment.topCenter,
+    return FundingLimitPopScope(
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF5F5F5),
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: Image(
+                image: Assets.images.loanBg.provider(),
+                fit: BoxFit.cover,
+                alignment: Alignment.topCenter,
+              ),
             ),
-          ),
-          SafeArea(
-            bottom: false,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(context),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.only(left: 24, right: 24),
-                  child: Text(
-                    pageTitle,
-                    style: const TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      height: 1.1,
-                      letterSpacing: 0,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Padding(
-                  padding: EdgeInsets.only(left: 24, right: 150),
-                  child: Text(
-                    AppStrings.questionnaireDescription,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white70,
-                      height: 1.45,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(16),
+            SafeArea(
+              bottom: false,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(context),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 24, right: 24),
+                    child: Text(
+                      pageTitle,
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        height: 1.1,
+                        letterSpacing: 0,
                       ),
                     ),
-                    child: _buildBody(questionnaireAsync),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 24, right: 150),
+                    child: Text(
+                      AppStrings.questionnaireDescription,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white70,
+                        height: 1.45,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  Expanded(
+                    child: Container(
+                      width: double.infinity,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(16),
+                        ),
+                      ),
+                      child: _buildBody(questionnaireAsync),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: LoanBottomActionButton(
-        enabled: formState?.canSubmit ?? false,
-        onPressed: _onSubmit,
-        text: (formState?.isSubmitting ?? false)
-            ? AppStrings.questionnaireSaving
-            : AppStrings.questionnaireSubmitButton,
+          ],
+        ),
+        bottomNavigationBar: LoanBottomActionButton(
+          enabled: formState?.canSubmit ?? false,
+          onPressed: _onSubmit,
+          text: (formState?.isSubmitting ?? false)
+              ? AppStrings.questionnaireSaving
+              : AppStrings.questionnaireSubmitButton,
+        ),
       ),
     );
   }

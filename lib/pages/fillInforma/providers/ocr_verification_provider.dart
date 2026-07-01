@@ -76,9 +76,7 @@ class OcrVerificationApi {
       final isSuccessCode = map['code'] == 200 || map['code'] == 0;
       if (isSuccessCode && responseData is Map) {
         return HttpResult.success(
-          OcrVerificationResp.fromJson(
-            Map<String, dynamic>.from(responseData),
-          ),
+          OcrVerificationResp.fromJson(Map<String, dynamic>.from(responseData)),
         );
       }
 
@@ -115,43 +113,57 @@ class OcrVerificationApi {
   }
 }
 
+/// OCR 识别结果，字段结构与后端 data 响应保持一致。
 class OcrVerificationResp {
-  final String? type;
-  final String? name;
   final String? idCardNumber;
-  final String? firstNames;
-  final String? lastName;
-  final String? birthday;
-  final String? gender;
+  final String? name;
+  final String? fatherName;
+  final String? motherName;
+  final String? type;
   final String? url;
   final String? backUrl;
   final int? isSuccess;
+  final int? gender;
+  final String? birthday;
+  final String? documentNumber;
 
   OcrVerificationResp({
-    this.type,
-    this.name,
     this.idCardNumber,
-    this.firstNames,
-    this.lastName,
-    this.birthday,
-    this.gender,
+    this.name,
+    this.fatherName,
+    this.motherName,
+    this.type,
     this.url,
     this.backUrl,
     this.isSuccess,
+    this.gender,
+    this.birthday,
+    this.documentNumber,
   });
 
   factory OcrVerificationResp.fromJson(Map<String, dynamic> json) {
     return OcrVerificationResp(
-      type: json['type']?.toString(),
-      name: json['name']?.toString(),
       idCardNumber: json['idCardNumber']?.toString(),
-      firstNames: json['fatherName']?.toString(),
-      lastName: json['name']?.toString(),
-      birthday: json['birthday']?.toString(),
-      gender: json['gender']?.toString(),
+      name: json['name']?.toString(),
+      fatherName: json['fatherName']?.toString(),
+      motherName: json['motherName']?.toString(),
+      type: json['type']?.toString(),
       url: json['url']?.toString(),
       backUrl: json['backUrl']?.toString(),
-      isSuccess: json['isSuccess'] as int?,
+      isSuccess: _parseNullableInt(json['isSuccess']),
+      gender: _parseNullableInt(json['gender']),
+      birthday: json['birthday']?.toString(),
+      documentNumber: json['documentNumber']?.toString(),
     );
+  }
+
+  static int? _parseNullableInt(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+    if (value is int) {
+      return value;
+    }
+    return int.tryParse(value.toString());
   }
 }

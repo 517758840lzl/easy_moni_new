@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,7 +9,7 @@ import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:easy_moni/utils/widgets/toast.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final talker = AppLogger.instance;
   HttpProvider.init(talker: talker);
@@ -25,10 +23,8 @@ void main() {
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
-  // 启动首帧优先展示，方向锁定通过平台通道异步执行，避免阻塞 Dart 启动页可见时间。
-  unawaited(
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]),
-  );
+  // 方向锁定
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   runApp(
     ProviderScope(

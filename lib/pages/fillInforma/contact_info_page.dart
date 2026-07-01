@@ -198,23 +198,25 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
 
   @override
   Widget build(BuildContext context) {
-    return LoanRoundedPageShell(
-      contentTop: _contentTop,
-      contentTopRadius: 12,
-      backgroundColor: AppColors.primaryDark,
-      header: buildInformationHeader(
-        context: context,
-        title: _pageTitle,
-        activeStep: InformationStep.personal,
-        onBack: () => FundingLimitDialog.showRetainDialog(context),
-      ),
-      content: _buildContent(),
-      bottomNavigationBar: LoanBottomActionButton(
-        enabled: _canContinue && !_isSubmitting,
-        onPressed: _canContinue && !_isSubmitting ? _onContinue : null,
-        text: _isSubmitting
-            ? AppStrings.personalInfoSaving
-            : AppStrings.continueStr,
+    return FundingLimitPopScope(
+      child: LoanRoundedPageShell(
+        contentTop: _contentTop,
+        contentTopRadius: 12,
+        backgroundColor: AppColors.primaryDark,
+        header: buildInformationHeader(
+          context: context,
+          title: _pageTitle,
+          activeStep: InformationStep.personal,
+          onBack: () => FundingLimitDialog.showRetainDialog(context),
+        ),
+        content: _buildContent(),
+        bottomNavigationBar: LoanBottomActionButton(
+          enabled: _canContinue && !_isSubmitting,
+          onPressed: _canContinue && !_isSubmitting ? _onContinue : null,
+          text: _isSubmitting
+              ? AppStrings.personalInfoSaving
+              : AppStrings.continueStr,
+        ),
       ),
     );
   }

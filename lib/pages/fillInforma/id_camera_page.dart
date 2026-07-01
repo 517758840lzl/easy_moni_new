@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:easy_moni/core/constants/app_strings.dart';
@@ -164,6 +165,9 @@ class _IdCameraScreenState extends State<IdCameraScreen>
   String? _cameraError;
   bool _isTakingPicture = false;
   bool _isProcessingCapturedImage = false;
+  bool _isLeavingCameraPage = false;
+  bool _hasRestoredPortraitOrientation = false;
+  int _cameraInitToken = 0;
   late bool _currentIsFront;
   Uint8List? _frontImageData;
   Uint8List? _backImageData;
@@ -175,13 +179,7 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _currentIsFront = widget.isFront;
-    // 证件拍摄需要横屏，以匹配 Ghana Card 的宽版比例。
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    _initializeControllerFuture = _initCamera();
+    _initializeControllerFuture = _prepareCameraPageAndInit();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final message = widget.entryToastMessage?.trim();
       if (!mounted || message == null || message.isEmpty) {
@@ -193,8 +191,33 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     });
   }
 
+  /// 先完成横屏与沉浸式布局切换，再初始化相机，降低 Activity 旋转期间抢占相机的概率。
+  Future<void> _prepareCameraPageAndInit() async {
+    // 证件拍摄需要横屏，以匹配 Ghana Card 的宽版比例。
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    await _waitForOrientationLayoutToSettle();
+    if (!mounted || _isLeavingCameraPage) {
+      return;
+    }
+    await _initCamera();
+  }
+
+  /// 等待 Flutter 完成方向切换后的布局刷新，避免相机初始化撞上窗口尺寸变化。
+  Future<void> _waitForOrientationLayoutToSettle() async {
+    await WidgetsBinding.instance.endOfFrame;
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    await WidgetsBinding.instance.endOfFrame;
+  }
+
   Future<void> _initCamera() async {
+    final initToken = ++_cameraInitToken;
+    CameraController? nextController;
     try {
+      _cameraError = null;
       CameraDescription? camera = widget.camera;
       if (camera == null) {
         final cameras = await availableCameras();
@@ -204,31 +227,58 @@ class _IdCameraScreenState extends State<IdCameraScreen>
         );
       }
       if (camera == null) {
-        _cameraError = AppStrings.identityVerifyImageNotCaptured;
+        AppLogger.warning('相机初始化失败: 未找到可用相机');
+        if (_isCurrentCameraInit(initToken)) {
+          _cameraError = AppStrings.identityVerifyImageNotCaptured;
+        }
         return;
       }
       // 证件裁剪后再上传，medium 预览可降低不同机型初始化耗时和内存压力。
-      final controller = CameraController(
+      nextController = CameraController(
         camera,
-        ResolutionPreset.medium,
+        ResolutionPreset.veryHigh,
         enableAudio: false,
       );
-      await controller.initialize();
-      if (!mounted) {
-        await controller.dispose();
+      await nextController.initialize();
+      if (!_isCurrentCameraInit(initToken)) {
+        await nextController.dispose();
         return;
       }
-      _controller = controller;
-    } catch (e) {
-      AppLogger.debug('相机初始化失败: $e');
-      _cameraError = AppStrings.identityVerifyImageNotCaptured;
+
+      final oldController = _controller;
+      _controller = nextController;
+      nextController = null;
+      await oldController?.dispose();
+    } on CameraException catch (e, stackTrace) {
+      AppLogger.error(
+        '相机初始化失败: code=${e.code}, description=${e.description}',
+        e,
+        stackTrace,
+      );
+      if (_isCurrentCameraInit(initToken)) {
+        _cameraError = AppStrings.identityVerifyImageNotCaptured;
+      }
+    } catch (e, stackTrace) {
+      AppLogger.error('相机初始化失败: $e', e, stackTrace);
+      if (_isCurrentCameraInit(initToken)) {
+        _cameraError = AppStrings.identityVerifyImageNotCaptured;
+      }
+    } finally {
+      if (nextController != null) {
+        await nextController.dispose();
+      }
     }
+  }
+
+  bool _isCurrentCameraInit(int initToken) {
+    return mounted && !_isLeavingCameraPage && initToken == _cameraInitToken;
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     final controller = _controller;
     if (state == AppLifecycleState.inactive) {
+      _cameraInitToken++;
       if (controller == null || !controller.value.isInitialized) {
         return;
       }
@@ -238,10 +288,13 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     }
 
     if (state == AppLifecycleState.resumed) {
+      if (_isLeavingCameraPage) {
+        return;
+      }
       if (controller != null && controller.value.isInitialized) {
         return;
       }
-      _initializeControllerFuture = _initCamera();
+      _initializeControllerFuture = _prepareCameraPageAndInit();
       if (mounted) {
         setState(() {});
       }
@@ -251,72 +304,91 @@ class _IdCameraScreenState extends State<IdCameraScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    // 离开完整拍摄流程后恢复主流程竖屏显示。
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    _cameraInitToken++;
+    if (!_hasRestoredPortraitOrientation) {
+      unawaited(_restorePortraitOrientation());
+    }
     _controller?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF1A1A1A),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final viewportSize = constraints.biggest;
-          final cardRect = IdCardCameraLayout.cardRect(viewportSize);
-          _viewportSize = viewportSize;
-          _cardRect = cardRect;
+    return PopScope<IdCameraCaptureResult>(
+      canPop: _isLeavingCameraPage,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          return;
+        }
+        unawaited(_popWithoutResult());
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF1A1A1A),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final viewportSize = constraints.biggest;
+            final cardRect = IdCardCameraLayout.cardRect(viewportSize);
+            _viewportSize = viewportSize;
+            _cardRect = cardRect;
 
-          return FutureBuilder<void>(
-            future: _initializeControllerFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState != ConnectionState.done) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              final controller = _controller;
-              if (_cameraError != null || controller == null) {
-                return _CameraUnavailableView(
-                  message:
-                      _cameraError ?? AppStrings.identityVerifyImageNotCaptured,
-                );
-              }
-
-              return Stack(
-                children: [
-                  Positioned.fill(child: IdCameraPreviewCover(controller)),
-                  Positioned.fromRect(
-                    rect: cardRect,
-                    child: Opacity(
-                      opacity: 0.62,
-                      child:
-                          (_currentIsFront
-                                  ? Assets.images.inforamtionIdw
-                                  : Assets.images.inforamtionIdo)
-                              .image(fit: BoxFit.fill),
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter: CardMaskPainter(cardRect: cardRect),
-                    ),
-                  ),
-                  IdCameraUiLayer(
-                    cardRect: cardRect,
-                    isTakingPicture: _isTakingPicture,
-                    onTakePicture: _takePicture,
-                  ),
-                  if (_isProcessingCapturedImage)
-                    const Positioned.fill(
-                      child: _CapturedImageProcessingOverlay(),
-                    ),
-                ],
+            if (_isLeavingCameraPage) {
+              return _CameraExitLoadingView(
+                cardRect: cardRect,
+                isFront: _currentIsFront,
               );
-            },
-          );
-        },
+            }
+
+            return FutureBuilder<void>(
+              future: _initializeControllerFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final controller = _controller;
+                if (_cameraError != null || controller == null) {
+                  return _CameraUnavailableView(
+                    message:
+                        _cameraError ??
+                        AppStrings.identityVerifyImageNotCaptured,
+                    onCancel: _popWithoutResult,
+                  );
+                }
+
+                return Stack(
+                  children: [
+                    Positioned.fill(child: IdCameraPreviewCover(controller)),
+                    Positioned.fromRect(
+                      rect: cardRect,
+                      child: Opacity(
+                        opacity: 0.62,
+                        child:
+                            (_currentIsFront
+                                    ? Assets.images.inforamtionIdw
+                                    : Assets.images.inforamtionIdo)
+                                .image(fit: BoxFit.fill),
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: CardMaskPainter(cardRect: cardRect),
+                      ),
+                    ),
+                    IdCameraUiLayer(
+                      cardRect: cardRect,
+                      isTakingPicture: _isTakingPicture,
+                      onTakePicture: _takePicture,
+                    ),
+                    if (_isProcessingCapturedImage)
+                      const Positioned.fill(
+                        child: _CapturedImageProcessingOverlay(),
+                      ),
+                  ],
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
@@ -366,8 +438,8 @@ class _IdCameraScreenState extends State<IdCameraScreen>
         return;
       }
 
-      Navigator.of(context).pop<IdCameraCaptureResult>(
-        IdCameraCaptureResult(
+      await _popWithResult(
+        result: IdCameraCaptureResult(
           frontImageData: _frontImageData,
           backImageData: _backImageData,
         ),
@@ -380,7 +452,7 @@ class _IdCameraScreenState extends State<IdCameraScreen>
         SnackBar(content: Text(AppStrings.captureFailed(e))),
       );
     } finally {
-      if (mounted) {
+      if (mounted && !_isLeavingCameraPage) {
         setState(() {
           _isTakingPicture = false;
           _isProcessingCapturedImage = false;
@@ -402,6 +474,48 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     } else {
       _backImageData = imageData;
     }
+  }
+
+  Future<void> _popWithoutResult() async {
+    await _popWithResult();
+  }
+
+  /// 退出拍照页前先恢复竖屏，避免上一页短暂暴露在横屏状态。
+  Future<void> _popWithResult({IdCameraCaptureResult? result}) async {
+    if (_isLeavingCameraPage) {
+      return;
+    }
+
+    _cameraInitToken++;
+    if (mounted) {
+      setState(() {
+        _isLeavingCameraPage = true;
+        _isTakingPicture = true;
+        _isProcessingCapturedImage = false;
+      });
+    }
+
+    final controller = _controller;
+    _controller = null;
+    await controller?.dispose();
+    await _restorePortraitOrientation();
+    if (!mounted) {
+      return;
+    }
+
+    Navigator.of(context).pop<IdCameraCaptureResult>(result);
+  }
+
+  Future<void> _restorePortraitOrientation() async {
+    if (_hasRestoredPortraitOrientation) {
+      return;
+    }
+
+    // 离开完整拍摄流程后恢复主流程竖屏显示。
+    await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    await _waitForOrientationLayoutToSettle();
+    _hasRestoredPortraitOrientation = true;
   }
 
   /// 拍照成功后冻结取景画面，让用户明确知道照片已经定格。
@@ -429,9 +543,34 @@ class _IdCameraScreenState extends State<IdCameraScreen>
   }
 }
 
+/// 退出相机页时保留证件框界面并展示加载态，避免释放相机后继续依赖预览纹理。
+class _CameraExitLoadingView extends StatelessWidget {
+  const _CameraExitLoadingView({required this.cardRect, required this.isFront});
+
+  final Rect cardRect;
+  final bool isFront;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        const Positioned.fill(
+          child: _CapturedImageProcessingOverlay(
+            message: AppStrings.identityVerifyCameraReturning,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// 拍照完成后的处理遮罩，避免用户误以为仍需要继续保持拍摄姿势。
 class _CapturedImageProcessingOverlay extends StatelessWidget {
-  const _CapturedImageProcessingOverlay();
+  const _CapturedImageProcessingOverlay({
+    this.message = AppStrings.identityVerifyPhotoProcessing,
+  });
+
+  final String message;
 
   @override
   Widget build(BuildContext context) {
@@ -443,12 +582,12 @@ class _CapturedImageProcessingOverlay extends StatelessWidget {
             color: Colors.black.withValues(alpha: 0.72),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SizedBox(
+                const SizedBox(
                   width: 22,
                   height: 22,
                   child: CircularProgressIndicator(
@@ -456,9 +595,9 @@ class _CapturedImageProcessingOverlay extends StatelessWidget {
                     color: Colors.white,
                   ),
                 ),
-                SizedBox(width: 12),
+                const SizedBox(width: 12),
                 Text(
-                  AppStrings.identityVerifyPhotoProcessing,
+                  message,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 14,
@@ -475,9 +614,10 @@ class _CapturedImageProcessingOverlay extends StatelessWidget {
 }
 
 class _CameraUnavailableView extends StatelessWidget {
-  const _CameraUnavailableView({required this.message});
+  const _CameraUnavailableView({required this.message, required this.onCancel});
 
   final String message;
+  final VoidCallback onCancel;
 
   @override
   Widget build(BuildContext context) {
@@ -494,8 +634,7 @@ class _CameraUnavailableView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             TextButton(
-              onPressed: () =>
-                  Navigator.of(context).pop<IdCameraCaptureResult>(),
+              onPressed: onCancel,
               child: const Text(AppStrings.cancel),
             ),
           ],

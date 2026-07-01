@@ -163,33 +163,38 @@ class _FaceVerifyEntryPageState extends ConsumerState<FaceVerifyEntryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return LoanRoundedPageShell(
-      contentTop: _contentTop,
-      contentTopRadius: 12,
-      backgroundColor: AppColors.primaryDark,
-      header: buildInformationHeader(
-        context: context,
-        title: _pageTitle,
-        activeStep: InformationStep.face,
-        onBack: () => FundingLimitDialog.showRetainDialog(context),
+    return FundingLimitPopScope(
+      child: LoanRoundedPageShell(
+        contentTop: _contentTop,
+        contentTopRadius: 12,
+        backgroundColor: AppColors.primaryDark,
+        header: buildInformationHeader(
+          context: context,
+          title: _pageTitle,
+          activeStep: InformationStep.face,
+          onBack: () => FundingLimitDialog.showRetainDialog(context),
+        ),
+        content: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _buildContent(),
+        bottomNavigationBar: _hasCapturedFace
+            ? _FacePhotoActionBar(
+                enabled: !_isLoading && !_isSubmitting,
+                isSubmitting: _isSubmitting,
+                onRetake: _onRetake,
+                onConfirm: _onConfirmPhoto,
+              )
+            : LoanBottomActionButton(
+                enabled: !_isLoading,
+                onPressed: _isLoading ? null : _onContinue,
+                text: AppStrings.faceVerifyEntryContinue,
+                fontWeight: FontWeight.w600,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 4,
+                ),
+              ),
       ),
-      content: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _buildContent(),
-      bottomNavigationBar: _hasCapturedFace
-          ? _FacePhotoActionBar(
-              enabled: !_isLoading && !_isSubmitting,
-              isSubmitting: _isSubmitting,
-              onRetake: _onRetake,
-              onConfirm: _onConfirmPhoto,
-            )
-          : LoanBottomActionButton(
-              enabled: !_isLoading,
-              onPressed: _isLoading ? null : _onContinue,
-              text: AppStrings.faceVerifyEntryContinue,
-              fontWeight: FontWeight.w600,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-            ),
     );
   }
 

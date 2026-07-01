@@ -479,10 +479,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
   }
 
   FormEntry? get _regionEntry {
-    return _formEntries
-        .where(_isRegionEntry)
-        .cast<FormEntry?>()
-        .firstOrNull;
+    return _formEntries.where(_isRegionEntry).cast<FormEntry?>().firstOrNull;
   }
 
   String get _pageTitle => _stepInfo?.pageTitle.trim() ?? '';
@@ -799,18 +796,20 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
 
   @override
   Widget build(BuildContext context) {
-    return LoanRoundedPageShell(
-      contentTop: _contentTop,
-      contentTopRadius: 12,
-      backgroundColor: AppColors.primaryDark,
-      header: buildInformationHeader(
-        context: context,
-        title: _pageTitle,
-        activeStep: InformationStep.personal,
-        onBack: () => FundingLimitDialog.showRetainDialog(context),
+    return FundingLimitPopScope(
+      child: LoanRoundedPageShell(
+        contentTop: _contentTop,
+        contentTopRadius: 12,
+        backgroundColor: AppColors.primaryDark,
+        header: buildInformationHeader(
+          context: context,
+          title: _pageTitle,
+          activeStep: InformationStep.personal,
+          onBack: () => FundingLimitDialog.showRetainDialog(context),
+        ),
+        content: _buildContent(),
+        bottomNavigationBar: _buildBottomAction(),
       ),
-      content: _buildContent(),
-      bottomNavigationBar: _buildBottomAction(),
     );
   }
 

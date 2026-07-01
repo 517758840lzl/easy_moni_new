@@ -30,7 +30,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/pages/login/permission_page.dart';
-import 'package:easy_moni/pages/login/splash_page.dart';
+// import 'package:easy_moni/pages/login/splash_page.dart';
 import 'package:easy_moni/pages/login/login_page.dart';
 import 'package:easy_moni/pages/home/homesell.dart';
 import 'package:easy_moni/pages/fillInforma/personal_info_page.dart'
@@ -41,14 +41,15 @@ final globalNavigationKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: globalNavigationKey,
-    initialLocation: AppRoutePaths.root,
+    initialLocation: AppRoutePaths.permission,
     debugLogDiagnostics: true,
     routes: [
-      GoRoute(
-        path: AppRoutePaths.root,
-        name: AppRouteNames.splash,
-        builder: (context, state) => const SplashPage(),
-      ),
+      // TODO: 当前 Android 已接入原生启动页，暂时跳过 Flutter SplashPage。
+      // GoRoute(
+      //   path: AppRoutePaths.root,
+      //   name: AppRouteNames.splash,
+      //   builder: (context, state) => const SplashPage(),
+      // ),
       GoRoute(
         path: AppRoutePaths.permission,
         name: AppRouteNames.permission,

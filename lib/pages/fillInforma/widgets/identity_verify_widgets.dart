@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/entities/acp_element_info_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
@@ -42,22 +44,22 @@ class IdCardUploadItem extends StatelessWidget {
   const IdCardUploadItem({
     super.key,
     required this.bgImage,
-    required this.imageUrl,
+    required this.imageData,
     required this.isProcessing,
     this.errorText,
     required this.onTap,
   });
 
   final AssetGenImage bgImage;
-  final String? imageUrl;
+  final Uint8List? imageData;
   final bool isProcessing;
   final String? errorText;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final normalizedImageUrl = imageUrl?.trim() ?? '';
-    final isFilled = normalizedImageUrl.isNotEmpty;
+    final localImageData = imageData;
+    final isFilled = localImageData != null && localImageData.isNotEmpty;
     final normalizedErrorText = errorText?.trim();
     final hasError =
         normalizedErrorText != null && normalizedErrorText.isNotEmpty;
@@ -90,23 +92,10 @@ class IdCardUploadItem extends StatelessWidget {
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            normalizedImageUrl,
+                          child: Image.memory(
+                            localImageData,
                             fit: BoxFit.cover,
-                            loadingBuilder: (context, child, progress) {
-                              if (progress == null) {
-                                return child;
-                              }
-                              return const Center(
-                                child: SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.4,
-                                  ),
-                                ),
-                              );
-                            },
+                            gaplessPlayback: true,
                             errorBuilder: (context, error, stackTrace) {
                               return const _IdCardImageStatus(
                                 icon: Icons.broken_image_outlined,
@@ -153,9 +142,7 @@ class IdCardUploadItem extends StatelessWidget {
                       ),
               ),
             if (isProcessing)
-              const Positioned.fill(
-                child: _IdCardImageProcessingOverlay(),
-              ),
+              const Positioned.fill(child: _IdCardImageProcessingOverlay()),
           ],
         ),
       ),
@@ -173,9 +160,7 @@ class _IdCardImageProcessingOverlay extends StatelessWidget {
       child: SizedBox(
         width: 24,
         height: 24,
-        child: CircularProgressIndicator(
-          strokeWidth: 2.4,
-        ),
+        child: CircularProgressIndicator(strokeWidth: 2.4),
       ),
     );
   }

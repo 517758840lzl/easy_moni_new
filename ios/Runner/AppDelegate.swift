@@ -137,6 +137,14 @@ import CoreLocation
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
+  override func application(
+    _ application: UIApplication,
+    supportedInterfaceOrientationsFor window: UIWindow?
+  ) -> UIInterfaceOrientationMask {
+    // 全局限制竖屏，确保原生启动页和 Flutter 页面方向一致。
+    return .portrait
+  }
+
   func contactPicker(_ picker: CNContactPickerViewController, didSelect contact: CNContact) {
     let phone = contact.phoneNumbers.first?.value.stringValue ?? ""
     let name = CNContactFormatter.string(from: contact, style: .fullName) ?? ""

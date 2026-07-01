@@ -1,5 +1,4 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
-import 'package:easy_moni/core/network/http_provider.dart';
 import 'package:easy_moni/core/router/acquisition_progress_route_resolver.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
@@ -11,7 +10,6 @@ import 'package:easy_moni/pages/fillInforma/id_camera_page.dart';
 import 'package:easy_moni/pages/fillInforma/providers/acp_element_info_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/ocr_verification_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/submit_acp_element_info_provider.dart';
-import 'package:easy_moni/pages/fillInforma/providers/upload_file_provider.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/identity_verify_widgets.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/picker_bottom_sheet.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/progress_information.dart';
@@ -38,6 +36,8 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   static const double _headerTopGap = 16;
   static const double _stepIndicatorHeight = 56;
   static const double _headerBottomGap = 16;
+  static const String _frontOcrType = 'FRONT';
+  static const String _backOcrType = 'BACK';
 
   final IdentityVerifyFormController _formController =
       IdentityVerifyFormController();
@@ -46,6 +46,8 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   int? _processId;
   String? _frontImageUrl;
   String? _backImageUrl;
+  Uint8List? _frontPreviewImageData;
+  Uint8List? _backPreviewImageData;
   String? _frontUploadError;
   String? _backUploadError;
   bool _isLoading = true;
@@ -62,8 +64,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     return requiredSides.every(_isImageSideReady);
   }
 
-  bool get _shouldShowIdentityForm =>
-      _hasUploadedImageUrl(_frontImageUrl);
+  bool get _shouldShowIdentityForm => _hasUploadedImageUrl(_frontImageUrl);
 
   bool get _isFormComplete => _formController.areRequiredVisibleEntriesFilled;
 
@@ -423,31 +424,30 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     setState(() {
       if (frontImageData != null) {
         _frontImageUrl = null;
+        _frontPreviewImageData = null;
         _frontUploadError = null;
         _isFrontImageProcessing = true;
       }
       if (backImageData != null) {
         _backImageUrl = null;
+        _backPreviewImageData = null;
         _backUploadError = null;
         _isBackImageProcessing = true;
       }
-      _isOcrLoading = true;
+      _isOcrLoading = frontImageData != null;
     });
 
-    _showSnackBar(
-      frontImageData != null
-          ? AppStrings.continueIdentifyStr
-          : AppStrings.continueUploadPicture,
-    );
+    // _showSnackBar(
+    //   frontImageData != null
+    //       ? AppStrings.continueIdentifyStr
+    //       : AppStrings.continueUploadPicture,
+    // );
 
     if (frontImageData != null && backImageData != null) {
       await Future.wait([
-        _recognizeFrontImage(frontImageData, shouldUpdateLoading: false),
-        _uploadBackImage(backImageData, shouldUpdateLoading: false),
+        _recognizeFrontImage(frontImageData),
+        _recognizeBackImage(backImageData, shouldUpdateLoading: false),
       ]);
-      if (mounted) {
-        setState(() => _isOcrLoading = false);
-      }
       return;
     }
 
@@ -456,27 +456,35 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
       return;
     }
 
-    await _uploadBackImage(backImageData!);
+    await _recognizeBackImage(backImageData!, shouldUpdateLoading: false);
   }
 
-  Future<void> _uploadBackImage(
+  /// 身份证反面同样调用 OCR 接口上传，后端通过 BACK 区分证件面，但不触发表单 OCR 加载态。
+  Future<void> _recognizeBackImage(
     Uint8List imageData, {
     bool shouldUpdateLoading = true,
   }) async {
-    final uploadResult = await ref
-        .read(uploadFileProvider)
-        .call(bytes: imageData, filename: 'id_card_back.jpg');
+    final result = await ref
+        .read(ocrVerificationProvider)
+        .call(
+          bytes: imageData,
+          filename: 'id_card_back.jpg',
+          type: _backOcrType,
+        );
 
     if (!mounted) return;
 
+    final recognizedUrl = _uploadedImageUrlFromOcrResult(result.data);
     setState(() {
-      if (uploadResult.isSuccess) {
-        _backImageUrl = uploadResult.data;
+      if (result.isSuccess && recognizedUrl != null) {
+        _backImageUrl = recognizedUrl;
+        _backPreviewImageData = imageData;
         _backUploadError = null;
       } else {
         _backImageUrl = null;
+        _backPreviewImageData = null;
         _backUploadError =
-            uploadResult.message ?? AppStrings.identityVerifyUploadFailed;
+            result.message ?? AppStrings.identityVerifyOcrFailed;
       }
       _isBackImageProcessing = false;
       if (shouldUpdateLoading) {
@@ -485,9 +493,9 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     });
 
     _showSnackBar(
-      uploadResult.isSuccess
+      result.isSuccess && recognizedUrl != null
           ? AppStrings.identityVerifyBackUploadSuccess
-          : uploadResult.message ?? AppStrings.identityVerifyUploadFailed,
+          : result.message ?? AppStrings.identityVerifyOcrFailed,
     );
   }
 
@@ -497,7 +505,11 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   }) async {
     final result = await ref
         .read(ocrVerificationProvider)
-        .call(bytes: imageData, filename: 'id_card_front.jpg', type: 'FRONT');
+        .call(
+          bytes: imageData,
+          filename: 'id_card_front.jpg',
+          type: _frontOcrType,
+        );
 
     AppLogger.debug(
       'OCR 接口返回: isSuccess=${result.isSuccess}, message=${result.message}, data=${result.data}',
@@ -506,58 +518,28 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     if (!mounted) return;
 
     if (result.isSuccess) {
-      final recognizedUrl = result.data?.url;
-      if (recognizedUrl == null || recognizedUrl.isEmpty) {
-        await _uploadFrontImageAfterOcrFailed(
-          imageData,
-          fallbackMessage: AppStrings.identityVerifyUploadFailed,
-          shouldUpdateLoading: shouldUpdateLoading,
-        );
+      final recognizedUrl = _uploadedImageUrlFromOcrResult(result.data);
+      if (recognizedUrl != null) {
+        setState(() {
+          _frontImageUrl = recognizedUrl;
+          _frontPreviewImageData = imageData;
+          _frontUploadError = null;
+          _isFrontImageProcessing = false;
+          _formController.applyOcrResult(result.data);
+          if (shouldUpdateLoading) {
+            _isOcrLoading = false;
+          }
+        });
+
+        _showSnackBar(AppStrings.identityVerifyOcrSuccess);
         return;
       }
-
-      setState(() {
-        _frontImageUrl = recognizedUrl;
-        _frontUploadError = null;
-        _isFrontImageProcessing = false;
-        _formController.applyOcrResult(result.data);
-        if (shouldUpdateLoading) {
-          _isOcrLoading = false;
-        }
-      });
-
-      _showSnackBar(AppStrings.identityVerifyOcrSuccess);
-      return;
     }
 
-    await _uploadFrontImageAfterOcrFailed(
-      imageData,
-      fallbackMessage: result.message ?? AppStrings.identityVerifyOcrFailed,
-      shouldUpdateLoading: shouldUpdateLoading,
-    );
-  }
-
-  /// OCR 失败时仍上传身份证正面图片，保留手动填写与后续提交能力。
-  Future<void> _uploadFrontImageAfterOcrFailed(
-    Uint8List imageData, {
-    required String fallbackMessage,
-    bool shouldUpdateLoading = true,
-  }) async {
-    final uploadResult = await ref
-        .read(uploadFileProvider)
-        .call(bytes: imageData, filename: 'id_card_front.jpg');
-
-    if (!mounted) return;
-
     setState(() {
-      if (uploadResult.isSuccess) {
-        _frontImageUrl = uploadResult.data;
-        _frontUploadError = null;
-      } else {
-        _frontImageUrl = null;
-        _frontUploadError =
-            uploadResult.message ?? AppStrings.identityVerifyUploadFailed;
-      }
+      _frontImageUrl = null;
+      _frontPreviewImageData = null;
+      _frontUploadError = result.message ?? AppStrings.identityVerifyOcrFailed;
       _isFrontImageProcessing = false;
       if (shouldUpdateLoading) {
         _isOcrLoading = false;
@@ -565,10 +547,22 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     });
 
     _showSnackBar(
-      uploadResult.isSuccess
-          ? fallbackMessage
-          : uploadResult.message ?? AppStrings.identityVerifyUploadFailed,
+      result.message ?? AppStrings.identityVerifyOcrFailed,
     );
+  }
+
+  /// OCR 接口在不同证件面可能返回 url/backUrl，这里统一取可提交图片地址。
+  String? _uploadedImageUrlFromOcrResult(OcrVerificationResp? data) {
+    final imageUrl = data?.url;
+    if (imageUrl != null && imageUrl.trim().isNotEmpty) {
+      return imageUrl;
+    }
+
+    final backImageUrl = data?.backUrl;
+    if (backImageUrl != null && backImageUrl.trim().isNotEmpty) {
+      return backImageUrl;
+    }
+    return null;
   }
 
   void _showSnackBar(String message) {
@@ -731,11 +725,11 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     return false;
   }
 
-  String? _imageUrlForEntry(FormEntry entry) {
+  Uint8List? _imageDataForEntry(FormEntry entry) {
     if (_formController.isBackImageEntry(entry)) {
-      return _displayImageUrl(_backImageUrl);
+      return _backPreviewImageData;
     }
-    return _displayImageUrl(_frontImageUrl);
+    return _frontPreviewImageData;
   }
 
   bool _isImageProcessingForEntry(FormEntry entry) {
@@ -753,7 +747,8 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   }
 
   AssetGenImage _backgroundForImageEntry(FormEntry entry) {
-    if (_imageUrlForEntry(entry) != null || _isImageProcessingForEntry(entry)) {
+    if (_imageDataForEntry(entry) != null ||
+        _isImageProcessingForEntry(entry)) {
       return Assets.images.idCardRectangle;
     }
     if (_formController.isBackImageEntry(entry)) {
@@ -764,20 +759,6 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
 
   bool _hasUploadedImageUrl(String? imageUrl) {
     return imageUrl != null && imageUrl.trim().isNotEmpty;
-  }
-
-  /// 将后端返回的图片地址转成可直接用于预览的完整地址，提交仍保留原始 URL。
-  String? _displayImageUrl(String? imageUrl) {
-    if (!_hasUploadedImageUrl(imageUrl)) {
-      return null;
-    }
-
-    final trimmedUrl = imageUrl!.trim();
-    final uri = Uri.tryParse(trimmedUrl);
-    if (uri != null && uri.hasScheme) {
-      return trimmedUrl;
-    }
-    return HttpProvider.instance.config.resolveApiPath(trimmedUrl);
   }
 
   /// 计算白色内容区起点，与资料采集流程的进度头部保持一致。
@@ -791,70 +772,74 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
 
   @override
   Widget build(BuildContext context) {
-    return LoanRoundedPageShell(
-      contentTop: _contentTop,
-      contentTopRadius: 12,
-      backgroundColor: AppColors.primaryDark,
-      header: buildInformationHeader(
-        context: context,
-        title: _pageTitle,
-        activeStep: InformationStep.identity,
-        onBack: () => FundingLimitDialog.showRetainDialog(context),
-      ),
-      content: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  const SizedBox(height: 16),
-                  const IdentityCheckNotice(),
-                  const SizedBox(height: 16),
-                  ..._formController.idCardImageEntries.map(
-                    (entry) => Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: IdCardUploadItem(
-                        bgImage: _backgroundForImageEntry(entry),
-                        imageUrl: _imageUrlForEntry(entry),
-                        isProcessing: _isImageProcessingForEntry(entry),
-                        errorText: _imageErrorForEntry(entry),
-                        onTap: () => _openUploadMethodSheet(entry: entry),
+    return FundingLimitPopScope(
+      child: LoanRoundedPageShell(
+        contentTop: _contentTop,
+        contentTopRadius: 12,
+        backgroundColor: AppColors.primaryDark,
+        header: buildInformationHeader(
+          context: context,
+          title: _pageTitle,
+          activeStep: InformationStep.identity,
+          onBack: () => FundingLimitDialog.showRetainDialog(context),
+        ),
+        content: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 16),
+                    const IdentityCheckNotice(),
+                    const SizedBox(height: 16),
+                    ..._formController.idCardImageEntries.map(
+                      (entry) => Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: IdCardUploadItem(
+                          bgImage: _backgroundForImageEntry(entry),
+                          imageData: _imageDataForEntry(entry),
+                          isProcessing: _isImageProcessingForEntry(entry),
+                          errorText: _imageErrorForEntry(entry),
+                          onTap: () => _openUploadMethodSheet(entry: entry),
+                        ),
                       ),
                     ),
-                  ),
-                  if (_isOcrLoading)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      child: CircularProgressIndicator(),
-                    ),
-                  if (_shouldShowIdentityForm) ...[
-                    const SizedBox(height: 8),
-                    ..._formController.visibleEntries.map(
-                      (entry) => IdentityFormEntryItem(
-                        entry: entry,
-                        formController: _formController,
-                        onTextChanged: (value) {
-                          setState(
-                            () => _formController.updateTextValue(entry, value),
-                          );
-                        },
-                        onTextSubmitted: (entry) =>
-                            _focusNextVisibleEntryAfter(entry),
-                        onPickerTap: _openPickerForEntry,
-                        onDatePickerTap: _openBirthdayPickerForEntry,
+                    
+                    if (_isOcrLoading)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: CircularProgressIndicator(),
                       ),
-                    ),
+                    if (_shouldShowIdentityForm) ...[
+                      const SizedBox(height: 8),
+                      ..._formController.visibleEntries.map(
+                        (entry) => IdentityFormEntryItem(
+                          entry: entry,
+                          formController: _formController,
+                          onTextChanged: (value) {
+                            setState(
+                              () =>
+                                  _formController.updateTextValue(entry, value),
+                            );
+                          },
+                          onTextSubmitted: (entry) =>
+                              _focusNextVisibleEntryAfter(entry),
+                          onPickerTap: _openPickerForEntry,
+                          onDatePickerTap: _openBirthdayPickerForEntry,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 20),
                   ],
-                  const SizedBox(height: 20),
-                ],
+                ),
               ),
-            ),
-      bottomNavigationBar: LoanBottomActionButton(
-        enabled: _isActionEnabled,
-        onPressed: _isActionEnabled ? _onContinue : null,
-        text: _isSubmitting
-            ? AppStrings.personalInfoSaving
-            : AppStrings.continueStr,
+        bottomNavigationBar: LoanBottomActionButton(
+          enabled: _isActionEnabled,
+          onPressed: _isActionEnabled ? _onContinue : null,
+          text: _isSubmitting
+              ? AppStrings.personalInfoSaving
+              : AppStrings.continueStr,
+        ),
       ),
     );
   }
