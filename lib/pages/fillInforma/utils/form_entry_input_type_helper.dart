@@ -104,8 +104,11 @@ class FormEntryInputTypeHelper {
     if (_isContactNameEntry(entry)) {
       return null;
     }
-    if (entry.type == FormEntryInputType.number ||
-        entry.type == FormEntryInputType.contactInputOrPick) {
+    // 联系人可输入字段可能展示“姓名-手机号”，不能使用纯数字过滤器。
+    if (entry.type == FormEntryInputType.contactInputOrPick) {
+      return null;
+    }
+    if (entry.type == FormEntryInputType.number) {
       return [FilteringTextInputFormatter.digitsOnly];
     }
     return null;

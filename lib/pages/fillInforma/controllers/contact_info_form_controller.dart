@@ -105,22 +105,16 @@ class ContactInfoFormController {
 
   /// 更新输入框值，联系人手机号需转换为后端 JSON 字符串提交。
   void updateTextValue(FormEntry entry, String value) {
-    final submitValue = _isContactPhoneEntry(entry)
-        ? _encodeContactPhone(value)
-        : value.trim();
-    final displayValue = _isContactPhoneEntry(entry)
-        ? _normalizeContactPhone(value)
-        : value.trim();
+    if (_isContactPhoneEntry(entry)) {
+      _updateContactInputValue(entry, value);
+      return;
+    }
+
+    final submitValue = value.trim();
+    final displayValue = value.trim();
 
     _displayValues[entry.key] = displayValue;
     _submitValues[entry.key] = submitValue;
-
-    final nameEntry = _nameEntryForPhone(entry);
-    if (nameEntry != null) {
-      _displayValues[nameEntry.key] = '';
-      _submitValues[nameEntry.key] = '';
-      _textControllers[nameEntry.key]?.text = '';
-    }
   }
 
   /// 更新联系人关系选择值。
@@ -254,6 +248,26 @@ class ContactInfoFormController {
     return _normalizeContactPhone(_decodeContactPhone(_entryValue(phoneEntry)));
   }
 
+  /// 解析可输入联系人字段，保留展示姓名，仅规范化手机号提交给后端。
+  void _updateContactInputValue(FormEntry entry, String value) {
+    final contactInput = _parseContactInput(value);
+    final displayName = contactInput.name.trim();
+    final normalizedPhone = _normalizeContactPhone(contactInput.phone);
+    final displayValue = displayName.isEmpty
+        ? normalizedPhone
+        : _formatContactDisplay(displayName, normalizedPhone);
+
+    _displayValues[entry.key] = displayValue;
+    _submitValues[entry.key] = _encodeContactPhone(normalizedPhone);
+
+    final nameEntry = _nameEntryForPhone(entry);
+    if (nameEntry != null) {
+      _displayValues[nameEntry.key] = displayName;
+      _submitValues[nameEntry.key] = displayName;
+      _textControllers[nameEntry.key]?.text = displayName;
+    }
+  }
+
   String _encodeContactPhone(String phoneNumber) {
     final normalizedPhone = _normalizeContactPhone(phoneNumber);
     if (normalizedPhone.isEmpty) {
@@ -286,4 +300,26 @@ class ContactInfoFormController {
     }
     return submitValue;
   }
+
+  _ContactInputParts _parseContactInput(String value) {
+    final trimmedValue = value.trim();
+    final match = RegExp(
+      r'^(.*?)[\s-]+([+\d][\d\s().-]*)$',
+    ).firstMatch(trimmedValue);
+    if (match == null) {
+      return _ContactInputParts(name: '', phone: trimmedValue);
+    }
+
+    return _ContactInputParts(
+      name: match.group(1) ?? '',
+      phone: match.group(2) ?? '',
+    );
+  }
+}
+
+class _ContactInputParts {
+  const _ContactInputParts({required this.name, required this.phone});
+
+  final String name;
+  final String phone;
 }
