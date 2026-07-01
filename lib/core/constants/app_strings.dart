@@ -138,8 +138,11 @@ class AppStrings {
   static const String identityVerifyImageDecodeFailed = '无法解码图片';
   static const String identityVerifyCameraPermissionDenied = '未获得相机权限';
   static const String identityVerifyFlipCardAndContinue = '请将身份证翻面，并继续拍摄';
+  static const String identityVerifyPhotoProcessing = '已拍摄，正在处理照片';
+  static const String identityVerifyPhotoUploading = '图片上传中...';
   static const String identityVerifyBackUploadSuccess = '证件背面上传成功';
   static const String identityVerifyUploadFailed = '图片上传失败';
+  static const String identityVerifyImageLoadFailed = '图片加载失败，请重试';
   static const String identityVerifyOcrSuccess = '证件识别成功';
   static const String identityVerifyOcrFailed = 'OCR失败';
   static const String identityVerifySaveFailed = '提交失败';

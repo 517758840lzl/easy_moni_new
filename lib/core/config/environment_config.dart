@@ -66,7 +66,7 @@ class EnvironmentConfig {
   }) async {
     final runtimeAttribution =
         await AppsFlyerTracker.getAppsFlyerLoginAttributionData();
-    final runtimeAppVersion = await AppInfoService.getVersionName();
+    final runtimeAppVersion = await AppInfoService.getVersionCode();
 
     return {
       'afid': runtimeAttribution['afid'] ?? afid,

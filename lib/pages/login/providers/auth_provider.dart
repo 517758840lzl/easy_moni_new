@@ -5,7 +5,6 @@ import 'package:easy_moni/core/network/http_result.dart';
 import 'package:easy_moni/entities/check_upload_data_valid_resp.dart';
 import 'package:easy_moni/entities/login_resp.dart';
 import 'package:easy_moni/entities/startup_config_resp.dart';
-import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
 import 'package:easy_moni/utils/af_tracker/track_events.dart';
 
@@ -75,9 +74,6 @@ class LoginApi {
         return LoginResp.fromJson(json);
       },
     );
-    AppLogger.debug(
-      'LoginApi 返回: status=${result.status}, data=${result.data}, message=${result.message}',
-    );
     await AppsFlyerTracker.logAppsFlyerActionEvent(
       AppsFlyerEventNames.otpApplyResult,
       msg: {
@@ -103,12 +99,8 @@ class CheckUploadDataValidApi {
     final result = await HttpProvider.instance.get<CheckUploadDataValidResp>(
       ApiConstants.checkUploadDataValid,
       fromJson: (json) {
-        AppLogger.debug('CheckUploadDataValidApi fromJson 原始数据: $json');
         return CheckUploadDataValidResp.fromJson(json);
       },
-    );
-    AppLogger.debug(
-      'CheckUploadDataValidApi 返回: status=${result.status}, data=${result.data}, message=${result.message}',
     );
     return result;
   }
@@ -119,12 +111,8 @@ class StartupConfigApi {
     final result = await HttpProvider.instance.post<StartupConfigResp>(
       ApiConstants.startupConfig,
       fromJson: (json) {
-        AppLogger.debug('StartupConfigApi fromJson 原始数据: $json');
         return StartupConfigResp.fromJson(json);
       },
-    );
-    AppLogger.debug(
-      'StartupConfigApi 返回: status=${result.status}, data=${result.data}, message=${result.message}',
     );
     return result;
   }

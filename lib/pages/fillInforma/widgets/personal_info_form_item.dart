@@ -5,8 +5,8 @@ import 'package:flutter/services.dart';
 class PersonalInfoFormItem extends StatelessWidget {
   const PersonalInfoFormItem({
     super.key,
-    required this.title,
-    required this.isRequired,
+    this.title,
+    this.isRequired = false,
     this.value,
     this.placeholder = '',
     this.onTap,
@@ -16,12 +16,15 @@ class PersonalInfoFormItem extends StatelessWidget {
     this.focusNode,
     this.textInputAction,
     this.onSubmitted,
+    this.inputFormatters,
     this.showDivider = true,
     this.isLoading = false,
     this.trailing,
+    this.inputTrailing,
+    this.onInputTrailingTap,
   });
 
-  final String title;
+  final String? title;
   final bool isRequired;
   final String? value;
   final String placeholder;
@@ -32,14 +35,18 @@ class PersonalInfoFormItem extends StatelessWidget {
   final FocusNode? focusNode;
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onSubmitted;
+  final List<TextInputFormatter>? inputFormatters;
   final bool showDivider;
   final bool isLoading;
   final Widget? trailing;
+  final Widget? inputTrailing;
+  final VoidCallback? onInputTrailingTap;
 
   bool get _isTextInput => controller != null;
 
   @override
   Widget build(BuildContext context) {
+    final hasTitle = title?.isNotEmpty ?? false;
     final itemContent = GestureDetector(
       onTap: _isTextInput ? null : _handlePickerTap,
       behavior: HitTestBehavior.opaque,
@@ -48,10 +55,12 @@ class PersonalInfoFormItem extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _FormItemTitle(title: title, isRequired: isRequired),
-            SizedBox(height: _isTextInput ? 10 : 8),
+            if (hasTitle) ...[
+              _FormItemTitle(title: title!, isRequired: isRequired),
+              const SizedBox(height: 10),
+            ],
             Padding(
-              padding: const EdgeInsets.only(left: 20),
+              padding: EdgeInsets.only(left: 16),
               child: _isTextInput ? _buildTextField() : _buildPickerValue(),
             ),
           ],
@@ -107,6 +116,7 @@ class PersonalInfoFormItem extends StatelessWidget {
       controller: controller,
       focusNode: focusNode,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       textInputAction: textInputAction,
       decoration: InputDecoration(
         filled: true,
@@ -118,6 +128,20 @@ class PersonalInfoFormItem extends StatelessWidget {
         border: InputBorder.none,
         enabledBorder: InputBorder.none,
         focusedBorder: InputBorder.none,
+        suffixIcon: inputTrailing == null
+            ? null
+            : GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onInputTrailingTap,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: inputTrailing,
+                ),
+              ),
+        suffixIconConstraints: const BoxConstraints(
+          minWidth: 32,
+          minHeight: 32,
+        ),
       ),
       style: const TextStyle(fontSize: 14, color: Colors.black),
       onChanged: onChanged,
@@ -139,11 +163,14 @@ class PersonalInfoFormItem extends StatelessWidget {
           )
         else
           Expanded(
-            child: Text(
-              value ?? placeholder,
-              style: TextStyle(
-                fontSize: 14,
-                color: value != null ? Colors.black : const Color(0xFFCCCCCC),
+            child: Padding(
+              padding: const EdgeInsets.only(left: 4.0),
+              child: Text(
+                value ?? placeholder,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: value != null ? Colors.black : const Color(0xFFCCCCCC),
+                ),
               ),
             ),
           ),
@@ -157,6 +184,39 @@ class PersonalInfoFormItem extends StatelessWidget {
       Icons.chevron_right,
       size: 16,
       color: Colors.black.withValues(alpha: 0.8),
+    );
+  }
+}
+
+/// 仅展示型表单项，复用统一标题样式，不展示 defaultText。
+class PersonalInfoDisplayFormItem extends StatelessWidget {
+  const PersonalInfoDisplayFormItem({
+    super.key,
+    this.title,
+    this.isRequired = false,
+    this.showDivider = true,
+  });
+
+  final String? title;
+  final bool isRequired;
+  final bool showDivider;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasTitle = title?.isNotEmpty ?? false;
+    if (!hasTitle) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: _FormItemTitle(title: title!, isRequired: isRequired),
+        ),
+        // if (showDivider)
+        //   const Divider(height: 1, thickness: 1, color: Color(0xFFE7E7E7)),
+      ],
     );
   }
 }

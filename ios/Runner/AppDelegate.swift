@@ -125,6 +125,9 @@ import CoreLocation
         if call.method == "getVersionName" {
           let versionName = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
           result(versionName)
+        } else if call.method == "getVersionCode" {
+          let versionCode = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""
+          result(versionCode)
         } else {
           result(FlutterMethodNotImplemented)
         }

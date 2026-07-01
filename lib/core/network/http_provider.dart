@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:easy_moni/core/config/environment_config.dart';
+import 'package:easy_moni/core/constants/api_constants.dart';
 import 'package:easy_moni/core/network/http_result.dart';
 import 'package:easy_moni/core/network/interrepters/header_interrepter.dart';
 import 'package:easy_moni/core/network/interrepters/logging_interrepter.dart';
@@ -199,11 +200,7 @@ class HttpProvider {
 
       try {
         if (map.containsKey('code')) {
-          // _talker.debug('调用 BaseResult.fromJson, map=$map');
           final result = BaseResult.fromJson(map, fromJson);
-          _talker.debug(
-            'BaseResult 结果: code=${result.code}, isSuccess=${result.isSuccess}, data=${result.data}',
-          );
           if (result.isSuccess) {
             return HttpResult.success(
               result.data as T,
@@ -249,6 +246,11 @@ class HttpProvider {
     bool includeToken = true,
   }) async {
     try {
+      // 登录调试：打印加密前的 loginParams，便于排查登录参数组装问题。
+      if (path == ApiConstants.login) {
+        _talker.debug('loginParams: $data');
+      }
+
       final requestData = _encryptPostDataIfNeeded(data);
 
       // 使用 dynamic 而不是 T，避免 Dio 自动转换失败
@@ -276,14 +278,11 @@ class HttpProvider {
 
       try {
         // 使用 Map.from 来确保正确转换
-        _talker.debug('POST response.data before cast: $responseData');
-        _talker.debug('POST response.data type: ${responseData.runtimeType}');
         final sourceMap = responseData as Map;
         map = {};
         for (final key in sourceMap.keys) {
           map[key.toString()] = sourceMap[key];
         }
-        _talker.debug('POST map after conversion: $map');
       } catch (e) {
         _talker.error('Map conversion error: $e');
         _talker.error('Map conversion stack: ${StackTrace.current}');
@@ -296,11 +295,7 @@ class HttpProvider {
 
       try {
         if (map.containsKey('code')) {
-          _talker.debug('调用 BaseResult.fromJson, map=$map');
           final result = BaseResult.fromJson(map, fromJson);
-          _talker.debug(
-            'BaseResult 结果: code=${result.code}, isSuccess=${result.isSuccess}, data=${result.data}',
-          );
           if (result.isSuccess) {
             // 处理 data 为 null 的情况
             if (result.data == null) {
@@ -362,6 +357,7 @@ class HttpProvider {
       return data;
     }
 
+    _talker.debug('POST request body before encryption: $data');
     final encryptedData = RequestSecurityUtil.encryptRequestBody(data);
     _talker.debug('POST encrypted request body: $encryptedData');
     return encryptedData;

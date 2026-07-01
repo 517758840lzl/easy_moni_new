@@ -1,6 +1,16 @@
 import 'package:easy_moni/entities/acp_element_info_resp.dart';
 import 'package:easy_moni/pages/fillInforma/providers/ocr_verification_provider.dart';
+import 'package:easy_moni/pages/fillInforma/utils/form_entry_input_type_helper.dart';
 import 'package:flutter/material.dart';
+
+/// 证件图片侧别常量，避免使用 enum 并集中管理提交映射。
+class IdentityImageSide {
+  IdentityImageSide._();
+
+  static const String front = 'front';
+  static const String back = 'back';
+  static const String unknown = '';
+}
 
 /// 身份认证表单控制器，负责后端表单项、OCR 数据和提交参数之间的映射。
 class IdentityVerifyFormController {
@@ -13,8 +23,38 @@ class IdentityVerifyFormController {
 
   List<FormEntry> _entries = [];
 
-  List<FormEntry> get visibleEntries =>
-      _entries.where((entry) => !_isImageEntry(entry)).toList(growable: false);
+  /// 按后端 order 统一排序，页面渲染和提交参数都遵循后端配置顺序。
+  List<FormEntry> get _sortedEntries {
+    final sortedEntries = [..._entries];
+    sortedEntries.sort((a, b) => a.order.compareTo(b.order));
+    return sortedEntries;
+  }
+
+  /// 后端下发的证件图片上传表单项。
+  List<FormEntry> get idCardImageEntries => _sortedEntries
+      .where(FormEntryInputTypeHelper.isIdCardImage)
+      .toList(growable: false);
+
+  /// OCR 后需要核对和补填的普通表单项。
+  List<FormEntry> get visibleEntries => _sortedEntries
+      .where((entry) => !FormEntryInputTypeHelper.isSpecialProcessEntry(entry))
+      .toList(growable: false);
+
+  /// 当前流程必填的证件图片侧别，用于驱动底部按钮可用状态。
+  List<String> get requiredIdCardImageSides {
+    final sides = <String>{};
+    for (final entry in idCardImageEntries) {
+      if (entry.must != 1) {
+        continue;
+      }
+
+      final side = imageSideFor(entry);
+      if (side.isNotEmpty) {
+        sides.add(side);
+      }
+    }
+    return sides.toList(growable: false);
+  }
 
   /// 校验身份证 OCR 回显表单中的必填项，确保底部按钮只在信息完整时可用。
   bool get areRequiredVisibleEntriesFilled {
@@ -44,19 +84,22 @@ class IdentityVerifyFormController {
   /// 初始化后端表单配置，并恢复已提交过的文本或选择项值。
   void applyEntries(List<FormEntry> entries) {
     _entries = entries;
+    _selectedIndices.clear();
+    _displayValues.clear();
+    _submitValues.clear();
     _textEntryKeys.clear();
 
-    for (final entry in entries) {
+    for (final entry in _sortedEntries) {
       _selectedIndices[entry.key] = 0;
       _restoreInitialValue(entry, entry.submitValue);
       _focusNodes[entry.key] ??= FocusNode(debugLabel: entry.key);
 
       if (_isTextEntry(entry)) {
         _textEntryKeys.add(entry.key);
-        _textControllers[entry.key] = TextEditingController(
-          text: _displayValues[entry.key] ?? '',
-        );
-      } else if (!_isBirthdayPickerEntry(entry)) {
+        final controller = _textControllers[entry.key] ??=
+            TextEditingController();
+        controller.text = _displayValues[entry.key] ?? '';
+      } else if (FormEntryInputTypeHelper.isPicker(entry)) {
         _restorePickerValue(entry);
       }
     }
@@ -112,6 +155,43 @@ class IdentityVerifyFormController {
   bool isTextEntry(FormEntry entry) => _isTextEntry(entry);
 
   bool isBirthdayPickerEntry(FormEntry entry) => _isBirthdayPickerEntry(entry);
+
+  bool isIdCardImageEntry(FormEntry entry) {
+    return FormEntryInputTypeHelper.isIdCardImage(entry);
+  }
+
+  bool isFrontImageEntry(FormEntry entry) {
+    return imageSideFor(entry) == IdentityImageSide.front;
+  }
+
+  bool isBackImageEntry(FormEntry entry) {
+    return imageSideFor(entry) == IdentityImageSide.back;
+  }
+
+  /// 识别证件图片字段的正反面；后端暂未提供独立 side 字段时使用 key/文案和顺序兜底。
+  String imageSideFor(FormEntry entry) {
+    if (!FormEntryInputTypeHelper.isIdCardImage(entry)) {
+      return IdentityImageSide.unknown;
+    }
+    if (_looksLikeFrontImageEntry(entry)) {
+      return IdentityImageSide.front;
+    }
+    if (_looksLikeBackImageEntry(entry)) {
+      return IdentityImageSide.back;
+    }
+
+    final index = idCardImageEntries.indexWhere(
+      (imageEntry) => imageEntry.key == entry.key,
+    );
+    // TODO: 后端若支持明确 side 字段，应替换当前按 order 推断正反面的兜底逻辑。
+    if (index == 0) {
+      return IdentityImageSide.front;
+    }
+    if (index == 1) {
+      return IdentityImageSide.back;
+    }
+    return IdentityImageSide.unknown;
+  }
 
   bool hasNextVisibleEntry(FormEntry entry) =>
       nextVisibleEntryAfter(entry) != null;
@@ -178,7 +258,7 @@ class IdentityVerifyFormController {
   }) {
     final jsonParam = <Map<String, dynamic>>[];
 
-    for (final entry in _entries) {
+    for (final entry in _sortedEntries) {
       final value = _submitValueForEntry(
         entry,
         frontImageUrl: frontImageUrl,
@@ -194,10 +274,11 @@ class IdentityVerifyFormController {
   }
 
   bool _isTextEntry(FormEntry entry) {
-    if (_isBirthdayPickerEntry(entry)) {
+    if (_isBirthdayPickerEntry(entry) ||
+        FormEntryInputTypeHelper.isSpecialProcessEntry(entry)) {
       return false;
     }
-    return entry.selectList == null || entry.selectList!.isEmpty;
+    return FormEntryInputTypeHelper.isTextInput(entry);
   }
 
   void _restoreInitialValue(FormEntry entry, String? value) {
@@ -238,11 +319,14 @@ class IdentityVerifyFormController {
     required String? frontImageUrl,
     required String? backImageUrl,
   }) {
-    if (_isFrontImageEntry(entry)) {
-      return frontImageUrl;
-    }
-    if (_isBackImageEntry(entry)) {
-      return backImageUrl;
+    if (FormEntryInputTypeHelper.isIdCardImage(entry)) {
+      final side = imageSideFor(entry);
+      if (side == IdentityImageSide.front) {
+        return frontImageUrl;
+      }
+      if (side == IdentityImageSide.back) {
+        return backImageUrl;
+      }
     }
     return _submitValues[entry.key];
   }
@@ -281,18 +365,14 @@ class IdentityVerifyFormController {
     return null;
   }
 
-  bool _isImageEntry(FormEntry entry) {
-    return _isFrontImageEntry(entry) || _isBackImageEntry(entry);
-  }
-
-  bool _isFrontImageEntry(FormEntry entry) {
+  bool _looksLikeFrontImageEntry(FormEntry entry) {
     final text = _entryIdentityText(entry);
     return text.contains('id_card_front') ||
         (text.contains('front') &&
             (text.contains('image') || text.contains('photo')));
   }
 
-  bool _isBackImageEntry(FormEntry entry) {
+  bool _looksLikeBackImageEntry(FormEntry entry) {
     final text = _entryIdentityText(entry);
     return text.contains('id_card_back') ||
         (text.contains('back') &&
@@ -327,7 +407,7 @@ class IdentityVerifyFormController {
   }
 
   bool _isBirthdayPickerEntry(FormEntry entry) {
-    return entry.code == '40006' || entry.key.toLowerCase() == 'date_of_birth';
+    return FormEntryInputTypeHelper.isDatePicker(entry);
   }
 
   String _entryIdentityText(FormEntry entry) {

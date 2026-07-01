@@ -13,6 +13,7 @@ import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/fillInforma/providers/acp_element_info_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/provinces_cities_area_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/submit_acp_element_info_provider.dart';
+import 'package:easy_moni/pages/fillInforma/utils/form_entry_input_type_helper.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/personal_info_form_item.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/picker_bottom_sheet.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/progress_information.dart';
@@ -38,7 +39,6 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
   static const double _headerTopGap = 16;
   static const double _stepIndicatorHeight = 56;
   static const double _headerBottomGap = 16;
-  static const String _codeEmail = '10003';
   static const String _codeRegionCity = '10004';
 
   StepInfo? _stepInfo;
@@ -64,18 +64,11 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     return entry.code == _codeRegionCity;
   }
 
-  bool _isEmailEntry(FormEntry entry) {
-    return entry.code == _codeEmail;
-  }
-
   bool _isPickerEntry(FormEntry entry) {
-    if (_isEmailEntry(entry) || entry.type == 1) {
-      return false;
-    }
     if (_isRegionEntry(entry)) {
       return true;
     }
-    return entry.selectList != null && entry.selectList!.isNotEmpty;
+    return FormEntryInputTypeHelper.isPicker(entry);
   }
 
   bool _isEntryFilled(FormEntry entry) {
@@ -84,8 +77,8 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
   }
 
   FormEntry? _findNextUnfilledPickerEntry(FormEntry currentEntry) {
-    final entries = _stepInfo?.entries;
-    if (entries == null || entries.isEmpty) return null;
+    final entries = _formEntries;
+    if (entries.isEmpty) return null;
 
     final currentIndex = entries.indexWhere(
       (entry) => entry.key == currentEntry.key,
@@ -156,6 +149,14 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
       province,
       city,
     );
+  }
+
+  /// 按后台 order 稳定渲染表单项，适配后端驱动 UI 的字段顺序。
+  List<FormEntry> get _formEntries {
+    final entries = _stepInfo?.entries ?? const <FormEntry>[];
+    final sortedEntries = [...entries];
+    sortedEntries.sort((a, b) => a.order.compareTo(b.order));
+    return sortedEntries;
   }
 
   @override
@@ -316,7 +317,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     _processId = data.processId;
     AppLogger.debug('设置 _stepInfo, entries 数量: ${stepInfo.entries.length}');
 
-    for (final entry in stepInfo.entries) {
+    for (final entry in _formEntries) {
       _initializeEntryValue(entry);
     }
   }
@@ -331,6 +332,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     _provinces = result.data!.province;
     _cities = result.data!.city;
     _buildRegionCityData();
+    _restoreRegionSelectionIndex();
   }
 
   /// 初始化单个表单项的展示值、提交值和选择器索引。
@@ -341,7 +343,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     _selectedSubmitValues[entry.key] = submitValue;
     AppLogger.debug('entry: ${entry.key} - ${entry.showContent}');
 
-    if (_isEmailEntry(entry) || entry.type == 1) {
+    if (FormEntryInputTypeHelper.isTextInput(entry)) {
       _textControllers[entry.key] = TextEditingController(
         text: submitValue ?? '',
       );
@@ -357,6 +359,24 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     }
 
     _restorePickerEntryValue(entry, submitValue);
+  }
+
+  /// 地区列表晚于表单配置返回时，重新根据历史提交值定位选择器索引。
+  void _restoreRegionSelectionIndex() {
+    final regionEntry = _regionEntry;
+    final submitValue = regionEntry?.submitValue;
+    if (regionEntry == null || submitValue == null || submitValue.isEmpty) {
+      return;
+    }
+
+    final regionData = _parseGeoLocationSubmitValue(submitValue);
+    final matchedRegionIndex = _regionCityData.indexWhere(
+      (item) =>
+          item['region'] == regionData.$1 && item['city'] == regionData.$2,
+    );
+    if (matchedRegionIndex >= 0) {
+      _selectedRegionIndex = matchedRegionIndex;
+    }
   }
 
   void _restoreRegionEntryValue(String entryKey, String submitValue) {
@@ -379,7 +399,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
   void _restorePickerEntryValue(FormEntry entry, String submitValue) {
     final options = entry.selectList;
     final matchedIndex = options?.indexWhere(
-      (option) => option.key == submitValue,
+      (option) => option.key == submitValue || option.value == submitValue,
     );
     if (options == null || matchedIndex == null || matchedIndex < 0) {
       return;
@@ -426,7 +446,11 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
 
   bool get _canContinue {
     if (_stepInfo == null) return false;
-    for (final entry in _stepInfo!.entries) {
+    for (final entry in _formEntries) {
+      if (FormEntryInputTypeHelper.isDisplayOnly(entry) ||
+          FormEntryInputTypeHelper.isSpecialProcessEntry(entry)) {
+        continue;
+      }
       if (entry.must == 1 &&
           (_selectedValues[entry.key] == null ||
               _selectedValues[entry.key]!.isEmpty)) {
@@ -455,7 +479,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
   }
 
   FormEntry? get _regionEntry {
-    return _stepInfo?.entries
+    return _formEntries
         .where(_isRegionEntry)
         .cast<FormEntry?>()
         .firstOrNull;
@@ -722,7 +746,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     setState(() => _isSubmitting = true);
 
     try {
-      final jsonParam = _stepInfo!.entries.map((entry) {
+      final jsonParam = _formEntries.map((entry) {
         return {
           'key': entry.key,
           'value': _selectedSubmitValues[entry.key] ?? '',
@@ -805,7 +829,13 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
-        children: _stepInfo?.entries.map(_buildEntryItem).toList() ?? [],
+        children: [
+          for (var i = 0; i < _formEntries.length; i++)
+            _buildEntryItem(
+              entry: _formEntries[i],
+              showDivider: i != _formEntries.length - 1,
+            ),
+        ],
       ),
     );
   }
@@ -825,8 +855,30 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
   }
 
   /// 根据后台表单配置生成对应的个人信息表单项。
-  Widget _buildEntryItem(FormEntry entry) {
-    if (_isEmailEntry(entry) || entry.type == 1) {
+  Widget _buildEntryItem({
+    required FormEntry entry,
+    required bool showDivider,
+  }) {
+    if (FormEntryInputTypeHelper.isDisplayOnly(entry)) {
+      return PersonalInfoDisplayFormItem(
+        title: entry.showContent,
+        isRequired: entry.must == 1,
+        showDivider: showDivider,
+      );
+    }
+
+    if (_isPickerEntry(entry)) {
+      return PersonalInfoFormItem(
+        title: entry.showContent,
+        isRequired: entry.must == 1,
+        value: _selectedValues[entry.key],
+        placeholder: entry.defaultText,
+        showDivider: showDivider,
+        onTap: () => _openPickerForEntry(entry),
+      );
+    }
+
+    if (FormEntryInputTypeHelper.isTextInput(entry)) {
       final controller = _textControllers[entry.key] ??= TextEditingController(
         text: _selectedValues[entry.key] ?? '',
       );
@@ -836,7 +888,10 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
         isRequired: entry.must == 1,
         placeholder: entry.defaultText,
         controller: controller,
-        keyboardType: TextInputType.emailAddress,
+        keyboardType: FormEntryInputTypeHelper.keyboardTypeFor(entry),
+        inputFormatters: FormEntryInputTypeHelper.inputFormattersFor(entry),
+        textInputAction: TextInputAction.next,
+        showDivider: showDivider,
         onChanged: (value) {
           setState(() {
             _selectedValues[entry.key] = value.trim();
@@ -846,12 +901,10 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
       );
     }
 
-    return PersonalInfoFormItem(
+    return PersonalInfoDisplayFormItem(
       title: entry.showContent,
       isRequired: entry.must == 1,
-      value: _selectedValues[entry.key],
-      placeholder: entry.defaultText,
-      onTap: () => _openPickerForEntry(entry),
+      showDivider: showDivider,
     );
   }
 }

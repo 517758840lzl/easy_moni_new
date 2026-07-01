@@ -2,9 +2,9 @@ import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/entities/acp_element_info_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/fillInforma/controllers/identity_verify_form_controller.dart';
+import 'package:easy_moni/pages/fillInforma/utils/form_entry_input_type_helper.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/personal_info_form_item.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 /// 身份证 OCR 信息核对提示。
 class IdentityCheckNotice extends StatelessWidget {
@@ -42,36 +42,40 @@ class IdCardUploadItem extends StatelessWidget {
   const IdCardUploadItem({
     super.key,
     required this.bgImage,
-    required this.imageData,
+    required this.imageUrl,
+    required this.isProcessing,
+    this.errorText,
     required this.onTap,
   });
 
   final AssetGenImage bgImage;
-  final Uint8List? imageData;
+  final String? imageUrl;
+  final bool isProcessing;
+  final String? errorText;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final isFilled = imageData != null;
+    final normalizedImageUrl = imageUrl?.trim() ?? '';
+    final isFilled = normalizedImageUrl.isNotEmpty;
+    final normalizedErrorText = errorText?.trim();
+    final hasError =
+        normalizedErrorText != null && normalizedErrorText.isNotEmpty;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         height: (MediaQuery.of(context).size.width - 40) * 683.0 / 1005.0,
         decoration: BoxDecoration(
-          image: DecorationImage(image: bgImage.provider(), fit: BoxFit.contain),
+          image: DecorationImage(
+            image: bgImage.provider(),
+            fit: BoxFit.contain,
+          ),
         ),
         child: Stack(
           children: [
-            if (!isFilled)
-              Center(
-                child: Assets.images.inforamtionScan.image(
-                  width: 40,
-                  height: 40,
-                ),
-              ),
             if (isFilled)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 child: Stack(
                   children: [
                     Positioned.fill(
@@ -83,9 +87,34 @@ class IdCardUploadItem extends StatelessWidget {
                             color: const Color(0xFF8FB3B0),
                             width: 2,
                           ),
-                          image: DecorationImage(
-                            image: MemoryImage(imageData!),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            normalizedImageUrl,
                             fit: BoxFit.cover,
+                            loadingBuilder: (context, child, progress) {
+                              if (progress == null) {
+                                return child;
+                              }
+                              return const Center(
+                                child: SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.4,
+                                  ),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              return const _IdCardImageStatus(
+                                icon: Icons.broken_image_outlined,
+                                message:
+                                    AppStrings.identityVerifyImageLoadFailed,
+                                color: Color(0xFFE5484D),
+                              );
+                            },
                           ),
                         ),
                       ),
@@ -110,8 +139,82 @@ class IdCardUploadItem extends StatelessWidget {
                   ],
                 ),
               ),
+            if (!isFilled && !isProcessing)
+              Center(
+                child: hasError
+                    ? _IdCardImageStatus(
+                        icon: Icons.error_outline,
+                        message: normalizedErrorText,
+                        color: const Color(0xFFE5484D),
+                      )
+                    : Assets.images.inforamtionScan.image(
+                        width: 40,
+                        height: 40,
+                      ),
+              ),
+            if (isProcessing)
+              const Positioned.fill(
+                child: _IdCardImageProcessingOverlay(),
+              ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// 证件图片上传中的加载状态。
+class _IdCardImageProcessingOverlay extends StatelessWidget {
+  const _IdCardImageProcessingOverlay();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: SizedBox(
+        width: 24,
+        height: 24,
+        child: CircularProgressIndicator(
+          strokeWidth: 2.4,
+        ),
+      ),
+    );
+  }
+}
+
+/// 证件图片失败态提示，统一承接上传失败与远端图片加载失败。
+class _IdCardImageStatus extends StatelessWidget {
+  const _IdCardImageStatus({
+    required this.icon,
+    required this.message,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String message;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 32, color: color),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: color,
+              height: 1.3,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -145,6 +248,8 @@ class IdentityFormEntryItem extends StatelessWidget {
         placeholder: entry.defaultText,
         controller: formController.controllerFor(entry),
         focusNode: formController.focusNodeFor(entry),
+        keyboardType: FormEntryInputTypeHelper.keyboardTypeFor(entry),
+        inputFormatters: FormEntryInputTypeHelper.inputFormattersFor(entry),
         textInputAction: formController.hasNextVisibleEntry(entry)
             ? TextInputAction.next
             : TextInputAction.done,
@@ -184,15 +289,18 @@ class IdentityFormEntryItem extends StatelessWidget {
 class UploadMethodSheet extends StatelessWidget {
   const UploadMethodSheet({
     super.key,
+    this.options,
     required this.onPickFromGallery,
     required this.onTakePhoto,
   });
 
+  final List<SelectOption>? options;
   final VoidCallback onPickFromGallery;
   final VoidCallback onTakePhoto;
 
   static Future<void> show({
     required BuildContext context,
+    List<SelectOption>? options,
     required VoidCallback onPickFromGallery,
     required VoidCallback onTakePhoto,
   }) {
@@ -204,6 +312,7 @@ class UploadMethodSheet extends StatelessWidget {
       ),
       builder: (context) {
         return UploadMethodSheet(
+          options: options,
           onPickFromGallery: () {
             Navigator.pop(context);
             onPickFromGallery();
@@ -219,6 +328,8 @@ class UploadMethodSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final uploadMethods = _resolveUploadMethods();
+    final itemWidth = (MediaQuery.of(context).size.width - 72) / 2;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -254,37 +365,40 @@ class UploadMethodSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: _UploadMethodOption(
-                      icon: Assets.images.gallerySend.image(
-                        width: 30,
-                        height: 30,
-                        fit: BoxFit.contain,
+              Wrap(
+                spacing: 24,
+                runSpacing: 12,
+                children: uploadMethods
+                    .map(
+                      (method) => SizedBox(
+                        width: itemWidth,
+                        child: _UploadMethodOption(
+                          icon: method.isGallery
+                              ? Assets.images.gallerySend.image(
+                                  width: 30,
+                                  height: 30,
+                                  fit: BoxFit.contain,
+                                )
+                              : Assets.images.cameraM.image(
+                                  width: 30,
+                                  height: 30,
+                                  fit: BoxFit.contain,
+                                ),
+                          cornerDecoration: method.isGallery
+                              ? null
+                              : Assets.images.inforamtionStar.image(
+                                  width: 28,
+                                  height: 28,
+                                  fit: BoxFit.contain,
+                                ),
+                          text: method.label,
+                          onTap: method.isGallery
+                              ? onPickFromGallery
+                              : onTakePhoto,
+                        ),
                       ),
-                      text: AppStrings.selectFormPhotos,
-                      onTap: onPickFromGallery,
-                    ),
-                  ),
-                  const SizedBox(width: 24),
-                  Expanded(
-                    child: _UploadMethodOption(
-                      icon: Assets.images.cameraM.image(
-                        width: 30,
-                        height: 30,
-                        fit: BoxFit.contain,
-                      ),
-                      cornerDecoration: Assets.images.inforamtionStar.image(
-                        width: 28,
-                        height: 28,
-                        fit: BoxFit.contain,
-                      ),
-                      text: AppStrings.takephotos,
-                      onTap: onTakePhoto,
-                    ),
-                  ),
-                ],
+                    )
+                    .toList(),
               ),
             ],
           ),
@@ -292,6 +406,46 @@ class UploadMethodSheet extends StatelessWidget {
         SizedBox(height: MediaQuery.of(context).padding.bottom),
       ],
     );
+  }
+
+  List<_UploadMethodData> _resolveUploadMethods() {
+    final backendOptions = options;
+    if (backendOptions == null || backendOptions.isEmpty) {
+      return const [
+        _UploadMethodData(label: AppStrings.selectFormPhotos, isGallery: true),
+        _UploadMethodData(label: AppStrings.takephotos, isGallery: false),
+      ];
+    }
+
+    final methods = backendOptions
+        .map((option) {
+          final isGallery = _isGalleryOption(option);
+          final label = option.value.trim().isEmpty
+              ? _fallbackUploadLabel(isGallery: isGallery)
+              : option.value;
+          return _UploadMethodData(label: label, isGallery: isGallery);
+        })
+        .toList(growable: false);
+
+    // 上传方式视觉顺序固定为左侧相册、右侧拍照，不受后端 selectList 顺序影响。
+    methods.sort((a, b) {
+      if (a.isGallery == b.isGallery) {
+        return 0;
+      }
+      return a.isGallery ? -1 : 1;
+    });
+    return methods;
+  }
+
+  bool _isGalleryOption(SelectOption option) {
+    final text = '${option.key} ${option.value}'.toLowerCase();
+    return option.key == '2' ||
+        text.contains('album') ||
+        text.contains('gallery');
+  }
+
+  String _fallbackUploadLabel({required bool isGallery}) {
+    return isGallery ? AppStrings.selectFormPhotos : AppStrings.takephotos;
   }
 }
 
@@ -315,6 +469,14 @@ class ConfirmIdNumberIcon extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 上传方式视图数据，后端 key 暂按 1=拍照、2=相册 映射到本地动作。
+class _UploadMethodData {
+  const _UploadMethodData({required this.label, required this.isGallery});
+
+  final String label;
+  final bool isGallery;
 }
 
 /// 上传方式选择项，按设计稿展示图标与右上角推荐标识。
