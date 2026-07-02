@@ -25,13 +25,17 @@ class IdentityCheckNotice extends StatelessWidget {
           ),
         ),
         SizedBox(width: 8),
-        Text(
-          AppStrings.identityVerifyCheckInfo,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-            letterSpacing: 0.4,
+        Expanded(
+          child: Text(
+            AppStrings.identityVerifyCheckInfo,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+              letterSpacing: 0.4,
+            ),
           ),
         ),
       ],
@@ -292,20 +296,24 @@ class UploadMethodSheet extends StatelessWidget {
     return showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.white,
+      isScrollControlled: true,
+      requestFocus: false,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
       ),
       builder: (context) {
-        return UploadMethodSheet(
-          options: options,
-          onPickFromGallery: () {
-            Navigator.pop(context);
-            onPickFromGallery();
-          },
-          onTakePhoto: () {
-            Navigator.pop(context);
-            onTakePhoto();
-          },
+        return SingleChildScrollView(
+          child: UploadMethodSheet(
+            options: options,
+            onPickFromGallery: () {
+              Navigator.pop(context);
+              onPickFromGallery();
+            },
+            onTakePhoto: () {
+              Navigator.pop(context);
+              onTakePhoto();
+            },
+          ),
         );
       },
     );

@@ -62,7 +62,7 @@ Widget buildInformationHeader({
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          // const SizedBox(height: 8),
           buildProgressIndicator(activeStep: activeStep),
           const SizedBox(height: 24),
         ],
@@ -80,30 +80,36 @@ Widget buildProgressIndicator({required InformationStep activeStep}) {
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 16),
     child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildStepItem(
-          icon: isPersonActive
-              ? Assets.images.inforamtionIdSelect.image()
-              : Assets.images.inforamtionIdNormal.image(),
-          label: AppStrings.informationPersonalStep,
-          isCompleted: isPersonActive,
+        Flexible(
+          child: _buildStepItem(
+            icon: isPersonActive
+                ? Assets.images.inforamtionIdSelect.image()
+                : Assets.images.inforamtionIdNormal.image(),
+            label: AppStrings.informationPersonalStep,
+            isCompleted: isPersonActive,
+          ),
         ),
         _buildConnector(),
-        _buildStepItem(
-          icon: isIdActive
-              ? Assets.images.inforamtionIdtSelect.image()
-              : Assets.images.inforamtionIdtNormal.image(),
-          label: AppStrings.informationIdentityStep,
-          isCompleted: isIdActive,
+        Flexible(
+          child: _buildStepItem(
+            icon: isIdActive
+                ? Assets.images.inforamtionIdtSelect.image()
+                : Assets.images.inforamtionIdtNormal.image(),
+            label: AppStrings.informationIdentityStep,
+            isCompleted: isIdActive,
+          ),
         ),
         _buildConnector(),
-        _buildStepItem(
-          icon: isFaceActive
-              ? Assets.images.inforamtionIdthSelect.image()
-              : Assets.images.inforamtionIdthNormal.image(),
-          label: AppStrings.informationFaceStep,
-          isCompleted: isFaceActive,
+        Flexible(
+          child: _buildStepItem(
+            icon: isFaceActive
+                ? Assets.images.inforamtionIdthSelect.image()
+                : Assets.images.inforamtionIdthNormal.image(),
+            label: AppStrings.informationFaceStep,
+            isCompleted: isFaceActive,
+          ),
         ),
       ],
     ),
@@ -119,11 +125,18 @@ Widget _buildStepItem({
     children: [
       SizedBox(width: 36, height: 36, child: icon),
       const SizedBox(height: 6),
-      Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          color: isCompleted ? const Color(0xFF45F3A6) : Colors.white,
+      // 步骤文案可能较长，限制在当前步骤宽度内换行，避免横向溢出。
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: Text(
+          label,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 12,
+            color: isCompleted ? const Color(0xFF45F3A6) : Colors.white,
+          ),
         ),
       ),
     ],

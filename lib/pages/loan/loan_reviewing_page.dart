@@ -71,12 +71,8 @@ class _LoanReviewingPageState extends ConsumerState<LoanReviewingPage> {
     final inAppReview = InAppReview.instance;
     if (await inAppReview.isAvailable()) {
       await inAppReview.requestReview();
-      _showScoreSuccessToast();
       return;
     }
-
-    await inAppReview.openStoreListing();
-    _showScoreSuccessToast();
   }
 
   void _showScoreSuccessToast() {

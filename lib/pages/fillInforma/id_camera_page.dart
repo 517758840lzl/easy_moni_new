@@ -160,14 +160,28 @@ class IdCameraCaptureResult {
 
 class _IdCameraScreenState extends State<IdCameraScreen>
     with WidgetsBindingObserver {
+  static const int _maxCameraRecoveryAttempts = 1;
+  static const int _maxCameraInitRaceRetryAttempts = 2;
+  static const Duration _cameraInitRaceRetryDelay = Duration(milliseconds: 300);
+  static const List<ResolutionPreset> _cameraResolutionFallbacks = [
+    ResolutionPreset.veryHigh,
+    ResolutionPreset.high,
+    ResolutionPreset.medium,
+    ResolutionPreset.low,
+  ];
+
   CameraController? _controller;
   late Future<void> _initializeControllerFuture;
+  CameraDescription? _activeCameraDescription;
+  Future<void> _pendingCameraDispose = Future<void>.value();
   String? _cameraError;
   bool _isTakingPicture = false;
   bool _isProcessingCapturedImage = false;
   bool _isLeavingCameraPage = false;
   bool _hasRestoredPortraitOrientation = false;
+  bool _isRecoveringCamera = false;
   int _cameraInitToken = 0;
+  int _cameraRecoveryAttempts = 0;
   late bool _currentIsFront;
   Uint8List? _frontImageData;
   Uint8List? _backImageData;
@@ -213,12 +227,12 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     await WidgetsBinding.instance.endOfFrame;
   }
 
-  Future<void> _initCamera() async {
+  Future<void> _initCamera({int initRaceRetryAttempts = 0}) async {
     final initToken = ++_cameraInitToken;
     CameraController? nextController;
     try {
       _cameraError = null;
-      CameraDescription? camera = widget.camera;
+      CameraDescription? camera = widget.camera ?? _activeCameraDescription;
       if (camera == null) {
         final cameras = await availableCameras();
         camera = cameras.cast<CameraDescription?>().firstWhere(
@@ -229,26 +243,72 @@ class _IdCameraScreenState extends State<IdCameraScreen>
       if (camera == null) {
         AppLogger.warning('相机初始化失败: 未找到可用相机');
         if (_isCurrentCameraInit(initToken)) {
-          _cameraError = AppStrings.identityVerifyImageNotCaptured;
+          _cameraError = AppStrings.identityVerifyCameraError;
         }
         return;
       }
-      // 证件裁剪后再上传，medium 预览可降低不同机型初始化耗时和内存压力。
-      nextController = CameraController(
-        camera,
-        ResolutionPreset.veryHigh,
-        enableAudio: false,
-      );
-      await nextController.initialize();
+      _activeCameraDescription = camera;
+
+      // CameraX 释放旧用例是异步过程，先解绑旧 controller 再绑定新用例。
+      final oldController = _controller;
+      _controller = null;
+      await _disposeCameraControllerSerially(oldController);
       if (!_isCurrentCameraInit(initToken)) {
-        await nextController.dispose();
         return;
       }
 
-      final oldController = _controller;
-      _controller = nextController;
-      nextController = null;
-      await oldController?.dispose();
+      for (final resolutionPreset in _cameraResolutionFallbacks) {
+        try {
+          // 证件裁剪后再上传，优先 high 保留 OCR 清晰度，失败时向下兼容设备能力。
+          nextController = CameraController(
+            camera,
+            resolutionPreset,
+            enableAudio: false,
+            imageFormatGroup: ImageFormatGroup.jpeg,
+          );
+          nextController.addListener(_onCameraControllerChanged);
+          await nextController.initialize();
+          if (!_isCurrentCameraInit(initToken)) {
+            await _disposeCameraControllerSerially(nextController);
+            return;
+          }
+
+          _controller = nextController;
+          nextController = null;
+          _cameraRecoveryAttempts = 0;
+          return;
+        } on CameraException catch (e, stackTrace) {
+          AppLogger.error(
+            '相机初始化失败: preset=$resolutionPreset, '
+            'code=${e.code}, description=${e.description}',
+            e,
+            stackTrace,
+          );
+          await _disposeCameraControllerSerially(nextController);
+          nextController = null;
+
+          if (!_isCurrentCameraInit(initToken)) {
+            return;
+          }
+          if (await _retryCameraInitAfterPreviewRace(
+            initToken: initToken,
+            initRaceRetryAttempts: initRaceRetryAttempts,
+            error: e,
+            pendingController: null,
+          )) {
+            return;
+          }
+          if (!_shouldRetryWithLowerResolution(e, resolutionPreset)) {
+            _cameraError = AppStrings.identityVerifyCameraError;
+            return;
+          }
+          await Future<void>.delayed(const Duration(milliseconds: 120));
+        }
+      }
+
+      if (_isCurrentCameraInit(initToken)) {
+        _cameraError = AppStrings.identityVerifyCameraError;
+      }
     } on CameraException catch (e, stackTrace) {
       AppLogger.error(
         '相机初始化失败: code=${e.code}, description=${e.description}',
@@ -256,34 +316,186 @@ class _IdCameraScreenState extends State<IdCameraScreen>
         stackTrace,
       );
       if (_isCurrentCameraInit(initToken)) {
-        _cameraError = AppStrings.identityVerifyImageNotCaptured;
+        if (await _retryCameraInitAfterPreviewRace(
+          initToken: initToken,
+          initRaceRetryAttempts: initRaceRetryAttempts,
+          error: e,
+          pendingController: nextController,
+        )) {
+          nextController = null;
+          return;
+        }
+        _cameraError = AppStrings.identityVerifyCameraError;
       }
     } catch (e, stackTrace) {
       AppLogger.error('相机初始化失败: $e', e, stackTrace);
       if (_isCurrentCameraInit(initToken)) {
-        _cameraError = AppStrings.identityVerifyImageNotCaptured;
+        if (await _retryCameraInitAfterPreviewRace(
+          initToken: initToken,
+          initRaceRetryAttempts: initRaceRetryAttempts,
+          error: e,
+          pendingController: nextController,
+        )) {
+          nextController = null;
+          return;
+        }
+        _cameraError = AppStrings.identityVerifyCameraError;
       }
     } finally {
       if (nextController != null) {
-        await nextController.dispose();
+        await _disposeCameraControllerSerially(nextController);
       }
     }
+  }
+
+  /// CameraX 预览 Surface 尚未稳定时，延迟释放并重建相机，避免低概率初始化空指针直接暴露给用户。
+  Future<bool> _retryCameraInitAfterPreviewRace({
+    required int initToken,
+    required int initRaceRetryAttempts,
+    required Object error,
+    required CameraController? pendingController,
+  }) async {
+    if (!_shouldRetryAfterCameraInitRace(error, initRaceRetryAttempts)) {
+      return false;
+    }
+
+    AppLogger.warning(
+      'CameraX 预览初始化竞态，延迟重试相机初始化: '
+      'attempt=${initRaceRetryAttempts + 1}, error=$error',
+    );
+    await _disposeCameraControllerSerially(pendingController);
+    await Future<void>.delayed(_cameraInitRaceRetryDelay);
+    if (!_isCurrentCameraInit(initToken)) {
+      return true;
+    }
+
+    await _initCamera(initRaceRetryAttempts: initRaceRetryAttempts + 1);
+    return true;
+  }
+
+  bool _shouldRetryAfterCameraInitRace(
+    Object error,
+    int initRaceRetryAttempts,
+  ) {
+    if (initRaceRetryAttempts >= _maxCameraInitRaceRetryAttempts) {
+      return false;
+    }
+
+    final errorMessage = error.toString();
+    return errorMessage.contains('Null check operator used on a null value') ||
+        errorMessage.contains('getResolutionInfo') ||
+        errorMessage.contains('flutterSurfaceProducer') ||
+        errorMessage.contains(
+          'releaseFlutterSurfaceTexture() cannot be called',
+        );
+  }
+
+  bool _shouldRetryWithLowerResolution(
+    CameraException exception,
+    ResolutionPreset currentPreset,
+  ) {
+    final currentIndex = _cameraResolutionFallbacks.indexOf(currentPreset);
+    if (currentIndex < 0 ||
+        currentIndex >= _cameraResolutionFallbacks.length - 1) {
+      return false;
+    }
+
+    final description = exception.description ?? '';
+    return exception.code == 'IllegalArgumentException' &&
+        (description.contains('No supported surface combination') ||
+            description.contains('CameraUseCaseAdapter'));
+  }
+
+  Future<void> _disposeCameraControllerSerially(CameraController? controller) {
+    if (controller == null) {
+      return _pendingCameraDispose;
+    }
+
+    final disposeFuture = _pendingCameraDispose.then(
+      (_) => _disposeCameraController(controller),
+    );
+    _pendingCameraDispose = disposeFuture;
+    return disposeFuture;
   }
 
   bool _isCurrentCameraInit(int initToken) {
     return mounted && !_isLeavingCameraPage && initToken == _cameraInitToken;
   }
 
+  /// 监听 CameraX 运行期错误，避免初始化完成但预览 Surface 后续绑定失败时页面停在黑屏。
+  void _onCameraControllerChanged() {
+    final controller = _controller;
+    if (controller == null || !controller.value.isInitialized) {
+      return;
+    }
+
+    if (!controller.value.hasError) {
+      return;
+    }
+
+    final errorDescription = controller.value.errorDescription;
+    AppLogger.warning('相机运行异常: $errorDescription');
+    unawaited(_recoverFromCameraError(errorDescription));
+  }
+
+  /// CameraX 预览/拍照链路异常时主动释放并重建一次，失败后再展示不可用态。
+  Future<void> _recoverFromCameraError(String? errorDescription) async {
+    if (_isRecoveringCamera || _isLeavingCameraPage || !mounted) {
+      return;
+    }
+
+    _isRecoveringCamera = true;
+    _cameraInitToken++;
+    final failedController = _controller;
+    _controller = null;
+    if (mounted) {
+      setState(() => _cameraError = null);
+    }
+    await _disposeCameraControllerSerially(failedController);
+
+    try {
+      if (!mounted || _isLeavingCameraPage) {
+        return;
+      }
+
+      if (_cameraRecoveryAttempts >= _maxCameraRecoveryAttempts) {
+        setState(() {
+          _cameraError = AppStrings.identityVerifyCameraError;
+        });
+        return;
+      }
+
+      _cameraRecoveryAttempts++;
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+      if (!mounted || _isLeavingCameraPage) {
+        return;
+      }
+
+      final recoveryFuture = _prepareCameraPageAndInit();
+      _initializeControllerFuture = recoveryFuture;
+      setState(() {});
+      await recoveryFuture;
+    } finally {
+      _isRecoveringCamera = false;
+      if (mounted && !_isLeavingCameraPage) {
+        setState(() {});
+      }
+    }
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     final controller = _controller;
-    if (state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
       _cameraInitToken++;
-      if (controller == null || !controller.value.isInitialized) {
+      if (controller == null) {
         return;
       }
-      controller.dispose();
       _controller = null;
+      unawaited(_disposeCameraControllerSerially(controller));
       return;
     }
 
@@ -294,6 +506,7 @@ class _IdCameraScreenState extends State<IdCameraScreen>
       if (controller != null && controller.value.isInitialized) {
         return;
       }
+      _cameraRecoveryAttempts = 0;
       _initializeControllerFuture = _prepareCameraPageAndInit();
       if (mounted) {
         setState(() {});
@@ -308,7 +521,9 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     if (!_hasRestoredPortraitOrientation) {
       unawaited(_restorePortraitOrientation());
     }
-    _controller?.dispose();
+    final controller = _controller;
+    _controller = null;
+    unawaited(_disposeCameraControllerSerially(controller));
     super.dispose();
   }
 
@@ -345,12 +560,15 @@ class _IdCameraScreenState extends State<IdCameraScreen>
                   return const Center(child: CircularProgressIndicator());
                 }
 
+                if (_isRecoveringCamera) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
                 final controller = _controller;
                 if (_cameraError != null || controller == null) {
                   return _CameraUnavailableView(
                     message:
-                        _cameraError ??
-                        AppStrings.identityVerifyImageNotCaptured,
+                        _cameraError ?? AppStrings.identityVerifyCameraError,
                     onCancel: _popWithoutResult,
                   );
                 }
@@ -406,7 +624,11 @@ class _IdCameraScreenState extends State<IdCameraScreen>
       final controller = _controller;
       final viewportSize = _viewportSize;
       final cardRect = _cardRect;
-      if (controller == null || viewportSize == null || cardRect == null) {
+      if (controller == null ||
+          !controller.value.isInitialized ||
+          controller.value.isTakingPicture ||
+          viewportSize == null ||
+          cardRect == null) {
         return;
       }
 
@@ -497,7 +719,7 @@ class _IdCameraScreenState extends State<IdCameraScreen>
 
     final controller = _controller;
     _controller = null;
-    await controller?.dispose();
+    await _disposeCameraControllerSerially(controller);
     await _restorePortraitOrientation();
     if (!mounted) {
       return;
@@ -540,6 +762,34 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     } catch (e) {
       AppLogger.debug('恢复相机预览失败: $e');
     }
+  }
+
+  /// 安全释放相机控制器，兼容 CameraX 预览 Surface 尚未完成绑定时的释放竞态。
+  Future<void> _disposeCameraController(CameraController? controller) async {
+    if (controller == null) {
+      return;
+    }
+
+    try {
+      controller.removeListener(_onCameraControllerChanged);
+      await controller.dispose();
+    } on PlatformException catch (e, stackTrace) {
+      if (_isCameraXPreviewReleaseRace(e)) {
+        AppLogger.debug('忽略 CameraX 预览释放竞态: ${e.message}');
+        return;
+      }
+      AppLogger.error('释放相机失败: ${e.message}', e, stackTrace);
+    } catch (e, stackTrace) {
+      AppLogger.error('释放相机失败: $e', e, stackTrace);
+    }
+  }
+
+  bool _isCameraXPreviewReleaseRace(PlatformException exception) {
+    return exception.code == 'IllegalStateException' &&
+        (exception.message?.contains(
+              'releaseFlutterSurfaceTexture() cannot be called',
+            ) ??
+            false);
   }
 }
 

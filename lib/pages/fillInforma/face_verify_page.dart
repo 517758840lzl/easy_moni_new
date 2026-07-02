@@ -81,7 +81,7 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
   @override
   void dispose() {
     _cancelActionTimeout();
-    unawaited(_cameraController?.dispose());
+    unawaited(_releaseCameraController());
     unawaited(_faceDetector.close());
     super.dispose();
   }
@@ -174,7 +174,7 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
 
     final controller = CameraController(
       targetCamera,
-      ResolutionPreset.high,
+      ResolutionPreset.veryHigh,
       enableAudio: false,
       imageFormatGroup: imageFormatGroup,
     );
@@ -401,6 +401,36 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     _actionTimeoutToken += 1;
   }
 
+  /// 退出人脸页前完整停止图像流并释放相机，避免下个相机页抢占未解绑的 CameraX 用例。
+  Future<void> _releaseCameraController() async {
+    final controller = _cameraController;
+    _cameraController = null;
+    _isCameraReady = false;
+    if (controller == null) {
+      return;
+    }
+
+    try {
+      if (controller.value.isStreamingImages) {
+        await controller.stopImageStream();
+      }
+    } catch (e) {
+      AppLogger.debug('释放人脸相机前停止图像流失败: $e');
+    }
+
+    try {
+      await controller.dispose();
+    } catch (e) {
+      AppLogger.debug('释放人脸相机失败: $e');
+    }
+  }
+
+  Future<void> _popWithoutResult() async {
+    await _releaseCameraController();
+    if (!mounted) return;
+    Navigator.of(context).pop();
+  }
+
   /// 当前动作长时间未通过时提示用户，并退回入口页重新开始检测。
   Future<void> _handleActionTimeout() async {
     if (!mounted || _hasActionTimedOut || _hasCapturedFinalImage) return;
@@ -411,20 +441,11 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
 
     setState(() => _hintText = AppStrings.faceVerifyActionTimeout);
 
-    final controller = _cameraController;
-    try {
-      if (controller?.value.isStreamingImages == true) {
-        await controller!.stopImageStream();
-      }
-    } catch (e) {
-      AppLogger.debug('动作检测超时后停止相机流失败: $e');
-    }
-
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text(AppStrings.faceVerifyActionTimeout)),
     );
-    Navigator.of(context).pop();
+    await _popWithoutResult();
   }
 
   // TODO 最后一步抓拍由后端下发action：face_front ，根据这个action拍照，整体用户无感。暂时由前端模拟，后续再接入接口
@@ -460,6 +481,8 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
         setState(() {
           _hintText = AppStrings.faceVerifyCaptureCompleted;
         });
+        await _releaseCameraController();
+        if (!mounted) return;
         Navigator.of(context).pop(
           FaceVerifyCaptureResult(imageBytes: bytes, imageUrl: uploadedUrl),
         );
@@ -539,7 +562,7 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
           colors: [Color(0xFF216A4A), Color(0xFF288572)],
         ),
       ),
-      header: const _FaceVerifyHeader(),
+      header: _FaceVerifyHeader(onBack: _popWithoutResult),
       content: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Padding(
@@ -669,7 +692,9 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
 
 /// 深绿色顶部导航，只保留返回键和居中标题。
 class _FaceVerifyHeader extends StatelessWidget {
-  const _FaceVerifyHeader();
+  const _FaceVerifyHeader({required this.onBack});
+
+  final Future<void> Function() onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -684,7 +709,7 @@ class _FaceVerifyHeader extends StatelessWidget {
             Positioned(
               left: 10,
               child: IconButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => unawaited(onBack()),
                 icon: const Icon(
                   Icons.arrow_back_ios_new,
                   color: Colors.white,

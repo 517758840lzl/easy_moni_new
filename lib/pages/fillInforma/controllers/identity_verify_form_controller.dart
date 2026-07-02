@@ -366,7 +366,7 @@ class IdentityVerifyFormController {
       return data.gender?.toString();
     }
     if (_isBirthdayEntry(text)) {
-      return data.birthday;
+      return _backendBirthdaySubmitValue(data.birthday);
     }
     return null;
   }
@@ -402,10 +402,16 @@ class IdentityVerifyFormController {
       case IdentityVerifyFieldCode.gender:
         return data.gender?.toString();
       case IdentityVerifyFieldCode.birthday:
-        return data.birthday;
+        return _backendBirthdaySubmitValue(data.birthday);
       default:
         return null;
     }
+  }
+
+  /// 将 OCR 生日统一转换为后端提交格式，展示层继续使用 DD-MM-YYYY。
+  String? _backendBirthdaySubmitValue(String? value) {
+    final birthday = _parseBirthdayDate(value);
+    return birthday == null ? value : _formatBackendDate(birthday);
   }
 
   bool _isIdNumberEntry(String text) {

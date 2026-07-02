@@ -157,7 +157,7 @@ class _AntiFraudCard extends StatelessWidget {
               children: [
                 Text(
                   AppStrings.customerServiceAntiFraudTitle,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.white,
@@ -333,7 +333,7 @@ class _CustomerServiceHeader extends StatelessWidget {
                 ),
               ),
               Text(
-                data?.title ?? AppStrings.mineCustomerService,
+                AppStrings.mineCustomerService,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,

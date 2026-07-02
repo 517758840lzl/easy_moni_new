@@ -236,7 +236,6 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     if (!mounted) return;
 
     if (!capturedImages.hasAnyImage) {
-      _showSnackBar(AppStrings.identityVerifyImageNotCaptured);
       return;
     }
 

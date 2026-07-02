@@ -354,7 +354,7 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
                       // 底部操作按钮组，按设计稿保持 40px 高度和 14px 间距。
                       PermissionActionButtons(
                         secondaryText: AppStrings.decline,
-                        primaryText: AppStrings.receives,
+                        primaryText: AppStrings.agreeandContinue,
                         onSecondaryPressed: _onReject,
                         onPrimaryPressed: _onAccept,
                       ),

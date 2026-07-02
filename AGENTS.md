@@ -1,5 +1,7 @@
 # Project Agent Notes
 
+DO NOT send optional commentary.
+
 ## Command Environment
 
 - Use `pwsh` for local shell commands in this workspace.
