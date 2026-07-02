@@ -48,6 +48,7 @@ class LoanHomeScaffold extends ConsumerStatefulWidget {
 class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
   final Set<int> _selectedProductIndexes = {};
   bool _isLoading = true;
+  bool _isApplyButtonLocked = false;
   String? _loadError;
 
   List<_LoanProduct> _products = [];
@@ -204,7 +205,7 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
     }
 
     final selectedLoanAmount = _selectedLoanAmount;
-    final canApply = selectedLoanAmount > 0;
+    final canApply = selectedLoanAmount > 0 && !_isApplyButtonLocked;
 
     return Scaffold(
       backgroundColor: const Color(0xFF216A4A),
@@ -234,7 +235,14 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
   }
 
   // 跳转确认借款页面
-  void _handleApply(double selectedLoanAmount) {
+  Future<void> _handleApply(double selectedLoanAmount) async {
+    if (_isApplyButtonLocked) return;
+
+    // 防止确认页跳转未完成前重复触发底部主按钮。
+    setState(() {
+      _isApplyButtonLocked = true;
+    });
+
     final selectedConfirmProducts = _selectedProductIndexes
         .where((index) => index >= 0 && index < _products.length)
         .map((index) => _products[index].apiItem)
@@ -250,10 +258,18 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
         .where((item) => item.productCode.isNotEmpty)
         .toList();
 
-    context.push(
-      AppRoutePaths.loanConfirm,
-      extra: {'products': selectedConfirmProducts},
-    );
+    try {
+      await context.push(
+        AppRoutePaths.loanConfirm,
+        extra: {'products': selectedConfirmProducts},
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isApplyButtonLocked = false;
+        });
+      }
+    }
   }
 
   Widget _buildWhiteContentPanel() {
@@ -553,7 +569,7 @@ List<LoanOrderCardRowData> _homeOrderRows(HomeProductItem item) {
       ),
       LoanOrderCardRowData(
         label: AppStrings.loanOrderOverdueFeeLabel,
-        // TODO 确认后端逾期费是否下发
+        // 逾期费overdueInterest
         value: _amountText(item.overdueInterest),
       ),
     ];

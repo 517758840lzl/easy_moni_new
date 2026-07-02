@@ -120,6 +120,8 @@ class AppStrings {
       'Please check if your photo is clear.';
   static const String faceVerifyEntryPhotoBlurRisk =
       'A blurry photo may affect your verification.';
+  static const String faceVerifyEntryResultLoading =
+      'Processing your selfie...';
   static const String faceVerifyTitle = 'Face Verification';
   static const String faceVerifyGuideTitle =
       'Follow the instructions to complete face verification.';

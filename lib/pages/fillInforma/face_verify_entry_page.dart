@@ -31,7 +31,7 @@ class FaceVerifyEntryPage extends ConsumerStatefulWidget {
 class _FaceVerifyEntryPageState extends ConsumerState<FaceVerifyEntryPage> {
   static const double _headerTitleBarHeight = 44;
   static const double _headerTopGap = 16;
-  static const double _stepIndicatorHeight = 56;
+  static const double _stepIndicatorHeight = 80;
   static const double _headerBottomGap = 16;
   static const String _faceBiometricImageKey = 'face_biometric_image';
 
@@ -42,6 +42,7 @@ class _FaceVerifyEntryPageState extends ConsumerState<FaceVerifyEntryPage> {
   String? _faceImageUrl;
   bool _isLoading = true;
   bool _isSubmitting = false;
+  bool _isAwaitingFaceResult = false;
 
   String get _pageTitle => _stepInfo?.pageTitle.trim() ?? '';
   bool get _hasCapturedFace =>
@@ -90,15 +91,26 @@ class _FaceVerifyEntryPageState extends ConsumerState<FaceVerifyEntryPage> {
   }
 
   Future<void> _onContinue() async {
-    final captureResult = await context.push<FaceVerifyCaptureResult>(
-      AppRoutePaths.faceVerifyCapture,
-    );
-    if (!mounted || captureResult == null) return;
+    if (_isLoading || _isAwaitingFaceResult) return;
 
-    setState(() {
-      _faceImage = captureResult.imageBytes;
-      _faceImageUrl = captureResult.imageUrl;
-    });
+    setState(() => _isAwaitingFaceResult = true);
+
+    FaceVerifyCaptureResult? captureResult;
+    try {
+      captureResult = await context.push<FaceVerifyCaptureResult>(
+        AppRoutePaths.faceVerifyCapture,
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          if (captureResult != null) {
+            _faceImage = captureResult.imageBytes;
+            _faceImageUrl = captureResult.imageUrl;
+          }
+          _isAwaitingFaceResult = false;
+        });
+      }
+    }
   }
 
   Future<void> _onRetake() async {
@@ -176,17 +188,26 @@ class _FaceVerifyEntryPageState extends ConsumerState<FaceVerifyEntryPage> {
         ),
         content: _isLoading
             ? const Center(child: CircularProgressIndicator())
-            : _buildContent(),
+            : Stack(
+                children: [
+                  _buildContent(),
+                  if (_isAwaitingFaceResult)
+                    const _FaceVerifyResultLoadingOverlay(),
+                ],
+              ),
         bottomNavigationBar: _hasCapturedFace
             ? _FacePhotoActionBar(
-                enabled: !_isLoading && !_isSubmitting,
+                enabled:
+                    !_isLoading && !_isSubmitting && !_isAwaitingFaceResult,
                 isSubmitting: _isSubmitting,
                 onRetake: _onRetake,
                 onConfirm: _onConfirmPhoto,
               )
             : LoanBottomActionButton(
-                enabled: !_isLoading,
-                onPressed: _isLoading ? null : _onContinue,
+                enabled: !_isLoading && !_isAwaitingFaceResult,
+                onPressed: (_isLoading || _isAwaitingFaceResult)
+                    ? null
+                    : _onContinue,
                 text: AppStrings.faceVerifyEntryContinue,
                 fontWeight: FontWeight.w600,
                 padding: const EdgeInsets.symmetric(
@@ -277,6 +298,38 @@ class _FaceVerifyEntryPageState extends ConsumerState<FaceVerifyEntryPage> {
                     color: Color(0xFF216A4A),
                     height: 1.2,
                   ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 人脸检测页返回入口页时展示的临时等待层，避免回显结果前页面看起来无响应。
+class _FaceVerifyResultLoadingOverlay extends StatelessWidget {
+  const _FaceVerifyResultLoadingOverlay();
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: ColoredBox(
+        color: Colors.white.withValues(alpha: 0.82),
+        child: const Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: Color(0xFF216A4A)),
+              SizedBox(height: 14),
+              Text(
+                AppStrings.faceVerifyEntryResultLoading,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xFF3F4950),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],

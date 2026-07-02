@@ -94,6 +94,7 @@ class HomeConfirmData {
 
 class HomeProductItem {
   final double? actualToAccount;
+  final String? applicationTime;
   final int? appOrderId;
   final String? appOrderIdStr;
   final int? appOrderStatus;
@@ -107,12 +108,13 @@ class HomeProductItem {
   final int? daysPerTermFrom;
   final int? daysPerTermTo;
   final String? dueDate;
+  final String? effectiveTime;
   final double? interest;
   final bool? isExtensionSwitch;
   final double? loanAmount;
   final double? loanLimitFrom;
   final double? loanLimitTo;
-  final double? overdueInterest;
+  final num? overdueInterest;
   final int? productAccount;
   final String? productCode;
   final double? productInterest;
@@ -132,6 +134,7 @@ class HomeProductItem {
 
   const HomeProductItem({
     this.actualToAccount,
+    this.applicationTime,
     this.appOrderId,
     this.appOrderIdStr,
     this.appOrderStatus,
@@ -145,6 +148,7 @@ class HomeProductItem {
     this.daysPerTermFrom,
     this.daysPerTermTo,
     this.dueDate,
+    this.effectiveTime,
     this.interest,
     this.isExtensionSwitch,
     this.loanAmount,
@@ -173,6 +177,7 @@ class HomeProductItem {
     final map = _toMap(json);
     return HomeProductItem(
       actualToAccount: _parseDouble(map['actualToAccount']),
+      applicationTime: map['applicationTime'] as String?,
       appOrderId: _parseInt(map['appOrderId']),
       appOrderIdStr: map['appOrderIdStr'] as String?,
       appOrderStatus: _parseInt(map['appOrderStatus']),
@@ -186,12 +191,13 @@ class HomeProductItem {
       daysPerTermFrom: _parseInt(map['daysPerTermFrom']),
       daysPerTermTo: _parseInt(map['daysPerTermTo']),
       dueDate: map['dueDate'] as String?,
+      effectiveTime: map['effectiveTime'] as String?,
       interest: _parseDouble(map['interest']),
       isExtensionSwitch: _parseBool(map['isExtensionSwitch']),
       loanAmount: _parseDouble(map['loanAmount']),
       loanLimitFrom: _parseDouble(map['loanLimitFrom']),
       loanLimitTo: _parseDouble(map['loanLimitTo']),
-      overdueInterest: _parseDouble(map['overdueInterest']),
+      overdueInterest: _parseNum(map['overdueInterest']),
       productAccount: _parseInt(map['productAccount']),
       productCode: map['productCode'] as String?,
       productInterest: _parseDouble(map['productInterest']),
@@ -278,6 +284,13 @@ double? _parseDouble(dynamic value) {
   if (value is double) return value;
   if (value is int) return value.toDouble();
   if (value is String) return double.tryParse(value);
+  return null;
+}
+
+num? _parseNum(dynamic value) {
+  if (value == null) return null;
+  if (value is num) return value;
+  if (value is String) return num.tryParse(value);
   return null;
 }
 

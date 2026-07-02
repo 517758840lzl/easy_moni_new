@@ -65,6 +65,7 @@ class _RepayOrderDetailPageState extends ConsumerState<RepayOrderDetailPage> {
         _isCouponAmountPreviewLoading || showCouponAmount;
     final showExtensionButton =
         detail?.isExtensionSwitch == true && _firstOrder(detail) != null;
+    final isActionReady = detail != null;
 
     return LoanRoundedPageShell(
       contentTop: (_) => topInset + (reserveCouponAmountSpace ? 138 : 114),
@@ -94,6 +95,7 @@ class _RepayOrderDetailPageState extends ConsumerState<RepayOrderDetailPage> {
         loading: () => const AppStateView(child: CircularProgressIndicator()),
       ),
       bottomNavigationBar: _RepayDetailActions(
+        isActionReady: isActionReady,
         isActionLocked: _isBottomActionLocked,
         showExtensionButton: showExtensionButton,
         onExtensionTap: () => _runBottomAction(() => _openExtension(detail)),
@@ -612,12 +614,14 @@ List<String> _paymentProductCodes(
 
 class _RepayDetailActions extends StatelessWidget {
   const _RepayDetailActions({
+    required this.isActionReady,
     required this.isActionLocked,
     required this.showExtensionButton,
     required this.onExtensionTap,
     required this.onRepayTap,
   });
 
+  final bool isActionReady;
   final bool isActionLocked;
   final bool showExtensionButton;
   final VoidCallback onExtensionTap;
@@ -625,6 +629,9 @@ class _RepayDetailActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 底部按钮需等待订单详情接口完成后才允许点击，避免加载中提前进入支付流程。
+    final enabled = isActionReady && !isActionLocked;
+
     if (showExtensionButton) {
       return Container(
         color: Colors.white,
@@ -633,17 +640,17 @@ class _RepayDetailActions extends StatelessWidget {
           child: PermissionActionButtons(
             secondaryText: AppStrings.repayDetailApplyExtension,
             primaryText: AppStrings.repayDetailRepayNow,
-            onSecondaryPressed: isActionLocked ? null : onExtensionTap,
-            onPrimaryPressed: isActionLocked ? null : onRepayTap,
+            onSecondaryPressed: enabled ? onExtensionTap : null,
+            onPrimaryPressed: enabled ? onRepayTap : null,
           ),
         ),
       );
     }
 
     return LoanBottomActionButton(
-      enabled: !isActionLocked,
+      enabled: enabled,
       text: AppStrings.repayDetailRepayNow,
-      onPressed: isActionLocked ? null : onRepayTap,
+      onPressed: enabled ? onRepayTap : null,
     );
   }
 }

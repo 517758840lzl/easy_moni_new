@@ -32,7 +32,7 @@ class ContactInfoPage extends ConsumerStatefulWidget {
 class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
   static const double _headerTitleBarHeight = 44;
   static const double _headerTopGap = 16;
-  static const double _stepIndicatorHeight = 56;
+  static const double _stepIndicatorHeight = 80;
   static const double _headerBottomGap = 16;
 
   final ContactInfoFormController _formController = ContactInfoFormController();

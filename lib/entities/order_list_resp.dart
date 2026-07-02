@@ -19,6 +19,7 @@ abstract class OrderListResp with _$OrderListResp {
 abstract class OrderListItem with _$OrderListItem {
   const factory OrderListItem({
     @JsonKey(name: 'appOrderId') String? appOrderId,
+    @JsonKey(name: 'applicationTime') String? applicationTime,
     @JsonKey(name: 'productSetCode') String? productSetCode,
     @JsonKey(name: 'productLevel') String? productLevel,
     @JsonKey(name: 'orderStatus') int? orderStatus,
@@ -27,6 +28,7 @@ abstract class OrderListItem with _$OrderListItem {
     @JsonKey(name: 'loanAmount') num? loanAmount,
     @JsonKey(name: 'receiptAmount') num? receiptAmount,
     @JsonKey(name: 'interest') num? interest,
+    @JsonKey(name: 'overdueInterest') num? overdueInterest,
     @JsonKey(name: 'term') int? term,
     @JsonKey(name: 'totalServiceDays') int? totalServiceDays,
     @JsonKey(name: 'remainingDays') int? remainingDays,
@@ -40,6 +42,7 @@ abstract class OrderListItem with _$OrderListItem {
     @JsonKey(name: 'bankCardType') String? bankCardType,
     @JsonKey(name: 'updateTime') String? updateTime,
     @JsonKey(name: 'createTime') String? createTime,
+    @JsonKey(name: 'effectiveTime') String? effectiveTime,
     @JsonKey(name: 'acqChannel') String? acqChannel,
     @JsonKey(name: 'closeTime') String? closeTime,
     @JsonKey(name: 'rejectTime') int? rejectTime,

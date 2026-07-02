@@ -11,6 +11,7 @@ class LoanOrderDetailData {
     required this.loanAmount,
     required this.receiptAmount,
     required this.repayAmount,
+    this.overdueInterest,
     this.productCode,
     this.productLevel,
     this.productLogo,
@@ -40,6 +41,7 @@ class LoanOrderDetailData {
           ? item.productName!
           : AppStrings.loanOrderProductFallback,
       loanAmount: item.loanAmount ?? 0,
+      overdueInterest: item.overdueInterest ?? 0,
       receiptAmount: item.actualToAccount ?? item.receiptAmount ?? 0,
       repayAmount: item.repayAmount ?? 0,
       productCode: item.productCode,
@@ -71,6 +73,7 @@ class LoanOrderDetailData {
           ? order.productName!.trim()
           : AppStrings.loanOrderProductFallback,
       loanAmount: order.loanAmount ?? 0,
+      overdueInterest: order.overdueInterest ?? 0,
       receiptAmount: order.receiptAmount ?? 0,
       repayAmount: order.repayAmount ?? 0,
       productCode: order.productSetCode,
@@ -98,6 +101,7 @@ class LoanOrderDetailData {
   final String appOrderId;
   final String productName;
   final num loanAmount;
+  final num? overdueInterest;
   final num receiptAmount;
   final num repayAmount;
   final String? productCode;

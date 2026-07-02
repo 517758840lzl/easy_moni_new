@@ -25,6 +25,7 @@ Map<String, dynamic> _$OrderListRespToJson(_OrderListResp instance) =>
 _OrderListItem _$OrderListItemFromJson(Map<String, dynamic> json) =>
     _OrderListItem(
       appOrderId: json['appOrderId'] as String?,
+      applicationTime: json['applicationTime'] as String?,
       productSetCode: json['productSetCode'] as String?,
       productLevel: json['productLevel'] as String?,
       orderStatus: (json['orderStatus'] as num?)?.toInt(),
@@ -33,6 +34,7 @@ _OrderListItem _$OrderListItemFromJson(Map<String, dynamic> json) =>
       loanAmount: json['loanAmount'] as num?,
       receiptAmount: json['receiptAmount'] as num?,
       interest: json['interest'] as num?,
+      overdueInterest: json['overdueInterest'] as num?,
       term: (json['term'] as num?)?.toInt(),
       totalServiceDays: (json['totalServiceDays'] as num?)?.toInt(),
       remainingDays: (json['remainingDays'] as num?)?.toInt(),
@@ -46,6 +48,7 @@ _OrderListItem _$OrderListItemFromJson(Map<String, dynamic> json) =>
       bankCardType: json['bankCardType'] as String?,
       updateTime: json['updateTime'] as String?,
       createTime: json['createTime'] as String?,
+      effectiveTime: json['effectiveTime'] as String?,
       acqChannel: json['acqChannel'] as String?,
       closeTime: json['closeTime'] as String?,
       rejectTime: (json['rejectTime'] as num?)?.toInt(),
@@ -57,6 +60,7 @@ _OrderListItem _$OrderListItemFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$OrderListItemToJson(_OrderListItem instance) =>
     <String, dynamic>{
       'appOrderId': instance.appOrderId,
+      'applicationTime': instance.applicationTime,
       'productSetCode': instance.productSetCode,
       'productLevel': instance.productLevel,
       'orderStatus': instance.orderStatus,
@@ -65,6 +69,7 @@ Map<String, dynamic> _$OrderListItemToJson(_OrderListItem instance) =>
       'loanAmount': instance.loanAmount,
       'receiptAmount': instance.receiptAmount,
       'interest': instance.interest,
+      'overdueInterest': instance.overdueInterest,
       'term': instance.term,
       'totalServiceDays': instance.totalServiceDays,
       'remainingDays': instance.remainingDays,
@@ -78,6 +83,7 @@ Map<String, dynamic> _$OrderListItemToJson(_OrderListItem instance) =>
       'bankCardType': instance.bankCardType,
       'updateTime': instance.updateTime,
       'createTime': instance.createTime,
+      'effectiveTime': instance.effectiveTime,
       'acqChannel': instance.acqChannel,
       'closeTime': instance.closeTime,
       'rejectTime': instance.rejectTime,

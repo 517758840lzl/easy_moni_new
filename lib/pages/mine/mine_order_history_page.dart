@@ -246,18 +246,27 @@ class _MineOrderHistoryTabBar extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       height: 50,
-      child: Row(
-        children: List.generate(tabs.length, (index) {
-          final selected = index == selectedIndex;
-          return Expanded(
-            child: _MineOrderHistoryTabItem(
-              label: tabs[index].label,
-              itemCount: itemCounts[tabs[index].key] ?? 0,
-              selected: selected,
-              onTap: () => onTap(index),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minWidth: constraints.maxWidth),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: List.generate(tabs.length, (index) {
+                  final selected = index == selectedIndex;
+                  return _MineOrderHistoryTabItem(
+                    label: tabs[index].label,
+                    itemCount: itemCounts[tabs[index].key] ?? 0,
+                    selected: selected,
+                    onTap: () => onTap(index),
+                  );
+                }),
+              ),
             ),
           );
-        }),
+        },
       ),
     );
   }
@@ -281,42 +290,39 @@ class _MineOrderHistoryTabItem extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(4),
-      child: Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Row(
+              mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                      color: selected
-                          ? Colors.white
-                          : Colors.white.withValues(alpha: 0.55),
-                      height: 18 / 14,
-                    ),
+                Text(
+                  label,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                    color: selected
+                        ? Colors.white
+                        : Colors.white.withValues(alpha: 0.55),
+                    height: 18 / 14,
                   ),
                 ),
                 const SizedBox(width: 4),
-                Flexible(
-                  child: Text(
-                    AppStrings.mineOrderHistoryTabCount(itemCount),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                      color: selected
-                          ? Colors.white
-                          : Colors.white.withValues(alpha: 0.55),
-                      height: 18 / 14,
-                    ),
+                Text(
+                  AppStrings.mineOrderHistoryTabCount(itemCount),
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                    color: selected
+                        ? Colors.white
+                        : Colors.white.withValues(alpha: 0.55),
+                    height: 18 / 14,
                   ),
                 ),
               ],
@@ -457,10 +463,10 @@ List<MineOrderSummaryCardColumnData> _buildDisbursementColumns(
       label: AppStrings.loanOrderReceiptAmountLabel,
       value: (order.receiptAmount ?? 0).formatAmount(),
     ),
-    // TODO 借款日期暂时使用 createTime
+    // 借款日期使用 applicationTime
     MineOrderSummaryCardColumnData(
       label: AppStrings.mineOrderLoanDateLabel,
-      value: _formatDate(order.createTime),
+      value: _formatDate(order.applicationTime),
     ),
   ];
 }

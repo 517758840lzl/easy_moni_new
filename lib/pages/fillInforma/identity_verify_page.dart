@@ -34,7 +34,7 @@ class IdentityVerifyPage extends ConsumerStatefulWidget {
 class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   static const double _headerTitleBarHeight = 44;
   static const double _headerTopGap = 16;
-  static const double _stepIndicatorHeight = 56;
+  static const double _stepIndicatorHeight = 80;
   static const double _headerBottomGap = 16;
   static const String _frontOcrType = 'FRONT';
   static const String _backOcrType = 'BACK';

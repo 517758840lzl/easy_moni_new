@@ -35,7 +35,7 @@ class MineOrderHistoryTabs {
     MineOrderHistoryTab(
       key: allKey,
       label: AppStrings.mineOrderHistoryAllTab,
-      statusList: <int>[20, 3, 4, 5, 22],
+      statusList: <int>[20, 3, 4, 5],
     ),
     MineOrderHistoryTab(
       key: 'disbursing',
@@ -47,11 +47,11 @@ class MineOrderHistoryTabs {
       label: AppStrings.mineOrderHistoryRepayingTab,
       statusList: <int>[4],
     ),
-    MineOrderHistoryTab(
-      key: 'failed',
-      label: AppStrings.mineOrderHistoryFailedTab,
-      statusList: <int>[5, 22],
-    ),
+    // MineOrderHistoryTab(
+    //   key: 'failed',
+    //   label: AppStrings.mineOrderHistoryFailedTab,
+    //   statusList: <int>[5, 22],
+    // ),
   ];
 
   static MineOrderHistoryTab byKey(String key) {

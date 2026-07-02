@@ -147,6 +147,16 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     if (normalizedKey == 'sideFaceStep') {
       return FaceAction.shakeHead;
     }
+    if (normalizedKey == 'blinkStep') {
+      return FaceAction.blink;
+    }
+    if (normalizedKey == 'nodHeadStep') {
+      return FaceAction.nodHead;
+    }
+    if (normalizedKey == 'mouthOpenStep') {
+      return FaceAction.openMouth;
+    }
+
     return FaceAction.openMouth;
   }
 
@@ -174,7 +184,7 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
 
     final controller = CameraController(
       targetCamera,
-      ResolutionPreset.veryHigh,
+      ResolutionPreset.high,
       enableAudio: false,
       imageFormatGroup: imageFormatGroup,
     );

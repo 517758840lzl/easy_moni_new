@@ -78,7 +78,7 @@ Widget buildProgressIndicator({required InformationStep activeStep}) {
   final isFaceActive = activeStep == InformationStep.face;
 
   return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16),
+    padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 12),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
