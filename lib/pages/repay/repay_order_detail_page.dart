@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/entities/coupon_resp.dart';
@@ -41,6 +43,7 @@ class _RepayOrderDetailPageState extends ConsumerState<RepayOrderDetailPage> {
   CouponItem? _selectedCoupon;
   UseCouponRespData? _couponAmountPreview;
   bool _isCouponAmountPreviewLoading = false;
+  bool _isBottomActionLocked = false;
   int _couponPreviewRequestId = 0;
 
   @override
@@ -91,9 +94,10 @@ class _RepayOrderDetailPageState extends ConsumerState<RepayOrderDetailPage> {
         loading: () => const AppStateView(child: CircularProgressIndicator()),
       ),
       bottomNavigationBar: _RepayDetailActions(
+        isActionLocked: _isBottomActionLocked,
         showExtensionButton: showExtensionButton,
-        onExtensionTap: () => _openExtension(context, detail),
-        onRepayTap: () => _openPayment(context, detail),
+        onExtensionTap: () => _runBottomAction(() => _openExtension(detail)),
+        onRepayTap: () => _runBottomAction(() => _openPayment(detail)),
       ),
     );
   }
@@ -200,21 +204,40 @@ class _RepayOrderDetailPageState extends ConsumerState<RepayOrderDetailPage> {
     }
   }
 
-  void _openPayment(BuildContext context, RepayDetailRespData? detail) {
+  // 底部操作加锁，避免用户连续点击造成重复跳转和后续接口频繁调用。
+  Future<void> _runBottomAction(FutureOr<void> Function() action) async {
+    if (_isBottomActionLocked) return;
+
+    setState(() {
+      _isBottomActionLocked = true;
+    });
+
+    try {
+      await action();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isBottomActionLocked = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _openPayment(RepayDetailRespData? detail) async {
     final requestParams = _buildPaymentParams(detail, _selectedCoupon);
     if (requestParams == null) {
       _showSnack(context, AppStrings.paymentNoOrderData);
       return;
     }
 
-    context.push(AppRoutePaths.payment, extra: requestParams);
+    await context.push(AppRoutePaths.payment, extra: requestParams);
   }
 
-  void _openExtension(BuildContext context, RepayDetailRespData? detail) {
+  Future<void> _openExtension(RepayDetailRespData? detail) async {
     final order = _firstOrder(detail);
     if (order == null) return;
 
-    context.push(
+    await context.push(
       AppRoutePaths.repayExtension,
       extra: RepayExtensionRequestData(loanOrderDetails: [order]),
     );
@@ -589,11 +612,13 @@ List<String> _paymentProductCodes(
 
 class _RepayDetailActions extends StatelessWidget {
   const _RepayDetailActions({
+    required this.isActionLocked,
     required this.showExtensionButton,
     required this.onExtensionTap,
     required this.onRepayTap,
   });
 
+  final bool isActionLocked;
   final bool showExtensionButton;
   final VoidCallback onExtensionTap;
   final VoidCallback onRepayTap;
@@ -608,17 +633,17 @@ class _RepayDetailActions extends StatelessWidget {
           child: PermissionActionButtons(
             secondaryText: AppStrings.repayDetailApplyExtension,
             primaryText: AppStrings.repayDetailRepayNow,
-            onSecondaryPressed: onExtensionTap,
-            onPrimaryPressed: onRepayTap,
+            onSecondaryPressed: isActionLocked ? null : onExtensionTap,
+            onPrimaryPressed: isActionLocked ? null : onRepayTap,
           ),
         ),
       );
     }
 
     return LoanBottomActionButton(
-      enabled: true,
+      enabled: !isActionLocked,
       text: AppStrings.repayDetailRepayNow,
-      onPressed: onRepayTap,
+      onPressed: isActionLocked ? null : onRepayTap,
     );
   }
 }

@@ -240,8 +240,8 @@ class _MineOrderStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 54,
       height: 18,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
       alignment: Alignment.center,
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -254,7 +254,6 @@ class _MineOrderStatusBadge extends StatelessWidget {
       child: Text(
         visual.label,
         maxLines: 1,
-        overflow: TextOverflow.ellipsis,
         textAlign: TextAlign.center,
         style: const TextStyle(
           fontSize: 10,

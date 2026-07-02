@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/entities/coupon_resp.dart';
 import 'package:easy_moni/entities/repay/repay_detail_resp.dart';
@@ -39,6 +41,7 @@ class _RepayMultiOrderDetailPageState
   CouponItem? _selectedCoupon;
   UseCouponRespData? _couponAmountPreview;
   bool _isCouponAmountPreviewLoading = false;
+  bool _isRepayActionLocked = false;
   int _couponPreviewRequestId = 0;
 
   @override
@@ -88,14 +91,35 @@ class _RepayMultiOrderDetailPageState
         loading: () => const AppStateView(child: CircularProgressIndicator()),
       ),
       bottomNavigationBar: LoanBottomActionButton(
-        enabled: detail != null,
+        enabled: detail != null && !_isRepayActionLocked,
         text: AppStrings.repayDetailRepayNow,
-        onPressed: detail == null ? null : () => _openPayment(context, detail),
+        onPressed: detail == null || _isRepayActionLocked
+            ? null
+            : () => _runRepayAction(() => _openPayment(detail)),
       ),
     );
   }
 
-  void _openPayment(BuildContext context, RepayDetailRespData detail) {
+  // 还款入口加锁，避免重复点击造成重复跳转和支付接口频繁调用。
+  Future<void> _runRepayAction(FutureOr<void> Function() action) async {
+    if (_isRepayActionLocked) return;
+
+    setState(() {
+      _isRepayActionLocked = true;
+    });
+
+    try {
+      await action();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRepayActionLocked = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _openPayment(RepayDetailRespData detail) async {
     final requestParams = _buildPaymentParams(detail, _selectedCoupon);
     if (requestParams == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -104,7 +128,7 @@ class _RepayMultiOrderDetailPageState
       return;
     }
 
-    context.push(AppRoutePaths.payment, extra: requestParams);
+    await context.push(AppRoutePaths.payment, extra: requestParams);
   }
 
   Future<void> _showCoupons(RepayDetailRespData detail) async {
@@ -372,14 +396,14 @@ class _SummaryCard extends StatelessWidget {
         ),
       ),
       child: Container(
-        height: 51,
-        padding: const EdgeInsets.fromLTRB(9, 8, 9, 7),
+        padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               amount.formatAmount(),
-              maxLines: 1,
+              maxLines:1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 fontSize: 14,

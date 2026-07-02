@@ -29,6 +29,8 @@ class PermissionPage extends ConsumerStatefulWidget {
 
 class _PermissionPageState extends ConsumerState<PermissionPage> {
   bool _isAgreed = false;
+  bool _isPermissionActionLocked = false;
+  bool _isPrivacyAgreementHandling = false;
 
   @override
   void initState() {
@@ -113,37 +115,80 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
     }
   }
 
-  void _onAccept() {
-    PrivacyPolicyDialog.show(
+  // 权限页底部按钮加锁，避免连续点击重复弹窗或重复触发授权流程。
+  Future<void> _runPermissionAction(FutureOr<void> Function() action) async {
+    if (_isPermissionActionLocked) return;
+
+    setState(() {
+      _isPermissionActionLocked = true;
+    });
+
+    try {
+      await action();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPermissionActionLocked = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _onAccept() async {
+    final agreementFlow = Completer<void>();
+
+    await PrivacyPolicyDialog.show<void>(
       context: context,
-      onAgree: () async {
-        // 保存用户同意状态
-        await PermissionStorage.setPrivacyAgreed(true);
-        if (!mounted) return;
-
-        _startPrivacyAwareTracking();
-
-        // 关掉隐私确认弹窗
-        Navigator.of(context).pop();
-
-        await _requestRequiredNativePermissions();
-        if (!mounted) return;
-
-        await PermissionStorage.setPermissionsAccepted(true);
-        if (!mounted) return;
-
-        _startSilentPermissionDataCollection();
-        unawaited(_runPrivacyAwareStartupSync());
-
-        // 跳转到下一页面
-        if (mounted) {
-          await _routeAfterPermissionsAccepted();
-        }
+      onAgree: () {
+        unawaited(_handlePrivacyPolicyAgree(agreementFlow));
       },
       onDecline: () {
+        _completeAgreementFlow(agreementFlow);
         SystemNavigator.pop(); // 拒绝就退出
       },
     );
+
+    _completeAgreementFlow(agreementFlow);
+    await agreementFlow.future;
+  }
+
+  Future<void> _handlePrivacyPolicyAgree(Completer<void> agreementFlow) async {
+    if (_isPrivacyAgreementHandling) return;
+    _isPrivacyAgreementHandling = true;
+
+    try {
+      // 保存用户同意状态
+      await PermissionStorage.setPrivacyAgreed(true);
+      if (!mounted) return;
+
+      _startPrivacyAwareTracking();
+
+      // 关掉隐私确认弹窗
+      Navigator.of(context).pop();
+
+      await _requestRequiredNativePermissions();
+      if (!mounted) return;
+
+      await PermissionStorage.setPermissionsAccepted(true);
+      if (!mounted) return;
+
+      _startSilentPermissionDataCollection();
+      unawaited(_runPrivacyAwareStartupSync());
+
+      // 跳转到下一页面
+      if (mounted) {
+        await _routeAfterPermissionsAccepted();
+      }
+    } finally {
+      _isPrivacyAgreementHandling = false;
+      _completeAgreementFlow(agreementFlow);
+    }
+  }
+
+  void _completeAgreementFlow(Completer<void> agreementFlow) {
+    if (!agreementFlow.isCompleted) {
+      agreementFlow.complete();
+    }
   }
 
   /// 隐私同意后执行启动阶段数据有效性检查，并按需触发非阻塞上传。
@@ -175,9 +220,9 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
     }
   }
 
-  void _onReject() {
+  Future<void> _onReject() async {
     AppLogger.debug('点击了拒绝按钮');
-    SystemNavigator.pop();
+    await SystemNavigator.pop();
   }
 
   @override
@@ -351,12 +396,15 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
                       ),
 
                       const SizedBox(height: 6),
-                      // 底部操作按钮组，按设计稿保持 40px 高度和 14px 间距。
                       PermissionActionButtons(
                         secondaryText: AppStrings.decline,
                         primaryText: AppStrings.agreeandContinue,
-                        onSecondaryPressed: _onReject,
-                        onPrimaryPressed: _onAccept,
+                        onSecondaryPressed: _isPermissionActionLocked
+                            ? null
+                            : () => _runPermissionAction(_onReject),
+                        onPrimaryPressed: _isPermissionActionLocked
+                            ? null
+                            : () => _runPermissionAction(_onAccept),
                       ),
                     ],
                   ),

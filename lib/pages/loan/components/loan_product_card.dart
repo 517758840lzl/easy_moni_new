@@ -317,7 +317,7 @@ class _StateBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 18,
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: colors.badgeGradient == null ? colors.badgeColor : null,
         gradient: colors.badgeGradient == null

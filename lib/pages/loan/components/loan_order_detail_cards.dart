@@ -183,7 +183,7 @@ class _DetailInfoRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(
+        Flexible(
           child: Text(
             label,
             maxLines: 1,
@@ -198,7 +198,6 @@ class _DetailInfoRow extends StatelessWidget {
         ),
         const SizedBox(width: 16),
         Flexible(
-          flex: 2,
           child: Text(
             value,
             maxLines: 1,
