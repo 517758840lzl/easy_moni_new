@@ -95,7 +95,7 @@ class CommonBottomSheet<T> extends StatelessWidget {
                         bottom: MediaQuery.viewInsetsOf(context).bottom,
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+                        padding: const EdgeInsets.fromLTRB(12, 32, 12, 32),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [

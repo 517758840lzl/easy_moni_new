@@ -163,47 +163,51 @@ class CouponTicketCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // title
-                _CouponTitle(title: title, couponType: couponType),
+                _CouponTitle(title: title),
                 const SizedBox(height: 8),
-                // summary
-                Text(
-                  summary,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    height: 27 / 24,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF252629),
-                  ),
-                ),
-                // desc
+                // 金额与类型标签同排展示，金额按内容宽度自然渲染。
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Expanded(
-                      flex: 2,
+                    Flexible(
+                      fit: FlexFit.loose,
                       child: Text(
-                        desc,
+                        summary,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 14,
-                          height: 14 / 14,
+                          fontSize: 24,
+                          height: 27 / 24,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF252629),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    CouponBadge(couponType: couponType),
+                  ],
+                ),
+                // 描述可换行，右侧保留选中态入口。
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        desc,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          height: 14 / 12,
                           color: Color(0xFF2F2F2F),
                         ),
                       ),
                     ),
-                    // check
-                    Expanded(
-                      flex: 1,
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: isUsable
-                            ? _CouponCheckMark(selected: selected)
-                            : const SizedBox.shrink(),
-                      ),
-                    ),
+                    if (isUsable) ...[
+                      const SizedBox(width: 8),
+                      _CouponCheckMark(selected: selected),
+                    ],
                   ],
                 ),
               ],
@@ -216,43 +220,46 @@ class CouponTicketCard extends StatelessWidget {
 }
 
 class _CouponTitle extends StatelessWidget {
-  const _CouponTitle({required this.title, required this.couponType});
+  const _CouponTitle({required this.title});
 
   final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return _CouponTitleText(title);
+  }
+}
+
+class CouponBadge extends StatelessWidget {
+  const CouponBadge({super.key, required this.couponType});
+
   final String couponType;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          height: 15,
-          constraints: const BoxConstraints(minWidth: 40),
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-          decoration: const BoxDecoration(
-            color: Color(0xFF268470),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(15),
-              topRight: Radius.circular(15),
-              bottomRight: Radius.circular(15),
-            ),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            couponType,
-            maxLines: 1,
-            style: const TextStyle(
-              fontSize: 8,
-              height: 12 / 8,
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+    return Container(
+      height: 15,
+      constraints: const BoxConstraints(minWidth: 40),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+      decoration: const BoxDecoration(
+        color: Color(0xFF268470),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(15),
+          topRight: Radius.circular(15),
+          bottomRight: Radius.circular(15),
         ),
-        const SizedBox(width: 4),
-        Expanded(child: _CouponTitleText(title)),
-      ],
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        couponType,
+        maxLines: 1,
+        style: const TextStyle(
+          fontSize: 8,
+          height: 12 / 8,
+          color: Colors.white,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
     );
   }
 }

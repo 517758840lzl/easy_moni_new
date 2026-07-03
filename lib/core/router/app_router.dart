@@ -28,6 +28,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_moni/core/constants/app_strings.dart';
+import 'package:easy_moni/core/router/app_route_extra_codec.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/pages/login/permission_page.dart';
 // import 'package:easy_moni/pages/login/splash_page.dart';
@@ -42,6 +43,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: globalNavigationKey,
     initialLocation: AppRoutePaths.permission,
+    extraCodec: const AppRouteExtraCodec(),
     debugLogDiagnostics: true,
     routes: [
       // TODO: 当前 Android 已接入原生启动页，暂时跳过 Flutter SplashPage。

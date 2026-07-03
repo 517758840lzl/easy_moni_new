@@ -426,6 +426,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
         _frontPreviewImageData = null;
         _frontUploadError = null;
         _isFrontImageProcessing = true;
+        _formController.clearOcrResult();
       }
       if (backImageData != null) {
         _backImageUrl = null;
@@ -482,8 +483,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
       } else {
         _backImageUrl = null;
         _backPreviewImageData = null;
-        _backUploadError =
-            result.message ?? AppStrings.identityVerifyOcrFailed;
+        _backUploadError = result.message ?? AppStrings.identityVerifyOcrFailed;
       }
       _isBackImageProcessing = false;
       if (shouldUpdateLoading) {
@@ -545,9 +545,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
       }
     });
 
-    _showSnackBar(
-      result.message ?? AppStrings.identityVerifyOcrFailed,
-    );
+    _showSnackBar(result.message ?? AppStrings.identityVerifyOcrFailed);
   }
 
   /// OCR 接口在不同证件面可能返回 url/backUrl，这里统一取可提交图片地址。
@@ -803,7 +801,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
                         ),
                       ),
                     ),
-                    
+
                     if (_isOcrLoading)
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 16),

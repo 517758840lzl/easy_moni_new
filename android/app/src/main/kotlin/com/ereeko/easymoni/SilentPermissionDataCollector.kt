@@ -1,11 +1,14 @@
 package com.ereeko.easymoni
 
 import android.app.Activity
+import android.app.ActivityManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
+import android.os.Environment
+import android.os.StatFs
 import android.os.SystemClock
 import android.provider.Settings
 import io.flutter.plugin.common.BinaryMessenger
@@ -133,8 +136,34 @@ internal class SilentPermissionDataCollector(
             "longitude" to locationSnapshot?.longitude,
             "advertising_id" to advertisingId
         )
+        deviceInfo.putAll(memoryStorageInfo(activity))
 
         return deviceInfo
+    }
+
+    // 采集设备内存和内部存储容量，作为 deviceInfo 外层字段上报。
+    private fun memoryStorageInfo(context: Context): Map<String, Long> {
+        var totalMemory = 0L
+        var freeMemory = 0L
+        var totalStorage = 0L
+
+        try {
+            val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+            val memoryInfo = ActivityManager.MemoryInfo()
+            activityManager.getMemoryInfo(memoryInfo)
+            totalMemory = memoryInfo.totalMem
+            freeMemory = memoryInfo.availMem
+
+            val stat = StatFs(Environment.getDataDirectory().path)
+            totalStorage = stat.blockSizeLong * stat.blockCountLong
+        } catch (_: Exception) {
+        }
+
+        return mapOf(
+            "total_memory" to totalMemory,
+            "total_storage" to totalStorage,
+            "used_memory" to (totalMemory - freeMemory),
+        )
     }
 
     private fun getAppVersionName(): String {

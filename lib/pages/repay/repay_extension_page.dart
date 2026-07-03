@@ -411,12 +411,13 @@ class _RepayExtensionInfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Flexible(
+        Expanded(
           child: Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 12,
               color: Color(0xFF252629),
@@ -424,19 +425,17 @@ class _RepayExtensionInfoRow extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: 12),
-        Flexible(
-          child: Text(
-            value,
-            textAlign: TextAlign.right,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: Colors.black,
-              height: 16 / 12,
-            ),
+        const SizedBox(width: 8),
+        Text(
+          value,
+          textAlign: TextAlign.right,
+          maxLines: 1,
+          softWrap: false,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: Colors.black,
+            height: 16 / 12,
           ),
         ),
       ],

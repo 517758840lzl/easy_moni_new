@@ -71,13 +71,13 @@ class _FundingLimitDialogState extends State<FundingLimitDialog> {
         child: Material(
           color: Colors.transparent,
           child: Container(
-            width: 300,
+            width: 280,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 34),
             decoration: BoxDecoration(
               // borderRadius: BorderRadius.circular(24),
               image: DecorationImage(
                 image: Assets.images.informationBg.provider(),
-                fit: BoxFit.cover,
+                fit: BoxFit.fill,
               ),
             ),
             child: Column(

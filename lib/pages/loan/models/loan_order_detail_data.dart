@@ -53,7 +53,7 @@ class LoanOrderDetailData {
       remainingDays: item.remainingDays,
       interest: item.interest,
       serviceFee: item.serviceFee,
-      term: item.totalServiceDays ?? item.term,
+      term: item.term,
       repaidAmount: item.repaidAmount,
       rawRepayDate: item.repayDate,
       repayDateStr: item.repayDateStr,
@@ -98,6 +98,38 @@ class LoanOrderDetailData {
     );
   }
 
+  /// 从路由恢复的 JSON 快照重建详情页展示数据。
+  factory LoanOrderDetailData.fromJson(Map<String, dynamic> json) {
+    return LoanOrderDetailData(
+      appOrderId: json['appOrderId'] as String? ?? '',
+      productName: json['productName'] as String? ?? '',
+      loanAmount: json['loanAmount'] as num? ?? 0,
+      overdueInterest: json['overdueInterest'] as num?,
+      receiptAmount: json['receiptAmount'] as num? ?? 0,
+      repayAmount: json['repayAmount'] as num? ?? 0,
+      productCode: json['productCode'] as String?,
+      productLevel: json['productLevel'] as int?,
+      productLogo: json['productLogo'] as String?,
+      statusCode: json['statusCode'] as int?,
+      statusText: json['statusText'] as String?,
+      totalServiceDays: json['totalServiceDays'] as int?,
+      remainingDays: json['remainingDays'] as int?,
+      interest: json['interest'] as num?,
+      serviceFee: json['serviceFee'] as num?,
+      term: json['term'] as int?,
+      repaidAmount: json['repaidAmount'] as num?,
+      rawRepayDate: json['rawRepayDate'] as String?,
+      repayDateStr: json['repayDateStr'] as String?,
+      isExtensionSwitch: json['isExtensionSwitch'] as bool?,
+      borrowDate: json['borrowDate'] as String?,
+      dueDate: json['dueDate'] as String?,
+      momoAccount: json['momoAccount'] as String?,
+      walletType: json['walletType'] as String?,
+      createTime: json['createTime'] as String?,
+      updateTime: json['updateTime'] as String?,
+    );
+  }
+
   final String appOrderId;
   final String productName;
   final num loanAmount;
@@ -124,6 +156,37 @@ class LoanOrderDetailData {
   final String? walletType;
   final String? createTime;
   final String? updateTime;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'appOrderId': appOrderId,
+      'productName': productName,
+      'loanAmount': loanAmount,
+      'overdueInterest': overdueInterest,
+      'receiptAmount': receiptAmount,
+      'repayAmount': repayAmount,
+      'productCode': productCode,
+      'productLevel': productLevel,
+      'productLogo': productLogo,
+      'statusCode': statusCode,
+      'statusText': statusText,
+      'totalServiceDays': totalServiceDays,
+      'remainingDays': remainingDays,
+      'interest': interest,
+      'serviceFee': serviceFee,
+      'term': term,
+      'repaidAmount': repaidAmount,
+      'rawRepayDate': rawRepayDate,
+      'repayDateStr': repayDateStr,
+      'isExtensionSwitch': isExtensionSwitch,
+      'borrowDate': borrowDate,
+      'dueDate': dueDate,
+      'momoAccount': momoAccount,
+      'walletType': walletType,
+      'createTime': createTime,
+      'updateTime': updateTime,
+    };
+  }
 
   /// 优先展示后端到期日；为空时沿用首页订单卡的放款中兜底日期。
   static String? _resolveDueDate(HomeProductItem item) {

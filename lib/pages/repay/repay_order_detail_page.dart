@@ -14,7 +14,6 @@ import 'package:easy_moni/pages/loan/providers/coupon_provider.dart';
 import 'package:easy_moni/pages/repay/components/overdue_badge.dart';
 import 'package:easy_moni/pages/repay/components/total_repay_amount_display.dart';
 import 'package:easy_moni/pages/repay/models/payment_request_params.dart';
-import 'package:easy_moni/pages/repay/models/repay_extension_request_data.dart';
 import 'package:easy_moni/pages/repay/models/repay_order_detail_request_data.dart';
 import 'package:easy_moni/pages/repay/providers/repay_detail_provider.dart';
 import 'package:easy_moni/utils/extensions.dart';
@@ -240,8 +239,11 @@ class _RepayOrderDetailPageState extends ConsumerState<RepayOrderDetailPage> {
     if (order == null) return;
 
     await context.push(
-      AppRoutePaths.repayExtension,
-      extra: RepayExtensionRequestData(loanOrderDetails: [order]),
+      AppRoutePaths.repayExtensionWithParams(
+        appOrderId: order.appOrderId,
+        productCode: order.productCode,
+        installmentId: order.installmentId,
+      ),
     );
   }
 

@@ -614,6 +614,10 @@ class _Hero extends StatelessWidget {
       orders: orders,
       preview: couponAmountPreview,
     );
+    final actualToAccountMoney = _previewActualToAccountMoney(
+      data: data,
+      preview: couponAmountPreview,
+    );
     final previewAmount = couponAmountPreview?.newLoanAmount;
     final originalAmount = couponAmountPreview?.loanAmount;
     final showCouponAmount = _shouldShowCouponLoanAmount(couponAmountPreview);
@@ -702,7 +706,7 @@ class _Hero extends StatelessWidget {
                       width: 22,
                       height: 22,
                     ),
-                    value: _amountText(data?.actualToAccountMoney),
+                    value: _amountText(actualToAccountMoney),
                     label: AppStrings.loanConfirmActualAmountLabel,
                   ),
                 ),
@@ -932,6 +936,16 @@ String _couponAmountText(CouponItem coupon) {
 // 贷前优惠券金额试算：选券后顶部展示优惠后借款金额及原始金额。
 bool _shouldShowCouponLoanAmount(UseCouponRespData? preview) {
   return preview?.newLoanAmount != null && preview?.loanAmount != null;
+}
+
+// 实际到账金额：未选券取确认页数据，选券后取贷前优惠券试算结果。
+num? _previewActualToAccountMoney({
+  required LoanConfirmData? data,
+  required UseCouponRespData? preview,
+}) {
+  return preview == null
+      ? data?.actualToAccountMoney
+      : preview.actualToAccountMoney;
 }
 
 // 贷前优惠券试算后的应还总额：未选券时取订单应还总和，选券后按新借款金额加租金计算。

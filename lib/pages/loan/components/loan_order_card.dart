@@ -276,18 +276,16 @@ class _OrderInfoRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Flexible(
-            child: Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.right,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF131313),
-                height: 16 / 12,
-              ),
+          Text(
+            value,
+            maxLines: 1,
+            softWrap: false,
+            textAlign: TextAlign.right,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF131313),
+              height: 16 / 12,
             ),
           ),
         ],

@@ -52,7 +52,7 @@ class LoanOrderDetailCards extends StatelessWidget {
           AppStrings.loanOrderRepayAmountLabel,
           data.repayAmount,
         ),
-        _DetailRowData.days(AppStrings.loanOrderLoanTermLabel, data.term),
+        _DetailRowData.days(AppStrings.loanOrderLoanTermLabel, data.totalServiceDays),
         _DetailRowData.text(AppStrings.loanOrderDueDateLabel, data.dueDate),
         // 逾期状态下后端 remainingDays 为负数，展示时按逾期天数取绝对值。
         _DetailRowData.days(
@@ -73,7 +73,7 @@ class LoanOrderDetailCards extends StatelessWidget {
           AppStrings.loanOrderRepayAmountLabel,
           data.repayAmount,
         ),
-        _DetailRowData.days(AppStrings.loanOrderLoanTermLabel, data.term),
+        _DetailRowData.days(AppStrings.loanOrderLoanTermLabel, data.totalServiceDays),
         _DetailRowData.text(AppStrings.loanOrderDueDateLabel, data.dueDate),
         _DetailRowData.days(
           AppStrings.loanOrderRepaymentRemainingDaysLabel,
@@ -96,7 +96,7 @@ class LoanOrderDetailCards extends StatelessWidget {
         AppStrings.loanOrderRepayAmountLabel,
         data.repayAmount,
       ),
-      _DetailRowData.days(AppStrings.loanOrderLoanTermLabel, data.term),
+      _DetailRowData.days(AppStrings.loanOrderLoanTermLabel, data.totalServiceDays),
       _DetailRowData.text(AppStrings.loanOrderDueDateLabel, data.dueDate),
     ]);
   }

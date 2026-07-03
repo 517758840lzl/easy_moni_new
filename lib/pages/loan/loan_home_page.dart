@@ -517,6 +517,7 @@ class _SelectionHint extends StatelessWidget {
               borderRadius: BorderRadius.circular(4),
             ),
             child: const Text(
+              // TODO 右侧溢出，待解决
               AppStrings.homeMultiSelectHint,
               style: TextStyle(
                 fontSize: 11,

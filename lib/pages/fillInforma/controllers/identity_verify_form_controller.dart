@@ -141,6 +141,18 @@ class IdentityVerifyFormController {
     }
   }
 
+  /// 重新识别身份证正面前清空旧 OCR 结果，避免新结果缺字段时沿用上次数据。
+  void clearOcrResult() {
+    for (final entry in visibleEntries) {
+      _displayValues[entry.key] = '';
+      _submitValues[entry.key] = '';
+      _selectedIndices[entry.key] = 0;
+      if (_isTextEntry(entry)) {
+        _textControllers[entry.key]?.clear();
+      }
+    }
+  }
+
   TextEditingController controllerFor(FormEntry entry) {
     return _textControllers[entry.key] ??= TextEditingController(
       text: _displayValues[entry.key] ?? '',
