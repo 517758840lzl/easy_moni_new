@@ -175,6 +175,7 @@ class _MineOrderLogo extends StatelessWidget {
   }
 }
 
+/// 订单摘要信息区，按原始字段顺序纵向展示 key-value 行。
 class _MineOrderInfoColumns extends StatelessWidget {
   const _MineOrderInfoColumns({required this.columns});
 
@@ -182,17 +183,19 @@ class _MineOrderInfoColumns extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         for (var i = 0; i < columns.length; i++) ...[
-          Flexible(child: _MineOrderInfoColumn(data: columns[i])),
+          if (i > 0) const SizedBox(height: 8),
+          _MineOrderInfoColumn(data: columns[i]),
         ],
       ],
     );
   }
 }
 
+/// 单行订单摘要，左侧展示字段名，右侧展示字段值。
 class _MineOrderInfoColumn extends StatelessWidget {
   const _MineOrderInfoColumn({required this.data});
 
@@ -200,31 +203,36 @@ class _MineOrderInfoColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          data.label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w400,
-            color: Colors.black.withValues(alpha: 0.6),
-            height: 12 / 12,
+        Expanded(
+          child: Text(
+            data.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              color: Colors.black.withValues(alpha: 0.6),
+              height: 12 / 12,
+            ),
           ),
         ),
-        const SizedBox(height: 6),
-        Text(
-          data.value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Colors.black,
-            height: 16 / 14,
+        const SizedBox(width: 12),
+        Flexible(
+          child: Text(
+            data.value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.right,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.black,
+              height: 16 / 14,
+            ),
           ),
         ),
       ],

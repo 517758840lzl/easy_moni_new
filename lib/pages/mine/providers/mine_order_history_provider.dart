@@ -5,7 +5,7 @@ import 'package:easy_moni/core/network/http_result.dart';
 import 'package:easy_moni/entities/order_list_resp.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// 历史订单 tab 配置，使用固定实例替代 enum，便于集中维护请求参数和展示文案。
+/// 历史订单 tab 配置，使用固定实例替代 enum，便于集中维护状态规则和展示文案。
 class MineOrderHistoryTab {
   const MineOrderHistoryTab({
     required this.key,
@@ -23,13 +23,6 @@ class MineOrderHistoryTabs {
   MineOrderHistoryTabs._();
 
   static const String allKey = 'all';
-
-  static List<int> get allStatusList {
-    return values
-        .expand((tab) => tab.statusList)
-        .toSet()
-        .toList(growable: false);
-  }
 
   static const List<MineOrderHistoryTab> values = <MineOrderHistoryTab>[
     MineOrderHistoryTab(
@@ -78,25 +71,21 @@ final mineOrderHistoryApiProvider = Provider<MineOrderHistoryApi>((ref) {
 final mineOrderHistoryProvider = FutureProvider.autoDispose
     .family<List<OrderListItem>, String>((ref, tabKey) async {
       final tab = MineOrderHistoryTabs.byKey(tabKey);
-      final result = await ref
-          .read(mineOrderHistoryApiProvider)
-          .call(statusList: tab.statusList);
+      final result = await ref.read(mineOrderHistoryApiProvider).call();
 
       if (result.isSuccess) {
-        return result.data ?? const <OrderListItem>[];
+        return _filterOrdersByTab(result.data ?? const <OrderListItem>[], tab);
       }
 
       throw Exception(result.message ?? AppStrings.mineOrderHistoryLoadFailed);
     });
 
 class MineOrderHistoryApi {
-  // 获取历史订单列表
-  Future<HttpResult<List<OrderListItem>>> call({
-    required List<int> statusList,
-  }) async {
+  /// 获取历史订单全量列表，statusList 传空数组，由前端按 tab 状态本地分组。
+  Future<HttpResult<List<OrderListItem>>> call() async {
     final result = await HttpProvider.instance.post<List<dynamic>>(
       ApiConstants.userRepayment,
-      data: {'statusList': statusList},
+      data: {'statusList': const <int>[]},
       fromJson: (json) => json as List<dynamic>,
     );
 
@@ -121,10 +110,6 @@ List<OrderListItem> _filterOrdersByTab(
   List<OrderListItem> orders,
   MineOrderHistoryTab tab,
 ) {
-  if (tab.key == MineOrderHistoryTabs.allKey) {
-    return List<OrderListItem>.unmodifiable(orders);
-  }
-
   final statusSet = tab.statusList.toSet();
   return List<OrderListItem>.unmodifiable(
     orders.where((order) => statusSet.contains(order.orderStatus)),

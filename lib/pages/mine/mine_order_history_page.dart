@@ -57,9 +57,7 @@ class _MineOrderHistoryPageState extends ConsumerState<MineOrderHistoryPage> {
       });
     }
 
-    final result = await ref
-        .read(mineOrderHistoryApiProvider)
-        .call(statusList: MineOrderHistoryTabs.allStatusList);
+    final result = await ref.read(mineOrderHistoryApiProvider).call();
 
     if (!mounted) return;
 
