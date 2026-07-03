@@ -508,26 +508,26 @@ class _SelectionHint extends StatelessWidget {
             letterSpacing: 0.41,
           ),
         ),
-        if (canSelectMultiple) ...[
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE9F6EF),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: const Text(
-              // TODO 右侧溢出，待解决
-              AppStrings.homeMultiSelectHint,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF216A4A),
-                height: 14 / 11,
-              ),
-            ),
-          ),
-        ],
+        // if (canSelectMultiple) ...[
+        //   const SizedBox(width: 8),
+        //   Container(
+        //     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        //     decoration: BoxDecoration(
+        //       color: const Color(0xFFE9F6EF),
+        //       borderRadius: BorderRadius.circular(4),
+        //     ),
+        //     child: const Text(
+        //       // TODO 右侧溢出，待解决
+        //       AppStrings.homeMultiSelectHint,
+        //       style: TextStyle(
+        //         fontSize: 11,
+        //         fontWeight: FontWeight.w500,
+        //         color: Color(0xFF216A4A),
+        //         height: 14 / 11,
+        //       ),
+        //     ),
+        //   ),
+        // ],
       ],
     );
   }
