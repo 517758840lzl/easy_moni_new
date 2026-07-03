@@ -23,7 +23,7 @@ android {
 
     defaultConfig {
         // 测试的
-        applicationId = "com.app.kudinow"
+        applicationId = "com.loan.superpresta"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 24
@@ -72,6 +72,7 @@ flutter {
 }
 
 dependencies {
+    implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("com.google.android.gms:play-services-location:21.0.1")
     implementation("com.google.android.gms:play-services-ads-identifier:18.2.0")
     implementation("com.android.installreferrer:installreferrer:2.2")

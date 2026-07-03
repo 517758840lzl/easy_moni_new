@@ -16,7 +16,7 @@ class AppsFlyerTracker {
 
   // TODO 正式环境替换_devKey
   static const String _tag = 'AF_HELPER';
-  static const String _devKey = 'TvjK7RCEfTqdjkXRpnzY7P';
+  static const String _devKey = 'PFfRT77vnCVpKaZuU3Pghg';
   static const String _keyUid = 'af_tracker_uid';
   static const String _keyMediaSource = 'af_tracker_media_source';
   static const String _keyFirstOpenTracked = 'af_tracker_first_open_tracked';

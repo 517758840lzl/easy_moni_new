@@ -4,7 +4,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.os.Bundle
+import android.os.SystemClock
 import android.util.Log
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 
@@ -13,6 +15,7 @@ class MainActivity : FlutterActivity() {
         private const val TAG = "MainActivity"
         private const val DEVICE_INFO_PREFS = "device_info_prefs"
         private const val KEY_LAST_LAUNCH_AT = "last_launch_at"
+        private const val MIN_SPLASH_DURATION_MS = 1000L
     }
 
     private lateinit var locationService: LocationPlatformService
@@ -26,6 +29,13 @@ class MainActivity : FlutterActivity() {
     private var previousLaunchAt: Long = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
+        val splashStartedAt = SystemClock.uptimeMillis()
+        // 启动页最短展示时间，避免 Flutter 首帧过快时品牌页一闪而过。
+        splashScreen.setKeepOnScreenCondition {
+            SystemClock.uptimeMillis() - splashStartedAt < MIN_SPLASH_DURATION_MS
+        }
+
         try {
             // 原生启动阶段先锁定竖屏，避免 Flutter 首帧前短暂横屏。
             requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
