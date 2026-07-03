@@ -36,9 +36,21 @@ internal class LocationPlatformService(private val activity: Activity) {
     fun register(messenger: BinaryMessenger) {
         MethodChannel(messenger, NativeChannels.LOCATION).setMethodCallHandler { call, result ->
             when (call.method) {
-                "checkLocationPermission" -> result.success(hasLocationPermission())
+                "checkLocationPermission" -> {
+                    try {
+                        result.success(hasLocationPermission())
+                    } catch (e: Exception) {
+                        result.error("CHECK_LOCATION_PERMISSION_FAILED", e.message, null)
+                    }
+                }
                 "requestLocationPermission" -> requestLocationPermission(result)
-                "isLocationServiceEnabled" -> result.success(isLocationServiceEnabled())
+                "isLocationServiceEnabled" -> {
+                    try {
+                        result.success(isLocationServiceEnabled())
+                    } catch (e: Exception) {
+                        result.error("CHECK_LOCATION_SERVICE_FAILED", e.message, null)
+                    }
+                }
                 "getCurrentLocation" -> getCurrentLocation(result)
                 "openAppSettings" -> openAppSettings(result)
                 else -> result.notImplemented()
@@ -61,15 +73,20 @@ internal class LocationPlatformService(private val activity: Activity) {
     }
 
     private fun requestLocationPermission(result: MethodChannel.Result) {
-        if (!hasLocationPermission()) {
-            pendingResult = result
-            ActivityCompat.requestPermissions(
-                activity,
-                arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION),
-                REQUEST_CODE
-            )
-        } else {
-            result.success(true)
+        try {
+            if (!hasLocationPermission()) {
+                pendingResult = result
+                ActivityCompat.requestPermissions(
+                    activity,
+                    arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION),
+                    REQUEST_CODE
+                )
+            } else {
+                result.success(true)
+            }
+        } catch (e: Exception) {
+            pendingResult = null
+            result.error("REQUEST_LOCATION_PERMISSION_FAILED", e.message, null)
         }
     }
 
@@ -262,16 +279,24 @@ internal class LocationPlatformService(private val activity: Activity) {
     }
 
     private fun hasLocationPermission(): Boolean {
-        return ContextCompat.checkSelfPermission(
-            activity,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
+        return try {
+            ContextCompat.checkSelfPermission(
+                activity,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        } catch (_: Exception) {
+            false
+        }
     }
 
     private fun isLocationServiceEnabled(): Boolean {
-        val locationManager = activity.getSystemService(Context.LOCATION_SERVICE) as android.location.LocationManager
-        return locationManager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER) ||
-                locationManager.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER)
+        return try {
+            val locationManager = activity.getSystemService(Context.LOCATION_SERVICE) as android.location.LocationManager
+            locationManager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER) ||
+                    locationManager.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER)
+        } catch (_: Exception) {
+            false
+        }
     }
 
     private fun toDeviceLocationSnapshot(location: Location): DeviceLocationSnapshot {

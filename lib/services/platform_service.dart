@@ -152,6 +152,9 @@ class SmsService {
     if (!_isSupportedPlatform) return null;
 
     try {
+      AppLogger.debug(
+        'SmsService.getSmsRecords keywords=${keywords.length}, limit=$limit, values=$keywords',
+      );
       final List<dynamic> result = await _channel.invokeMethod(
         'getSmsRecords',
         {'keywords': keywords, 'limit': limit},

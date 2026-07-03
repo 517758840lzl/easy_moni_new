@@ -55,16 +55,18 @@ internal class AttributionPlatformService(private val activity: Activity) {
     }
 
     private fun getInstallReferrer(): String {
-        val client = InstallReferrerClient.newBuilder(activity).build()
         val latch = CountDownLatch(1)
         var referrer = ""
+        var client: InstallReferrerClient? = null
 
         return try {
-            client.startConnection(object : InstallReferrerStateListener {
+            val referrerClient = InstallReferrerClient.newBuilder(activity).build()
+            client = referrerClient
+            referrerClient.startConnection(object : InstallReferrerStateListener {
                 override fun onInstallReferrerSetupFinished(responseCode: Int) {
                     try {
                         if (responseCode == InstallReferrerClient.InstallReferrerResponse.OK) {
-                            referrer = client.installReferrer.installReferrer ?: ""
+                            referrer = referrerClient.installReferrer.installReferrer ?: ""
                         }
                     } catch (_: Exception) {
                         referrer = ""
@@ -83,7 +85,7 @@ internal class AttributionPlatformService(private val activity: Activity) {
             ""
         } finally {
             try {
-                client.endConnection()
+                client?.endConnection()
             } catch (_: Exception) {
             }
         }

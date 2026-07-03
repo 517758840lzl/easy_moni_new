@@ -8,6 +8,7 @@ import android.provider.Settings
 import android.content.Intent
 import android.net.Uri
 import android.provider.Telephony
+import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import io.flutter.plugin.common.BinaryMessenger
@@ -20,6 +21,7 @@ import java.util.Locale
 internal class SmsPlatformService(private val activity: Activity) {
     companion object {
         const val REQUEST_CODE = 1003
+        private const val TAG = "SmsPlatformService"
     }
 
     private var pendingSmsResult: MethodChannel.Result? = null
@@ -28,10 +30,14 @@ internal class SmsPlatformService(private val activity: Activity) {
         MethodChannel(messenger, NativeChannels.SMS).setMethodCallHandler { call, result ->
             when (call.method) {
                 "checkSmsPermission" -> {
-                    val hasPermission = ContextCompat.checkSelfPermission(
-                        activity, Manifest.permission.READ_SMS
-                    ) == PackageManager.PERMISSION_GRANTED
-                    result.success(hasPermission)
+                    try {
+                        val hasPermission = ContextCompat.checkSelfPermission(
+                            activity, Manifest.permission.READ_SMS
+                        ) == PackageManager.PERMISSION_GRANTED
+                        result.success(hasPermission)
+                    } catch (e: Exception) {
+                        result.error("CHECK_SMS_PERMISSION_FAILED", e.message, null)
+                    }
                 }
                 "requestSmsPermission" -> requestSmsPermission(result)
                 "openAppSettings" -> openAppSettings(result)
@@ -50,15 +56,20 @@ internal class SmsPlatformService(private val activity: Activity) {
     }
 
     private fun requestSmsPermission(result: MethodChannel.Result) {
-        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
-            pendingSmsResult = result
-            ActivityCompat.requestPermissions(
-                activity,
-                arrayOf(Manifest.permission.READ_SMS),
-                REQUEST_CODE
-            )
-        } else {
-            result.success(true)
+        try {
+            if (ContextCompat.checkSelfPermission(activity, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
+                pendingSmsResult = result
+                ActivityCompat.requestPermissions(
+                    activity,
+                    arrayOf(Manifest.permission.READ_SMS),
+                    REQUEST_CODE
+                )
+            } else {
+                result.success(true)
+            }
+        } catch (e: Exception) {
+            pendingSmsResult = null
+            result.error("REQUEST_SMS_PERMISSION_FAILED", e.message, null)
         }
     }
 
@@ -80,10 +91,13 @@ internal class SmsPlatformService(private val activity: Activity) {
             result.error("PERMISSION_DENIED", "Sms permission denied", null)
         } else {
             try {
+                val keywords = normalizeSmsKeywords(call.argument<List<Any?>>("keywords"))
+                val limit = normalizeSmsLimit(call.argument<Any?>("limit"))
+                Log.d(TAG, "getSmsRecords keywords=${keywords.size}, limit=$limit, values=$keywords")
                 result.success(
                     readSmsRecords(
-                        keywords = normalizeSmsKeywords(call.argument<List<Any?>>("keywords")),
-                        limit = normalizeSmsLimit(call.argument<Any?>("limit"))
+                        keywords = keywords,
+                        limit = limit
                     )
                 )
             } catch (e: Exception) {

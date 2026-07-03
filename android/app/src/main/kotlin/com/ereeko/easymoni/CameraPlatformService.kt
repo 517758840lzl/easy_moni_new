@@ -27,10 +27,14 @@ internal class CameraPlatformService(private val activity: Activity) {
         MethodChannel(messenger, NativeChannels.CAMERA).setMethodCallHandler { call, result ->
             when (call.method) {
                 "checkCameraPermission" -> {
-                    val hasPermission = ContextCompat.checkSelfPermission(
-                        activity, Manifest.permission.CAMERA
-                    ) == PackageManager.PERMISSION_GRANTED
-                    result.success(hasPermission)
+                    try {
+                        val hasPermission = ContextCompat.checkSelfPermission(
+                            activity, Manifest.permission.CAMERA
+                        ) == PackageManager.PERMISSION_GRANTED
+                        result.success(hasPermission)
+                    } catch (e: Exception) {
+                        result.error("CHECK_CAMERA_PERMISSION_FAILED", e.message, null)
+                    }
                 }
                 "requestCameraPermission" -> requestCameraPermission(result)
                 "openAppSettings" -> openAppSettings(result)
@@ -77,15 +81,20 @@ internal class CameraPlatformService(private val activity: Activity) {
     }
 
     private fun requestCameraPermission(result: MethodChannel.Result) {
-        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            pendingCameraPermissionResult = result
-            ActivityCompat.requestPermissions(
-                activity,
-                arrayOf(Manifest.permission.CAMERA),
-                CAMERA_PERMISSION_REQUEST_CODE
-            )
-        } else {
-            result.success(true)
+        try {
+            if (ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                pendingCameraPermissionResult = result
+                ActivityCompat.requestPermissions(
+                    activity,
+                    arrayOf(Manifest.permission.CAMERA),
+                    CAMERA_PERMISSION_REQUEST_CODE
+                )
+            } else {
+                result.success(true)
+            }
+        } catch (e: Exception) {
+            pendingCameraPermissionResult = null
+            result.error("REQUEST_CAMERA_PERMISSION_FAILED", e.message, null)
         }
     }
 
@@ -103,10 +112,15 @@ internal class CameraPlatformService(private val activity: Activity) {
     }
 
     private fun pickFromGallery(result: MethodChannel.Result) {
-        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        intent.type = "image/*"
-        pendingCameraResult = result
-        activity.startActivityForResult(intent, PICK_GALLERY_REQUEST_CODE)
+        try {
+            val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+            intent.type = "image/*"
+            pendingCameraResult = result
+            activity.startActivityForResult(intent, PICK_GALLERY_REQUEST_CODE)
+        } catch (e: Exception) {
+            pendingCameraResult = null
+            result.error("PICK_GALLERY_FAILED", e.message, null)
+        }
     }
 
     private fun getBase64FromUri(uri: Uri): String? {

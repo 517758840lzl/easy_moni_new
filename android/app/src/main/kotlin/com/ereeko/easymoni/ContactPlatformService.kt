@@ -49,6 +49,7 @@ internal class ContactPlatformService(private val activity: Activity) {
             pendingPickContactResult = result
             activity.startActivityForResult(intent, PICK_CONTACT_REQUEST_CODE)
         } catch (e: Exception) {
+            pendingPickContactResult = null
             result.error("PICK_CONTACT_FAILED", e.message, null)
         }
     }
