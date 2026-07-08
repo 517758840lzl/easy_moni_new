@@ -33,7 +33,6 @@ class _FaceVerifyEntryPageState extends ConsumerState<FaceVerifyEntryPage> {
   static const double _headerTopGap = 16;
   static const double _stepIndicatorHeight = 80;
   static const double _headerBottomGap = 16;
-  static const String _faceBiometricImageKey = 'face_biometric_image';
 
   StepInfo? _stepInfo;
   int? _processId;
@@ -45,6 +44,9 @@ class _FaceVerifyEntryPageState extends ConsumerState<FaceVerifyEntryPage> {
   bool _isAwaitingFaceResult = false;
 
   String get _pageTitle => _stepInfo?.pageTitle.trim() ?? '';
+  /// 从当前步骤配置读取人脸图片提交字段 key，避免固定后端字段名。
+  String get _faceBiometricImageKey =>
+      _stepInfo?.entries.firstOrNull?.key.trim() ?? '';
   bool get _hasCapturedFace =>
       _faceImage != null && _faceImageUrl?.trim().isNotEmpty == true;
 
@@ -123,7 +125,11 @@ class _FaceVerifyEntryPageState extends ConsumerState<FaceVerifyEntryPage> {
       return;
     }
 
-    if (_isSubmitting || _stepInfo == null || _processId == null) {
+    final faceBiometricImageKey = _faceBiometricImageKey;
+    if (_isSubmitting ||
+        _stepInfo == null ||
+        _processId == null ||
+        faceBiometricImageKey.isEmpty) {
       return;
     }
 
@@ -135,7 +141,7 @@ class _FaceVerifyEntryPageState extends ConsumerState<FaceVerifyEntryPage> {
             processId: _processId!,
             step: _stepInfo!.step,
             jsonParam: [
-              {'key': _faceBiometricImageKey, 'value': _faceImageUrl!},
+              {'key': faceBiometricImageKey, 'value': _faceImageUrl!},
             ],
           );
 

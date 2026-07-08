@@ -8,7 +8,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 class PrivacyPolicyPage extends StatefulWidget {
   const PrivacyPolicyPage({super.key});
 
-  static const String policyUrl = 'www.baidu.com';
+  static const String policyUrl = 'https://www.ereekotechsolutions.com/privacy/index.html';
 
   @override
   State<PrivacyPolicyPage> createState() => _PrivacyPolicyPageState();

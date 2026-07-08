@@ -7,7 +7,7 @@ class RequestSecurityConfig {
   static const int aesBlockSize = 16;
 
   /// 请求体 AES 加密密钥，同时也是后端加密包的密文字段名。
-  static const String requestAesKey = 'q7aeAEHhH2T77qiuBrFR7IHgkof3Qd2L';
+  static const String requestAesKey = 'DK4h7cLWoYQf092pWm17836iTIR85MyZ';
 
   /// 默认 IV 字段名，按后端约定从 AES key 前 16 个 UTF-8 字节截取。
   static final String requestIvKey = _takeFirstUtf8Text(requestAesKey);

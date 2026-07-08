@@ -51,10 +51,9 @@ class EnvironmentConfig {
   /// 构建每次请求都会携带的公共请求头，仅保留后端要求的业务头字段。
   Map<String, String> commonHeaders({String? token}) {
     return {
-      'acqChannel': acqChannel,
-      'acqChannelIndex': acqChannelIndex,
-      'disableEncBody': disableEncBody,
-      if (token != null && token.isNotEmpty) 'token': token,
+      'BridgeKey': acqChannel,
+      'Position': acqChannelIndex,
+      if (token != null && token.isNotEmpty) 'Seal': token,
     };
   }
 
@@ -100,7 +99,7 @@ class EnvironmentConfigs {
     baseUrl: 'https://www.zzyd.click/',
     connectTimeout: Duration(seconds: 30),
     receiveTimeout: Duration(seconds: 30),
-    acqChannel: 'GHPM',
+    acqChannel: 'Easy',
     acqChannelIndex: '0',
     disableEncBody: 'false',
     appInstanceId: '',
@@ -122,7 +121,7 @@ class EnvironmentConfigs {
     baseUrl: 'https://www.zzyd.click/',
     connectTimeout: Duration(seconds: 30),
     receiveTimeout: Duration(seconds: 30),
-    acqChannel: 'GHPM',
+    acqChannel: 'Easy',
     acqChannelIndex: '0',
     disableEncBody: 'true',
     appInstanceId: '',

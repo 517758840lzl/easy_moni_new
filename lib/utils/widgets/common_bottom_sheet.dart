@@ -190,7 +190,6 @@ class _BottomSheetActions<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: Colors.white,
-      // TODO 底部间距
       padding: EdgeInsets.fromLTRB(20, 4, 20, 16 + bottomPadding),
       child: actions.length == 1
           ? _BottomSheetActionButton<T>(action: actions.first)

@@ -31,6 +31,7 @@ class CustomerServiceContactType {
   static const int whatsapp = 2;
   static const int email = 3;
   static const int zalo = 5;
+  static const int intelligent = 11;
 }
 
 /// 客服页，负责根据后端 showType 切换 WebView 或纯文本联系方式。
@@ -208,9 +209,10 @@ class _AntiFraudGradient extends StatelessWidget {
 }
 
 class _CustomerServiceWebViewPage extends StatefulWidget {
-  const _CustomerServiceWebViewPage({required this.data});
+  const _CustomerServiceWebViewPage({this.data, this.source});
 
-  final ServiceInfoRespData data;
+  final ServiceInfoRespData? data;
+  final _CustomerServiceWebSource? source;
 
   @override
   State<_CustomerServiceWebViewPage> createState() =>
@@ -248,15 +250,17 @@ class _CustomerServiceWebViewPageState
 
   @override
   Widget build(BuildContext context) {
-    final source = _CustomerServiceWebSource.fromList(
-      widget.data.appCustomerServiceInfoResps,
-    );
+    final source =
+        widget.source ??
+        _CustomerServiceWebSource.fromList(
+          widget.data?.appCustomerServiceInfoResps,
+        );
     _loadSourceIfNeeded(source);
 
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(AppStrings.mineCustomerService),
+        title: const Text(AppStrings.customerServiceIntelligent),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
           onPressed: _handleBack,
@@ -357,7 +361,7 @@ class _CustomerServiceContactCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: _handleTap,
+      onTap: () => _handleTap(context),
       child: Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: Container(
@@ -400,10 +404,20 @@ class _CustomerServiceContactCard extends StatelessWidget {
     );
   }
 
-  Future<void> _handleTap() async {
+  Future<void> _handleTap(BuildContext context) async {
     if (contact.type == CustomerServiceContactType.phone) {
       AppLogger.debug('phone');
       DialerService.openDialer(phone: contact.account);
+      return;
+    }
+    if (contact.type == CustomerServiceContactType.intelligent) {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => _CustomerServiceWebViewPage(
+            source: _CustomerServiceWebSource.fromValue(contact.account),
+          ),
+        ),
+      );
       return;
     }
 
@@ -479,17 +493,19 @@ class _CustomerServiceContactText extends StatelessWidget {
               letterSpacing: 0.14,
             ),
           ),
-        if (contact.displayTitle.isNotEmpty) const SizedBox(height: 2),
-        SelectableText(
-          contact.account,
-          maxLines: 1,
-          style: const TextStyle(
-            fontSize: 16,
-            height: 24 / 16,
-            fontWeight: FontWeight.w400,
-            color: Color(0xFF141B2B),
+        if (contact.displayTitle.isNotEmpty && contact.showAccount)
+          const SizedBox(height: 2),
+        if (contact.showAccount)
+          SelectableText(
+            contact.account,
+            maxLines: 1,
+            style: const TextStyle(
+              fontSize: 16,
+              height: 24 / 16,
+              fontWeight: FontWeight.w400,
+              color: Color(0xFF141B2B),
+            ),
           ),
-        ),
         if (contact.desc.isNotEmpty) ...[
           const SizedBox(height: 4),
           Text(
@@ -539,6 +555,7 @@ class _CustomerServiceContact {
   final String desc;
 
   String get displayTitle => title.isNotEmpty ? title : typeLabel;
+  bool get showAccount => type != CustomerServiceContactType.intelligent;
 
   String get typeLabel {
     switch (type) {
@@ -548,6 +565,8 @@ class _CustomerServiceContact {
         return AppStrings.customerServiceEmail;
       case CustomerServiceContactType.zalo:
         return AppStrings.customerServiceZalo;
+      case CustomerServiceContactType.intelligent:
+        return AppStrings.customerServiceIntelligent;
       case CustomerServiceContactType.phone:
         return AppStrings.customerServicePhone;
       default:
@@ -563,6 +582,8 @@ class _CustomerServiceContact {
         return Icons.email_outlined;
       case CustomerServiceContactType.zalo:
         return Icons.forum_outlined;
+      case CustomerServiceContactType.intelligent:
+        return Icons.support_agent_outlined;
       case CustomerServiceContactType.phone:
       default:
         return Icons.phone_outlined;
@@ -608,14 +629,20 @@ class _CustomerServiceWebSource {
   final String value;
   final bool isHtml;
 
+  static _CustomerServiceWebSource? fromValue(String value) {
+    final rawValue = value.trim();
+    if (rawValue.isEmpty) return null;
+    final isUrl =
+        rawValue.startsWith('http://') || rawValue.startsWith('https://');
+    return _CustomerServiceWebSource(value: rawValue, isHtml: !isUrl);
+  }
+
   static _CustomerServiceWebSource? fromList(List<dynamic>? sourceList) {
     // 兼容 String、url/link/h5Url/content/html 字段。
     for (final item in sourceList ?? const <dynamic>[]) {
       final rawValue = _extractWebValue(item);
-      if (rawValue.isEmpty) continue;
-      final isUrl =
-          rawValue.startsWith('http://') || rawValue.startsWith('https://');
-      return _CustomerServiceWebSource(value: rawValue, isHtml: !isUrl);
+      final source = fromValue(rawValue);
+      if (source != null) return source;
     }
     return null;
   }

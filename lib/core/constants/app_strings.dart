@@ -216,6 +216,7 @@ class AppStrings {
   static const String customerServiceWhatsApp = 'WhatsApp';
   static const String customerServiceEmail = 'Email';
   static const String customerServiceZalo = 'Zalo';
+  static const String customerServiceIntelligent = 'Live Support';
   static const String customerServiceAntiFraudTitle =
       'Beware of Customer Support Scams';
   static const String customerServiceAntiFraudDesc =
