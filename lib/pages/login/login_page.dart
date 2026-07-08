@@ -32,6 +32,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   late final TextEditingController _phoneController;
   late final TextEditingController _codeController;
+  late final FocusNode _codeFocusNode;
   Timer? _countdownTimer;
   int _countdownSeconds = 0;
   bool _isSendingCode = false;
@@ -46,6 +47,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     _phoneController = TextEditingController();
     _codeController = TextEditingController();
+    _codeFocusNode = FocusNode();
     _phoneController.addListener(_onPhoneChanged);
     _codeController.addListener(_onCodeChanged);
     unawaited(_routeBySavedSession());
@@ -57,6 +59,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     _codeController.removeListener(_onCodeChanged);
     _phoneController.dispose();
     _codeController.dispose();
+    _codeFocusNode.dispose();
     _countdownTimer?.cancel();
     super.dispose();
   }
@@ -237,6 +240,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       showToast(AppStrings.loginPhoneInvalid);
       return;
     }
+    // 触发发送验证码后，立即引导用户输入验证码。
+    _codeFocusNode.requestFocus();
     try {
       setState(() => _isSendingCode = true);
 
@@ -609,6 +614,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   Expanded(
                     child: TextField(
                       controller: _codeController,
+                      focusNode: _codeFocusNode,
                       keyboardType: TextInputType.number,
                       textInputAction: TextInputAction.done,
                       style: const TextStyle(fontSize: 14, color: Colors.white),

@@ -9,7 +9,7 @@ class PermissionActionButtons extends StatelessWidget {
     required this.primaryText,
     required this.onSecondaryPressed,
     required this.onPrimaryPressed,
-    this.padding = const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+    this.padding = const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
   });
 
   final String secondaryText;

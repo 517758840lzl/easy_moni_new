@@ -57,17 +57,12 @@ class _RepayOrderDetailPageState extends ConsumerState<RepayOrderDetailPage> {
       error: (_, _) => null,
       loading: () => null,
     );
-    final showCouponAmount = _shouldShowCouponRepaymentAmount(
-      _couponAmountPreview,
-    );
-    final reserveCouponAmountSpace =
-        _isCouponAmountPreviewLoading || showCouponAmount;
     final showExtensionButton =
         detail?.isExtensionSwitch == true && _firstOrder(detail) != null;
     final isActionReady = detail != null;
 
     return LoanRoundedPageShell(
-      contentTop: (_) => topInset + (reserveCouponAmountSpace ? 138 : 114),
+      contentTop: (_) => topInset + 138,
       contentTopRadius: 16,
       backgroundDecoration: BoxDecoration(
         image: DecorationImage(
@@ -78,6 +73,7 @@ class _RepayOrderDetailPageState extends ConsumerState<RepayOrderDetailPage> {
       ),
       header: _RepayDetailHeader(
         detail: detail,
+        isLoading: detailAsync.isLoading,
         couponAmountPreview: _couponAmountPreview,
         isCouponAmountLoading: _isCouponAmountPreviewLoading,
       ),
@@ -255,11 +251,13 @@ class _RepayOrderDetailPageState extends ConsumerState<RepayOrderDetailPage> {
 class _RepayDetailHeader extends StatelessWidget {
   const _RepayDetailHeader({
     required this.detail,
+    required this.isLoading,
     required this.couponAmountPreview,
     required this.isCouponAmountLoading,
   });
 
   final RepayDetailRespData? detail;
+  final bool isLoading;
   final UseCouponRespData? couponAmountPreview;
   final bool isCouponAmountLoading;
 
@@ -319,48 +317,59 @@ class _RepayDetailHeader extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
             child: Column(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    if (isCouponAmountLoading)
-                      const SizedBox(
-                        width: 32,
-                        height: 32,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
+                if (isLoading || isCouponAmountLoading)
+                  const SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                else
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Flexible(
+                        child: TotalRepayAmountDisplay(
+                          amount: showCouponAmount
+                              ? previewAmount ?? 0
+                              : repaymentAmount,
                         ),
-                      )
-                    else if (showCouponAmount)
-                      Column(
-                        children: [
-                          TotalRepayAmountDisplay(amount: previewAmount ?? 0),
-                          const SizedBox(height: 4),
-                          TotalRepayAmountDisplay(
-                            amount: originalAmount ?? 0,
-                            currencyStyle: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xCCFFFFFF),
-                              height: 24 / 20,
-                              decoration: TextDecoration.lineThrough,
-                              decorationColor: Color(0xCCFFFFFF),
-                            ),
-                            amountStyle: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xCCFFFFFF),
-                              height: 24 / 20,
-                              decoration: TextDecoration.lineThrough,
-                              decorationColor: Color(0xCCFFFFFF),
-                            ),
+                      ),
+                      if (showCouponAmount) ...[
+                        const SizedBox(width: 6),
+                        TotalRepayAmountDisplay(
+                          amount: originalAmount ?? 0,
+                          currencyStyle: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white70,
+                            height: 24 / 20,
+                            decoration: TextDecoration.lineThrough,
+                            decorationColor: Colors.white70,
                           ),
-                        ],
-                      )
-                    else
-                      TotalRepayAmountDisplay(amount: repaymentAmount),
-                  ],
+                          amountStyle: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white70,
+                            height: 24 / 20,
+                            decoration: TextDecoration.lineThrough,
+                            decorationColor: Colors.white70,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                const SizedBox(height: 6),
+                const Text(
+                  AppStrings.loanConfirmRepayAmountLabel,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
                 ),
               ],
             ),

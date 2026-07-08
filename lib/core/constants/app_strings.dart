@@ -79,7 +79,7 @@ class AppStrings {
       'Failed to open contacts. Please try again.';
   static const String contactInfoSaveFailed = 'Save failed';
   static const String checkIdCard =
-      'Align your Ghana Card within the frame. Make sure all corners are visible and the image is clear.';
+      'Please upload a clear and complete photo of your ID.';
   static const String chooseUploadMethod = 'Choose Upload Method';
   static const String selectFormPhotos = 'Choose from Gallery';
   static const String takephotos = 'Take Photo';
@@ -205,7 +205,7 @@ class AppStrings {
   static const String mineCurrentPending = 'Outstanding Amount';
   static const String mineGoToRepay = 'Repay Now';
   static const String mineOtherFeatures = 'More';
-  static const String mineHistoryOrders = 'My Orders';
+  static const String mineHistoryOrders = 'My Loans';
   static const String mineCustomerService = 'Customer Support';
   static const String mineCustomerServiceEmpty =
       'No support information available.';
@@ -231,13 +231,13 @@ class AppStrings {
   static const String mineTestUploadDataSuccess = 'Upload data success';
   static const String mineTestUploadDataFailed = 'Upload data failed';
   static const String mineTestUploadDataNoTrackId = 'No valid trackId';
-  static const String mineOrderHistoryTitle = 'My Orders';
+  static const String mineOrderHistoryTitle = 'My Loans';
   static const String mineOrderHistoryAllTab = 'All';
   static const String mineOrderHistoryDisbursingTab = 'Processing';
   static const String mineOrderHistoryRepayingTab = 'Repayment Due';
   static const String mineOrderHistoryFailedTab = 'Failed';
-  static const String mineOrderHistoryEmpty = 'No orders found.';
-  static const String mineOrderHistoryLoadFailed = 'Failed to load orders.';
+  static const String mineOrderHistoryEmpty = 'No loans found.';
+  static const String mineOrderHistoryLoadFailed = 'Failed to load loans.';
   static const String mineOrderHistoryRetry = 'Retry';
   static const String mineOrderLoanDateLabel = 'Loan Date';
   static const String mineLogoutDialogTitle = 'Log Out';
@@ -249,6 +249,7 @@ class AppStrings {
   // ==================== 首页 =======================
   static const String homeButtonText = 'Borrow Now';
   static const String homeLoanSectionTitle = 'My Loans';
+  static const String homeLockedSectionTitle = 'More Products to Unlock';
   static const String homeHeaderTitle = 'Maximum Loan Amount';
   static const String homeAvailableString = 'Available Offers';
   static const String homeMultiSelectHint = 'Multiple Selection Available';
@@ -298,13 +299,13 @@ class AppStrings {
   static const String loanOrderFooterCouponRepayment = 'Repay with Coupon >';
   static const String loanOrderFooterImmediateRepayment = 'Repay Now >';
   static const String loanOrderFooterTransferFailed =
-      'Payout Failed. View order details. >';
+      'Payout Failed. View loan details. >';
   static const String loanOrderProductFallback = '';
   static const String loanOrderLogoFallback = '';
   static const String loanOrderEmptyValue = '';
   static const String loanOrderUnknownValue = '-';
   static const String loanOrderDaysUnit = 'days';
-  static const String loanOrderDetailInfoTitle = 'Order Details';
+  static const String loanOrderDetailInfoTitle = 'Loan Details';
   static const String loanOrderAccountInfoTitle = 'Receiving Account';
   static const String loanOrderLoanAmountLabel = 'Loan Amount';
   static const String loanOrderLoanTermLabel = 'Loan Term';
@@ -324,7 +325,7 @@ class AppStrings {
   static const String loanOrderWalletTypeLabel = 'Wallet Provider';
 
   // ==================== 账单详情 ====================
-  static const String orderDetailTitle = 'Bill Details';
+  static const String orderDetailTitle = 'Loan Details';
   static const String orderDetailNoOrderData = 'No bill found';
   static const String orderDetailLoadFailed = 'Failed to load bill details';
   static const String orderDetailMissingRouteParams =
@@ -343,7 +344,7 @@ class AppStrings {
   static const String orderDetailMomoAccountLabel = 'MoMo Account';
   static const String orderDetailWalletTypeLabel = 'Wallet Provider';
   static const String orderDetailRepayNow = 'Repay Now';
-  static const String orderDetailCurrencyCode = 'GHS';
+  static const String orderDetailCurrencyCode = 'GHS ';
   static const String orderDetailZeroAmount = '0.00';
 
   // ==================== 还款卡片 ====================
@@ -363,7 +364,6 @@ class AppStrings {
   static const String repayDetailPendingStatus = 'Pending Repayment';
   static const String repayDetailApplyExtension = 'Apply for Extension';
   static const String repayDetailRepayNow = 'Repay Now';
-  static const String repayDetailOrderInfoTitle = 'Order Details';
 
   static const String paymentTitle = 'Payment';
   static const String paymentNoOrderData = 'No payment data';
@@ -376,7 +376,7 @@ class AppStrings {
   static const String repayExtensionFeeLabel = 'Extension Fee';
   static const String repayExtensionInfoTitle = 'Extension Details';
   static const String repayExtensionNotice =
-      'After your extension is approved, your repayment amount will remain unchanged with no additional fees.';
+      'After your extension is approved, please repay by the new due date.';
   static const String repayExtensionDaysLabel = 'Extended Days';
   static const String repayExtensionNewDueDateLabel = 'New Due Date';
   static const String repayExtensionNewRepayAmountLabel =
@@ -408,6 +408,7 @@ class AppStrings {
   static const String loanReviewAppBarTitle = 'Loan Application';
   static const String loanReviewDesc =
       'Your loan application is under review. \nThe review is usually completed within a few minutes. \nWe\'ll notify you as soon as the result is available.';
+  static const String loanReviewRatingTitle = 'Rate Our App';
   static const String scoreSuccess = 'Thanks for your rating!';
 
   // ===================== 优惠券 ========================

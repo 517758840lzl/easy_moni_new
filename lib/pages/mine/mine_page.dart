@@ -216,7 +216,7 @@ class _MineHeader extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: SizedBox(
-                height: 44,
+                height: 52,
                 child: Row(
                   children: [
                     const Spacer(),

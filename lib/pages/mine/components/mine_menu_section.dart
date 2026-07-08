@@ -21,20 +21,6 @@ class MineMenuSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(20, 18, 20, 8),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              AppStrings.mineOtherFeatures,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF1A1A1A),
-              ),
-            ),
-          ),
-        ),
         _MineMenuItem(
           icon: Assets.images.mineFile.image(width: 18, height: 18),
           title: AppStrings.mineHistoryOrders,

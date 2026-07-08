@@ -64,6 +64,11 @@ class LoanBottomActionButton extends StatelessWidget {
       button = SafeArea(top: false, child: button);
     }
 
-    return Container(color: backgroundColor, child: button);
+    return Container(
+      color: backgroundColor,
+      // TODO 底部边距待确认
+      padding: const EdgeInsets.only(bottom: 8),
+      child: button,
+    );
   }
 }

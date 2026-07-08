@@ -152,30 +152,6 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
   int get _availableProductCount =>
       _products.where((p) => p.state.canConfirm).length;
 
-  bool get _canSelectMultipleProducts {
-    return _products
-            .where((p) => !p.shouldUseOrderCard && p.state.canConfirm)
-            .length >
-        1;
-  }
-
-  // 首页展示优先级：可借款产品卡片置顶，其余卡片继续保持后端返回顺序。
-  List<int> get _orderedHomeIndexes {
-    final availableProductIndexes = <int>[];
-    final remainingIndexes = <int>[];
-
-    for (var index = 0; index < _products.length; index++) {
-      final product = _products[index];
-      if (!product.shouldUseOrderCard && product.state.canConfirm) {
-        availableProductIndexes.add(index);
-      } else {
-        remainingIndexes.add(index);
-      }
-    }
-
-    return [...availableProductIndexes, ...remainingIndexes];
-  }
-
   double get _selectedLoanAmount {
     return _selectedProductIndexes.fold<double>(0, (total, index) {
       if (index < 0 || index >= _products.length) return total;
@@ -224,7 +200,7 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
       bottomNavigationBar: LoanBottomActionButton(
         text: AppStrings.homeButtonText,
         enabled: canApply,
-        onPressed: canApply ? () => _handleApply(selectedLoanAmount) : null,
+        onPressed: canApply ? _handleApply : null,
       ),
     );
   }
@@ -235,10 +211,10 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
   }
 
   // 跳转确认借款页面
-  Future<void> _handleApply(double selectedLoanAmount) async {
+  void _handleApply() {
     if (_isApplyButtonLocked) return;
 
-    // 防止确认页跳转未完成前重复触发底部主按钮。
+    // 防止同一轮点击重复触发跳转，进入确认页后首页按钮状态仍由产品选择决定。
     setState(() {
       _isApplyButtonLocked = true;
     });
@@ -258,17 +234,15 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
         .where((item) => item.productCode.isNotEmpty)
         .toList();
 
-    try {
-      await context.push(
-        AppRoutePaths.loanConfirm,
-        extra: {'products': selectedConfirmProducts},
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isApplyButtonLocked = false;
-        });
-      }
+    context.push(
+      AppRoutePaths.loanConfirm,
+      extra: {'products': selectedConfirmProducts},
+    );
+
+    if (mounted) {
+      setState(() {
+        _isApplyButtonLocked = false;
+      });
     }
   }
 
@@ -292,8 +266,6 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(10, 17, 10, 92),
           children: [
-            const _SelectionHint(canSelectMultiple: false),
-            const SizedBox(height: 24),
             const AppEmptyStateView(text: AppStrings.noLoanProducts),
             if (widget.bottomContent != null) ...[
               const SizedBox(height: 16),
@@ -304,32 +276,77 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
       );
     }
 
-    final orderedHomeIndexes = _orderedHomeIndexes;
+    final homeSections = _buildHomeSections();
 
     return RefreshIndicator(
       onRefresh: _refreshHomeData,
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(10, 17, 10, 92),
-        itemCount:
-            orderedHomeIndexes.length +
-            1 +
-            (widget.bottomContent == null ? 0 : 1),
+        itemCount: homeSections.length + (widget.bottomContent == null ? 0 : 1),
         separatorBuilder: (context, index) {
-          return SizedBox(height: index == 0 ? 12 : 16);
+          return const SizedBox(height: 16);
         },
         itemBuilder: (context, index) {
-          if (index == 0) {
-            return _SelectionHint(
-              canSelectMultiple: _canSelectMultipleProducts,
-            );
-          }
-          if (index <= orderedHomeIndexes.length) {
-            return _buildHomeListItem(orderedHomeIndexes[index - 1]);
+          if (index < homeSections.length) {
+            return homeSections[index];
           }
           return widget.bottomContent!;
         },
       ),
+    );
+  }
+
+  // 首页分区：可借产品、订单卡片、不可借产品按区域展示，便于标题区分。
+  List<Widget> _buildHomeSections() {
+    final availableProductIndexes = <int>[];
+    final orderIndexes = <int>[];
+    final unavailableProductIndexes = <int>[];
+
+    for (var index = 0; index < _products.length; index++) {
+      final product = _products[index];
+      if (!product.shouldUseOrderCard && product.state.canConfirm) {
+        availableProductIndexes.add(index);
+      } else if (product.shouldUseOrderCard) {
+        orderIndexes.add(index);
+      } else {
+        unavailableProductIndexes.add(index);
+      }
+    }
+
+    return [
+      if (availableProductIndexes.isNotEmpty)
+        _buildHomeSection(
+          sectionTitle: AppStrings.selectProucts,
+          itemIndexes: availableProductIndexes,
+        ),
+      if (orderIndexes.isNotEmpty)
+        _buildHomeSection(
+          sectionTitle: AppStrings.homeLoanSectionTitle,
+          itemIndexes: orderIndexes,
+        ),
+      if (unavailableProductIndexes.isNotEmpty)
+        _buildHomeSection(
+          sectionTitle: AppStrings.homeLockedSectionTitle,
+          itemIndexes: unavailableProductIndexes,
+        ),
+    ];
+  }
+
+  Widget _buildHomeSection({
+    required String sectionTitle,
+    required List<int> itemIndexes,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionTitle(text: sectionTitle),
+        const SizedBox(height: 12),
+        for (var i = 0; i < itemIndexes.length; i++) ...[
+          if (i > 0) const SizedBox(height: 16),
+          _buildHomeListItem(itemIndexes[i]),
+        ],
+      ],
     );
   }
 
@@ -416,7 +433,7 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
         child: Stack(
           children: [
             Positioned(
-              top: topInset + 13,
+              top: topInset + 16,
               left: 56,
               right: 56,
               child: const Text(
@@ -431,7 +448,7 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
               ),
             ),
             Positioned(
-              top: topInset + 11,
+              top: topInset + 10,
               right: 20,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
@@ -440,7 +457,7 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
               ),
             ),
             Positioned(
-              top: topInset + 63,
+              top: topInset + 52,
               left: 20,
               right: 20,
               child: TotalRepayAmountDisplay(amount: selectedLoanAmount),
@@ -471,7 +488,7 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
                         ),
                         const SizedBox(width: 10),
                         Text(
-                          '${AppStrings.homeAvailableString} $_availableProductCount',
+                          '${AppStrings.homeAvailableString} : $_availableProductCount',
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
@@ -490,45 +507,21 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
   }
 }
 
-class _SelectionHint extends StatelessWidget {
-  const _SelectionHint({required this.canSelectMultiple});
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle({required this.text});
 
-  final bool canSelectMultiple;
+  final String text;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const Text(
-          AppStrings.selectProucts,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-            letterSpacing: 0.41,
-          ),
-        ),
-        // if (canSelectMultiple) ...[
-        //   const SizedBox(width: 8),
-        //   Container(
-        //     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        //     decoration: BoxDecoration(
-        //       color: const Color(0xFFE9F6EF),
-        //       borderRadius: BorderRadius.circular(4),
-        //     ),
-        //     child: const Text(
-        //       // TODO 右侧溢出，待解决
-        //       AppStrings.homeMultiSelectHint,
-        //       style: TextStyle(
-        //         fontSize: 11,
-        //         fontWeight: FontWeight.w500,
-        //         color: Color(0xFF216A4A),
-        //         height: 14 / 11,
-        //       ),
-        //     ),
-        //   ),
-        // ],
-      ],
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: Colors.black,
+        letterSpacing: 0.41,
+      ),
     );
   }
 }
@@ -652,7 +645,9 @@ LoanOrderCardFooterData _homeOrderFooter(
 }
 
 String _amountText(num? value) {
-  return (value ?? 0).formatAmount(showCurrencySymbol: true);
+  return value == null
+      ? AppStrings.loanOrderEmptyValue
+      : value.formatAmount(showCurrencySymbol: true);
 }
 
 String _daysText(int days) {

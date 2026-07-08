@@ -365,6 +365,7 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
               right: 0,
               child: _Hero(
                 data: data,
+                isLoading: _isLoading,
                 couponAmountPreview: _couponAmountPreview,
                 isCouponAmountLoading: _isCouponAmountPreviewLoading,
                 couponAmountOffset: couponAmountOffset,
@@ -596,12 +597,14 @@ class _LoanConfirmContentClipper extends CustomClipper<Path> {
 class _Hero extends StatelessWidget {
   const _Hero({
     required this.data,
+    required this.isLoading,
     required this.couponAmountPreview,
     required this.isCouponAmountLoading,
     required this.couponAmountOffset,
   });
 
   final LoanConfirmData? data;
+  final bool isLoading;
   final UseCouponRespData? couponAmountPreview;
   final bool isCouponAmountLoading;
   final double couponAmountOffset;
@@ -639,7 +642,7 @@ class _Hero extends StatelessWidget {
             ),
           ),
           Positioned(
-            top: topInset + 17,
+            top: topInset + 16,
             left: 64,
             right: 64,
             child: const Text(
@@ -663,13 +666,13 @@ class _Hero extends StatelessWidget {
             ),
           ),
           Positioned(
-            top: topInset + 66,
+            top: topInset + 52,
             left: 20,
             right: 20,
             child: Center(
               child: FittedBox(
                 fit: BoxFit.scaleDown,
-                child: isCouponAmountLoading
+                child: isLoading || isCouponAmountLoading
                     ? const SizedBox(
                         width: 32,
                         height: 32,
@@ -695,9 +698,9 @@ class _Hero extends StatelessWidget {
             ),
           ),
           Positioned(
-            top: topInset + 116 + couponAmountOffset,
-            left: 18,
-            right: 18,
+            top: topInset + 112 + couponAmountOffset,
+            left: 12,
+            right: 12,
             child: Row(
               children: [
                 Expanded(
@@ -918,7 +921,7 @@ class _SimIcon extends StatelessWidget {
 
 // 金额展示统一加 GHS 前缀，并按项目扩展方法格式化小数。
 String _amountText(num? value) {
-  return (value ?? 0).formatAmount();
+  return value == null ? AppStrings.loanOrderEmptyValue : value.formatAmount();
 }
 
 String _couponName(CouponItem coupon) {
@@ -949,15 +952,24 @@ num? _previewActualToAccountMoney({
 }
 
 // 贷前优惠券试算后的应还总额：未选券时取订单应还总和，选券后按新借款金额加租金计算。
-num _previewRepayTotal({
+num? _previewRepayTotal({
   required List<LoanConfirmOrder> orders,
   required UseCouponRespData? preview,
 }) {
-  final originalRepayTotal = orders.fold<num>(0, (sum, item) {
-    return sum + (item.repayAmount ?? 0);
-  });
-  if (preview == null) return originalRepayTotal;
-  return (preview.newLoanAmount ?? 0) + (preview.rent ?? 0);
+  if (preview != null) {
+    final newLoanAmount = preview.newLoanAmount;
+    final rent = preview.rent;
+    if (newLoanAmount == null && rent == null) return null;
+    return (newLoanAmount ?? 0) + (rent ?? 0);
+  }
+
+  num? total;
+  for (final item in orders) {
+    final amount = item.repayAmount;
+    if (amount == null) continue;
+    total = (total ?? 0) + amount;
+  }
+  return total;
 }
 
 List<int> _selectedCouponIds(CouponItem? coupon) {

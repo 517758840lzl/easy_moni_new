@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/loan/models/review_pop_config.dart';
@@ -26,7 +27,7 @@ class _LoanReviewRatingSheetState extends State<LoanReviewRatingSheet> {
   @override
   void initState() {
     super.initState();
-    _score = widget.config.initialScore;
+    _score = 5;
   }
 
   @override
@@ -63,7 +64,7 @@ class _LoanReviewRatingSheetState extends State<LoanReviewRatingSheet> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    widget.config.title,
+                    AppStrings.loanReviewRatingTitle,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       color: Color(0xFF101314),

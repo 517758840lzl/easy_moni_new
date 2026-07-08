@@ -75,6 +75,7 @@ class _RepayMultiOrderDetailPageState
       ),
       header: _RepayMultiHeader(
         detail: detail,
+        isLoading: detailAsync.isLoading,
         couponAmountPreview: _couponAmountPreview,
         isCouponAmountLoading: _isCouponAmountPreviewLoading,
       ),
@@ -245,11 +246,13 @@ class _RepayMultiOrderDetailPageState
 class _RepayMultiHeader extends StatelessWidget {
   const _RepayMultiHeader({
     required this.detail,
+    required this.isLoading,
     required this.couponAmountPreview,
     required this.isCouponAmountLoading,
   });
 
   final RepayDetailRespData? detail;
+  final bool isLoading;
   final UseCouponRespData? couponAmountPreview;
   final bool isCouponAmountLoading;
 
@@ -263,7 +266,7 @@ class _RepayMultiHeader extends StatelessWidget {
       (order) => order.overdueInterest,
     );
     // 顶部主金额展示多订单确认还款总额
-    final totalRepayAmount = detail?.totalSureRepayAmounts ?? 0;
+    final totalRepayAmount = detail?.totalSureRepayAmounts;
     final previewAmount = couponAmountPreview?.newRepaymentAmount;
     final originalAmount = couponAmountPreview?.repaymentAmount;
     final showCouponAmount = _shouldShowCouponRepaymentAmount(
@@ -319,11 +322,21 @@ class _RepayMultiHeader extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                if (isCouponAmountLoading)
+                if (isLoading)
                   const SizedBox(
                     width: 32,
                     height: 32,
                     child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                else if (isCouponAmountLoading)
+                  Container(
+                    margin: const EdgeInsets.all(14),
+                    width: 32,
+                    height: 32,
+                    child: const CircularProgressIndicator(
                       strokeWidth: 2,
                       color: Colors.white,
                     ),
@@ -340,14 +353,14 @@ class _RepayMultiHeader extends StatelessWidget {
                       ),
                     ],
                   )
-                else
+                else if (totalRepayAmount != null)
                   TotalRepayAmountDisplay(amount: totalRepayAmount),
               ],
             ),
           ),
           const SizedBox(height: 18),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               children: [
                 Expanded(
@@ -382,7 +395,7 @@ class _RepayMultiHeader extends StatelessWidget {
 class _SummaryCard extends StatelessWidget {
   const _SummaryCard({required this.amount, required this.label});
 
-  final num amount;
+  final num? amount;
   final String label;
 
   @override
@@ -402,8 +415,10 @@ class _SummaryCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              amount.formatAmount(),
-              maxLines:1,
+              amount == null
+                  ? AppStrings.loanOrderEmptyValue
+                  : amount!.formatAmount(),
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 fontSize: 14,
@@ -547,11 +562,17 @@ LoanOrderCardStatusBadgeData? _overdueStatusBadge(
   );
 }
 
-num _sumOrderAmount(
+num? _sumOrderAmount(
   Iterable<RepayDetailRespDataLoanOrderDetails> orders,
   num? Function(RepayDetailRespDataLoanOrderDetails order) valueOf,
 ) {
-  return orders.fold<num>(0, (sum, order) => sum + (valueOf(order) ?? 0));
+  num? total;
+  for (final order in orders) {
+    final value = valueOf(order);
+    if (value == null) continue;
+    total = (total ?? 0) + value;
+  }
+  return total;
 }
 
 bool _isOverdue(RepayDetailRespDataLoanOrderDetails order) {

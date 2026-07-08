@@ -149,6 +149,7 @@ class _PhotoGuideGrid extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _PhotoGuideItem(
               image: Assets.images.inforamtionF.image(fit: BoxFit.contain),
@@ -163,6 +164,7 @@ class _PhotoGuideGrid extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _PhotoGuideItem(
               image: Assets.images.inforamtionTh.image(fit: BoxFit.contain),

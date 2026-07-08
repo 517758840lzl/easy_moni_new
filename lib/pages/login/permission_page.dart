@@ -377,7 +377,7 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
                         padding: const EdgeInsets.symmetric(horizontal: 22),
                         child: Row(
                           children: [
-                            Assets.images.loginSetting.image(
+                            Assets.images.safeIcon.image(
                               width: 15,
                               height: 15,
                             ),

@@ -391,6 +391,10 @@ class $AssetsImagesGen {
   AssetGenImage get rightArrow =>
       const AssetGenImage('assets/images/right_arrow.png');
 
+  /// File path: assets/images/safe_Icon.png
+  AssetGenImage get safeIcon =>
+      const AssetGenImage('assets/images/safe_Icon.png');
+
   /// File path: assets/images/service_right_arrow.png
   AssetGenImage get serviceRightArrow =>
       const AssetGenImage('assets/images/service_right_arrow.png');
@@ -513,6 +517,7 @@ class $AssetsImagesGen {
     review3,
     reviewBanner,
     rightArrow,
+    safeIcon,
     serviceRightArrow,
     serviceSafe,
     settingsDeleteAccount,

@@ -413,9 +413,7 @@ class UploadMethodSheet extends StatelessWidget {
     final methods = backendOptions
         .map((option) {
           final isGallery = _isGalleryOption(option);
-          final label = option.value.trim().isEmpty
-              ? _fallbackUploadLabel(isGallery: isGallery)
-              : option.value;
+          final label = _fallbackUploadLabel(isGallery: isGallery);
           return _UploadMethodData(label: label, isGallery: isGallery);
         })
         .toList(growable: false);

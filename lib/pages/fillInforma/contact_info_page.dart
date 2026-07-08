@@ -269,7 +269,7 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
       return PersonalInfoFormItem(
         isRequired: entry.must == 1,
         value: _formController.displayValueFor(entry),
-        placeholder: entry.defaultText,
+        placeholder: AppStrings.contactPlaceholder,
         showDivider: showDivider,
         focusNode: _formController.focusNodeFor(entry),
         trailing: Assets.images.notebook.image(width: 22, height: 22),
@@ -283,7 +283,7 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
       );
       return PersonalInfoFormItem(
         isRequired: entry.must == 1,
-        placeholder: entry.defaultText,
+        placeholder: AppStrings.contactPlaceholder,
         controller: _formController.controllerFor(entry),
         focusNode: _formController.focusNodeFor(entry),
         keyboardType: FormEntryInputTypeHelper.keyboardTypeFor(entry),

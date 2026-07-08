@@ -36,7 +36,7 @@ extension StringExtension on String {
   }
 
   /// 格式化日利率展示文案，统一补充利率单位。
-  String formatDailyInterestLabel({String unit = 'per day'}) {
+  String formatDailyInterestLabel({String unit = ''}) {
     if (isEmpty || this == '-') return this;
     return '$this $unit';
   }

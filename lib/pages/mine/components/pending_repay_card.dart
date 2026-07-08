@@ -23,7 +23,7 @@ class PendingRepayCard extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: Container(
         margin: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         decoration: const BoxDecoration(
           color: Color(0xFFFDF5EE),
           borderRadius: BorderRadius.all(Radius.circular(8)),
@@ -35,7 +35,7 @@ class PendingRepayCard extends StatelessWidget {
               height: 48,
               child: Assets.images.mineArrow.image(),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,7 +47,7 @@ class PendingRepayCard extends StatelessWidget {
                           currencySymbol: AppStrings.orderDetailCurrencyCode,
                         ),
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF1A1A1A),
                         ),

@@ -225,28 +225,45 @@ class _RepayExtensionHeader extends StatelessWidget {
                 if (isLoading && detail == null)
                   const _RepayExtensionAmountLoading()
                 else
-                  TotalRepayAmountDisplay(amount: amount ?? 0),
-                if (!isLoading && hasSelectedCoupon) ...[
-                  const SizedBox(height: 2),
-                  // 展示优惠前金额
-                  TotalRepayAmountDisplay(
-                    amount: detail?.extensionFee ?? 0,
-                    currencyStyle: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.white70,
-                      decoration: TextDecoration.lineThrough,
-                      decorationColor: Colors.white70,
-                      height: 24 / 16,
-                    ),
-                    amountStyle: const TextStyle(
-                      fontSize: 20,
-                      color: Colors.white70,
-                      decoration: TextDecoration.lineThrough,
-                      decorationColor: Colors.white70,
-                      height: 24 / 20,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Flexible(
+                        child: TotalRepayAmountDisplay(amount: amount ?? 0),
+                      ),
+                      if (!isLoading && hasSelectedCoupon) ...[
+                        const SizedBox(width: 6),
+                        // 展示优惠前金额
+                        TotalRepayAmountDisplay(
+                          amount: detail?.extensionFee ?? 0,
+                          currencyStyle: const TextStyle(
+                            fontSize: 20,
+                            color: Colors.white70,
+                            decoration: TextDecoration.lineThrough,
+                            decorationColor: Colors.white70,
+                            height: 24 / 20,
+                          ),
+                          amountStyle: const TextStyle(
+                            fontSize: 20,
+                            color: Colors.white70,
+                            decoration: TextDecoration.lineThrough,
+                            decorationColor: Colors.white70,
+                            height: 24 / 20,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                ],
+                const SizedBox(height: 6),
+                const Text(
+                  AppStrings.repayExtensionFeeLabel,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
+                ),
               ],
             ),
           ),
@@ -339,6 +356,7 @@ class _RepayExtensionNotice extends StatelessWidget {
       color: const Color(0xFFFFF4DF),
       padding: const EdgeInsets.fromLTRB(9, 8, 12, 8),
       child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(Icons.info_outline_rounded, size: 12, color: Color(0xFFFFAA00)),
           SizedBox(width: 4),
@@ -375,7 +393,7 @@ class _RepayExtensionInfoCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(10, 16, 10, 16),
+      padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
       decoration: BoxDecoration(
         color: const Color(0xFFFDF5EE),
         borderRadius: BorderRadius.circular(10),

@@ -121,6 +121,7 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
       header: _RepayEntryHeader(
         totalAmount: _totalAmount(selectedBills),
         showTotalAmount: showTotalAmount,
+        onRepayTap: () => _openSelectedRepayDetail(context, selectedBills),
       ),
       content: RefreshIndicator(
         onRefresh: _refreshBills,
@@ -177,10 +178,12 @@ class _RepayEntryHeader extends StatelessWidget {
   const _RepayEntryHeader({
     required this.totalAmount,
     required this.showTotalAmount,
+    required this.onRepayTap,
   });
 
   final double totalAmount;
   final bool showTotalAmount;
+  final VoidCallback onRepayTap;
 
   @override
   Widget build(BuildContext context) {
@@ -205,16 +208,7 @@ class _RepayEntryHeader extends StatelessWidget {
                           height: 20 / 16,
                         ),
                       )
-                    : Text(
-                        AppStrings.repayDefaultTitle,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
-                          height: 20 / 16,
-                        ),
-                      ),
+                    : const SizedBox.shrink(),
                 Positioned(
                   right: 20,
                   child: GestureDetector(
@@ -235,7 +229,11 @@ class _RepayEntryHeader extends StatelessWidget {
                 const SizedBox(width: 6),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Assets.images.rightArrow.image(width: 20, height: 20),
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: onRepayTap,
+                    child: Assets.images.rightArrow.image(width: 20, height: 20),
+                  ),
                 ),
               ],
             ),
@@ -269,18 +267,19 @@ class _RepayEntryContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(12, 17, 12, 12),
-          child: Text(
-            AppStrings.repayEntryBillTitle,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-              height: 20 / 14,
+        if (bills.isNotEmpty)
+          const Padding(
+            padding: EdgeInsets.fromLTRB(12, 17, 12, 12),
+            child: Text(
+              AppStrings.repayEntryBillTitle,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+                height: 20 / 14,
+              ),
             ),
           ),
-        ),
         Expanded(
           child: stateChild != null
               ? AppScrollableStateView(child: stateChild!)

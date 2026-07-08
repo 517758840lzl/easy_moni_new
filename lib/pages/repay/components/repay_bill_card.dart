@@ -287,7 +287,7 @@ class _RepayButton extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        width: 73,
+        width: 76,
         height: 26,
         decoration: BoxDecoration(
           gradient: LinearGradient(colors: colors.buttonGradient),
