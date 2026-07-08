@@ -177,6 +177,7 @@ class _IdCameraScreenState extends State<IdCameraScreen>
   String? _cameraError;
   bool _isTakingPicture = false;
   bool _isProcessingCapturedImage = false;
+  bool _showFlipCardHint = false;
   bool _isLeavingCameraPage = false;
   bool _hasRestoredPortraitOrientation = false;
   bool _isRecoveringCamera = false;
@@ -595,11 +596,22 @@ class _IdCameraScreenState extends State<IdCameraScreen>
                     IdCameraUiLayer(
                       cardRect: cardRect,
                       isTakingPicture: _isTakingPicture,
+                      onBack: _popWithoutResult,
                       onTakePicture: _takePicture,
                     ),
                     if (_isProcessingCapturedImage)
                       const Positioned.fill(
                         child: _CapturedImageProcessingOverlay(),
+                      ),
+                    if (_showFlipCardHint)
+                      const Positioned.fill(
+                        child: IgnorePointer(
+                          child: _CapturedImageProcessingOverlay(
+                            message:
+                                AppStrings.identityVerifyFlipCardAndContinue,
+                            showProgress: false,
+                          ),
+                        ),
                       ),
                   ],
                 );
@@ -619,7 +631,10 @@ class _IdCameraScreenState extends State<IdCameraScreen>
 
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     try {
-      setState(() => _isTakingPicture = true);
+      setState(() {
+        _isTakingPicture = true;
+        _showFlipCardHint = false;
+      });
       await _initializeControllerFuture;
       final controller = _controller;
       final viewportSize = _viewportSize;
@@ -651,12 +666,9 @@ class _IdCameraScreenState extends State<IdCameraScreen>
           _currentIsFront = !_currentIsFront;
           _isTakingPicture = false;
           _isProcessingCapturedImage = false;
+          _showFlipCardHint = true;
         });
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(
-            content: Text(AppStrings.identityVerifyFlipCardAndContinue),
-          ),
-        );
+        unawaited(_hideFlipCardHintAfterDelay());
         return;
       }
 
@@ -698,6 +710,15 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     }
   }
 
+  /// 翻面提示短暂居中展示，避免用户误以为流程已结束。
+  Future<void> _hideFlipCardHintAfterDelay() async {
+    await Future<void>.delayed(const Duration(seconds: 2));
+    if (!mounted || _isLeavingCameraPage) {
+      return;
+    }
+    setState(() => _showFlipCardHint = false);
+  }
+
   Future<void> _popWithoutResult() async {
     await _popWithResult();
   }
@@ -714,6 +735,7 @@ class _IdCameraScreenState extends State<IdCameraScreen>
         _isLeavingCameraPage = true;
         _isTakingPicture = true;
         _isProcessingCapturedImage = false;
+        _showFlipCardHint = false;
       });
     }
 
@@ -818,9 +840,11 @@ class _CameraExitLoadingView extends StatelessWidget {
 class _CapturedImageProcessingOverlay extends StatelessWidget {
   const _CapturedImageProcessingOverlay({
     this.message = AppStrings.identityVerifyPhotoProcessing,
+    this.showProgress = true,
   });
 
   final String message;
+  final bool showProgress;
 
   @override
   Widget build(BuildContext context) {
@@ -837,21 +861,33 @@ class _CapturedImageProcessingOverlay extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.2,
-                    color: Colors.white,
+                if (showProgress) ...[
+                  const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.2,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  message,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                  const SizedBox(width: 12),
+                ],
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.sizeOf(context).width * 0.62,
+                  ),
+                  child: Text(
+                    message,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: showProgress ? 14 : 16,
+                      fontWeight: showProgress
+                          ? FontWeight.w500
+                          : FontWeight.w600,
+                    ),
                   ),
                 ),
               ],

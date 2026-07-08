@@ -42,12 +42,14 @@ class IdCameraUiLayer extends StatelessWidget {
   const IdCameraUiLayer({
     required this.cardRect,
     required this.isTakingPicture,
+    required this.onBack,
     required this.onTakePicture,
     super.key,
   });
 
   final Rect cardRect;
   final bool isTakingPicture;
+  final VoidCallback onBack;
   final VoidCallback onTakePicture;
 
   @override
@@ -70,11 +72,20 @@ class IdCameraUiLayer extends StatelessWidget {
 
           return Stack(
             children: [
-              const Positioned(
+              Positioned(
                 top: 24,
                 left: 0,
                 right: 56,
-                child: Center(child: _CameraTip()),
+                child: Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _CameraBackButton(onPressed: onBack),
+                      const SizedBox(width: 12),
+                      const Flexible(child: _CameraTip()),
+                    ],
+                  ),
+                ),
               ),
               // 示例图组按证件框中心线定位，确保引导区和拍摄框视觉对齐。
               Positioned(
@@ -99,6 +110,28 @@ class IdCameraUiLayer extends StatelessWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// 拍摄页返回按钮，复用设计切图并交给页面处理退出流程。
+class _CameraBackButton extends StatelessWidget {
+  const _CameraBackButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onPressed,
+      tooltip: AppStrings.back,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+      icon: Assets.images.idBackArrowIcon.image(
+        width: 24,
+        height: 24,
+        fit: BoxFit.contain,
       ),
     );
   }
@@ -129,7 +162,7 @@ class _CameraTip extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 14,
+                fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
             ),

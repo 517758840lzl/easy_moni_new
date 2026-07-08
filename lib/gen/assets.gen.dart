@@ -83,6 +83,10 @@ class $AssetsImagesGen {
   AssetGenImage get faceVerifyRectangle =>
       const AssetGenImage('assets/images/face_verify_rectangle.png');
 
+  /// File path: assets/images/id_back_arrow_Icon.png
+  AssetGenImage get idBackArrowIcon =>
+      const AssetGenImage('assets/images/id_back_arrow_Icon.png');
+
   /// File path: assets/images/id_card_rectangle.png
   AssetGenImage get idCardRectangle =>
       const AssetGenImage('assets/images/id_card_rectangle.png');
@@ -439,6 +443,7 @@ class $AssetsImagesGen {
     dotss,
     faceVerifyCircle,
     faceVerifyRectangle,
+    idBackArrowIcon,
     idCardRectangle,
     inforamtionBgheader,
     inforamtionF,

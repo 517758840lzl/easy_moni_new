@@ -11,6 +11,7 @@ class AppStrings {
   static const String continueStr = 'Continue';
   static const String agrees = 'Agree';
   static const String receives = 'Accpet';
+  static const String back = 'Back';
   static const String cancel = 'Cancel';
   static const String confirm = 'Confirm';
   static const String goSettings = 'Go to Settings';
@@ -97,7 +98,7 @@ class AppStrings {
   static const String questionnaireDescription =
       'Complete this questionnaire to help us better evaluate your credit profile.';
   static const String questionnaireSaving = 'Saving...';
-  static const String questionnaireSubmitButton = 'Submit report, get quota';
+  static const String questionnaireSubmitButton = 'Complete Application';
   static const String questionnaireNoData = 'No questionnaire data';
   static const String questionnaireSaveFailed = 'Save failed';
   static const String questionnaireAuthentication = 'Authentication';
@@ -150,7 +151,7 @@ class AppStrings {
   static const String faceVerifyAutoCaptureHint =
       'Please look at the camera. Your photo will be captured automatically.';
   static const String identityVerifyCheckInfo =
-      'Please review your personal information carefully.';
+      'Please upload your Ghana Card';
   static const String identityVerifyConfirmIdNumber =
       'Please confirm your Ghana Card number.';
   static const String identityVerifyConfirmRequired =
@@ -187,7 +188,7 @@ class AppStrings {
   static const String continueSallery = "Continue";
   static const String looseSallery = "Not Now";
   static const String noLoanProducts = 'No loan offers available.';
-  static const String selectProucts = 'Select the loan offer you want.';
+  static const String selectProucts = 'Select the loan offer you want';
   static const String takeOcrPictures =
       'Please use landscape mode and place all four corners of your Ghana Card inside the frame.';
   static String captureFailed(Object error) =>

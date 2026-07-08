@@ -423,7 +423,7 @@ class _FacePhotoActionBar extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: PermissionActionButtons(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
           secondaryText: AppStrings.faceVerifyEntryRetake,
           primaryText: isSubmitting
               ? AppStrings.personalInfoSaving
