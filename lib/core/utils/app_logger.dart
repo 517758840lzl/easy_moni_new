@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:talker/talker.dart';
 
 /// 应用统一日志工具，集中管理日志实例、等级和输出开关。
+// TODO 交付关闭
 class AppLogger {
   AppLogger._();
 

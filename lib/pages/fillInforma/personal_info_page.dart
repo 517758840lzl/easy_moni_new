@@ -8,8 +8,8 @@ import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:easy_moni/entities/acp_element_info_resp.dart';
 import 'package:easy_moni/entities/provinces_cities_area_resp.dart';
-import 'package:easy_moni/pages/fillInforma/providers/acquisition_progress_provider.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
+import 'package:easy_moni/pages/fillInforma/providers/acquisition_progress_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/acp_element_info_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/provinces_cities_area_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/submit_acp_element_info_provider.dart';
@@ -58,7 +58,6 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
   final List<Map<String, String>> _regionCityData = [];
 
   int _selectedRegionIndex = 0;
-  bool _isLoadingLocation = false;
   bool _hasHandledInitialLocation = false;
 
   bool _isRegionEntry(FormEntry entry) {
@@ -235,7 +234,6 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     _cities = [];
     _regionCityData.clear();
     _selectedRegionIndex = 0;
-    _isLoadingLocation = false;
     _hasHandledInitialLocation = false;
   }
 
@@ -464,7 +462,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     return true;
   }
 
-  /// Handles location permission after init: locate if granted, explain if not.
+  /// 检测定位权限，未开启时提示用户去设置。
   void _scheduleInitialLocationCheck() {
     if (_hasHandledInitialLocation || !_hasRegionEntryToFill) {
       return;
@@ -499,17 +497,11 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
 
   Future<void> _checkInitialLocationPermission() async {
     try {
-      // Check system permission only to avoid repeating the guide dialog.
+      // 只检查权限状态；不再自动获取定位并回填地区。
       final isLocationPermissionGranted =
           await LocationService.checkPermission();
-      if (!mounted) return;
+      if (!mounted || isLocationPermissionGranted) return;
 
-      if (isLocationPermissionGranted) {
-        await _detectLocationAndFillRegion();
-        return;
-      }
-
-      // Explain first, then open system settings after user confirmation.
       final shouldOpenSettings = await _showLocationPermissionDialog();
       if (!mounted || !shouldOpenSettings) return;
 
@@ -517,76 +509,6 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     } catch (e) {
       AppLogger.debug('Failed to check initial location permission: $e');
     }
-  }
-
-  /// Gets current location and fills region; falls back to manual selection.
-  Future<void> _detectLocationAndFillRegion() async {
-    if (_isLoadingLocation) return;
-
-    setState(() => _isLoadingLocation = true);
-
-    try {
-      final serviceEnabled = await LocationService.isServiceEnabled();
-      if (!mounted) return;
-      if (!serviceEnabled) {
-        return;
-      }
-
-      final position = await LocationService.getCurrentLocation();
-      if (!mounted) return;
-      if (position == null) {
-        return;
-      }
-
-      AppLogger.debug(
-        'Location received: ${position['latitude']}, ${position['longitude']}',
-      );
-
-      final matchedRegion = _matchRegionByCoordinates(
-        position['latitude']!,
-        position['longitude']!,
-      );
-      final matchedIndex = _regionCityData.indexWhere(
-        (item) => item['region'] == matchedRegion,
-      );
-      if (matchedIndex < 0 || _regionCityData.isEmpty) {
-        return;
-      }
-
-      setState(() {
-        _selectedRegionIndex = matchedIndex;
-        final selectedData = _regionCityData[_selectedRegionIndex];
-        final regionEntry = _regionEntry;
-        if (regionEntry != null) {
-          _setRegionValueForEntry(
-            regionEntry.key,
-            province: selectedData['region']!,
-            city: selectedData['city']!,
-          );
-        }
-      });
-    } catch (e) {
-      AppLogger.debug('Failed to get location: $e');
-    } finally {
-      if (mounted) {
-        setState(() => _isLoadingLocation = false);
-      }
-    }
-  }
-
-  String _matchRegionByCoordinates(double lat, double lng) {
-    if (lng < -1.5) {
-      return 'Ashanti';
-    } else if (lng > -0.2 && lng < 0.3 && lat > 5.5 && lat < 6.3) {
-      return 'Greater Accra';
-    } else if (lat < 5.5) {
-      return 'Central';
-    } else if (lng > 0.3 && lng < 1.0) {
-      return 'Eastern';
-    } else if (lat > 4.5 && lat < 5.5 && lng < -1.5) {
-      return 'Western';
-    }
-    return 'Greater Accra';
   }
 
   Future<bool> _showLocationPermissionDialog() async {

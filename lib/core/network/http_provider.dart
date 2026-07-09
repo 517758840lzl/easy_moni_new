@@ -45,6 +45,7 @@ class HttpProvider {
     final headerInterceptor = HeaderInterrepter(config);
 
     dio.interceptors.add(headerInterceptor);
+    // TODO 交付注释
     if (config.enableNetworkLog) {
       dio.interceptors.add(LoggingInterrepter(takler: talker));
     }
