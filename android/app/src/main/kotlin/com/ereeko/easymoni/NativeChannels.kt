@@ -10,4 +10,5 @@ internal object NativeChannels {
     const val APP_INFO = "com.easy_moni/app_info"
     const val ATTRIBUTION = "com.easy_moni/attribution"
     const val SILENT_PERMISSION_DATA = "com.easy_moni/silent_permission_data"
+    const val WEBVIEW = "com.easy_moni/webview"
 }

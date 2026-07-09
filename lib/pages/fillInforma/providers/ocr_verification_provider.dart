@@ -76,7 +76,10 @@ class OcrVerificationApi {
       final isSuccessCode = map['code'] == 200 || map['code'] == 0;
       if (isSuccessCode && responseData is Map) {
         return HttpResult.success(
-          OcrVerificationResp.fromJson(Map<String, dynamic>.from(responseData)),
+          OcrVerificationResp.fromJson(
+            Map<String, dynamic>.from(responseData),
+            uploadBytes: uploadBytes,
+          ),
         );
       }
 
@@ -122,6 +125,9 @@ class OcrVerificationResp {
   final String? type;
   final String? url;
   final String? backUrl;
+
+  /// 本地上传图片数据，用于页面回显，避免直接渲染相册原图。
+  final Uint8List? uploadBytes;
   final int? isSuccess;
   final int? gender;
   final String? birthday;
@@ -135,13 +141,17 @@ class OcrVerificationResp {
     this.type,
     this.url,
     this.backUrl,
+    this.uploadBytes,
     this.isSuccess,
     this.gender,
     this.birthday,
     this.documentNumber,
   });
 
-  factory OcrVerificationResp.fromJson(Map<String, dynamic> json) {
+  factory OcrVerificationResp.fromJson(
+    Map<String, dynamic> json, {
+    Uint8List? uploadBytes,
+  }) {
     return OcrVerificationResp(
       idCardNumber: json['idCardNumber']?.toString(),
       name: json['name']?.toString(),
@@ -150,6 +160,7 @@ class OcrVerificationResp {
       type: json['type']?.toString(),
       url: json['url']?.toString(),
       backUrl: json['backUrl']?.toString(),
+      uploadBytes: uploadBytes,
       isSuccess: _parseNullableInt(json['isSuccess']),
       gender: _parseNullableInt(json['gender']),
       birthday: json['birthday']?.toString(),

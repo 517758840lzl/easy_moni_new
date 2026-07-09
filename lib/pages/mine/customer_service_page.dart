@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:easy_moni/core/utils/app_logger.dart';
@@ -11,8 +13,10 @@ import 'package:easy_moni/utils/widgets/app_state_view.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 /// 客服展示方式，和后端 showType 保持一致。
@@ -221,13 +225,31 @@ class _CustomerServiceWebViewPage extends StatefulWidget {
 
 class _CustomerServiceWebViewPageState
     extends State<_CustomerServiceWebViewPage> {
-  late final WebViewController _controller;
+  static const MethodChannel _webViewChannel = MethodChannel(
+    'com.easy_moni/webview',
+  );
+
+  late WebViewController _controller;
   bool _isLoading = false;
+  bool _hasRenderProcessGone = false;
+  int? _protectedWebViewId;
+  int _webViewKey = 0;
   String? _loadedSource;
 
   @override
   void initState() {
     super.initState();
+    _webViewChannel.setMethodCallHandler(_handleNativeWebViewCall);
+    _createController();
+  }
+
+  @override
+  void dispose() {
+    _webViewChannel.setMethodCallHandler(null);
+    super.dispose();
+  }
+
+  void _createController() {
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
@@ -255,7 +277,9 @@ class _CustomerServiceWebViewPageState
         _CustomerServiceWebSource.fromList(
           widget.data?.appCustomerServiceInfoResps,
         );
-    _loadSourceIfNeeded(source);
+    if (!_hasRenderProcessGone) {
+      _loadSourceIfNeeded(source);
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -270,9 +294,15 @@ class _CustomerServiceWebViewPageState
         top: false,
         child: source == null
             ? const AppEmptyStateView(text: AppStrings.mineCustomerServiceEmpty)
+            : _hasRenderProcessGone
+            ? AppErrorStateView(
+                text: AppStrings.mineCustomerServiceLoadFailed,
+                onReload: _handleWebViewReload,
+              )
             : Stack(
                 children: [
                   WebViewWidget(
+                    key: ValueKey(_webViewKey),
                     controller: _controller,
                     gestureRecognizers: {
                       Factory<OneSequenceGestureRecognizer>(
@@ -292,6 +322,15 @@ class _CustomerServiceWebViewPageState
     if (source == null || source.value == _loadedSource) return;
 
     _loadedSource = source.value;
+    unawaited(_loadSource(source));
+  }
+
+  Future<void> _loadSource(_CustomerServiceWebSource source) async {
+    await _protectWebViewRenderer();
+    if (!mounted || _hasRenderProcessGone || source.value != _loadedSource) {
+      return;
+    }
+
     if (source.isHtml) {
       _controller.loadHtmlString(source.value);
       return;
@@ -299,7 +338,53 @@ class _CustomerServiceWebViewPageState
     _controller.loadRequest(Uri.parse(source.value));
   }
 
+  Future<void> _protectWebViewRenderer() async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
+
+    final platformController = _controller.platform;
+    if (platformController is! AndroidWebViewController) return;
+
+    final identifier = platformController.webViewIdentifier;
+    _protectedWebViewId = identifier;
+    try {
+      await _webViewChannel.invokeMethod<bool>('protectWebViewRenderer', {
+        'identifier': identifier,
+      });
+    } on PlatformException catch (e) {
+      AppLogger.debug('Protect customer service WebView failed: $e');
+    } on MissingPluginException catch (e) {
+      AppLogger.debug('Protect customer service WebView missing plugin: $e');
+    }
+  }
+
+  Future<void> _handleNativeWebViewCall(MethodCall call) async {
+    if (call.method != 'onRenderProcessGone') return;
+    final args = call.arguments;
+    final identifier = args is Map ? args['identifier'] : null;
+    if (identifier != _protectedWebViewId || !mounted) return;
+
+    setState(() {
+      _isLoading = false;
+      _hasRenderProcessGone = true;
+      _loadedSource = null;
+    });
+  }
+
+  void _handleWebViewReload() {
+    setState(() {
+      _isLoading = false;
+      _hasRenderProcessGone = false;
+      _loadedSource = null;
+      _webViewKey++;
+      _createController();
+    });
+  }
+
   Future<void> _handleBack() async {
+    if (_hasRenderProcessGone) {
+      Navigator.of(context).pop();
+      return;
+    }
     if (await _controller.canGoBack()) {
       await _controller.goBack();
       return;

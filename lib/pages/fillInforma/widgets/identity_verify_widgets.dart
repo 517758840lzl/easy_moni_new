@@ -67,10 +67,16 @@ class IdCardUploadItem extends StatelessWidget {
     final normalizedErrorText = errorText?.trim();
     final hasError =
         normalizedErrorText != null && normalizedErrorText.isNotEmpty;
+    final mediaQuery = MediaQuery.of(context);
+    final itemWidth = mediaQuery.size.width - 40;
+    final previewCacheWidth = ((itemWidth - 16) * mediaQuery.devicePixelRatio)
+        .round()
+        .clamp(1, 4096)
+        .toInt();
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: (MediaQuery.of(context).size.width - 40) * 683.0 / 1005.0,
+        height: itemWidth * 683.0 / 1005.0,
         decoration: BoxDecoration(
           image: DecorationImage(
             image: bgImage.provider(),
@@ -99,6 +105,7 @@ class IdCardUploadItem extends StatelessWidget {
                           child: Image.memory(
                             localImageData,
                             fit: BoxFit.cover,
+                            cacheWidth: previewCacheWidth,
                             gaplessPlayback: true,
                             errorBuilder: (context, error, stackTrace) {
                               return const _IdCardImageStatus(

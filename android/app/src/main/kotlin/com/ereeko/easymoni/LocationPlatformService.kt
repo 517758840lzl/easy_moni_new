@@ -75,6 +75,12 @@ internal class LocationPlatformService(private val activity: Activity) {
     private fun requestLocationPermission(result: MethodChannel.Result) {
         try {
             if (!hasLocationPermission()) {
+                if (pendingResult != null) {
+                    result.error("REQUEST_IN_PROGRESS", "Location permission request is already in progress", null)
+                    return
+                }
+
+                // 避免连续权限请求覆盖上一笔 Flutter Result，导致前一个 Future 无法结束。
                 pendingResult = result
                 ActivityCompat.requestPermissions(
                     activity,

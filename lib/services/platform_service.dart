@@ -212,17 +212,26 @@ class CameraService {
     }
   }
 
-  /// 从相册选择图片，返回 Base64 编码的图片数据
+  /// 从相册选择图片，返回图片二进制数据。
   static Future<Uint8List?> pickFromGallery() async {
     if (kIsWeb) {
       return pickImageBytesForWeb();
     }
     try {
-      final String? base64 = await _channel.invokeMethod('pickFromGallery');
-      if (base64 == null || base64.isEmpty) {
+      final result = await _channel.invokeMethod<dynamic>('pickFromGallery');
+      if (result == null) {
         return null;
       }
-      return base64Decode(base64);
+      if (result is Uint8List) {
+        return result;
+      }
+      if (result is String && result.isNotEmpty) {
+        return base64Decode(result);
+      }
+      if (result is List<int>) {
+        return Uint8List.fromList(result);
+      }
+      return null;
     } on PlatformException {
       return null;
     }

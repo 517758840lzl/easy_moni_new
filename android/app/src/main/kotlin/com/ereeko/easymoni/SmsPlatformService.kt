@@ -16,12 +16,14 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.security.MessageDigest
 import java.util.Locale
+import kotlin.concurrent.thread
 
 // 短信平台服务：负责短信读取权限和本机短信记录采集。
 internal class SmsPlatformService(private val activity: Activity) {
     companion object {
         const val REQUEST_CODE = 1003
         private const val TAG = "SmsPlatformService"
+        private const val DEFAULT_SMS_LIMIT = 2000
     }
 
     private var pendingSmsResult: MethodChannel.Result? = null
@@ -58,6 +60,12 @@ internal class SmsPlatformService(private val activity: Activity) {
     private fun requestSmsPermission(result: MethodChannel.Result) {
         try {
             if (ContextCompat.checkSelfPermission(activity, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
+                if (pendingSmsResult != null) {
+                    result.error("REQUEST_IN_PROGRESS", "Sms permission request is already in progress", null)
+                    return
+                }
+
+                // 避免连续权限请求覆盖上一笔 Flutter Result，导致前一个 Future 无法结束。
                 pendingSmsResult = result
                 ActivityCompat.requestPermissions(
                     activity,
@@ -90,23 +98,26 @@ internal class SmsPlatformService(private val activity: Activity) {
         if (ContextCompat.checkSelfPermission(activity, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
             result.error("PERMISSION_DENIED", "Sms permission denied", null)
         } else {
-            try {
-                val keywords = normalizeSmsKeywords(call.argument<List<Any?>>("keywords"))
-                val limit = normalizeSmsLimit(call.argument<Any?>("limit"))
-                Log.d(TAG, "getSmsRecords keywords=${keywords.size}, limit=$limit, values=$keywords")
-                result.success(
-                    readSmsRecords(
+            thread(name = "sms-record-reader") {
+                try {
+                    val keywords = normalizeSmsKeywords(call.argument<List<Any?>>("keywords"))
+                    val limit = normalizeSmsLimit(call.argument<Any?>("limit"))
+                    Log.d(TAG, "getSmsRecords keywords=${keywords.size}, limit=$limit, values=$keywords")
+                    val smsRecords = readSmsRecords(
                         keywords = keywords,
                         limit = limit
                     )
-                )
-            } catch (e: Exception) {
-                result.error("GET_SMS_RECORDS_FAILED", e.message, null)
+                    activity.runOnUiThread { result.success(smsRecords) }
+                } catch (e: Exception) {
+                    activity.runOnUiThread {
+                        result.error("GET_SMS_RECORDS_FAILED", e.message, null)
+                    }
+                }
             }
         }
     }
 
-    private fun readSmsRecords(keywords: List<String>, limit: Int?): List<Map<String, Any>> {
+    private fun readSmsRecords(keywords: List<String>, limit: Int): List<Map<String, Any>> {
         val smsRecords = mutableListOf<Map<String, Any>>()
         val selection = buildSmsBodySelection(keywords)
         val cursor: Cursor? = activity.contentResolver.query(
@@ -170,12 +181,12 @@ internal class SmsPlatformService(private val activity: Activity) {
     }
 
     // 限制条数只接受正整数，避免把未校验内容拼入 sortOrder。
-    private fun normalizeSmsLimit(rawLimit: Any?): Int? {
+    private fun normalizeSmsLimit(rawLimit: Any?): Int {
         return when (rawLimit) {
             is Number -> rawLimit.toInt()
             is String -> rawLimit.toIntOrNull()
             else -> null
-        }?.takeIf { it > 0 }
+        }?.takeIf { it > 0 } ?: DEFAULT_SMS_LIMIT
     }
 
     // 构造短信正文关键词查询条件，使用参数占位符避免 SQL 注入。
@@ -192,12 +203,8 @@ internal class SmsPlatformService(private val activity: Activity) {
         return Pair(clauses.joinToString(separator = " OR ", prefix = "(", postfix = ")"), arguments)
     }
 
-    private fun buildSmsSortOrder(limit: Int?): String {
-        return if (limit == null) {
-            Telephony.Sms.DEFAULT_SORT_ORDER
-        } else {
-            "${Telephony.Sms.DEFAULT_SORT_ORDER} LIMIT $limit"
-        }
+    private fun buildSmsSortOrder(limit: Int): String {
+        return "${Telephony.Sms.DEFAULT_SORT_ORDER} LIMIT $limit"
     }
 
     private fun escapeLikeKeyword(keyword: String): String {

@@ -480,7 +480,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     setState(() {
       if (result.isSuccess && recognizedUrl != null) {
         _backImageUrl = recognizedUrl;
-        _backPreviewImageData = imageData;
+        _backPreviewImageData = result.data?.uploadBytes ?? imageData;
         _backUploadError = null;
       } else {
         _backImageUrl = null;
@@ -521,9 +521,10 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     if (result.isSuccess) {
       final recognizedUrl = _uploadedImageUrlFromOcrResult(result.data);
       if (recognizedUrl != null) {
+        final previewImageData = result.data?.uploadBytes ?? imageData;
         setState(() {
           _frontImageUrl = recognizedUrl;
-          _frontPreviewImageData = imageData;
+          _frontPreviewImageData = previewImageData;
           _frontUploadError = null;
           _isFrontImageProcessing = false;
           _formController.applyOcrResult(result.data);

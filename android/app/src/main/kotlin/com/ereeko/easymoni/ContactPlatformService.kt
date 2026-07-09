@@ -42,10 +42,16 @@ internal class ContactPlatformService(private val activity: Activity) {
 
     private fun pickContact(result: MethodChannel.Result) {
         try {
+            if (pendingPickContactResult != null) {
+                result.error("REQUEST_IN_PROGRESS", "Contact picker request is already in progress", null)
+                return
+            }
+
             val intent = Intent(
                 Intent.ACTION_PICK,
                 ContactsContract.CommonDataKinds.Phone.CONTENT_URI
             )
+            // 避免连续联系人选择请求覆盖上一笔 Flutter Result，导致前一个 Future 无法结束。
             pendingPickContactResult = result
             activity.startActivityForResult(intent, PICK_CONTACT_REQUEST_CODE)
         } catch (e: Exception) {

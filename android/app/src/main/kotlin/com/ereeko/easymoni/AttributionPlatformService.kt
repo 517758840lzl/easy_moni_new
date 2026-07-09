@@ -9,26 +9,33 @@ import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodChannel
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 // 归因平台服务：负责广告 ID、安装来源和基础设备归因字段。
 internal class AttributionPlatformService(private val activity: Activity) {
+    private val backgroundExecutor = Executors.newSingleThreadExecutor()
+
     fun register(messenger: BinaryMessenger) {
         MethodChannel(messenger, NativeChannels.ATTRIBUTION).setMethodCallHandler { call, result ->
             when (call.method) {
                 "getAttributionData" -> {
-                    Thread {
+                    backgroundExecutor.execute {
                         try {
                             val data = getAttributionData()
                             activity.runOnUiThread { result.success(data) }
                         } catch (e: Exception) {
                             activity.runOnUiThread { result.error("GET_ATTRIBUTION_FAILED", e.message, null) }
                         }
-                    }.start()
+                    }
                 }
                 else -> result.notImplemented()
             }
         }
+    }
+
+    fun shutdown() {
+        backgroundExecutor.shutdownNow()
     }
 
     fun getAdvertisingId(): String {

@@ -4,20 +4,25 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.provider.MediaStore
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.provider.Settings
 import android.net.Uri
-import android.util.Base64
+import android.provider.MediaStore
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodChannel
+import java.io.ByteArrayOutputStream
+import kotlin.concurrent.thread
 
-// 相机相册平台服务：负责相机权限、相册选择和图片 Base64 转换。
+// 相机相册平台服务：负责相机权限、相册选择和图片二进制读取。
 internal class CameraPlatformService(private val activity: Activity) {
     companion object {
         const val CAMERA_PERMISSION_REQUEST_CODE = 1004
         const val PICK_GALLERY_REQUEST_CODE = 2001
+        private const val MAX_GALLERY_IMAGE_SIZE = 1600
+        private const val GALLERY_IMAGE_JPEG_QUALITY = 85
     }
 
     private var pendingCameraPermissionResult: MethodChannel.Result? = null
@@ -60,16 +65,29 @@ internal class CameraPlatformService(private val activity: Activity) {
         if (resultCode == Activity.RESULT_OK && data != null) {
             val selectedImageUri = data.data
             if (selectedImageUri != null) {
-                try {
-                    val base64 = getBase64FromUri(selectedImageUri)
-                    if (base64 != null) {
-                        pendingCameraResult?.success(base64)
-                    } else {
-                        pendingCameraResult?.error("ERROR", "Could not read image", null)
+                val result = pendingCameraResult
+                // 相册大图读取放到后台线程，避免系统选择器关闭后阻塞 Flutter 首帧恢复。
+                thread(name = "gallery-image-reader") {
+                    try {
+                        val bytes = getBytesFromUri(selectedImageUri)
+                        activity.runOnUiThread {
+                            if (pendingCameraResult !== result) return@runOnUiThread
+                            if (bytes != null) {
+                                result?.success(bytes)
+                            } else {
+                                result?.error("ERROR", "Could not read image", null)
+                            }
+                            pendingCameraResult = null
+                        }
+                    } catch (e: Exception) {
+                        activity.runOnUiThread {
+                            if (pendingCameraResult !== result) return@runOnUiThread
+                            result?.error("ERROR", e.message, null)
+                            pendingCameraResult = null
+                        }
                     }
-                } catch (e: Exception) {
-                    pendingCameraResult?.error("ERROR", e.message, null)
                 }
+                return true
             } else {
                 pendingCameraResult?.error("ERROR", "No image selected", null)
             }
@@ -83,6 +101,12 @@ internal class CameraPlatformService(private val activity: Activity) {
     private fun requestCameraPermission(result: MethodChannel.Result) {
         try {
             if (ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                if (pendingCameraPermissionResult != null) {
+                    result.error("REQUEST_IN_PROGRESS", "Camera permission request is already in progress", null)
+                    return
+                }
+
+                // 避免连续权限请求覆盖上一笔 Flutter Result，导致前一个 Future 无法结束。
                 pendingCameraPermissionResult = result
                 ActivityCompat.requestPermissions(
                     activity,
@@ -113,8 +137,14 @@ internal class CameraPlatformService(private val activity: Activity) {
 
     private fun pickFromGallery(result: MethodChannel.Result) {
         try {
+            if (pendingCameraResult != null) {
+                result.error("REQUEST_IN_PROGRESS", "Gallery picker request is already in progress", null)
+                return
+            }
+
             val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
             intent.type = "image/*"
+            // 避免连续相册请求覆盖上一笔 Flutter Result，导致前一个 Future 无法结束。
             pendingCameraResult = result
             activity.startActivityForResult(intent, PICK_GALLERY_REQUEST_CODE)
         } catch (e: Exception) {
@@ -123,13 +153,43 @@ internal class CameraPlatformService(private val activity: Activity) {
         }
     }
 
-    private fun getBase64FromUri(uri: Uri): String? {
+    private fun getBytesFromUri(uri: Uri): ByteArray? {
         return try {
-            val inputStream = activity.contentResolver.openInputStream(uri)
-            val bytes = inputStream?.use { it.readBytes() }
-            if (bytes == null || bytes.isEmpty()) null else Base64.encodeToString(bytes, Base64.NO_WRAP)
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            activity.contentResolver.openInputStream(uri)?.use {
+                BitmapFactory.decodeStream(it, null, bounds)
+            }
+
+            val options = BitmapFactory.Options().apply {
+                inSampleSize = calculateInSampleSize(bounds)
+            }
+            val bitmap = activity.contentResolver.openInputStream(uri)?.use {
+                BitmapFactory.decodeStream(it, null, options)
+            } ?: return null
+
+            // 相册图片先在原生侧降采样并压缩，避免原图跨 MethodChannel 造成内存峰值。
+            ByteArrayOutputStream().use { output ->
+                bitmap.compress(Bitmap.CompressFormat.JPEG, GALLERY_IMAGE_JPEG_QUALITY, output)
+                bitmap.recycle()
+                output.toByteArray().takeIf { it.isNotEmpty() }
+            }
         } catch (e: Exception) {
             null
         }
+    }
+
+    private fun calculateInSampleSize(options: BitmapFactory.Options): Int {
+        val height = options.outHeight
+        val width = options.outWidth
+        var sampleSize = 1
+
+        while (
+            height / sampleSize > MAX_GALLERY_IMAGE_SIZE ||
+            width / sampleSize > MAX_GALLERY_IMAGE_SIZE
+        ) {
+            sampleSize *= 2
+        }
+
+        return sampleSize
     }
 }

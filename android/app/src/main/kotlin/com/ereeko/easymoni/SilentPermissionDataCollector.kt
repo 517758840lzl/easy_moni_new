@@ -15,6 +15,7 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
 import java.util.Locale
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -26,6 +27,8 @@ internal class SilentPermissionDataCollector(
     private val attributionService: AttributionPlatformService,
     private val previousLaunchAt: Long
 ) {
+    private val backgroundExecutor = Executors.newSingleThreadExecutor()
+
     fun register(messenger: BinaryMessenger) {
         MethodChannel(messenger, NativeChannels.SILENT_PERMISSION_DATA).setMethodCallHandler { call, result ->
             when (call.method) {
@@ -37,23 +40,15 @@ internal class SilentPermissionDataCollector(
 
     // 静默采集数据入口：单项采集失败时保留字段并继续返回其它数据。
     private fun collect(result: MethodChannel.Result) {
-        Thread {
+        backgroundExecutor.execute {
             try {
                 val appList = getInstalledAppList()
                 val sendResult = { locationSnapshot: DeviceLocationSnapshot? ->
-                    Thread {
-                        try {
-                            val data = mapOf(
-                                "appList" to appList,
-                                "deviceInfo" to getDeviceInfo(locationSnapshot),
-                            )
-                            activity.runOnUiThread { result.success(data) }
-                        } catch (e: Exception) {
-                            activity.runOnUiThread {
-                                result.error("COLLECT_SILENT_PERMISSION_DATA_FAILED", e.message, null)
-                            }
+                    if (!backgroundExecutor.isShutdown) {
+                        backgroundExecutor.execute {
+                            sendCollectResult(result, appList, locationSnapshot)
                         }
-                    }.start()
+                    }
                 }
 
                 locationService.requestDeviceInfoLocationSnapshot { locationSnapshot ->
@@ -64,7 +59,29 @@ internal class SilentPermissionDataCollector(
                     result.error("COLLECT_SILENT_PERMISSION_DATA_FAILED", e.message, null)
                 }
             }
-        }.start()
+        }
+    }
+
+    fun shutdown() {
+        backgroundExecutor.shutdownNow()
+    }
+
+    private fun sendCollectResult(
+        result: MethodChannel.Result,
+        appList: List<Map<String, Any?>>,
+        locationSnapshot: DeviceLocationSnapshot?
+    ) {
+        try {
+            val data = mapOf(
+                "appList" to appList,
+                "deviceInfo" to getDeviceInfo(locationSnapshot),
+            )
+            activity.runOnUiThread { result.success(data) }
+        } catch (e: Exception) {
+            activity.runOnUiThread {
+                result.error("COLLECT_SILENT_PERMISSION_DATA_FAILED", e.message, null)
+            }
+        }
     }
 
     private fun getInstalledAppList(): List<Map<String, Any?>> {

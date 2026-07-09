@@ -1,7 +1,7 @@
 import 'dart:math' as math;
-import 'dart:typed_data';
 
 import 'package:easy_moni/core/utils/app_logger.dart';
+import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 
 class ImageCompressTool {
@@ -33,49 +33,24 @@ class ImageCompressTool {
     }
 
     try {
-      final decodedImage = img.decodeImage(bytes);
-      if (decodedImage == null) {
-        if (bytes.length <= normalizedMaxBytes) {
-          return bytes;
-        }
-        throw StateError('图片解析失败，无法压缩到上传大小限制以内');
-      }
-
-      if (bytes.length <= normalizedMaxBytes &&
-          math.max(decodedImage.width, decodedImage.height) <= maxLongSide) {
-        return bytes;
-      }
-
-      final orientedImage = img.bakeOrientation(decodedImage);
-      final compressedBytes = _compressWithUploadBounds(
-        orientedImage,
-        maxBytes: normalizedMaxBytes,
-        minBytes: bytes.length >= normalizedMinBytes ? normalizedMinBytes : 0,
-        maxLongSide: maxLongSide,
-        quality: quality,
+      final result = await compute(
+        _compressForUploadInBackground,
+        _ImageCompressRequest(
+          bytes: bytes,
+          maxBytes: normalizedMaxBytes,
+          minBytes: normalizedMinBytes,
+          maxLongSide: maxLongSide,
+          quality: quality,
+        ),
       );
-
-      if (compressedBytes == null) {
-        throw StateError('图片压缩后仍超过上传大小限制');
+      if (result.wasCompressed) {
+        AppLogger.debug(
+          '图片压缩完成: original=${bytes.length}, compressed=${result.bytes.length}, '
+          'maxBytes=$normalizedMaxBytes, minBytes=$normalizedMinBytes, '
+          'maxLongSide=$maxLongSide, quality=$quality',
+        );
       }
-
-      if (bytes.length <= normalizedMaxBytes &&
-          bytes.length >= normalizedMinBytes &&
-          compressedBytes.length < normalizedMinBytes) {
-        return bytes;
-      }
-
-      if (bytes.length <= normalizedMaxBytes &&
-          compressedBytes.length >= bytes.length) {
-        return bytes;
-      }
-
-      AppLogger.debug(
-        '图片压缩完成: original=${bytes.length}, compressed=${compressedBytes.length}, '
-        'maxBytes=$normalizedMaxBytes, minBytes=$normalizedMinBytes, '
-        'maxLongSide=$maxLongSide, quality=$quality',
-      );
-      return compressedBytes;
+      return result.bytes;
     } catch (error, stackTrace) {
       AppLogger.debug('图片压缩异常: $error\n$stackTrace');
       if (bytes.length > normalizedMaxBytes) {
@@ -275,6 +250,80 @@ class ImageCompressTool {
       math.max(1, math.max(image.width, image.height)),
     );
   }
+}
+
+/// 在后台 isolate 执行图片解码、缩放和 JPEG 编码，避免阻塞页面渲染。
+_ImageCompressResult _compressForUploadInBackground(
+  _ImageCompressRequest request,
+) {
+  final bytes = request.bytes;
+  final decodedImage = img.decodeImage(bytes);
+  if (decodedImage == null) {
+    if (bytes.length <= request.maxBytes) {
+      return _ImageCompressResult(bytes: bytes, wasCompressed: false);
+    }
+    throw StateError('图片解析失败，无法压缩到上传大小限制以内');
+  }
+
+  if (bytes.length <= request.maxBytes &&
+      math.max(decodedImage.width, decodedImage.height) <=
+          request.maxLongSide) {
+    return _ImageCompressResult(bytes: bytes, wasCompressed: false);
+  }
+
+  final orientedImage = img.bakeOrientation(decodedImage);
+  final compressedBytes = ImageCompressTool._compressWithUploadBounds(
+    orientedImage,
+    maxBytes: request.maxBytes,
+    minBytes: bytes.length >= request.minBytes ? request.minBytes : 0,
+    maxLongSide: request.maxLongSide,
+    quality: request.quality,
+  );
+
+  if (compressedBytes == null) {
+    throw StateError('图片压缩后仍超过上传大小限制');
+  }
+
+  if (bytes.length <= request.maxBytes &&
+      bytes.length >= request.minBytes &&
+      compressedBytes.length < request.minBytes) {
+    return _ImageCompressResult(bytes: bytes, wasCompressed: false);
+  }
+
+  if (bytes.length <= request.maxBytes &&
+      compressedBytes.length >= bytes.length) {
+    return _ImageCompressResult(bytes: bytes, wasCompressed: false);
+  }
+
+  return _ImageCompressResult(bytes: compressedBytes, wasCompressed: true);
+}
+
+/// 图片压缩请求参数，供后台 isolate 传递。
+class _ImageCompressRequest {
+  const _ImageCompressRequest({
+    required this.bytes,
+    required this.maxBytes,
+    required this.minBytes,
+    required this.maxLongSide,
+    required this.quality,
+  });
+
+  final Uint8List bytes;
+  final int maxBytes;
+  final int minBytes;
+  final int maxLongSide;
+  final int quality;
+}
+
+/// 图片压缩执行结果，保留是否真实压缩便于主 isolate 记录日志。
+class _ImageCompressResult {
+  const _ImageCompressResult({
+    required this.bytes,
+    required this.wasCompressed,
+  });
+
+  final Uint8List bytes;
+  final bool wasCompressed;
 }
 
 /// 图片压缩参数边界，集中描述本次编码使用的尺寸和质量。

@@ -26,6 +26,7 @@ class MainActivity : FlutterActivity() {
     private lateinit var appInfoService: AppInfoPlatformService
     private lateinit var attributionService: AttributionPlatformService
     private lateinit var silentPermissionDataCollector: SilentPermissionDataCollector
+    private lateinit var webViewService: WebViewPlatformService
     private var previousLaunchAt: Long = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,6 +67,7 @@ class MainActivity : FlutterActivity() {
             dialerService = DialerPlatformService(this)
             appInfoService = AppInfoPlatformService(this)
             attributionService = AttributionPlatformService(this)
+            webViewService = WebViewPlatformService(flutterEngine)
             silentPermissionDataCollector = SilentPermissionDataCollector(
                 activity = this,
                 locationService = locationService,
@@ -80,6 +82,7 @@ class MainActivity : FlutterActivity() {
             dialerService.register(messenger)
             appInfoService.register(messenger)
             attributionService.register(messenger)
+            webViewService.register(messenger)
             silentPermissionDataCollector.register(messenger)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to configure native channels", e)
@@ -111,5 +114,16 @@ class MainActivity : FlutterActivity() {
         } catch (e: Exception) {
             Log.e(TAG, "Failed to handle permission result", e)
         }
+    }
+
+    override fun onDestroy() {
+        try {
+            if (::silentPermissionDataCollector.isInitialized) silentPermissionDataCollector.shutdown()
+            if (::attributionService.isInitialized) attributionService.shutdown()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to shutdown native services", e)
+        }
+
+        super.onDestroy()
     }
 }
