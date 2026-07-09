@@ -305,53 +305,53 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
                         child: Column(
                           children: [
                             _buildPermissionItem(
-                              icon: Assets.images.takepicture.image(
-                                width: 48,
-                                height: 48,
+                              icon: Assets.images.message.image(
+                                width: 20,
+                                height: 20,
                               ),
                               title: AppStrings.messageReceive,
                               description: AppStrings.messageReceiveDetail,
                             ),
                             _buildPermissionItem(
-                              icon: Assets.images.message.image(
-                                width: 48,
-                                height: 48,
+                              icon: Assets.images.location.image(
+                                width: 20,
+                                height: 20,
                               ),
                               title: AppStrings.gainLocation,
                               description: AppStrings.gainLocationDetail,
                             ),
                             _buildPermissionItem(
-                              icon: Assets.images.location.image(
-                                width: 48,
-                                height: 48,
+                              icon: Assets.images.takepicture.image(
+                                width: 20,
+                                height: 20,
                               ),
                               title: AppStrings.carema,
                               description: AppStrings.caremaDetail,
                             ),
                             _buildPermissionItem(
                               icon: Assets.images.moban.image(
-                                width: 48,
-                                height: 48,
+                                width: 20,
+                                height: 20,
                               ),
                               title: AppStrings.installAppData,
                               description: AppStrings.installAppDataDetail,
                             ),
                             _buildPermissionItem(
                               icon: Assets.images.biaoqian.image(
-                                width: 48,
-                                height: 48,
+                                width: 20,
+                                height: 20,
                               ),
                               title: AppStrings.deviceinformation,
                               description: AppStrings.deviceInformationDetail,
                             ),
                             _buildPermissionItem(
                               icon: Assets.images.dotss.image(
-                                width: 48,
-                                height: 48,
+                                width: 20,
+                                height: 20,
                               ),
                               title: AppStrings.campaign,
                               description: AppStrings.campaignDetail,
-                              showDivider: false,
+                              showDivider: true,
                             ),
                             const SizedBox(height: 24),
                           ],
@@ -431,7 +431,7 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               icon,
-              const SizedBox(width: 11),
+              const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

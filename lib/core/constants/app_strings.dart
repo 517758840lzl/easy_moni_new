@@ -18,18 +18,18 @@ class AppStrings {
   // ==================== KYC流程 ====================
   static const String messageReceive = 'SMS Permission';
   static const String messageReceiveDetail =
-      'Reads financial transaction messages (deposit alerts, repayment reminders) for credit assessment and risk control. All data is encrypted.';
+      'With your authorization, we may access SMS messages related to financial transactions, such as bank transaction notifications, credit card repayment reminders, loan approval notifications, and mobile payment transaction alerts. This information is used solely to support credit assessment, risk management, and fraud prevention. We do not collect SMS messages unrelated to financial services. All relevant information is encrypted during transmission and storage, and access is strictly restricted.';
   static const String gainLocation = 'Location Permission';
   static const String gainLocationDetail =
-      'Uses approximate device location to verify your application environment and prevent fraud.';
+      'With your authorization, we may access your device\'s approximate location to perform security verification, detect abnormal application activities, and prevent fraudulent behavior, helping protect your account and funds. Your location information will not be used for purposes unrelated to those described above.';
   static const String appdiscrptions =
-      'We request the permissions below to provide secure loan services and comply with Ghana\'s data protection laws. \n\nYour personal information is encrypted and will never be shared with any third party without your consent.';
+      'To assess your loan eligibility and provide you with secure and reliable credit services, we may request the following device permissions after obtaining your authorization. We are committed to processing your personal information in a lawful, transparent, and secure manner, and in compliance with the applicable data protection laws and regulations of Ghana.';
   static const String carema = 'Camera Permission';
   static const String caremaDetail =
-      'Used for identity verification (ID photo + face check) to prevent fraud. Your images are stored securely for verification only.';
+      'With your authorization, we will access your device\'s camera to capture images of your identification document and perform facial liveness verification. This helps verify your identity and prevent identity theft and fraudulent activities. The captured images are used solely for identity verification, security validation, and fraud prevention. They are securely transmitted and stored and will not be used for purposes unrelated to those described above.';
   static const String installAppData = 'App List Permission';
   static const String installAppDataDetail =
-      'Checks for financial apps (banking, lending, mobile money) on your device to secure your account and prevent fraud.';
+      'With your authorization, we may obtain information about installed financial applications on your device, such as banking, lending, and mobile payment applications. This information is used solely to support credit assessment, risk management, and the identification of potential fraud risks. We do not collect information about applications unrelated to risk management, and the collected data is used only for risk assessment models.';
 
   static const String receiveData =
       'By tapping "Agree & Continue", you confirm that you have read, understood, and agreed to the statement above.';
@@ -37,9 +37,9 @@ class AppStrings {
   static const String campaign = 'In-app Activity';
   static const String agreeandContinue = 'Agree & Continue';
   static const String campaignDetail =
-      'Logs app usage data (error logs, crash reports) to improve stability, monitor security, and fix issues.';
+      'To maintain the security and stability of our application, we may collect necessary app activity information, such as application status and crash logs. This information is used solely for security monitoring, system troubleshooting, risk management, and fraud prevention, helping us continuously improve system stability and service quality.';
   static const String deviceInformationDetail =
-      'Collects basic device info (model, OS version) to ensure app stability, compatibility, and risk control.';
+      'To ensure the proper operation of our services and enhance system security, we may collect limited basic device information, such as your device model and operating system version. This information is used solely to ensure service compatibility, support risk management, prevent duplicate applications, and identify abnormal devices. It will not be used for purposes unrelated to those described above.';
   static const String privacyData = 'Privacy Policy';
   static const String grantedData =
       '''GATED LTDINTELLIGENCE LTD ("we", "us", or "our") is he developer and he developer and he developer and he developer and he developer and he developer and he developer and he developer and he developer and he developer and he developer and he developer and he developer and the developer and operator of the Palm Loan application. This Privacy Policy also applies to our official website www.gatedintelligence.com.We understand the importance of your personal information and are committed to complying fully with applicable privacy protection laws in Ghana. This policy explains how we collect, use, store, and share your personal information.By using the Palm Loan service, you agree to the processing of your information as described in this Privacy Policy. The information we collect is used solely for providing, maintaining, and improving our services. Unless explicitly stated in this policy, we will not share your personal information with any third party.''';

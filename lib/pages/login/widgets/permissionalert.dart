@@ -1,8 +1,10 @@
+import 'package:easy_moni/core/config/privacy_policy_config.dart';
 import 'package:easy_moni/core/constants/app_strings.dart';
-import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/utils/widgets/permission_action_buttons.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:easy_moni/core/utils/app_logger.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 class PrivacyPolicyDialog extends StatefulWidget {
   final VoidCallback? onAgree;
@@ -38,10 +40,34 @@ class PrivacyPolicyDialog extends StatefulWidget {
 }
 
 class _PrivacyPolicyDialogState extends State<PrivacyPolicyDialog> {
-  final String _privacyText = AppStrings.grantedData;
+  late final WebViewController _controller;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (_) {
+            if (!mounted) return;
+            setState(() {
+              _isLoading = true;
+            });
+          },
+          onPageFinished: (_) {
+            if (!mounted) return;
+            setState(() {
+              _isLoading = false;
+            });
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse(PrivacyPolicyConfig.privacyPolicyUrl));
+  }
 
   void _handleAgree() {
-    AppLogger.debug('点击了 Agree & Continue 按钮');
     if (widget.onAgree != null) {
       widget.onAgree!.call();
       return;
@@ -51,7 +77,6 @@ class _PrivacyPolicyDialogState extends State<PrivacyPolicyDialog> {
   }
 
   void _handleDecline() {
-    AppLogger.debug('点击了 Decline 按钮');
     // 拒绝时仅关闭隐私弹窗，不触发外部退出应用逻辑。
     Navigator.of(context).pop();
   }
@@ -70,7 +95,7 @@ class _PrivacyPolicyDialogState extends State<PrivacyPolicyDialog> {
           borderRadius: BorderRadius.circular(16),
         ),
         child: Material(
-          color: Colors.transparent, // 设为透明，继续使用 Container 的背景色和圆角
+          color: Colors.transparent,
           type: MaterialType.canvas,
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -78,45 +103,28 @@ class _PrivacyPolicyDialogState extends State<PrivacyPolicyDialog> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 19, left: 19),
-                    child: Text(
-                      AppStrings.privacyData,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                        height: 1.6,
-                      ),
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 19, right: 15),
-                      child: GestureDetector(
-                        onTap: () => Navigator.of(context).pop(),
-                        child: Assets.images.loginClose.image(
-                          width: 14,
-                          height: 14,
-                        ),
-                      ),
-                    ),
-                  ),
                 ],
               ),
-              const SizedBox(height: 19),
-              // 中间区域 - 可滚动
+              const SizedBox(height: 8),
+              // 中间区域承载隐私政策 H5 内容，并优先响应页面滚动手势。
               Flexible(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(19, 0, 19, 16),
-                  child: Text(
-                    _privacyText,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.black,
-                      fontWeight: FontWeight.w400,
-                      height: 1.6,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 0, 4, 16),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Stack(
+                      children: [
+                        WebViewWidget(
+                          controller: _controller,
+                          gestureRecognizers: {
+                            Factory<OneSequenceGestureRecognizer>(
+                              EagerGestureRecognizer.new,
+                            ),
+                          },
+                        ),
+                        if (_isLoading)
+                          const Center(child: CircularProgressIndicator()),
+                      ],
                     ),
                   ),
                 ),

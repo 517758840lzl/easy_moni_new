@@ -1,4 +1,5 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
+import 'package:easy_moni/core/config/privacy_policy_config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -7,8 +8,6 @@ import 'package:webview_flutter/webview_flutter.dart';
 /// 隐私政策 H5 容器页，承载外部隐私政策链接展示。
 class PrivacyPolicyPage extends StatefulWidget {
   const PrivacyPolicyPage({super.key});
-
-  static const String policyUrl = 'https://www.ereekotechsolutions.com/privacy/index.html';
 
   @override
   State<PrivacyPolicyPage> createState() => _PrivacyPolicyPageState();
@@ -44,7 +43,7 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
 
   @override
   Widget build(BuildContext context) {
-    _loadUrlIfNeeded(PrivacyPolicyPage.policyUrl);
+    _loadUrlIfNeeded(PrivacyPolicyConfig.privacyPolicyUrl);
 
     return Scaffold(
       backgroundColor: Colors.white,
