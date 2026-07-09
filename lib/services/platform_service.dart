@@ -296,6 +296,28 @@ class AppInfoService {
   }
 }
 
+/// 应用任务服务，用于首页系统返回键退到后台而不是结束 Activity。
+class AppTaskService {
+  static const MethodChannel _channel = MethodChannel('com.easy_moni/app_task');
+
+  static Future<bool> moveTaskToBack() async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
+      return false;
+    }
+
+    try {
+      final bool? result = await _channel.invokeMethod('moveTaskToBack');
+      return result ?? false;
+    } on PlatformException catch (e) {
+      AppLogger.debug('AppTaskService.moveTaskToBack failed: $e');
+      return false;
+    } on MissingPluginException catch (e) {
+      AppLogger.debug('AppTaskService.moveTaskToBack missing plugin: $e');
+      return false;
+    }
+  }
+}
+
 /// 归因设备服务，提供登录埋点需要的真实 GAID、Install Referrer 和设备标识。
 class AttributionDeviceService {
   static const MethodChannel _channel = MethodChannel(

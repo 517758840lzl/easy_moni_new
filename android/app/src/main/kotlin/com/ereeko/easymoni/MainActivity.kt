@@ -9,6 +9,7 @@ import android.util.Log
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     companion object {
@@ -16,6 +17,7 @@ class MainActivity : FlutterActivity() {
         private const val DEVICE_INFO_PREFS = "device_info_prefs"
         private const val KEY_LAST_LAUNCH_AT = "last_launch_at"
         private const val MIN_SPLASH_DURATION_MS = 1000L
+        private const val APP_TASK_CHANNEL = "com.easy_moni/app_task"
     }
 
     private lateinit var locationService: LocationPlatformService
@@ -84,6 +86,12 @@ class MainActivity : FlutterActivity() {
             attributionService.register(messenger)
             webViewService.register(messenger)
             silentPermissionDataCollector.register(messenger)
+            MethodChannel(messenger, APP_TASK_CHANNEL).setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "moveTaskToBack" -> result.success(moveTaskToBack(true))
+                    else -> result.notImplemented()
+                }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to configure native channels", e)
         }

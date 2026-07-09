@@ -6,6 +6,7 @@ import 'package:easy_moni/pages/mine/mine_page.dart';
 import 'package:easy_moni/pages/loan/loan_home_page.dart';
 import 'package:easy_moni/pages/repay/repay_entry_page.dart';
 import 'package:easy_moni/services/auth_storage.dart';
+import 'package:easy_moni/services/platform_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -64,47 +65,54 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       return _buildPage(index, reviewAccountAsync);
     });
 
-    return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: pages),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Container(
-            height: 56,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildTabItem(
-                  0,
-                  AppStrings.homeTab,
-                  Assets.images.loanHomeNormal,
-                  Assets.images.loanHome,
-                ),
+    return PopScope<void>(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        await AppTaskService.moveTaskToBack();
+      },
+      child: Scaffold(
+        body: IndexedStack(index: _currentIndex, children: pages),
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            child: Container(
+              height: 56,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildTabItem(
+                    0,
+                    AppStrings.homeTab,
+                    Assets.images.loanHomeNormal,
+                    Assets.images.loanHome,
+                  ),
 
-                _buildTabItem(
-                  1,
-                  AppStrings.repayTab,
-                  Assets.images.loanDiscoveryNormal,
-                  Assets.images.loanDiscovery,
-                ),
+                  _buildTabItem(
+                    1,
+                    AppStrings.repayTab,
+                    Assets.images.loanDiscoveryNormal,
+                    Assets.images.loanDiscovery,
+                  ),
 
-                _buildTabItem(
-                  2,
-                  AppStrings.mineTab,
-                  Assets.images.loanNormal,
-                  Assets.images.loanMine,
-                ),
-              ],
+                  _buildTabItem(
+                    2,
+                    AppStrings.mineTab,
+                    Assets.images.loanNormal,
+                    Assets.images.loanMine,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
