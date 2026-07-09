@@ -42,8 +42,10 @@ class _FaceVerifyEntryPageState extends ConsumerState<FaceVerifyEntryPage> {
   bool _isLoading = true;
   bool _isSubmitting = false;
   bool _isAwaitingFaceResult = false;
+  final ScrollController _scrollController = ScrollController();
 
   String get _pageTitle => _stepInfo?.pageTitle.trim() ?? '';
+
   /// 从当前步骤配置读取人脸图片提交字段 key，避免固定后端字段名。
   String get _faceBiometricImageKey =>
       _stepInfo?.entries.firstOrNull?.key.trim() ?? '';
@@ -54,6 +56,12 @@ class _FaceVerifyEntryPageState extends ConsumerState<FaceVerifyEntryPage> {
   void initState() {
     super.initState();
     _fetchPageData();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   /// 拉取当前人脸步骤配置和已确认的用户姓名。
@@ -231,45 +239,51 @@ class _FaceVerifyEntryPageState extends ConsumerState<FaceVerifyEntryPage> {
         final topSpace = (constraints.maxHeight * 0.14)
             .clamp(48.0, 73.0)
             .toDouble();
-        return SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(20, 48, 20, 24),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: constraints.maxHeight - topSpace - 24,
-            ),
-            child: Column(
-              children: [
-                if (_hasCapturedFace) ...[
-                  const _FacePhotoConfirmTip(),
-                  const SizedBox(height: 20),
-                ],
-                _FaceScanIllustration(faceImage: _faceImage),
-                const SizedBox(height: 24),
-                if (_hasCapturedFace)
-                  _buildPhotoQualityPrompt()
-                else ...[
-                  Text(
-                    AppStrings.faceVerifyEntryOwnerConfirm(_userName),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Color(0xFF1B222A),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
+        return Scrollbar(
+          controller: _scrollController,
+          thumbVisibility: true,
+          radius: const Radius.circular(8),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            padding: EdgeInsets.fromLTRB(20, 48, 20, 24),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight - topSpace - 24,
+              ),
+              child: Column(
+                children: [
+                  if (_hasCapturedFace) ...[
+                    const _FacePhotoConfirmTip(),
+                    const SizedBox(height: 20),
+                  ],
+                  _FaceScanIllustration(faceImage: _faceImage),
+                  const SizedBox(height: 24),
+                  if (_hasCapturedFace)
+                    _buildPhotoQualityPrompt()
+                  else ...[
+                    Text(
+                      AppStrings.faceVerifyEntryOwnerConfirm(_userName),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Color(0xFF1B222A),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 13),
-                  const Text(
-                    AppStrings.continueOcr,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Color(0xFF3F4950),
-                      fontSize: 14,
-                      height: 1.5,
-                      fontWeight: FontWeight.w400,
+                    const SizedBox(height: 13),
+                    const Text(
+                      AppStrings.continueOcr,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color(0xFF3F4950),
+                        fontSize: 14,
+                        height: 1.5,
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         );

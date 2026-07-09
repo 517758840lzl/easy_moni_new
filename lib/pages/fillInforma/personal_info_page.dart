@@ -50,6 +50,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
   final Map<String, int> _selectedIndices = {};
   final Map<String, String?> _selectedValues = {};
   final Map<String, String?> _selectedSubmitValues = {};
+  final ScrollController _contentScrollController = ScrollController();
 
   // 省市数据（从后台获取）
   List<AreaItem> _provinces = [];
@@ -170,6 +171,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     for (final controller in _textControllers.values) {
       controller.dispose();
     }
+    _contentScrollController.dispose();
     super.dispose();
   }
 
@@ -825,16 +827,22 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
       );
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          for (var i = 0; i < _formEntries.length; i++)
-            _buildEntryItem(
-              entry: _formEntries[i],
-              showDivider: i != _formEntries.length - 1,
-            ),
-        ],
+    return Scrollbar(
+      controller: _contentScrollController,
+      thumbVisibility: true,
+      radius: const Radius.circular(8),
+      child: SingleChildScrollView(
+        controller: _contentScrollController,
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            for (var i = 0; i < _formEntries.length; i++)
+              _buildEntryItem(
+                entry: _formEntries[i],
+                showDivider: i != _formEntries.length - 1,
+              ),
+          ],
+        ),
       ),
     );
   }

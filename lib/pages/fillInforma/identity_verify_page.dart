@@ -41,6 +41,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
 
   final IdentityVerifyFormController _formController =
       IdentityVerifyFormController();
+  final ScrollController _scrollController = ScrollController();
 
   StepInfo? _stepInfo;
   int? _processId;
@@ -90,6 +91,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _formController.dispose();
     super.dispose();
   }
@@ -782,52 +784,60 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
         ),
         content: _isLoading
             ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 16),
-                    const IdentityCheckNotice(),
-                    const SizedBox(height: 16),
-                    ..._formController.idCardImageEntries.map(
-                      (entry) => Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: IdCardUploadItem(
-                          bgImage: _backgroundForImageEntry(entry),
-                          imageData: _imageDataForEntry(entry),
-                          isProcessing: _isImageProcessingForEntry(entry),
-                          errorText: _imageErrorForEntry(entry),
-                          onTap: () => _openUploadMethodSheet(entry: entry),
+            : Scrollbar(
+                controller: _scrollController,
+                thumbVisibility: true,
+                radius: const Radius.circular(8),
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 16),
+                      const IdentityCheckNotice(),
+                      const SizedBox(height: 16),
+                      ..._formController.idCardImageEntries.map(
+                        (entry) => Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: IdCardUploadItem(
+                            bgImage: _backgroundForImageEntry(entry),
+                            imageData: _imageDataForEntry(entry),
+                            isProcessing: _isImageProcessingForEntry(entry),
+                            errorText: _imageErrorForEntry(entry),
+                            onTap: () => _openUploadMethodSheet(entry: entry),
+                          ),
                         ),
                       ),
-                    ),
 
-                    if (_isOcrLoading)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        child: CircularProgressIndicator(),
-                      ),
-                    if (_shouldShowIdentityForm) ...[
-                      const SizedBox(height: 8),
-                      ..._formController.visibleEntries.map(
-                        (entry) => IdentityFormEntryItem(
-                          entry: entry,
-                          formController: _formController,
-                          onTextChanged: (value) {
-                            setState(
-                              () =>
-                                  _formController.updateTextValue(entry, value),
-                            );
-                          },
-                          onTextSubmitted: (entry) =>
-                              _focusNextVisibleEntryAfter(entry),
-                          onPickerTap: _openPickerForEntry,
-                          onDatePickerTap: _openBirthdayPickerForEntry,
+                      if (_isOcrLoading)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: CircularProgressIndicator(),
                         ),
-                      ),
+                      if (_shouldShowIdentityForm) ...[
+                        const SizedBox(height: 8),
+                        ..._formController.visibleEntries.map(
+                          (entry) => IdentityFormEntryItem(
+                            entry: entry,
+                            formController: _formController,
+                            onTextChanged: (value) {
+                              setState(
+                                () => _formController.updateTextValue(
+                                  entry,
+                                  value,
+                                ),
+                              );
+                            },
+                            onTextSubmitted: (entry) =>
+                                _focusNextVisibleEntryAfter(entry),
+                            onPickerTap: _openPickerForEntry,
+                            onDatePickerTap: _openBirthdayPickerForEntry,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 20),
                     ],
-                    const SizedBox(height: 20),
-                  ],
+                  ),
                 ),
               ),
         bottomNavigationBar: LoanBottomActionButton(

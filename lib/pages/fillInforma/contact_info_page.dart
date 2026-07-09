@@ -36,6 +36,7 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
   static const double _headerBottomGap = 16;
 
   final ContactInfoFormController _formController = ContactInfoFormController();
+  final ScrollController _contentScrollController = ScrollController();
 
   StepInfo? _stepInfo;
   int? _processId;
@@ -53,6 +54,7 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
   @override
   void dispose() {
     _formController.dispose();
+    _contentScrollController.dispose();
     super.dispose();
   }
 
@@ -226,16 +228,22 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          for (var i = 0; i < _formController.entries.length; i++)
-            _buildEntryItem(
-              entry: _formController.entries[i],
-              showDivider: i != _formController.entries.length - 1,
-            ),
-        ],
+    return Scrollbar(
+      controller: _contentScrollController,
+      thumbVisibility: true,
+      radius: const Radius.circular(8),
+      child: SingleChildScrollView(
+        controller: _contentScrollController,
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            for (var i = 0; i < _formController.entries.length; i++)
+              _buildEntryItem(
+                entry: _formController.entries[i],
+                showDivider: i != _formController.entries.length - 1,
+              ),
+          ],
+        ),
       ),
     );
   }

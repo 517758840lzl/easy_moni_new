@@ -20,10 +20,12 @@ class QuestionnairePage extends ConsumerStatefulWidget {
 
 class _QuestionnairePageState extends ConsumerState<QuestionnairePage> {
   static const Duration _submitDialogMinDuration = Duration(seconds: 2);
+  final ScrollController _scrollController = ScrollController();
   final Map<String, TextEditingController> _textControllers = {};
 
   @override
   void dispose() {
+    _scrollController.dispose();
     for (final controller in _textControllers.values) {
       controller.dispose();
     }
@@ -273,17 +275,23 @@ class _QuestionnairePageState extends ConsumerState<QuestionnairePage> {
           );
         }
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-          child: Column(
-            children: [
-              for (var i = 0; i < formState.entries.length; i++)
-                _buildEntryItem(
-                  formState: formState,
-                  entry: formState.entries[i],
-                  showDivider: i != formState.entries.length - 1,
-                ),
-            ],
+        return Scrollbar(
+          controller: _scrollController,
+          thumbVisibility: true,
+          radius: const Radius.circular(8),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+            child: Column(
+              children: [
+                for (var i = 0; i < formState.entries.length; i++)
+                  _buildEntryItem(
+                    formState: formState,
+                    entry: formState.entries[i],
+                    showDivider: i != formState.entries.length - 1,
+                  ),
+              ],
+            ),
           ),
         );
       },
