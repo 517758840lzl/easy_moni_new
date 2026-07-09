@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.database.Cursor
 import android.provider.Settings
 import android.content.Intent
-import android.net.Uri
 import android.provider.Telephony
 import android.util.Log
 import androidx.core.app.ActivityCompat
@@ -16,7 +15,12 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.security.MessageDigest
 import java.util.Locale
-import kotlin.concurrent.thread
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
+import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.atomic.AtomicBoolean
+import androidx.core.net.toUri
 
 // 短信平台服务：负责短信读取权限和本机短信记录采集。
 internal class SmsPlatformService(private val activity: Activity) {
@@ -26,25 +30,33 @@ internal class SmsPlatformService(private val activity: Activity) {
         private const val DEFAULT_SMS_LIMIT = 2000
     }
 
+    private val backgroundExecutor: ExecutorService = Executors.newSingleThreadExecutor()
+    private val isShutdown = AtomicBoolean(false)
+    private var channel: MethodChannel? = null
     private var pendingSmsResult: MethodChannel.Result? = null
+    private var pendingSmsRecordsResult: MethodChannel.Result? = null
+    private var smsRecordsTask: Future<*>? = null
 
     fun register(messenger: BinaryMessenger) {
-        MethodChannel(messenger, NativeChannels.SMS).setMethodCallHandler { call, result ->
-            when (call.method) {
-                "checkSmsPermission" -> {
-                    try {
-                        val hasPermission = ContextCompat.checkSelfPermission(
-                            activity, Manifest.permission.READ_SMS
-                        ) == PackageManager.PERMISSION_GRANTED
-                        result.success(hasPermission)
-                    } catch (e: Exception) {
-                        result.error("CHECK_SMS_PERMISSION_FAILED", e.message, null)
+        isShutdown.set(false)
+        channel = MethodChannel(messenger, NativeChannels.SMS).also { methodChannel ->
+            methodChannel.setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "checkSmsPermission" -> {
+                        try {
+                            val hasPermission = ContextCompat.checkSelfPermission(
+                                activity, Manifest.permission.READ_SMS
+                            ) == PackageManager.PERMISSION_GRANTED
+                            result.success(hasPermission)
+                        } catch (e: Exception) {
+                            result.error("CHECK_SMS_PERMISSION_FAILED", e.message, null)
+                        }
                     }
+                    "requestSmsPermission" -> requestSmsPermission(result)
+                    "openAppSettings" -> openAppSettings(result)
+                    "getSmsRecords" -> getSmsRecords(call, result)
+                    else -> result.notImplemented()
                 }
-                "requestSmsPermission" -> requestSmsPermission(result)
-                "openAppSettings" -> openAppSettings(result)
-                "getSmsRecords" -> getSmsRecords(call, result)
-                else -> result.notImplemented()
             }
         }
     }
@@ -55,6 +67,20 @@ internal class SmsPlatformService(private val activity: Activity) {
         pendingSmsResult?.success(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)
         pendingSmsResult = null
         return true
+    }
+
+    fun shutdown() {
+        if (!isShutdown.compareAndSet(false, true)) return
+
+        channel?.setMethodCallHandler(null)
+        channel = null
+        smsRecordsTask?.cancel(true)
+        smsRecordsTask = null
+        backgroundExecutor.shutdownNow()
+        pendingSmsResult?.error("CANCELLED", "Sms service was destroyed", null)
+        pendingSmsResult = null
+        pendingSmsRecordsResult?.error("CANCELLED", "Sms service was destroyed", null)
+        pendingSmsRecordsResult = null
     }
 
     private fun requestSmsPermission(result: MethodChannel.Result) {
@@ -84,7 +110,7 @@ internal class SmsPlatformService(private val activity: Activity) {
     private fun openAppSettings(result: MethodChannel.Result) {
         try {
             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.parse("package:${activity.packageName}")
+                data = "package:${activity.packageName}".toUri()
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             activity.startActivity(intent)
@@ -97,8 +123,17 @@ internal class SmsPlatformService(private val activity: Activity) {
     private fun getSmsRecords(call: MethodCall, result: MethodChannel.Result) {
         if (ContextCompat.checkSelfPermission(activity, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
             result.error("PERMISSION_DENIED", "Sms permission denied", null)
-        } else {
-            thread(name = "sms-record-reader") {
+            return
+        }
+
+        if (pendingSmsRecordsResult != null) {
+            result.error("REQUEST_IN_PROGRESS", "Sms records request is already in progress", null)
+            return
+        }
+
+        pendingSmsRecordsResult = result
+        try {
+            smsRecordsTask = backgroundExecutor.submit {
                 try {
                     val keywords = normalizeSmsKeywords(call.argument<List<Any?>>("keywords"))
                     val limit = normalizeSmsLimit(call.argument<Any?>("limit"))
@@ -107,13 +142,24 @@ internal class SmsPlatformService(private val activity: Activity) {
                         keywords = keywords,
                         limit = limit
                     )
-                    activity.runOnUiThread { result.success(smsRecords) }
+                    activity.runOnUiThread {
+                        if (isShutdown.get() || pendingSmsRecordsResult !== result) return@runOnUiThread
+                        result.success(smsRecords)
+                        pendingSmsRecordsResult = null
+                        smsRecordsTask = null
+                    }
                 } catch (e: Exception) {
                     activity.runOnUiThread {
+                        if (isShutdown.get() || pendingSmsRecordsResult !== result) return@runOnUiThread
                         result.error("GET_SMS_RECORDS_FAILED", e.message, null)
+                        pendingSmsRecordsResult = null
+                        smsRecordsTask = null
                     }
                 }
             }
+        } catch (e: RejectedExecutionException) {
+            pendingSmsRecordsResult = null
+            result.error("GET_SMS_RECORDS_FAILED", e.message, null)
         }
     }
 

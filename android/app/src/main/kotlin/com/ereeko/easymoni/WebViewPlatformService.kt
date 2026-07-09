@@ -39,6 +39,12 @@ internal class WebViewPlatformService(private val flutterEngine: FlutterEngine) 
         }
     }
 
+    fun shutdown() {
+        if (::channel.isInitialized) {
+            channel.setMethodCallHandler(null)
+        }
+    }
+
     @Suppress("DEPRECATION")
     private fun protectWebViewRenderer(identifier: Long): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return false

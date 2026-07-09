@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
-import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -20,6 +19,7 @@ import com.google.android.gms.tasks.CancellationTokenSource
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodChannel
 import java.util.concurrent.atomic.AtomicBoolean
+import androidx.core.net.toUri
 
 // 位置平台服务：负责位置权限、系统定位开关和当前位置快照采集。
 internal class LocationPlatformService(private val activity: Activity) {
@@ -31,29 +31,34 @@ internal class LocationPlatformService(private val activity: Activity) {
     private val fusedLocationClient: FusedLocationProviderClient =
         LocationServices.getFusedLocationProviderClient(activity)
     private val locationHandler = Handler(Looper.getMainLooper())
+    private var channel: MethodChannel? = null
     private var pendingResult: MethodChannel.Result? = null
+    private val isShutdown = AtomicBoolean(false)
 
     fun register(messenger: BinaryMessenger) {
-        MethodChannel(messenger, NativeChannels.LOCATION).setMethodCallHandler { call, result ->
-            when (call.method) {
-                "checkLocationPermission" -> {
-                    try {
-                        result.success(hasLocationPermission())
-                    } catch (e: Exception) {
-                        result.error("CHECK_LOCATION_PERMISSION_FAILED", e.message, null)
+        isShutdown.set(false)
+        channel = MethodChannel(messenger, NativeChannels.LOCATION).also { methodChannel ->
+            methodChannel.setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "checkLocationPermission" -> {
+                        try {
+                            result.success(hasLocationPermission())
+                        } catch (e: Exception) {
+                            result.error("CHECK_LOCATION_PERMISSION_FAILED", e.message, null)
+                        }
                     }
-                }
-                "requestLocationPermission" -> requestLocationPermission(result)
-                "isLocationServiceEnabled" -> {
-                    try {
-                        result.success(isLocationServiceEnabled())
-                    } catch (e: Exception) {
-                        result.error("CHECK_LOCATION_SERVICE_FAILED", e.message, null)
+                    "requestLocationPermission" -> requestLocationPermission(result)
+                    "isLocationServiceEnabled" -> {
+                        try {
+                            result.success(isLocationServiceEnabled())
+                        } catch (e: Exception) {
+                            result.error("CHECK_LOCATION_SERVICE_FAILED", e.message, null)
+                        }
                     }
+                    "getCurrentLocation" -> getCurrentLocation(result)
+                    "openAppSettings" -> openAppSettings(result)
+                    else -> result.notImplemented()
                 }
-                "getCurrentLocation" -> getCurrentLocation(result)
-                "openAppSettings" -> openAppSettings(result)
-                else -> result.notImplemented()
             }
         }
     }
@@ -64,6 +69,16 @@ internal class LocationPlatformService(private val activity: Activity) {
         pendingResult?.success(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)
         pendingResult = null
         return true
+    }
+
+    fun shutdown() {
+        if (!isShutdown.compareAndSet(false, true)) return
+
+        channel?.setMethodCallHandler(null)
+        channel = null
+        locationHandler.removeCallbacksAndMessages(null)
+        pendingResult?.error("CANCELLED", "Location service was destroyed", null)
+        pendingResult = null
     }
 
     fun requestDeviceInfoLocationSnapshot(onComplete: (DeviceLocationSnapshot?) -> Unit) {
@@ -99,7 +114,7 @@ internal class LocationPlatformService(private val activity: Activity) {
     private fun openAppSettings(result: MethodChannel.Result) {
         try {
             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.parse("package:${activity.packageName}")
+                data = "package:${activity.packageName}".toUri()
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             activity.startActivity(intent)
@@ -132,6 +147,8 @@ internal class LocationPlatformService(private val activity: Activity) {
         onComplete: (DeviceLocationResult) -> Unit
     ) {
         val requestRunnable = Runnable {
+            if (isShutdown.get() || activity.isFinishing) return@Runnable
+
             if (!hasLocationPermission()) {
                 onComplete(
                     DeviceLocationResult(
@@ -159,6 +176,7 @@ internal class LocationPlatformService(private val activity: Activity) {
             fun complete(locationResult: DeviceLocationResult) {
                 if (!resultSent.compareAndSet(false, true)) return
                 timeoutRunnable?.let { locationHandler.removeCallbacks(it) }
+                if (isShutdown.get() || activity.isFinishing) return
                 onComplete(locationResult)
             }
 
@@ -178,7 +196,7 @@ internal class LocationPlatformService(private val activity: Activity) {
                     cancellationTokenSource.cancel()
                     requestLastKnown("Current location request timed out")
                 }
-                locationHandler.postDelayed(timeoutRunnable!!, timeoutMs)
+                locationHandler.postDelayed(timeoutRunnable, timeoutMs)
 
                 fusedLocationClient
                     .getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, cancellationTokenSource.token)

@@ -13,13 +13,16 @@ internal class ContactPlatformService(private val activity: Activity) {
         const val PICK_CONTACT_REQUEST_CODE = 2002
     }
 
+    private var channel: MethodChannel? = null
     private var pendingPickContactResult: MethodChannel.Result? = null
 
     fun register(messenger: BinaryMessenger) {
-        MethodChannel(messenger, NativeChannels.CONTACTS).setMethodCallHandler { call, result ->
-            when (call.method) {
-                "pickContact" -> pickContact(result)
-                else -> result.notImplemented()
+        channel = MethodChannel(messenger, NativeChannels.CONTACTS).also { methodChannel ->
+            methodChannel.setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "pickContact" -> pickContact(result)
+                    else -> result.notImplemented()
+                }
             }
         }
     }
@@ -38,6 +41,13 @@ internal class ContactPlatformService(private val activity: Activity) {
         }
         pendingPickContactResult = null
         return true
+    }
+
+    fun shutdown() {
+        channel?.setMethodCallHandler(null)
+        channel = null
+        pendingPickContactResult?.error("CANCELLED", "Contact service was destroyed", null)
+        pendingPickContactResult = null
     }
 
     private fun pickContact(result: MethodChannel.Result) {

@@ -43,7 +43,7 @@ class _MinePageState extends ConsumerState<MinePage> {
       if (result.isSuccess && result.data != null) {
         final userInfo = result.data!;
         setState(() {
-          _userName = userInfo.customerName ?? userInfo.userName ?? '';
+          _userName = userInfo.middleName ?? userInfo.customerName ?? '';
           _userPhone = userInfo.phone?.toString() ?? '';
         });
         AppLogger.debug('用户信息加载成功: $userInfo');

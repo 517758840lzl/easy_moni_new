@@ -45,7 +45,6 @@ class _SplashPageState extends State<SplashPage> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
         statusBarColor: Colors.transparent,
-        systemNavigationBarColor: const Color(0xFF268470),
         systemNavigationBarIconBrightness: Brightness.light,
       ),
       child: Scaffold(

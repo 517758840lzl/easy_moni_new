@@ -14,7 +14,11 @@ import androidx.core.content.ContextCompat
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodChannel
 import java.io.ByteArrayOutputStream
-import kotlin.concurrent.thread
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
+import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.atomic.AtomicBoolean
 
 // 相机相册平台服务：负责相机权限、相册选择和图片二进制读取。
 internal class CameraPlatformService(private val activity: Activity) {
@@ -25,26 +29,33 @@ internal class CameraPlatformService(private val activity: Activity) {
         private const val GALLERY_IMAGE_JPEG_QUALITY = 85
     }
 
+    private val backgroundExecutor: ExecutorService = Executors.newSingleThreadExecutor()
+    private val isShutdown = AtomicBoolean(false)
+    private var channel: MethodChannel? = null
     private var pendingCameraPermissionResult: MethodChannel.Result? = null
     private var pendingCameraResult: MethodChannel.Result? = null
+    private var galleryTask: Future<*>? = null
 
     fun register(messenger: BinaryMessenger) {
-        MethodChannel(messenger, NativeChannels.CAMERA).setMethodCallHandler { call, result ->
-            when (call.method) {
-                "checkCameraPermission" -> {
-                    try {
-                        val hasPermission = ContextCompat.checkSelfPermission(
-                            activity, Manifest.permission.CAMERA
-                        ) == PackageManager.PERMISSION_GRANTED
-                        result.success(hasPermission)
-                    } catch (e: Exception) {
-                        result.error("CHECK_CAMERA_PERMISSION_FAILED", e.message, null)
+        isShutdown.set(false)
+        channel = MethodChannel(messenger, NativeChannels.CAMERA).also { methodChannel ->
+            methodChannel.setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "checkCameraPermission" -> {
+                        try {
+                            val hasPermission = ContextCompat.checkSelfPermission(
+                                activity, Manifest.permission.CAMERA
+                            ) == PackageManager.PERMISSION_GRANTED
+                            result.success(hasPermission)
+                        } catch (e: Exception) {
+                            result.error("CHECK_CAMERA_PERMISSION_FAILED", e.message, null)
+                        }
                     }
+                    "requestCameraPermission" -> requestCameraPermission(result)
+                    "openAppSettings" -> openAppSettings(result)
+                    "pickFromGallery" -> pickFromGallery(result)
+                    else -> result.notImplemented()
                 }
-                "requestCameraPermission" -> requestCameraPermission(result)
-                "openAppSettings" -> openAppSettings(result)
-                "pickFromGallery" -> pickFromGallery(result)
-                else -> result.notImplemented()
             }
         }
     }
@@ -59,6 +70,20 @@ internal class CameraPlatformService(private val activity: Activity) {
         return true
     }
 
+    fun shutdown() {
+        if (!isShutdown.compareAndSet(false, true)) return
+
+        channel?.setMethodCallHandler(null)
+        channel = null
+        galleryTask?.cancel(true)
+        galleryTask = null
+        backgroundExecutor.shutdownNow()
+        pendingCameraPermissionResult?.error("CANCELLED", "Camera service was destroyed", null)
+        pendingCameraPermissionResult = null
+        pendingCameraResult?.error("CANCELLED", "Camera service was destroyed", null)
+        pendingCameraResult = null
+    }
+
     fun handleActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
         if (requestCode != PICK_GALLERY_REQUEST_CODE) return false
 
@@ -67,24 +92,33 @@ internal class CameraPlatformService(private val activity: Activity) {
             if (selectedImageUri != null) {
                 val result = pendingCameraResult
                 // 相册大图读取放到后台线程，避免系统选择器关闭后阻塞 Flutter 首帧恢复。
-                thread(name = "gallery-image-reader") {
-                    try {
-                        val bytes = getBytesFromUri(selectedImageUri)
-                        activity.runOnUiThread {
-                            if (pendingCameraResult !== result) return@runOnUiThread
-                            if (bytes != null) {
-                                result?.success(bytes)
-                            } else {
-                                result?.error("ERROR", "Could not read image", null)
+                try {
+                    galleryTask = backgroundExecutor.submit {
+                        try {
+                            val bytes = getBytesFromUri(selectedImageUri)
+                            activity.runOnUiThread {
+                                if (isShutdown.get() || pendingCameraResult !== result) return@runOnUiThread
+                                if (bytes != null) {
+                                    result?.success(bytes)
+                                } else {
+                                    result?.error("ERROR", "Could not read image", null)
+                                }
+                                pendingCameraResult = null
+                                galleryTask = null
                             }
-                            pendingCameraResult = null
+                        } catch (e: Exception) {
+                            activity.runOnUiThread {
+                                if (isShutdown.get() || pendingCameraResult !== result) return@runOnUiThread
+                                result?.error("ERROR", e.message, null)
+                                pendingCameraResult = null
+                                galleryTask = null
+                            }
                         }
-                    } catch (e: Exception) {
-                        activity.runOnUiThread {
-                            if (pendingCameraResult !== result) return@runOnUiThread
-                            result?.error("ERROR", e.message, null)
-                            pendingCameraResult = null
-                        }
+                    }
+                } catch (e: RejectedExecutionException) {
+                    if (pendingCameraResult === result) {
+                        result?.error("ERROR", e.message, null)
+                        pendingCameraResult = null
                     }
                 }
                 return true
@@ -173,7 +207,7 @@ internal class CameraPlatformService(private val activity: Activity) {
                 bitmap.recycle()
                 output.toByteArray().takeIf { it.isNotEmpty() }
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }

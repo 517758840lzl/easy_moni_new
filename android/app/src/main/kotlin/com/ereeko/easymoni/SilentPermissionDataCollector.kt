@@ -16,7 +16,9 @@ import io.flutter.plugin.common.MethodChannel
 import java.io.File
 import java.util.Locale
 import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -28,42 +30,75 @@ internal class SilentPermissionDataCollector(
     private val previousLaunchAt: Long
 ) {
     private val backgroundExecutor = Executors.newSingleThreadExecutor()
+    private val isCollecting = AtomicBoolean(false)
+    private val isShutdown = AtomicBoolean(false)
+    private var channel: MethodChannel? = null
+    @Volatile private var pendingCollectResult: MethodChannel.Result? = null
 
     fun register(messenger: BinaryMessenger) {
-        MethodChannel(messenger, NativeChannels.SILENT_PERMISSION_DATA).setMethodCallHandler { call, result ->
-            when (call.method) {
-                "collect" -> collect(result)
-                else -> result.notImplemented()
+        isShutdown.set(false)
+        channel = MethodChannel(messenger, NativeChannels.SILENT_PERMISSION_DATA).also { methodChannel ->
+            methodChannel.setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "collect" -> collect(result)
+                    else -> result.notImplemented()
+                }
             }
         }
     }
 
     // 静默采集数据入口：单项采集失败时保留字段并继续返回其它数据。
     private fun collect(result: MethodChannel.Result) {
-        backgroundExecutor.execute {
-            try {
-                val appList = getInstalledAppList()
-                val sendResult = { locationSnapshot: DeviceLocationSnapshot? ->
-                    if (!backgroundExecutor.isShutdown) {
-                        backgroundExecutor.execute {
-                            sendCollectResult(result, appList, locationSnapshot)
+        if (isShutdown.get() || activity.isFinishing) {
+            result.error("CANCELLED", "Silent data collector is unavailable", null)
+            return
+        }
+
+        if (!isCollecting.compareAndSet(false, true)) {
+            result.error("REQUEST_IN_PROGRESS", "Silent data collection is already in progress", null)
+            return
+        }
+
+        pendingCollectResult = result
+        try {
+            backgroundExecutor.execute {
+                try {
+                    val appList = getInstalledAppList()
+                    val sendResult = { locationSnapshot: DeviceLocationSnapshot? ->
+                        if (!isShutdown.get() && !activity.isFinishing) {
+                            try {
+                                backgroundExecutor.execute {
+                                    sendCollectResult(result, appList, locationSnapshot)
+                                }
+                            } catch (e: RejectedExecutionException) {
+                                sendCollectError(result, e.message)
+                            }
                         }
                     }
-                }
 
-                locationService.requestDeviceInfoLocationSnapshot { locationSnapshot ->
-                    sendResult(locationSnapshot)
-                }
-            } catch (e: Exception) {
-                activity.runOnUiThread {
-                    result.error("COLLECT_SILENT_PERMISSION_DATA_FAILED", e.message, null)
+                    locationService.requestDeviceInfoLocationSnapshot { locationSnapshot ->
+                        sendResult(locationSnapshot)
+                    }
+                } catch (e: Exception) {
+                    sendCollectError(result, e.message)
                 }
             }
+        } catch (e: RejectedExecutionException) {
+            pendingCollectResult = null
+            isCollecting.set(false)
+            result.error("COLLECT_SILENT_PERMISSION_DATA_FAILED", e.message, null)
         }
     }
 
     fun shutdown() {
+        if (!isShutdown.compareAndSet(false, true)) return
+
+        channel?.setMethodCallHandler(null)
+        channel = null
         backgroundExecutor.shutdownNow()
+        pendingCollectResult?.error("CANCELLED", "Silent data collector was destroyed", null)
+        pendingCollectResult = null
+        isCollecting.set(false)
     }
 
     private fun sendCollectResult(
@@ -72,15 +107,29 @@ internal class SilentPermissionDataCollector(
         locationSnapshot: DeviceLocationSnapshot?
     ) {
         try {
+            if (isShutdown.get() || activity.isFinishing || pendingCollectResult !== result) return
+
             val data = mapOf(
                 "appList" to appList,
                 "deviceInfo" to getDeviceInfo(locationSnapshot),
             )
-            activity.runOnUiThread { result.success(data) }
-        } catch (e: Exception) {
             activity.runOnUiThread {
-                result.error("COLLECT_SILENT_PERMISSION_DATA_FAILED", e.message, null)
+                if (isShutdown.get() || activity.isFinishing || pendingCollectResult !== result) return@runOnUiThread
+                result.success(data)
+                pendingCollectResult = null
+                isCollecting.set(false)
             }
+        } catch (e: Exception) {
+            sendCollectError(result, e.message)
+        }
+    }
+
+    private fun sendCollectError(result: MethodChannel.Result, message: String?) {
+        activity.runOnUiThread {
+            if (isShutdown.get() || activity.isFinishing || pendingCollectResult !== result) return@runOnUiThread
+            result.error("COLLECT_SILENT_PERMISSION_DATA_FAILED", message, null)
+            pendingCollectResult = null
+            isCollecting.set(false)
         }
     }
 

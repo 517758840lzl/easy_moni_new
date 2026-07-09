@@ -8,14 +8,34 @@ import io.flutter.plugin.common.MethodChannel
 
 // 应用信息原生服务：读取安装包中由 Flutter 构建配置写入的版本信息。
 internal class AppInfoPlatformService(private val activity: Activity) {
+    private var appInfoChannel: MethodChannel? = null
+    private var appTaskChannel: MethodChannel? = null
+
     fun register(messenger: BinaryMessenger) {
-        MethodChannel(messenger, NativeChannels.APP_INFO).setMethodCallHandler { call, result ->
-            when (call.method) {
-                "getVersionName" -> result.success(getVersionName())
-                "getVersionCode" -> result.success(getVersionCode())
-                else -> result.notImplemented()
+        appInfoChannel = MethodChannel(messenger, NativeChannels.APP_INFO).also { methodChannel ->
+            methodChannel.setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "getVersionName" -> result.success(getVersionName())
+                    "getVersionCode" -> result.success(getVersionCode())
+                    else -> result.notImplemented()
+                }
             }
         }
+        appTaskChannel = MethodChannel(messenger, NativeChannels.APP_TASK).also { methodChannel ->
+            methodChannel.setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "moveTaskToBack" -> result.success(activity.moveTaskToBack(true))
+                    else -> result.notImplemented()
+                }
+            }
+        }
+    }
+
+    fun shutdown() {
+        appInfoChannel?.setMethodCallHandler(null)
+        appInfoChannel = null
+        appTaskChannel?.setMethodCallHandler(null)
+        appTaskChannel = null
     }
 
     // versionName 来源于 android/app/build.gradle.kts 中的 flutter.versionName。
@@ -31,7 +51,7 @@ internal class AppInfoPlatformService(private val activity: Activity) {
                 activity.packageManager.getPackageInfo(activity.packageName, 0)
             }
             packageInfo.versionName ?: ""
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             ""
         }
     }
@@ -54,7 +74,7 @@ internal class AppInfoPlatformService(private val activity: Activity) {
                 @Suppress("DEPRECATION")
                 packageInfo.versionCode.toString()
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             ""
         }
     }

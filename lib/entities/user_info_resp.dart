@@ -4,9 +4,12 @@ import 'package:easy_moni/core/utils/app_logger.dart';
 class UserInfoResp {
   final int? clientType;
   final String? customerName;
+  final String? firstName;
   final int? id;
   final int? idCardNumber;
+  final String? lastName;
   final int? level;
+  final String? middleName;
   final String? nickName;
   final int? phone;
   final int? sex;
@@ -20,9 +23,12 @@ class UserInfoResp {
   const UserInfoResp({
     this.clientType,
     this.customerName,
+    this.firstName,
     this.id,
     this.idCardNumber,
+    this.lastName,
     this.level,
+    this.middleName,
     this.nickName,
     this.phone,
     this.sex,
@@ -51,9 +57,12 @@ class UserInfoResp {
       return UserInfoResp(
         clientType: _parseInt(map['clientType']),
         customerName: _parseString(map['customerName']),
+        firstName: _parseString(map['firstName']),
         id: _parseInt(map['id']),
         idCardNumber: _parseInt(map['idCardNumber']),
+        lastName: _parseString(map['lastName']),
         level: _parseInt(map['level']),
+        middleName: _parseString(map['middleName']),
         nickName: _parseString(map['nickName']),
         phone: _parseInt(map['phone']),
         sex: _parseInt(map['sex']),
@@ -82,6 +91,28 @@ class UserInfoResp {
     if (value == null) return null;
     final text = value.toString().trim();
     return text.isEmpty ? null : text;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'clientType': clientType,
+      'customerName': customerName,
+      'firstName': firstName,
+      'id': id,
+      'idCardNumber': idCardNumber,
+      'lastName': lastName,
+      'level': level,
+      'middleName': middleName,
+      'nickName': nickName,
+      'phone': phone,
+      'sex': sex,
+      'showBankAccountPage': showBankAccountPage,
+      'showPersonInfoPage': showPersonInfoPage,
+      'status': status,
+      'totalOrderNum': totalOrderNum,
+      'userId': userId,
+      'userName': userName,
+    };
   }
 
   @override

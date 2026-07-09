@@ -10,39 +10,72 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodChannel
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 // 归因平台服务：负责广告 ID、安装来源和基础设备归因字段。
 internal class AttributionPlatformService(private val activity: Activity) {
     private val backgroundExecutor = Executors.newSingleThreadExecutor()
+    private val isShutdown = AtomicBoolean(false)
+    private var channel: MethodChannel? = null
+    private var pendingResult: MethodChannel.Result? = null
 
     fun register(messenger: BinaryMessenger) {
-        MethodChannel(messenger, NativeChannels.ATTRIBUTION).setMethodCallHandler { call, result ->
-            when (call.method) {
-                "getAttributionData" -> {
-                    backgroundExecutor.execute {
+        isShutdown.set(false)
+        channel = MethodChannel(messenger, NativeChannels.ATTRIBUTION).also { methodChannel ->
+            methodChannel.setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "getAttributionData" -> {
+                        if (pendingResult != null) {
+                            result.error("REQUEST_IN_PROGRESS", "Attribution request is already in progress", null)
+                            return@setMethodCallHandler
+                        }
+
+                        pendingResult = result
                         try {
-                            val data = getAttributionData()
-                            activity.runOnUiThread { result.success(data) }
-                        } catch (e: Exception) {
-                            activity.runOnUiThread { result.error("GET_ATTRIBUTION_FAILED", e.message, null) }
+                            backgroundExecutor.execute {
+                                try {
+                                    val data = getAttributionData()
+                                    activity.runOnUiThread {
+                                        if (isShutdown.get() || activity.isFinishing || pendingResult !== result) return@runOnUiThread
+                                        result.success(data)
+                                        pendingResult = null
+                                    }
+                                } catch (e: Exception) {
+                                    activity.runOnUiThread {
+                                        if (isShutdown.get() || activity.isFinishing || pendingResult !== result) return@runOnUiThread
+                                        result.error("GET_ATTRIBUTION_FAILED", e.message, null)
+                                        pendingResult = null
+                                    }
+                                }
+                            }
+                        } catch (e: RejectedExecutionException) {
+                            pendingResult = null
+                            result.error("GET_ATTRIBUTION_FAILED", e.message, null)
                         }
                     }
+                    else -> result.notImplemented()
                 }
-                else -> result.notImplemented()
             }
         }
     }
 
     fun shutdown() {
+        if (!isShutdown.compareAndSet(false, true)) return
+
+        channel?.setMethodCallHandler(null)
+        channel = null
         backgroundExecutor.shutdownNow()
+        pendingResult?.error("CANCELLED", "Attribution service was destroyed", null)
+        pendingResult = null
     }
 
     fun getAdvertisingId(): String {
         return try {
             val info = AdvertisingIdClient.getAdvertisingIdInfo(activity)
-            info?.id ?: ""
-        } catch (e: Exception) {
+            info.id ?: ""
+        } catch (_: Exception) {
             ""
         }
     }
@@ -88,7 +121,7 @@ internal class AttributionPlatformService(private val activity: Activity) {
             })
             latch.await(3, TimeUnit.SECONDS)
             referrer
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             ""
         } finally {
             try {

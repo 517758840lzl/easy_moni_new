@@ -83,7 +83,7 @@ class _FaceVerifyEntryPageState extends ConsumerState<FaceVerifyEntryPage> {
       if (!mounted) return;
 
       if (userInfoResult.isSuccess && userInfoResult.data != null) {
-        _userName = userInfoResult.data!.customerName ?? '';
+        _userName = userInfoResult.data!.middleName ?? '';
       } else if (userInfoResult.message?.trim().isNotEmpty == true) {
         _showSnackBar(userInfoResult.message!);
       }

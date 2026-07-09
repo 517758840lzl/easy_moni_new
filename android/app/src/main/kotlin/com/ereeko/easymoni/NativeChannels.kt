@@ -8,6 +8,7 @@ internal object NativeChannels {
     const val CAMERA = "com.easy_moni/camera"
     const val DIALER = "com.easy_moni/dialer"
     const val APP_INFO = "com.easy_moni/app_info"
+    const val APP_TASK = "com.easy_moni/app_task"
     const val ATTRIBUTION = "com.easy_moni/attribution"
     const val SILENT_PERMISSION_DATA = "com.easy_moni/silent_permission_data"
     const val WEBVIEW = "com.easy_moni/webview"
