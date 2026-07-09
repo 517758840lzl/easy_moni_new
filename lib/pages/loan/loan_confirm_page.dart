@@ -140,7 +140,7 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
       if (!mounted) return;
       if (result.isSuccess) {
         await AppsFlyerTracker.logAppsFlyerActionEvent(
-          AppsFlyerEventNames.withdrawSuccess,
+          AppsFlyerEventNames.easWithdrawSuccess,
         );
         if (!mounted) return;
         context.go(AppRoutePaths.loanReviewing);

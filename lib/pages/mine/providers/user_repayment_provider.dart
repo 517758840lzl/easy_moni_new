@@ -1,3 +1,4 @@
+import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/constants/api_constants.dart';
 import 'package:easy_moni/core/network/http_provider.dart';
 import 'package:easy_moni/core/network/http_result.dart';
@@ -9,8 +10,8 @@ final userRepaymentProvider = Provider<UserRepaymentApi>((ref) {
 });
 
 class UserRepaymentApi {
-  /// 获取用户还款列表
-  /// [statusList] 订单状态列表，如 [4] 表示还款中(Reembolso)
+  /// Fetches the user's repayment list.
+  /// [statusList] Order status list, such as [4] for repaying.
   Future<HttpResult<List<UserRepaymentResp>>> call({
     required List<int> statusList,
   }) async {
@@ -28,7 +29,7 @@ class UserRepaymentApi {
     } else {
       return HttpResult.error(
         HttpResultStatus.serverError,
-        result.message ?? '获取还款列表失败',
+        result.message ?? AppStrings.userRepaymentLoadFailed,
       );
     }
   }

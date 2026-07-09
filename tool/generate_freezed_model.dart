@@ -221,7 +221,7 @@ class _FreezedModelGenerator {
 
   void _writeClass(StringBuffer buffer, _ModelClass modelClass) {
     buffer
-      ..writeln('/// ${modelClass.name} 数据模型')
+      ..writeln('/// ${modelClass.name} model')
       ..writeln('@freezed')
       ..writeln(
         'abstract class ${modelClass.name} with _\$${modelClass.name} {',

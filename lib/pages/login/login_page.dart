@@ -257,7 +257,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     } catch (e) {
       if (!mounted) return;
       await AppsFlyerTracker.logAppsFlyerActionEvent(
-        AppsFlyerEventNames.registerErr,
+        AppsFlyerEventNames.easRegisterErr,
         msg: {'message': 'send code failed', 'error': e.toString()},
       );
       showToast(AppStrings.loginSendCodeFailed);
@@ -318,7 +318,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             authenticatedLoginData.token != null) {
           if (authenticatedLoginData.isFirstRegister == 1) {
             await AppsFlyerTracker.logAppsFlyerActionEvent(
-              AppsFlyerEventNames.registerSuccess,
+              AppsFlyerEventNames.easRegisterSuccess,
               msg: authenticatedLoginData.toJson(),
             );
           }

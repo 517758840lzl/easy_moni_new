@@ -262,7 +262,7 @@ _ImageCompressResult _compressForUploadInBackground(
     if (bytes.length <= request.maxBytes) {
       return _ImageCompressResult(bytes: bytes, wasCompressed: false);
     }
-    throw StateError('图片解析失败，无法压缩到上传大小限制以内');
+    throw StateError('error');
   }
 
   if (bytes.length <= request.maxBytes &&
@@ -281,7 +281,7 @@ _ImageCompressResult _compressForUploadInBackground(
   );
 
   if (compressedBytes == null) {
-    throw StateError('图片压缩后仍超过上传大小限制');
+    throw StateError('image too big');
   }
 
   if (bytes.length <= request.maxBytes &&

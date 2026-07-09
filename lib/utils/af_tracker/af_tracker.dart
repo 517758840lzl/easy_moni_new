@@ -117,7 +117,7 @@ class AppsFlyerTracker {
       if (hasTracked) return;
 
       final tracked = await logAppsFlyerActionEvent(
-        AppsFlyerEventNames.firstOpen,
+        AppsFlyerEventNames.easFirstOpen,
       );
       if (tracked) {
         await prefs.setBool(_keyFirstOpenTracked, true);

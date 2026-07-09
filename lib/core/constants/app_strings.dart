@@ -93,6 +93,7 @@ class AppStrings {
   static const String personalInfoSaving = 'Saving...';
   static const String personalInfoLoadFailed =
       'Failed to load data. Please try again.';
+  static const String personalInfoSaveFailed = 'Save failed';
   static const String personalInfoRegionCityTitle = 'Residential Region & City';
   static const String questionnaireDefaultTitle = '';
   static const String questionnaireDescription =
@@ -193,6 +194,8 @@ class AppStrings {
       'Please use landscape mode and place all four corners of your Ghana Card inside the frame.';
   static String captureFailed(Object error) =>
       'Failed to capture photo: $error';
+  static String personalInfoSaveFailedWithError(Object error) =>
+      '$personalInfoSaveFailed: $error';
   static String faceVerifyCameraInitFailed(Object error) =>
       'Failed to initialize camera: $error';
   static String faceVerifyEntryOwnerConfirm(String userName) {
@@ -216,11 +219,11 @@ class AppStrings {
   static const String customerServiceWhatsApp = 'WhatsApp';
   static const String customerServiceEmail = 'Email';
   static const String customerServiceZalo = 'Zalo';
-  static const String customerServiceIntelligent = 'Live Support';
+  static const String customerServiceIntelligent = 'Online Support';
   static const String customerServiceAntiFraudTitle =
-      'Beware of Customer Support Scams';
+      'Contact Our Support Team';
   static const String customerServiceAntiFraudDesc =
-      'Use only our official contact channels. Do not trust calls or messages from unknown sources.';
+      'Reach out anytime for help with your loan or repayment.';
   static const String mineSettings = 'Settings';
   static const String mineLogout = 'Log Out';
   static const String mineDeleteAccount = 'Delete Account';
@@ -236,7 +239,7 @@ class AppStrings {
   static const String mineOrderHistoryTitle = 'My Loans';
   static const String mineOrderHistoryAllTab = 'All';
   static const String mineOrderHistoryDisbursingTab = 'Processing';
-  static const String mineOrderHistoryRepayingTab = 'Repayment Due';
+  static const String mineOrderHistoryRepayingTab = 'Repay';
   static const String mineOrderHistoryFailedTab = 'Failed';
   static const String mineOrderHistoryEmpty = 'No loans found.';
   static const String mineOrderHistoryLoadFailed = 'Failed to load loans.';
@@ -290,14 +293,14 @@ class AppStrings {
   static const String loanOrderStatusReviewFailed = 'Rejected';
   static const String loanOrderStatusDisbursing = 'Disbursing';
   static const String loanOrderStatusDisbursingv2 = 'Disbursing to MoMo';
-  static const String loanOrderStatusWaitingRepayment = 'Pending Repayment';
+  static const String loanOrderStatusWaitingRepayment = 'To Repay';
   static const String loanOrderStatusTransferFailed = 'Payout Failed';
   static const String loanOrderFooterOverdue = 'Overdue. Repay now >';
   static const String loanOrderFooterReviewing = 'Under review. Please wait >';
   static const String loanOrderFooterDisbursing =
       'Funds on the way to your MoMo >';
   static const String loanOrderFooterWaitingRepayment =
-      'Pending repayment. Please repay on time >';
+      'To Repay. Please repay on time >';
   static const String loanOrderFooterCouponRepayment = 'Repay with Coupon >';
   static const String loanOrderFooterImmediateRepayment = 'Repay Now >';
   static const String loanOrderFooterTransferFailed =
@@ -334,7 +337,7 @@ class AppStrings {
       'Unable to load this bill. Please try again.';
   static const String orderDetailBackToRepayEntry = 'Back to Repayment';
   static const String orderDetailRepayingStatus = 'Repaying';
-  static const String orderDetailPendingRepaymentStatus = 'Pending Repayment';
+  static const String orderDetailPendingRepaymentStatus = 'To Repay';
   static const String orderDetailTotalRepayAmountLabel =
       'Total Outstanding Amount';
   static const String orderDetailRemainingDaysLabel = 'Days Remaining';
@@ -357,13 +360,15 @@ class AppStrings {
   static const String repayEntryRepayAll = 'Repay All';
   static const String repayEntryEmpty = 'No outstanding bills';
   static const String repayEntryLoadFailed = 'Failed to load outstanding bills';
+  static const String userRepaymentLoadFailed =
+      'Failed to load repayment list';
   static const String repayEntryRetry = 'Retry';
   static const String repayBillDueDateLabel = 'Due Date';
   static const String repayBillOverdueStatus = 'Overdue';
   static const String repayBillRepayNow = 'Repay Now';
   static const String repayBillLogoFallback = '';
   static const String repayDetailTitle = 'Repayment Details';
-  static const String repayDetailPendingStatus = 'Pending Repayment';
+  static const String repayDetailPendingStatus = 'To Repay';
   static const String repayDetailApplyExtension = 'Apply for Extension';
   static const String repayDetailRepayNow = 'Repay Now';
 

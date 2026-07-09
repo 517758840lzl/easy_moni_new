@@ -54,7 +54,7 @@ class SubmitAcpElementInfoApi {
         AcquisitionProgressRouteResolver.resolveSubmitResult(submitData) ==
             AppRoutePaths.home) {
       await AppsFlyerTracker.logAppsFlyerActionEvent(
-        AppsFlyerEventNames.autoOrder,
+        AppsFlyerEventNames.easAutoOrder,
       );
     }
     return result;

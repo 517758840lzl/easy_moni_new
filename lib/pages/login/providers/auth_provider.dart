@@ -31,7 +31,7 @@ class SendVerifyCodeApi {
     final requestHeaders = HttpProvider.instance.config.commonHeaders();
 
     await AppsFlyerTracker.logAppsFlyerActionEvent(
-      AppsFlyerEventNames.registerApply,
+      AppsFlyerEventNames.easRegisterApply,
       body: requestBody,
       heads: requestHeaders,
     );
@@ -43,7 +43,7 @@ class SendVerifyCodeApi {
       fromJson: (json) => json,
     );
     await AppsFlyerTracker.logAppsFlyerActionEvent(
-      AppsFlyerEventNames.registerApplyResult,
+      AppsFlyerEventNames.easRegisterApplyResult,
       msg: _httpResultLogValue(result),
     );
     return result;
@@ -62,7 +62,7 @@ class LoginApi {
       deviceId: HttpProvider.instance.deviceId,
     );
     await AppsFlyerTracker.logAppsFlyerActionEvent(
-      AppsFlyerEventNames.otpApply,
+      AppsFlyerEventNames.easOtpApply,
       body: requestBody,
     );
 
@@ -75,7 +75,7 @@ class LoginApi {
       },
     );
     await AppsFlyerTracker.logAppsFlyerActionEvent(
-      AppsFlyerEventNames.otpApplyResult,
+      AppsFlyerEventNames.easOtpApplyResult,
       msg: {
         ..._httpResultLogValue(result),
         if (result.data != null) 'data': result.data!.toJson(),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// 贷款业务通用圆角页面外壳。
+/// Shared rounded page shell for loan flows.
 ///
-/// 只负责背景、顶部区域和白色圆角内容区的组合，不承载加载态、错误态或业务逻辑。
+/// Handles only the background, header, and rounded white content area.
 class LoanRoundedPageShell extends StatelessWidget {
   const LoanRoundedPageShell({
     super.key,
@@ -17,39 +17,39 @@ class LoanRoundedPageShell extends StatelessWidget {
     this.resizeToAvoidBottomInset,
   }) : assert(
          contentTop != null || contentHeightFactor != null,
-         'contentTop 和 contentHeightFactor 至少传一个',
+         'Either contentTop or contentHeightFactor must be provided.',
        ),
        assert(
          contentHeightFactor == null ||
              (contentHeightFactor > 0 && contentHeightFactor <= 1),
-         'contentHeightFactor 必须大于 0 且小于等于 1',
+         'contentHeightFactor must be greater than 0 and less than or equal to 1.',
        );
 
-  /// 顶部信息区域，例如金额、标题、客服入口等。
+  /// Header area, such as amount, title, or customer support entry.
   final Widget header;
 
-  /// 白色圆角内容区，由具体页面自行处理滚动、状态和业务展示。
+  /// Rounded white content area; each page owns its own scrolling and state.
   final Widget content;
 
-  /// 白色内容区距离屏幕顶部的固定位置，优先级高于 [contentHeightFactor]。
+  /// Fixed top offset for the white content area; takes priority over [contentHeightFactor].
   final double Function(BuildContext context)? contentTop;
 
-  /// 白色内容区占屏幕高度比例，例如 0.72。
+  /// Height ratio used by the white content area, such as 0.72.
   final double? contentHeightFactor;
 
-  /// 白色内容区顶部圆角半径。
+  /// Top corner radius of the white content area.
   final double contentTopRadius;
 
-  /// Scaffold 和默认背景层颜色。
+  /// Color for the Scaffold and default background layer.
   final Color backgroundColor;
 
-  /// 自定义背景装饰，例如背景图或渐变；为空时使用 [backgroundColor]。
+  /// Custom background decoration, such as an image or gradient.
   final Decoration? backgroundDecoration;
 
-  /// 页面底部固定操作区。
+  /// Fixed bottom action area.
   final Widget? bottomNavigationBar;
 
-  /// 透传给 Scaffold，方便表单类页面自行决定键盘顶起行为。
+  /// Passed through to Scaffold so form pages can control keyboard insets.
   final bool? resizeToAvoidBottomInset;
 
   @override

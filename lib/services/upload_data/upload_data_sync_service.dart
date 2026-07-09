@@ -57,13 +57,13 @@ class UploadDataSyncService {
     CheckUploadDataValidResp? resp,
   ) async {
     if (resp == null) {
-      throw Exception('checkUploadDataValid 无返回数据');
+      throw Exception('checkUploadDataValid no data');
     }
 
     final request = _buildUploadRequest(resp);
     if (request == null) {
       if (_hasInvalidData(resp)) {
-        throw Exception('存在无法自动补传的无效数据');
+        throw Exception('invalid data');
       }
       return;
     }
@@ -146,7 +146,7 @@ class UploadDataSyncService {
         _hasBytes(smsRecordBytes);
 
     if (!hasUploadData) {
-      throw Exception('没有可上传数据');
+      throw Exception('no upload data');
     }
 
     final result = await ref
@@ -161,7 +161,7 @@ class UploadDataSyncService {
     if (result.isSuccess) {
       AppLogger.debug('UploadDataSyncService: submitUserUploadData 成功');
     } else {
-      throw Exception(result.message ?? 'submitUserUploadData 失败');
+      throw Exception(result.message ?? 'submitUserUploadData failed');
     }
   }
 

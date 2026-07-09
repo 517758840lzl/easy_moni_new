@@ -52,7 +52,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
   final Map<String, String?> _selectedSubmitValues = {};
   final ScrollController _contentScrollController = ScrollController();
 
-  // 省市数据（从后台获取）
+  // Region and city data from the backend.
   List<AreaItem> _provinces = [];
   List<AreaItem> _cities = [];
   final List<Map<String, String>> _regionCityData = [];
@@ -152,7 +152,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     );
   }
 
-  /// 按后台 order 稳定渲染表单项，适配后端驱动 UI 的字段顺序。
+  /// Renders form entries by backend order for server-driven field order.
   List<FormEntry> get _formEntries {
     final entries = _stepInfo?.entries ?? const <FormEntry>[];
     final sortedEntries = [...entries];
@@ -176,7 +176,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
   }
 
   Future<void> _fetchData() async {
-    AppLogger.debug('_fetchData 开始...');
+    AppLogger.debug('_fetchData started...');
     if (mounted) {
       setState(() {
         _resetLoadedData();
@@ -186,7 +186,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     }
 
     try {
-      // 并行获取表单配置与地区数据
+      // Fetch form config and area data in parallel.
       final formFuture = ref.read(acpElementInfoProvider).call(1);
       final areaFuture = ref.read(provincesCitiesAreaProvider).call();
       final formResult = await formFuture;
@@ -210,7 +210,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
       });
       _scheduleInitialLocationCheck();
     } catch (e) {
-      AppLogger.debug('获取数据失败: $e');
+      AppLogger.debug('Failed to fetch data: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -220,7 +220,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     }
   }
 
-  /// 重试前清理旧表单状态，避免失败后再次加载时混入残留数据。
+  /// Clears old form state before retrying to avoid stale data.
   void _resetLoadedData() {
     for (final controller in _textControllers.values) {
       controller.dispose();
@@ -248,7 +248,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     return result.isSuccess && result.data != null;
   }
 
-  /// 网络错误态重试只查询采集进度，按登录后相同规则恢复到下一步或首页。
+  /// Retries by checking acquisition progress and routes like post-login flow.
   Future<void> _retryByProgress() async {
     if (_isLoading) {
       return;
@@ -263,15 +263,17 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
       final progressResult = await ref.read(acquisitionProgressProvider).call();
       if (!mounted) return;
 
-      AppLogger.debug('个人信息页重试进度查询 isSuccess: ${progressResult.isSuccess}');
+      AppLogger.debug(
+        'Personal info retry progress isSuccess: ${progressResult.isSuccess}',
+      );
       if (progressResult.isSuccess && progressResult.data != null) {
         final progressData = progressResult.data!;
         AppLogger.debug(
-          '个人信息页重试进度: filledStep=${progressData.filledStep ?? 0}, '
+          'Personal info retry progress: filledStep=${progressData.filledStep ?? 0}, '
           'totalStep=${progressData.totalStep}',
         );
         final route = AcquisitionProgressRouteResolver.resolve(progressData);
-        AppLogger.debug('个人信息页重试分流目标: $route');
+        AppLogger.debug('Personal info retry target route: $route');
         if (route == AppRoutePaths.personalInfo) {
           setState(() {
             _isLoading = false;
@@ -289,8 +291,8 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
         _hasLoadError = true;
       });
     } catch (e, stack) {
-      AppLogger.debug('个人信息页重试进度查询失败: $e');
-      AppLogger.debug('堆栈: $stack');
+      AppLogger.debug('Failed to retry personal info progress: $e');
+      AppLogger.debug('Stack: $stack');
       if (!mounted) return;
       setState(() {
         _isLoading = false;
@@ -299,10 +301,10 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     }
   }
 
-  /// 应用个人信息表单配置，并恢复后台已提交过的表单值。
+  /// Applies personal info form config and restores submitted backend values.
   void _applyFormResult(HttpResult<AcpElementInfoResp> result) {
     if (!result.isSuccess || result.data == null) {
-      AppLogger.debug('表单数据获取失败: ${result.message}');
+      AppLogger.debug('Failed to fetch form data: ${result.message}');
       return;
     }
 
@@ -317,14 +319,14 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
 
     _stepInfo = stepInfo;
     _processId = data.processId;
-    AppLogger.debug('设置 _stepInfo, entries 数量: ${stepInfo.entries.length}');
+    AppLogger.debug('Set _stepInfo, entries count: ${stepInfo.entries.length}');
 
     for (final entry in _formEntries) {
       _initializeEntryValue(entry);
     }
   }
 
-  /// 应用地区数据，供地区选择器和历史值回显使用。
+  /// Applies area data for the region picker and historical value display.
   void _applyAreaResult(HttpResult<ProvincesCitiesAreaResp> result) {
     AppLogger.debug('areaResult.isSuccess: ${result.isSuccess}');
     if (!result.isSuccess || result.data == null) {
@@ -337,7 +339,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     _restoreRegionSelectionIndex();
   }
 
-  /// 初始化单个表单项的展示值、提交值和选择器索引。
+  /// Initializes display value, submit value, and picker index for one entry.
   void _initializeEntryValue(FormEntry entry) {
     final submitValue = entry.submitValue;
     _selectedIndices[entry.key] = 0;
@@ -363,7 +365,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     _restorePickerEntryValue(entry, submitValue);
   }
 
-  /// 地区列表晚于表单配置返回时，重新根据历史提交值定位选择器索引。
+  /// Repositions picker index when area data arrives after form config.
   void _restoreRegionSelectionIndex() {
     final regionEntry = _regionEntry;
     final submitValue = regionEntry?.submitValue;
@@ -421,16 +423,16 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
         );
       }
     } catch (_) {
-      AppLogger.debug('地区提交值解析失败: $rawValue');
+      AppLogger.debug('Failed to parse region submit value: $rawValue');
     }
     return ('', '');
   }
 
-  /// 组装省市区数据
+  /// Builds region and city data.
   void _buildRegionCityData() {
     _regionCityData.clear();
     for (final province in _provinces) {
-      // 查找该省下的所有城市
+      // Find all cities under this region.
       final provinceCities = _cities
           .where((city) => city.parentId == province.id)
           .toList();
@@ -440,7 +442,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
           _regionCityData.add({'region': province.name, 'city': city.name});
         }
       } else {
-        // 如果该省没有城市，只添加省
+        // Add only the region if it has no cities.
         _regionCityData.add({'region': province.name, 'city': ''});
       }
     }
@@ -462,7 +464,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     return true;
   }
 
-  /// 页面初始化后处理定位权限：已授权直接定位，未授权才展示业务说明弹窗。
+  /// Handles location permission after init: locate if granted, explain if not.
   void _scheduleInitialLocationCheck() {
     if (_hasHandledInitialLocation || !_hasRegionEntryToFill) {
       return;
@@ -486,7 +488,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
 
   String get _pageTitle => _stepInfo?.pageTitle.trim() ?? '';
 
-  /// 按信息采集流程 header 比例计算白色内容区起点。
+  /// Calculates the white content start based on acquisition header layout.
   double _contentTop(BuildContext context) {
     return MediaQuery.of(context).padding.top +
         _headerTitleBarHeight +
@@ -497,7 +499,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
 
   Future<void> _checkInitialLocationPermission() async {
     try {
-      // 仅检查系统授权状态，避免已授权用户再次看到位置权限引导弹窗。
+      // Check system permission only to avoid repeating the guide dialog.
       final isLocationPermissionGranted =
           await LocationService.checkPermission();
       if (!mounted) return;
@@ -507,17 +509,17 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
         return;
       }
 
-      // 未授权时先展示业务说明弹窗，用户确认后直接进入系统权限设置页。
+      // Explain first, then open system settings after user confirmation.
       final shouldOpenSettings = await _showLocationPermissionDialog();
       if (!mounted || !shouldOpenSettings) return;
 
       await LocationService.openAppSettings();
     } catch (e) {
-      AppLogger.debug('初始化定位权限检查失败: $e');
+      AppLogger.debug('Failed to check initial location permission: $e');
     }
   }
 
-  /// 获取当前位置并回填地区；定位失败或服务不可用时降级为手动选择。
+  /// Gets current location and fills region; falls back to manual selection.
   Future<void> _detectLocationAndFillRegion() async {
     if (_isLoadingLocation) return;
 
@@ -537,7 +539,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
       }
 
       AppLogger.debug(
-        '获取到位置: ${position['latitude']}, ${position['longitude']}',
+        'Location received: ${position['latitude']}, ${position['longitude']}',
       );
 
       final matchedRegion = _matchRegionByCoordinates(
@@ -564,7 +566,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
         }
       });
     } catch (e) {
-      AppLogger.debug('获取位置失败: $e');
+      AppLogger.debug('Failed to get location: $e');
     } finally {
       if (mounted) {
         setState(() => _isLoadingLocation = false);
@@ -673,7 +675,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     return result ?? false;
   }
 
-  /// 展示地区城市选择弹窗，省市展示格式由页面侧适配。
+  /// Shows the region and city picker with page-side display formatting.
   void _showRegionPicker({FormEntry? entry}) {
     if (_regionCityData.isEmpty) {
       return;
@@ -708,7 +710,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     );
   }
 
-  /// 展示普通表单选项弹窗。
+  /// Shows a standard form option picker.
   void _showPicker({
     required FormEntry entry,
     required String title,
@@ -782,13 +784,19 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
       } else {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(result.message ?? '保存失败')));
+        ).showSnackBar(
+          SnackBar(
+            content: Text(result.message ?? AppStrings.personalInfoSaveFailed),
+          ),
+        );
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('保存失败: $e')));
+      ).showSnackBar(
+        SnackBar(content: Text(AppStrings.personalInfoSaveFailedWithError(e))),
+      );
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
@@ -861,7 +869,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     );
   }
 
-  /// 根据后台表单配置生成对应的个人信息表单项。
+  /// Builds a personal info form item from backend form config.
   Widget _buildEntryItem({
     required FormEntry entry,
     required bool showDivider,
