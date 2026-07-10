@@ -373,7 +373,7 @@ internal class SilentPermissionDataCollector(
     private fun isUsingProxyPort(): Boolean {
         return try {
             val connectivityManager =
-                context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager?
+                activity.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
             connectivityManager?.defaultProxy != null
         } catch (_: Exception) {
             false
