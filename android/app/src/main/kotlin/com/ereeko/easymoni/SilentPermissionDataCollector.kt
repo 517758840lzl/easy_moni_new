@@ -1,5 +1,6 @@
 package com.ereeko.easymoni
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.ActivityManager
 import android.content.Context
@@ -133,6 +134,7 @@ internal class SilentPermissionDataCollector(
         }
     }
 
+    @SuppressLint("QueryPermissionsNeeded")
     private fun getInstalledAppList(): List<Map<String, Any?>> {
         val packageManager = activity.packageManager
         val installedApps = safeValue {
@@ -194,6 +196,7 @@ internal class SilentPermissionDataCollector(
         )
     }
 
+    @SuppressLint("HardwareIds")
     private fun getDeviceInfo(locationSnapshot: DeviceLocationSnapshot?): Map<String, Any?> {
         val androidId = safeValue {
             Settings.Secure.getString(activity.contentResolver, Settings.Secure.ANDROID_ID)
@@ -213,7 +216,7 @@ internal class SilentPermissionDataCollector(
             "isUsbDebug" to safeValue { if (isUsbDebugEnabled()) 1 else 0 }
         )
 
-        val deviceInfo = mutableMapOf<String, Any?>(
+        val deviceInfo = mutableMapOf(
             "androidVersionCode" to Build.VERSION.SDK_INT,
             "phoneAliveTime" to safeValue { SystemClock.elapsedRealtime() },
             "app_version" to appVersion,
@@ -285,7 +288,7 @@ internal class SilentPermissionDataCollector(
                 activity.packageManager.getPackageInfo(activity.packageName, 0)
             }
             packageInfo.versionName
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -328,7 +331,7 @@ internal class SilentPermissionDataCollector(
         val path = "/sys/devices/system/cpu/cpu0/cpufreq/$fileName"
         return try {
             File(path).bufferedReader().use { it.readLine()?.trim() }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -362,7 +365,7 @@ internal class SilentPermissionDataCollector(
             val activeNetwork = connectivityManager.activeNetwork ?: return false
             val capabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
             capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
@@ -380,7 +383,7 @@ internal class SilentPermissionDataCollector(
     private fun isUsbDebugEnabled(): Boolean {
         return try {
             Settings.Global.getInt(activity.contentResolver, Settings.Global.ADB_ENABLED, 0) == 1
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }

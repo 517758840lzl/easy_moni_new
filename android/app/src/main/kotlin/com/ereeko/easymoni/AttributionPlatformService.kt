@@ -1,5 +1,6 @@
 package com.ereeko.easymoni
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.os.Build
 import android.provider.Settings
@@ -71,6 +72,7 @@ internal class AttributionPlatformService(private val activity: Activity) {
         pendingResult = null
     }
 
+    @SuppressLint("AdvertisingIdPolicy")
     fun getAdvertisingId(): String {
         return try {
             val info = AdvertisingIdClient.getAdvertisingIdInfo(activity)
@@ -80,6 +82,7 @@ internal class AttributionPlatformService(private val activity: Activity) {
         }
     }
 
+    @SuppressLint("HardwareIds")
     private fun getAttributionData(): Map<String, Any> {
         val gaid = getAdvertisingId()
         return mapOf(

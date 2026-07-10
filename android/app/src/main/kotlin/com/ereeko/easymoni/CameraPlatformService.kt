@@ -1,6 +1,7 @@
 package com.ereeko.easymoni
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -19,6 +20,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
+import androidx.core.net.toUri
 
 // 相机相册平台服务：负责相机权限、相册选择和图片二进制读取。
 internal class CameraPlatformService(private val activity: Activity) {
@@ -159,7 +161,7 @@ internal class CameraPlatformService(private val activity: Activity) {
     private fun openAppSettings(result: MethodChannel.Result) {
         try {
             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.parse("package:${activity.packageName}")
+                data = "package:${activity.packageName}".toUri()
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             activity.startActivity(intent)
@@ -169,6 +171,7 @@ internal class CameraPlatformService(private val activity: Activity) {
         }
     }
 
+    @SuppressLint("IntentReset")
     private fun pickFromGallery(result: MethodChannel.Result) {
         try {
             if (pendingCameraResult != null) {

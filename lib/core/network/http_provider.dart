@@ -46,9 +46,9 @@ class HttpProvider {
 
     dio.interceptors.add(headerInterceptor);
     // TODO 交付注释
-    if (config.enableNetworkLog) {
-      dio.interceptors.add(LoggingInterrepter(takler: talker));
-    }
+    // if (config.enableNetworkLog) {
+    //   dio.interceptors.add(LoggingInterrepter(takler: talker));
+    // }
 
     instance = HttpProvider._(
       dio: dio,

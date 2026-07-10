@@ -82,7 +82,7 @@ internal class LocationPlatformService(private val activity: Activity) {
     }
 
     fun requestDeviceInfoLocationSnapshot(onComplete: (DeviceLocationSnapshot?) -> Unit) {
-        requestCurrentLocationSnapshot(LOCATION_TIMEOUT_MS) { locationResult ->
+        LOCATION_TIMEOUT_MS.requestCurrentLocationSnapshot { locationResult ->
             onComplete(locationResult.snapshot)
         }
     }
@@ -126,7 +126,7 @@ internal class LocationPlatformService(private val activity: Activity) {
 
     private fun getCurrentLocation(result: MethodChannel.Result) {
         val resultSent = AtomicBoolean(false)
-        requestCurrentLocationSnapshot(LOCATION_TIMEOUT_MS) { locationResult ->
+        LOCATION_TIMEOUT_MS.requestCurrentLocationSnapshot { locationResult ->
             val snapshot = locationResult.snapshot
             if (snapshot != null) {
                 sendLocationSuccess(result, resultSent, snapshot)
@@ -142,8 +142,7 @@ internal class LocationPlatformService(private val activity: Activity) {
     }
 
     // 定位快照采集：优先请求一次当前位置，失败或超时后降级读取系统缓存位置。
-    private fun requestCurrentLocationSnapshot(
-        timeoutMs: Long,
+    private fun Long.requestCurrentLocationSnapshot(
         onComplete: (DeviceLocationResult) -> Unit
     ) {
         val requestRunnable = Runnable {
@@ -196,7 +195,7 @@ internal class LocationPlatformService(private val activity: Activity) {
                     cancellationTokenSource.cancel()
                     requestLastKnown("Current location request timed out")
                 }
-                locationHandler.postDelayed(timeoutRunnable, timeoutMs)
+                locationHandler.postDelayed(timeoutRunnable, this)
 
                 fusedLocationClient
                     .getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, cancellationTokenSource.token)
