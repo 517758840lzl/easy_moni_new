@@ -14,6 +14,7 @@ class LoanHomeReviewPage extends StatelessWidget {
     return LoanHomeScaffold(
       refreshRequestId: refreshRequestId,
       showAvailableProductCount: false,
+      contentPanelTopOffset: 110,
       bottomContent: const _ReviewFeatureSection(),
     );
   }

@@ -35,11 +35,13 @@ class LoanHomeScaffold extends ConsumerStatefulWidget {
     this.bottomContent,
     this.refreshRequestId = '',
     this.showAvailableProductCount = true,
+    this.contentPanelTopOffset = 154,
   });
 
   final Widget? bottomContent;
   final String refreshRequestId;
   final bool showAvailableProductCount;
+  final double contentPanelTopOffset;
 
   @override
   ConsumerState<LoanHomeScaffold> createState() => _LoanHomeScaffoldState();
@@ -207,7 +209,7 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
 
   double _contentPanelTop(BuildContext context) {
     final topInset = MediaQuery.of(context).padding.top;
-    return topInset + 154;
+    return topInset + widget.contentPanelTopOffset;
   }
 
   // 跳转确认借款页面
