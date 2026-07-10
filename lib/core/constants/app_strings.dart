@@ -209,7 +209,7 @@ class AppStrings {
   static const String mineCurrentPending = 'Outstanding Amount';
   static const String mineGoToRepay = 'Repay Now';
   static const String mineOtherFeatures = 'More';
-  static const String mineHistoryOrders = 'My Loans';
+  static const String mineHistoryOrders = 'My Loan';
   static const String mineCustomerService = 'Customer Support';
   static const String mineCustomerServiceEmpty =
       'No support information available.';
@@ -236,7 +236,7 @@ class AppStrings {
   static const String mineTestUploadDataSuccess = 'Upload data success';
   static const String mineTestUploadDataFailed = 'Upload data failed';
   static const String mineTestUploadDataNoTrackId = 'No valid trackId';
-  static const String mineOrderHistoryTitle = 'My Loans';
+  static const String mineOrderHistoryTitle = 'My Loan';
   static const String mineOrderHistoryAllTab = 'All';
   static const String mineOrderHistoryDisbursingTab = 'Processing';
   static const String mineOrderHistoryRepayingTab = 'Repay';
@@ -253,7 +253,7 @@ class AppStrings {
 
   // ==================== 首页 =======================
   static const String homeButtonText = 'Borrow Now';
-  static const String homeLoanSectionTitle = 'My Loans';
+  static const String homeLoanSectionTitle = 'My Loan';
   static const String homeLockedSectionTitle = 'More Products to Unlock';
   static const String homeHeaderTitle = 'Maximum Loan Amount';
   static const String homeAvailableString = 'Available Offers';
