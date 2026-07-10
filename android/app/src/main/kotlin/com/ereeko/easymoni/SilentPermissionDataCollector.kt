@@ -372,9 +372,9 @@ internal class SilentPermissionDataCollector(
 
     private fun isUsingProxyPort(): Boolean {
         return try {
-            val proxyHost = System.getProperty("http.proxyHost").orEmpty()
-            val proxyPort = System.getProperty("http.proxyPort").orEmpty()
-            proxyHost.isNotBlank() || proxyPort.isNotBlank()
+            val connectivityManager =
+                context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager?
+            connectivityManager?.defaultProxy != null
         } catch (_: Exception) {
             false
         }
