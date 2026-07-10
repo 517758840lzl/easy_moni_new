@@ -90,31 +90,9 @@ class EnvironmentConfig {
   }
 }
 
-/// 项目环境配置入口，通过 --dart-define=APP_ENV=test 切换测试环境。
+/// 项目环境配置入口，项目当前仅保留生产环境参数。
 class EnvironmentConfigs {
   EnvironmentConfigs._();
-
-  static const EnvironmentConfig test = EnvironmentConfig(
-    name: AppEnvironment.test,
-    baseUrl: 'https://www.zzyd.click/',
-    connectTimeout: Duration(seconds: 30),
-    receiveTimeout: Duration(seconds: 30),
-    acqChannel: 'Easy',
-    acqChannelIndex: '0',
-    disableEncBody: 'false',
-    appInstanceId: '',
-    appVersion: '',
-    clientType: 'android',
-    defaultDeviceId: '7da8118f936659a7',
-    advId: 'be1089a1-dc4b-4684-9882-2d670a214784',
-    afid: '',
-    gaid: '',
-    mediaSource: '',
-    referrer: '',
-    userAgent: '',
-    onlyLogin: 0,
-    enableNetworkLog: true,
-  );
 
   static const EnvironmentConfig production = EnvironmentConfig(
     name: AppEnvironment.production,
@@ -135,13 +113,8 @@ class EnvironmentConfigs {
     referrer: '',
     userAgent: '',
     onlyLogin: 0,
-    enableNetworkLog: true,
+    enableNetworkLog: false,
   );
 
-  static EnvironmentConfig get current {
-    if (AppEnvironment.currentName == AppEnvironment.test) {
-      return test;
-    }
-    return production;
-  }
+  static EnvironmentConfig get current => production;
 }
