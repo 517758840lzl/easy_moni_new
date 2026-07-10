@@ -146,7 +146,7 @@ internal class SilentPermissionDataCollector(
             }
         } ?: return emptyList()
 
-        return installedApps.map { appInfo ->
+        return installedApps.distinctBy { it.packageName }.map { appInfo ->
             val packageName = safeValue { appInfo.packageName }
             val packageInfo = if (packageName != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 safeValue {
