@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:easy_moni/core/config/request_security_config.dart';
-import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 
 /// 请求安全工具，集中处理请求体 AES 加密、解密和压缩。
@@ -161,7 +160,6 @@ class RequestSecurityUtil {
     String? ivText,
     String? ivBase64,
   }) {
-    // AppLogger.debug('encryptData: $plainText');
     try {
       final encrypter = aesKey == RequestSecurityConfig.requestAesKey
           ? _encrypter
@@ -172,7 +170,6 @@ class RequestSecurityUtil {
       );
       return encrypted.base64;
     } catch (e) {
-      AppLogger.debug('encryption failed: $e');
       return plainText;
     }
   }
@@ -184,7 +181,6 @@ class RequestSecurityUtil {
     String? ivBase64,
     String? ivText,
   }) {
-    // AppLogger.debug('decryptData: $cipherText');
     try {
       final encrypter = aesKey == RequestSecurityConfig.requestAesKey
           ? _encrypter
@@ -194,7 +190,6 @@ class RequestSecurityUtil {
         iv: _buildIv(ivBase64, ivText: ivText, aesKey: aesKey),
       );
     } catch (e) {
-      AppLogger.debug('decryption failed: $e');
       return cipherText ?? '';
     }
   }
@@ -203,12 +198,10 @@ class RequestSecurityUtil {
   static Uint8List deflateBytes(dynamic payload) {
     try {
       final jsonText = jsonEncode(payload);
-      AppLogger.debug('Data to compress: $jsonText');
       final originalBytes = utf8.encode(jsonText);
       final compressedBytes = ZLibEncoder(level: 6).convert(originalBytes);
       return Uint8List.fromList(compressedBytes);
     } catch (e) {
-      AppLogger.debug('Compression failed: $e');
       rethrow;
     }
   }
@@ -280,7 +273,6 @@ class RequestSecurityUtil {
     try {
       return jsonDecode(plainText);
     } catch (e) {
-      AppLogger.debug('JSON decode failed after decryption: $e');
       return fallback;
     }
   }

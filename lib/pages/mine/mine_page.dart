@@ -2,7 +2,6 @@ import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/network/http_provider.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
-import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:easy_moni/entities/repay/repay_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
@@ -46,13 +45,9 @@ class _MinePageState extends ConsumerState<MinePage> {
           _userName = userInfo.middleName ?? userInfo.customerName ?? '';
           _userPhone = userInfo.phone?.toString() ?? '';
         });
-        AppLogger.debug('用户信息加载成功: $userInfo');
-      } else {
-        AppLogger.debug('获取用户信息失败: ${result.message}');
-      }
+      } else {}
     } catch (e) {
       if (!mounted) return;
-      AppLogger.debug('获取用户信息异常: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -134,7 +129,6 @@ class _MinePageState extends ConsumerState<MinePage> {
       }
     } catch (e) {
       if (!mounted) return;
-      AppLogger.debug('退出登录异常: $e');
       showToast(AppStrings.mineLogoutFailed);
     }
   }
@@ -170,17 +164,19 @@ class _MinePageState extends ConsumerState<MinePage> {
             userPhone: _userPhone,
             onCustomerServiceTap: _onCustomerServiceTap,
           ),
-          content:isPageLoading? Center(child: CircularProgressIndicator()) : _MineContent(
-            showPendingRepayCard: pendingRepayOrders.isNotEmpty,
-            pendingAmount: totalRepayAmount,
-            isOverdue: isOverdue,
-            onRepayTap: () => _onRepayTap(pendingRepayOrders),
-            onHistoryTap: _onHistoryTap,
-            onCustomerServiceTap: _onCustomerServiceTap,
-            onPrivacyPolicyTap: _onPrivacyPolicyTap,
-            onSettingsTap: _onSettingsTap,
-            onLogoutTap: _onLogoutTap,
-          ),
+          content: isPageLoading
+              ? Center(child: CircularProgressIndicator())
+              : _MineContent(
+                  showPendingRepayCard: pendingRepayOrders.isNotEmpty,
+                  pendingAmount: totalRepayAmount,
+                  isOverdue: isOverdue,
+                  onRepayTap: () => _onRepayTap(pendingRepayOrders),
+                  onHistoryTap: _onHistoryTap,
+                  onCustomerServiceTap: _onCustomerServiceTap,
+                  onPrivacyPolicyTap: _onPrivacyPolicyTap,
+                  onSettingsTap: _onSettingsTap,
+                  onLogoutTap: _onLogoutTap,
+                ),
         ),
       ],
     );

@@ -5,7 +5,6 @@ import 'package:easy_moni/core/config/environment_config.dart';
 import 'package:easy_moni/core/constants/api_constants.dart';
 import 'package:easy_moni/core/network/http_result.dart';
 import 'package:easy_moni/core/network/interrepters/header_interrepter.dart';
-import 'package:easy_moni/core/network/interrepters/logging_interrepter.dart';
 import 'package:easy_moni/core/router/app_router.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/core/utils/request_security_util.dart';

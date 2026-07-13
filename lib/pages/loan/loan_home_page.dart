@@ -15,7 +15,6 @@ import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:easy_moni/core/utils/app_logger.dart';
 
 class LoanHomePage extends StatelessWidget {
   const LoanHomePage({super.key, this.refreshRequestId = ''});
@@ -118,8 +117,6 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
       });
       return;
     }
-
-    AppLogger.debug('首页刷新失败: $message');
   }
 
   void _applyHomeData(HomeResp data) {
@@ -130,7 +127,6 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
         .map((e) => _LoanProduct.fromApi(e.value, e.key))
         .toList();
 
-    final availableCount = products.where((p) => p.state.canConfirm).length;
     final defaultSelectedIndexes = products
         .asMap()
         .entries
@@ -148,7 +144,6 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
         ..addAll(defaultSelectedIndexes);
     });
 
-    AppLogger.debug('首页加载成功: ${products.length} 个产品，可借 $availableCount 个');
   }
 
   int get _availableProductCount =>

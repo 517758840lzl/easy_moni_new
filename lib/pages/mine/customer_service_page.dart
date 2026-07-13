@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
-import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:easy_moni/entities/service/service_info_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
@@ -350,10 +349,10 @@ class _CustomerServiceWebViewPageState
       await _webViewChannel.invokeMethod<bool>('protectWebViewRenderer', {
         'identifier': identifier,
       });
-    } on PlatformException catch (e) {
-      AppLogger.debug('Protect customer service WebView failed: $e');
-    } on MissingPluginException catch (e) {
-      AppLogger.debug('Protect customer service WebView missing plugin: $e');
+    } on PlatformException {
+      return;
+    } on MissingPluginException {
+      return;
     }
   }
 
@@ -491,7 +490,6 @@ class _CustomerServiceContactCard extends StatelessWidget {
 
   Future<void> _handleTap(BuildContext context) async {
     if (contact.type == CustomerServiceContactType.phone) {
-      AppLogger.debug('phone');
       DialerService.openDialer(phone: contact.account);
       return;
     }
@@ -521,9 +519,6 @@ class _CustomerServiceContactLauncher {
       case CustomerServiceContactType.email:
         await _openEmail(contact.account);
       default:
-        AppLogger.debug(
-          'Unsupported customer service contact type: ${contact.type}',
-        );
     }
   }
 
@@ -531,7 +526,6 @@ class _CustomerServiceContactLauncher {
   static Future<void> _openWhatsApp(String account) async {
     final whatsAppAccount = account.trim();
     if (whatsAppAccount.isEmpty) {
-      AppLogger.debug('Invalid customer service WhatsApp account: $account');
       return;
     }
 
@@ -542,7 +536,6 @@ class _CustomerServiceContactLauncher {
   static Future<void> _openEmail(String account) async {
     final email = account.trim();
     if (email.isEmpty) {
-      AppLogger.debug('Invalid customer service email: $account');
       return;
     }
 

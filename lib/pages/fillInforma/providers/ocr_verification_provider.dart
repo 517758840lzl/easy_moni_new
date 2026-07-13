@@ -5,7 +5,6 @@ import 'package:easy_moni/core/constants/api_constants.dart';
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/network/http_provider.dart';
 import 'package:easy_moni/core/network/http_result.dart';
-import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:easy_moni/core/utils/request_security_util.dart';
 import 'package:easy_moni/utils/image_compress_tool.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,10 +27,6 @@ class OcrVerificationApi {
     final config = HttpProvider.instance.config;
     final requestUrl = config.resolveApiPath(ApiConstants.ocrVerification);
 
-    AppLogger.debug(
-      '开始调用 OCR 接口: url=$requestUrl, filename=$filename, bytes=${bytes.length}, type=$type',
-    );
-
     try {
       final dio = Dio();
       final uploadBytes = await ImageCompressTool.compressForUpload(bytes);
@@ -51,17 +46,9 @@ class OcrVerificationApi {
         options: Options(headers: config.commonHeaders(token: token)),
       );
 
-      AppLogger.debug(
-        'OCR 原始响应: status=${response.statusCode}, data=${response.data}, '
-        'originalBytes=${bytes.length}, uploadBytes=${uploadBytes.length}',
-      );
-
       // 解密
       final decryptedData = RequestSecurityUtil.decryptResponseBody(
         response.data,
-      );
-      AppLogger.debug(
-        'OCR 解密响应: type=${decryptedData.runtimeType}, data=$decryptedData',
       );
 
       final map = _normalizeResponseMap(decryptedData);
@@ -88,15 +75,11 @@ class OcrVerificationApi {
         (map['msg'] ?? map['message'] ?? 'ocr failed').toString(),
       );
     } on DioException catch (e) {
-      AppLogger.debug(
-        'OCR DioException: type=${e.type}, message=${e.message}, status=${e.response?.statusCode}, data=${e.response?.data}',
-      );
       return HttpResult.error(
         HttpResultStatus.serverError,
         e.message ?? 'ocr failed',
       );
     } catch (e) {
-      AppLogger.debug('OCR Exception: $e');
       return HttpResult.error(HttpResultStatus.unKnown, e.toString());
     }
   }

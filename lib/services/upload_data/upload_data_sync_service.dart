@@ -1,8 +1,6 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:easy_moni/entities/check_upload_data_valid_resp.dart';
 import 'package:easy_moni/pages/login/providers/upload_data_provider.dart';
 import 'package:easy_moni/services/upload_data/sms_keyword_provider.dart';
@@ -34,20 +32,17 @@ class UploadDataSyncService {
     if (request == null) return;
 
     if (_activeUploadTask != null) {
-      AppLogger.debug('UploadDataSyncService: 已有上传任务运行中，跳过本次触发');
       return;
     }
 
     final now = DateTime.now();
     final lastRunAt = _lastRunAt;
     if (lastRunAt != null && now.difference(lastRunAt).inSeconds < 60) {
-      AppLogger.debug('UploadDataSyncService: 触发过于频繁，跳过本次上传');
       return;
     }
 
     unawaited(
       _startUpload(request).catchError((Object error, StackTrace stackTrace) {
-        AppLogger.debug('UploadDataSyncService: 上传任务异常: $error\n$stackTrace');
       }),
     );
   }
@@ -70,7 +65,6 @@ class UploadDataSyncService {
 
     final activeTask = _activeUploadTask;
     if (activeTask != null) {
-      AppLogger.debug('UploadDataSyncService: 等待进行中的上传任务完成');
       await activeTask;
       return;
     }
@@ -83,7 +77,6 @@ class UploadDataSyncService {
 
     final trackId = resp.appTrackId;
     if (trackId == null || trackId <= 0) {
-      AppLogger.debug('UploadDataSyncService: appTrackId 无效，跳过上传');
       return null;
     }
 
@@ -92,7 +85,6 @@ class UploadDataSyncService {
     final needSmsRecord = resp.isValidSmsRecord == 0;
 
     if (!needDeviceInfo && !needAppList && !needSmsRecord) {
-      AppLogger.debug('UploadDataSyncService: 上传数据均有效，无需上传');
       return null;
     }
 
@@ -159,7 +151,6 @@ class UploadDataSyncService {
         );
 
     if (result.isSuccess) {
-      AppLogger.debug('UploadDataSyncService: submitUserUploadData 成功');
     } else {
       throw Exception(result.message ?? 'submitUserUploadData failed');
     }
@@ -182,9 +173,7 @@ class UploadDataSyncService {
 
   void _logDeviceInfoPayload(dynamic payload) {
     try {
-      AppLogger.debug('UploadDataSyncService: 请求体: ${jsonEncode(payload)}');
     } catch (_) {
-      AppLogger.debug('UploadDataSyncService:  请求体: $payload');
     }
   }
 

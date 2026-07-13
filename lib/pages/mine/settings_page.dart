@@ -2,7 +2,6 @@ import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/network/http_provider.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
-import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
 import 'package:easy_moni/pages/mine/providers/delete_account_provider.dart';
@@ -66,7 +65,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       showToast(result.message ?? AppStrings.mineDeleteAccountFailed);
     } catch (e) {
       if (!mounted) return;
-      AppLogger.debug('注销账号异常: $e');
       showToast(AppStrings.mineDeleteAccountFailed);
     } finally {
       if (mounted) {

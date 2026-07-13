@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:easy_moni/core/utils/app_logger.dart';
 
 class CheckUploadDataValidResp {
   final int? appTrackId;
@@ -30,9 +29,6 @@ class CheckUploadDataValidResp {
       } else if (json is String) {
         map = Map<String, dynamic>.from(jsonDecode(json) as Map);
       } else {
-        AppLogger.debug(
-          'CheckUploadDataValidResp.fromJson: 未知类型 ${json.runtimeType}',
-        );
         return const CheckUploadDataValidResp();
       }
 
@@ -45,8 +41,7 @@ class CheckUploadDataValidResp {
         isValidSmsRecord: _parseInt(map['isValidSmsRecord']),
         isValidCallLog: _parseInt(map['isValidCallLog']),
       );
-    } catch (e, stack) {
-      AppLogger.debug('CheckUploadDataValidResp.fromJson 异常: $e\n$stack');
+    } catch (e) {
       return const CheckUploadDataValidResp();
     }
   }

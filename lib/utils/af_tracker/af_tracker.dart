@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:appsflyer_sdk/appsflyer_sdk.dart';
 import 'package:easy_moni/core/config/request_security_config.dart';
-import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:easy_moni/core/utils/request_security_util.dart';
 import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/utils/af_tracker/track_events.dart';
@@ -15,7 +14,6 @@ class AppsFlyerTracker {
   AppsFlyerTracker._();
 
   // TODO 正式环境替换_devKey
-  static const String _tag = 'AF_HELPER';
   static const String _devKey = 'PFfRT77vnCVpKaZuU3Pghg';
   static const String _keyUid = 'af_tracker_uid';
   static const String _keyMediaSource = 'af_tracker_media_source';
@@ -54,8 +52,8 @@ class AppsFlyerTracker {
       _listenAppsFlyerInstallConversionData();
       await _cacheAppsFlyerUid();
       await refreshAppsFlyerRuntimeAttribution();
-    } catch (e, stackTrace) {
-      AppLogger.error('$_tag init failed', e, stackTrace);
+    } catch (e) {
+      return;
     }
   }
 
@@ -74,7 +72,7 @@ class AppsFlyerTracker {
         return storedUid;
       }
     } catch (e) {
-      AppLogger.debug('$_tag read cached uid failed: $e');
+      return '';
     }
 
     return _cacheAppsFlyerUid();
@@ -86,7 +84,6 @@ class AppsFlyerTracker {
         _runtimeAttribution ?? await refreshAppsFlyerRuntimeAttribution();
     final afid = await getAppsFlyerId();
     final mediaSource = await getAppsFlyerMediaSource();
-    AppLogger.debug('mediaSource $mediaSource');
 
     return {
       if (afid.isNotEmpty) 'afid': afid,
@@ -103,7 +100,6 @@ class AppsFlyerTracker {
       _runtimeAttribution = attribution;
       return attribution;
     } catch (e) {
-      AppLogger.debug('$_tag refreshAppsFlyerRuntimeAttribution failed: $e');
       _runtimeAttribution = <String, dynamic>{};
       return _runtimeAttribution!;
     }
@@ -123,7 +119,7 @@ class AppsFlyerTracker {
         await prefs.setBool(_keyFirstOpenTracked, true);
       }
     } catch (e) {
-      AppLogger.debug('$_tag logAppsFlyerFirstOpenIfNeeded failed: $e');
+      return;
     }
   }
 
@@ -134,7 +130,6 @@ class AppsFlyerTracker {
       final mediaSource = prefs.getString(_keyMediaSource) ?? '';
       return mediaSource;
     } catch (e) {
-      AppLogger.debug('$_tag getAppsFlyerMediaSource failed: $e');
       return '';
     }
   }
@@ -165,10 +160,8 @@ class AppsFlyerTracker {
       }
 
       final result = await _sdk?.logEvent(eventName, eventValueMap);
-      AppLogger.debug('$_tag Result logEvent($eventName): $result');
       return result ?? false;
-    } catch (e, stackTrace) {
-      AppLogger.error('$_tag logEvent($eventName) failed', e, stackTrace);
+    } catch (e) {
       return false;
     }
   }
@@ -176,7 +169,6 @@ class AppsFlyerTracker {
   static void _listenAppsFlyerInstallConversionData() {
     _sdk?.onInstallConversionData((res) async {
       try {
-        AppLogger.debug('$_tag onInstallConversionData res: $res');
         final sourceMap = res is Map ? Map<String, dynamic>.from(res) : null;
         final payload = sourceMap?['payload'];
         if (sourceMap?['status'] == 'success' && payload is Map) {
@@ -186,7 +178,7 @@ class AppsFlyerTracker {
           await _saveMediaSourceIfNeeded(mediaSource);
         }
       } catch (e) {
-        AppLogger.debug('$_tag onInstallConversionData failed: $e');
+        return;
       }
     });
   }
@@ -223,10 +215,9 @@ class AppsFlyerTracker {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString(_keyUid, uid);
       }
-      AppLogger.debug('$_tag AppsFlyer UID: $uid');
+
       return uid;
     } catch (e) {
-      AppLogger.debug('$_tag get AppsFlyer UID failed: $e');
       return '';
     }
   }

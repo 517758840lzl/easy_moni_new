@@ -5,7 +5,6 @@ import 'package:easy_moni/core/network/http_result.dart';
 import 'package:easy_moni/core/router/acquisition_progress_route_resolver.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
-import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:easy_moni/entities/acp_element_info_resp.dart';
 import 'package:easy_moni/entities/provinces_cities_area_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
@@ -175,7 +174,6 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
   }
 
   Future<void> _fetchData() async {
-    AppLogger.debug('_fetchData started...');
     if (mounted) {
       setState(() {
         _resetLoadedData();
@@ -209,7 +207,6 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
       });
       _scheduleInitialLocationCheck();
     } catch (e) {
-      AppLogger.debug('Failed to fetch data: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -261,17 +258,10 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
       final progressResult = await ref.read(acquisitionProgressProvider).call();
       if (!mounted) return;
 
-      AppLogger.debug(
-        'Personal info retry progress isSuccess: ${progressResult.isSuccess}',
-      );
       if (progressResult.isSuccess && progressResult.data != null) {
         final progressData = progressResult.data!;
-        AppLogger.debug(
-          'Personal info retry progress: filledStep=${progressData.filledStep ?? 0}, '
-          'totalStep=${progressData.totalStep}',
-        );
         final route = AcquisitionProgressRouteResolver.resolve(progressData);
-        AppLogger.debug('Personal info retry target route: $route');
+
         if (route == AppRoutePaths.personalInfo) {
           setState(() {
             _isLoading = false;
@@ -288,9 +278,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
         _isLoading = false;
         _hasLoadError = true;
       });
-    } catch (e, stack) {
-      AppLogger.debug('Failed to retry personal info progress: $e');
-      AppLogger.debug('Stack: $stack');
+    } catch (e) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
@@ -302,22 +290,17 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
   /// Applies personal info form config and restores submitted backend values.
   void _applyFormResult(HttpResult<AcpElementInfoResp> result) {
     if (!result.isSuccess || result.data == null) {
-      AppLogger.debug('Failed to fetch form data: ${result.message}');
       return;
     }
 
     final data = result.data!;
     final stepInfo = data.stepInfoList.firstOrNull;
-    AppLogger.debug(
-      'stepInfoList length: ${data.stepInfoList.length}, stepInfo: $stepInfo',
-    );
     if (stepInfo == null) {
       return;
     }
 
     _stepInfo = stepInfo;
     _processId = data.processId;
-    AppLogger.debug('Set _stepInfo, entries count: ${stepInfo.entries.length}');
 
     for (final entry in _formEntries) {
       _initializeEntryValue(entry);
@@ -326,7 +309,6 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
 
   /// Applies area data for the region picker and historical value display.
   void _applyAreaResult(HttpResult<ProvincesCitiesAreaResp> result) {
-    AppLogger.debug('areaResult.isSuccess: ${result.isSuccess}');
     if (!result.isSuccess || result.data == null) {
       return;
     }
@@ -343,7 +325,6 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     _selectedIndices[entry.key] = 0;
     _selectedValues[entry.key] = submitValue;
     _selectedSubmitValues[entry.key] = submitValue;
-    AppLogger.debug('entry: ${entry.key} - ${entry.showContent}');
 
     if (FormEntryInputTypeHelper.isTextInput(entry)) {
       _textControllers[entry.key] = TextEditingController(
@@ -420,9 +401,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
           decoded['homeCity'] as String? ?? '',
         );
       }
-    } catch (_) {
-      AppLogger.debug('Failed to parse region submit value: $rawValue');
-    }
+    } catch (_) {}
     return ('', '');
   }
 
@@ -507,7 +486,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
 
       await LocationService.openAppSettings();
     } catch (e) {
-      AppLogger.debug('Failed to check initial location permission: $e');
+      return;
     }
   }
 
@@ -704,9 +683,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
           context.push(route);
         }
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(result.message ?? AppStrings.personalInfoSaveFailed),
           ),
@@ -714,9 +691,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppStrings.personalInfoSaveFailedWithError(e))),
       );
     } finally {

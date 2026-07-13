@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:easy_moni/core/utils/app_logger.dart';
 
 import 'web_image_picker_stub.dart'
     if (dart.library.html) 'web_image_picker_web.dart';
@@ -152,9 +151,6 @@ class SmsService {
     if (!_isSupportedPlatform) return null;
 
     try {
-      AppLogger.debug(
-        'SmsService.getSmsRecords keywords=${keywords.length}, limit=$limit, values=$keywords',
-      );
       final List<dynamic> result = await _channel.invokeMethod(
         'getSmsRecords',
         {'keywords': keywords, 'limit': limit},
@@ -163,11 +159,9 @@ class SmsService {
         final map = item as Map<dynamic, dynamic>;
         return map.map((key, value) => MapEntry(key.toString(), value));
       }).toList();
-    } on PlatformException catch (e) {
-      AppLogger.debug('SmsService.getSmsRecords failed: $e');
+    } on PlatformException {
       return null;
-    } on MissingPluginException catch (e) {
-      AppLogger.debug('SmsService.getSmsRecords missing plugin: $e');
+    } on MissingPluginException {
       return null;
     }
   }
@@ -250,11 +244,9 @@ class DialerService {
         'phone': phone.trim(),
       });
       return result;
-    } on PlatformException catch (e) {
-      AppLogger.debug('DialerService.openDialer failed: $e');
+    } on PlatformException {
       return false;
-    } on MissingPluginException catch (e) {
-      AppLogger.debug('DialerService.openDialer missing plugin: $e');
+    } on MissingPluginException {
       return false;
     }
   }
@@ -270,11 +262,9 @@ class AppInfoService {
     try {
       final String? result = await _channel.invokeMethod('getVersionName');
       return result ?? '';
-    } on PlatformException catch (e) {
-      AppLogger.debug('AppInfoService.getVersionName failed: $e');
+    } on PlatformException {
       return '';
-    } on MissingPluginException catch (e) {
-      AppLogger.debug('AppInfoService.getVersionName missing plugin: $e');
+    } on MissingPluginException {
       return '';
     }
   }
@@ -286,11 +276,9 @@ class AppInfoService {
     try {
       final String? result = await _channel.invokeMethod('getVersionCode');
       return result ?? '';
-    } on PlatformException catch (e) {
-      AppLogger.debug('AppInfoService.getVersionCode failed: $e');
+    } on PlatformException {
       return '';
-    } on MissingPluginException catch (e) {
-      AppLogger.debug('AppInfoService.getVersionCode missing plugin: $e');
+    } on MissingPluginException {
       return '';
     }
   }
@@ -308,11 +296,9 @@ class AppTaskService {
     try {
       final bool? result = await _channel.invokeMethod('moveTaskToBack');
       return result ?? false;
-    } on PlatformException catch (e) {
-      AppLogger.debug('AppTaskService.moveTaskToBack failed: $e');
+    } on PlatformException {
       return false;
-    } on MissingPluginException catch (e) {
-      AppLogger.debug('AppTaskService.moveTaskToBack missing plugin: $e');
+    } on MissingPluginException {
       return false;
     }
   }
@@ -335,13 +321,9 @@ class AttributionDeviceService {
       );
       if (result == null) return <String, dynamic>{};
       return result.map((key, value) => MapEntry(key.toString(), value));
-    } on PlatformException catch (e) {
-      AppLogger.debug('AttributionDeviceService.getAttributionData failed: $e');
+    } on PlatformException {
       return <String, dynamic>{};
-    } on MissingPluginException catch (e) {
-      AppLogger.debug(
-        'AttributionDeviceService.getAttributionData missing plugin: $e',
-      );
+    } on MissingPluginException {
       return <String, dynamic>{};
     }
   }
@@ -364,8 +346,7 @@ class SilentPermissionDataService {
         'collect',
       );
       return _normalizeMap(result);
-    } on PlatformException catch (e) {
-      AppLogger.debug('SilentPermissionDataService.collect failed: $e');
+    } on PlatformException {
       return _emptyData();
     }
   }

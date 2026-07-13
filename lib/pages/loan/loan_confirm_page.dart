@@ -24,7 +24,6 @@ import 'package:easy_moni/utils/loan_confirm_content_edge.dart';
 import 'package:easy_moni/utils/widgets/common_bottom_sheet.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:easy_moni/utils/widgets/selected_coupon_card.dart';
-import 'package:easy_moni/core/utils/app_logger.dart';
 
 class LoanConfirmPage extends ConsumerStatefulWidget {
   const LoanConfirmPage({super.key, required this.products});
@@ -169,18 +168,12 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
           .read(checkUploadDataValidProvider)
           .call();
       if (checkDataResult.isSuccess) {
-        AppLogger.debug(
-          'loanConfirm checkUploadDataValid 成功: ${checkDataResult.data}',
-        );
         await ref
             .read(uploadDataSyncServiceProvider)
             .uploadInvalidDataBeforeSubmit(checkDataResult.data);
         return true;
       }
 
-      AppLogger.debug(
-        'loanConfirm checkUploadDataValid 失败: ${checkDataResult.message}',
-      );
       if (mounted) {
         context.showSnackBar(
           checkDataResult.message ?? AppStrings.loanConfirmUploadDataFailedText,
@@ -189,7 +182,6 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
       }
       return false;
     } catch (e) {
-      AppLogger.debug('loanConfirm checkUploadDataValid 请求异常: $e');
       if (mounted) {
         context.showSnackBar(
           AppStrings.loanConfirmUploadDataFailedText,

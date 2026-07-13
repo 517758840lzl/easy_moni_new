@@ -250,7 +250,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     try {
       imageData = await CameraService.pickFromGallery();
     } catch (e) {
-      AppLogger.debug('相册选择失败: $e');
+      return;
     }
     if (!mounted) {
       return;
@@ -418,9 +418,6 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   Future<void> _onImagesCaptured(_CapturedIdCardImages capturedImages) async {
     final frontImageData = capturedImages.frontImageData;
     final backImageData = capturedImages.backImageData;
-    AppLogger.debug(
-      '准备处理身份证图片, hasFront=${frontImageData != null}, hasBack=${backImageData != null}',
-    );
 
     setState(() {
       if (frontImageData != null) {
@@ -511,10 +508,6 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
           filename: 'id_card_front.jpg',
           type: _frontOcrType,
         );
-
-    AppLogger.debug(
-      'OCR 接口返回: isSuccess=${result.isSuccess}, message=${result.message}, data=${result.data}',
-    );
 
     if (!mounted) return;
 

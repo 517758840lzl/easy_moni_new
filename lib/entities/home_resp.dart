@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:easy_moni/utils/extensions.dart';
 
 class HomeResp {
@@ -23,8 +22,7 @@ class HomeResp {
         couponsTitle: map['couponsTitle'] as String?,
         hasAvailableCoupons: _parseBool(map['hasAvailableCoupons']),
       );
-    } catch (e, stack) {
-      AppLogger.debug('HomeResp.fromJson 异常: $e\n$stack');
+    } catch (e) {
       return const HomeResp();
     }
   }

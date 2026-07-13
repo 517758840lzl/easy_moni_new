@@ -242,7 +242,6 @@ class _IdCameraScreenState extends State<IdCameraScreen>
         );
       }
       if (camera == null) {
-        AppLogger.warning('相机初始化失败: 未找到可用相机');
         if (_isCurrentCameraInit(initToken)) {
           _cameraError = AppStrings.identityVerifyCameraError;
         }
@@ -278,13 +277,7 @@ class _IdCameraScreenState extends State<IdCameraScreen>
           nextController = null;
           _cameraRecoveryAttempts = 0;
           return;
-        } on CameraException catch (e, stackTrace) {
-          AppLogger.error(
-            '相机初始化失败: preset=$resolutionPreset, '
-            'code=${e.code}, description=${e.description}',
-            e,
-            stackTrace,
-          );
+        } on CameraException catch (e) {
           await _disposeCameraControllerSerially(nextController);
           nextController = null;
 
@@ -310,12 +303,7 @@ class _IdCameraScreenState extends State<IdCameraScreen>
       if (_isCurrentCameraInit(initToken)) {
         _cameraError = AppStrings.identityVerifyCameraError;
       }
-    } on CameraException catch (e, stackTrace) {
-      AppLogger.error(
-        '相机初始化失败: code=${e.code}, description=${e.description}',
-        e,
-        stackTrace,
-      );
+    } on CameraException catch (e) {
       if (_isCurrentCameraInit(initToken)) {
         if (await _retryCameraInitAfterPreviewRace(
           initToken: initToken,
@@ -328,8 +316,7 @@ class _IdCameraScreenState extends State<IdCameraScreen>
         }
         _cameraError = AppStrings.identityVerifyCameraError;
       }
-    } catch (e, stackTrace) {
-      AppLogger.error('相机初始化失败: $e', e, stackTrace);
+    } catch (e) {
       if (_isCurrentCameraInit(initToken)) {
         if (await _retryCameraInitAfterPreviewRace(
           initToken: initToken,
@@ -359,11 +346,6 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     if (!_shouldRetryAfterCameraInitRace(error, initRaceRetryAttempts)) {
       return false;
     }
-
-    AppLogger.warning(
-      'CameraX 预览初始化竞态，延迟重试相机初始化: '
-      'attempt=${initRaceRetryAttempts + 1}, error=$error',
-    );
     await _disposeCameraControllerSerially(pendingController);
     await Future<void>.delayed(_cameraInitRaceRetryDelay);
     if (!_isCurrentCameraInit(initToken)) {
@@ -435,7 +417,7 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     }
 
     final errorDescription = controller.value.errorDescription;
-    AppLogger.warning('相机运行异常: $errorDescription');
+
     unawaited(_recoverFromCameraError(errorDescription));
   }
 
@@ -679,7 +661,6 @@ class _IdCameraScreenState extends State<IdCameraScreen>
         ),
       );
     } catch (e) {
-      AppLogger.debug('拍照出错: $e');
       if (!mounted) return;
       await _resumePreviewForNextCapture(_controller);
       scaffoldMessenger.showSnackBar(
@@ -766,8 +747,8 @@ class _IdCameraScreenState extends State<IdCameraScreen>
   Future<void> _pausePreviewForProcessing(CameraController controller) async {
     try {
       await controller.pausePreview();
-    } catch (e) {
-      AppLogger.debug('暂停相机预览失败: $e');
+    } catch (_) {
+      return;
     }
   }
 
@@ -781,8 +762,8 @@ class _IdCameraScreenState extends State<IdCameraScreen>
 
     try {
       await controller.resumePreview();
-    } catch (e) {
-      AppLogger.debug('恢复相机预览失败: $e');
+    } catch (_) {
+      return;
     }
   }
 
@@ -795,14 +776,12 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     try {
       controller.removeListener(_onCameraControllerChanged);
       await controller.dispose();
-    } on PlatformException catch (e, stackTrace) {
+    } on PlatformException catch (e) {
       if (_isCameraXPreviewReleaseRace(e)) {
-        AppLogger.debug('忽略 CameraX 预览释放竞态: ${e.message}');
         return;
       }
-      AppLogger.error('释放相机失败: ${e.message}', e, stackTrace);
-    } catch (e, stackTrace) {
-      AppLogger.error('释放相机失败: $e', e, stackTrace);
+    } catch (e) {
+      return;
     }
   }
 

@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:easy_moni/core/utils/app_logger.dart';
 
 /// /api/common/startup/config 响应实体
 class StartupConfigResp {
@@ -29,7 +28,6 @@ class StartupConfigResp {
       } else if (json is String) {
         map = Map<String, dynamic>.from(jsonDecode(json) as Map);
       } else {
-        AppLogger.debug('StartupConfigResp.fromJson: 未知类型 ${json.runtimeType}');
         return const StartupConfigResp();
       }
 
@@ -45,8 +43,7 @@ class StartupConfigResp {
             ? Switches.fromJson(map['switches'])
             : null,
       );
-    } catch (e, stack) {
-      AppLogger.debug('StartupConfigResp.fromJson 异常: $e\n$stack');
+    } catch (e) {
       return const StartupConfigResp();
     }
   }
@@ -110,7 +107,6 @@ class AppListConfig {
         wayType: StartupConfigResp._parseInt(map['wayType']),
       );
     } catch (e) {
-      AppLogger.debug('AppListConfig.fromJson 异常: $e');
       return const AppListConfig();
     }
   }
@@ -142,7 +138,6 @@ class FaceStep {
         key: map['key']?.toString(),
       );
     } catch (e) {
-      AppLogger.debug('FaceStep.fromJson 异常: $e');
       return const FaceStep();
     }
   }
@@ -173,7 +168,6 @@ class Switches {
         ),
       );
     } catch (e) {
-      AppLogger.debug('Switches.fromJson 异常: $e');
       return const Switches();
     }
   }

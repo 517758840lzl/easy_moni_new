@@ -4,7 +4,6 @@ import 'package:dio/dio.dart';
 import 'package:easy_moni/core/constants/api_constants.dart';
 import 'package:easy_moni/core/network/http_provider.dart';
 import 'package:easy_moni/core/network/http_result.dart';
-import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:easy_moni/utils/image_compress_tool.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -29,12 +28,6 @@ class UploadFileApi {
       final headers = config.commonHeaders(token: token);
       final uploadBytes = await ImageCompressTool.compressForUpload(bytes);
 
-      AppLogger.debug(
-        '上传文件开始: url=$uploadUrl, '
-        'filename=$filename, originalBytes=${bytes.length}, '
-        'uploadBytes=${uploadBytes.length}, headers=$headers',
-      );
-
       final formData = FormData.fromMap({
         'multipartFile': MultipartFile.fromBytes(
           uploadBytes,
@@ -46,10 +39,6 @@ class UploadFileApi {
         uploadUrl,
         data: formData,
         options: Options(headers: headers),
-      );
-
-      AppLogger.debug(
-        '上传文件响应: status=${response.statusCode}, data=${response.data}',
       );
 
       final map = Map<String, dynamic>.from(response.data as Map);
@@ -64,16 +53,11 @@ class UploadFileApi {
         (map['msg'] ?? map['message'] ?? 'upload failed').toString(),
       );
     } on DioException catch (e) {
-      AppLogger.debug(
-        '上传文件 DioException: type=${e.type}, message=${e.message}, '
-        'status=${e.response?.statusCode}, data=${e.response?.data}',
-      );
       return HttpResult.error(
         HttpResultStatus.serverError,
         e.message ?? 'upload failed',
       );
     } catch (e) {
-      AppLogger.debug('上传文件 Exception: $e');
       return HttpResult.error(HttpResultStatus.unKnown, e.toString());
     }
   }

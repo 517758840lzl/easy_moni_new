@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 
-import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 
@@ -44,15 +43,9 @@ class ImageCompressTool {
         ),
       );
       if (result.wasCompressed) {
-        AppLogger.debug(
-          '图片压缩完成: original=${bytes.length}, compressed=${result.bytes.length}, '
-          'maxBytes=$normalizedMaxBytes, minBytes=$normalizedMinBytes, '
-          'maxLongSide=$maxLongSide, quality=$quality',
-        );
       }
       return result.bytes;
-    } catch (error, stackTrace) {
-      AppLogger.debug('图片压缩异常: $error\n$stackTrace');
+    } catch (error) {
       if (bytes.length > normalizedMaxBytes) {
         rethrow;
       }

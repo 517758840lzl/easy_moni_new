@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:easy_moni/core/constants/app_strings.dart';
-import 'package:easy_moni/core/utils/app_logger.dart';
 
 import 'package:camera/camera.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
@@ -94,10 +93,6 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
 
       if (configResult.isSuccess && configResult.data != null) {
         _startupConfig = configResult.data as StartupConfigResp;
-        AppLogger.debug(
-          'Face config from backend: faceStep=${_startupConfig?.faceStep}, '
-          'faceLiveStep=${_startupConfig?.faceLiveStep}',
-        );
       }
 
       _livenessSteps = _buildLivenessSteps();
@@ -260,7 +255,7 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
         }
       }
     } catch (e) {
-      AppLogger.debug('人脸识别处理失败: $e');
+      return;
     } finally {
       _isProcessingImage = false;
     }
@@ -425,13 +420,13 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
         await controller.stopImageStream();
       }
     } catch (e) {
-      AppLogger.debug('释放人脸相机前停止图像流失败: $e');
+      return;
     }
 
     try {
       await controller.dispose();
     } catch (e) {
-      AppLogger.debug('释放人脸相机失败: $e');
+      return;
     }
   }
 

@@ -1,9 +1,6 @@
-import 'dart:convert';
-
 import 'package:easy_moni/core/constants/api_constants.dart';
 import 'package:easy_moni/core/router/acquisition_progress_route_resolver.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
-import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:easy_moni/entities/submit_acp_info_resp.dart';
 import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
 import 'package:easy_moni/utils/af_tracker/track_events.dart';
@@ -39,9 +36,6 @@ class SubmitAcpElementInfoApi {
             'step': step,
             'data': data ?? <String, dynamic>{},
           };
-    AppLogger.debug(
-      'submitAcpElementInfo requestBody: ${jsonEncode(requestBody)}',
-    );
 
     final result = await HttpProvider.instance.post<SubmitAcpInfoResp>(
       ApiConstants.submitAcpElementInfo,

@@ -2,8 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:easy_moni/core/utils/app_logger.dart';
-
 class UploadDataCompressTool {
   const UploadDataCompressTool._();
 
@@ -13,8 +11,7 @@ class UploadDataCompressTool {
       final encoded = utf8.encode(jsonEncode(payload));
       final compressed = ZLibEncoder().convert(encoded);
       return Uint8List.fromList(compressed);
-    } catch (error, stackTrace) {
-      AppLogger.debug('UploadDataCompressTool 压缩异常: $error\n$stackTrace');
+    } catch (error) {
       return Uint8List(0);
     }
   }

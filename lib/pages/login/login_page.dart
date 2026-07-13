@@ -15,7 +15,6 @@ import 'package:easy_moni/utils/widgets/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:easy_moni/core/utils/app_logger.dart';
 
 import 'providers/auth_provider.dart';
 
@@ -95,7 +94,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   void _navigateByProgress(AcquisitionProgressResp progressData) {
     final route = AcquisitionProgressRouteResolver.resolve(progressData);
-    AppLogger.debug('登录态分流目标: $route');
     context.go(route);
   }
 
@@ -107,7 +105,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     if (!mounted) return;
 
     if (route != null) {
-      AppLogger.debug('登录态分流目标: $route');
       context.go(route);
       return;
     }
@@ -261,7 +258,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         msg: {'message': 'send code failed', 'error': e.toString()},
       );
       showToast(AppStrings.loginSendCodeFailed);
-      AppLogger.debug('发送验证码异常: $e');
     } finally {
       if (mounted) {
         setState(() => _isSendingCode = false);
@@ -289,11 +285,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       return;
     }
 
-    final maskedPhone = phone.length > 4
-        ? '${phone.substring(0, 2)}****${phone.substring(phone.length - 2)}'
-        : '****';
-    AppLogger.debug('登录请求 - 手机号: 233|$maskedPhone, 验证码: ****');
-
     try {
       setState(() => _isLoggingIn = true);
 
@@ -302,16 +293,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           .call(phone: '233|$phone', code: code);
 
       if (!mounted) return;
-      AppLogger.debug(
-        '登录响应 - status: ${result.status}, message: ${result.message}',
-      );
-      AppLogger.debug('登录响应数据是否为空: ${result.data == null}');
+
       if (result.isSuccess) {
         final loginData = result.data;
-        AppLogger.debug(
-          'loginData.isFirstRegister: ${loginData?.isFirstRegister}',
-        );
-        AppLogger.debug('loginData.cacheData: ${loginData?.cacheData}');
 
         final authenticatedLoginData = loginData;
         if (authenticatedLoginData != null &&
@@ -326,7 +310,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           await AuthStorage.saveReviewAccountFlag(
             authenticatedLoginData.isReviewAccount,
           );
-          AppLogger.debug('登录成功，Token 已保存');
 
           // 登录后请求 startup/config 接口
           try {
@@ -334,13 +317,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             if (!mounted) return;
 
             if (configResult.isSuccess) {
-              AppLogger.debug('startupConfig 成功: ${configResult.data}');
-            } else {
-              AppLogger.debug('startupConfig 失败: ${configResult.message}');
-            }
+            } else {}
           } catch (e) {
             if (!mounted) return;
-            AppLogger.debug('startupConfig 请求异常: $e');
           }
 
           // 登录后请求 checkUploadDataValid 接口
@@ -351,20 +330,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             if (!mounted) return;
 
             if (checkDataResult.isSuccess) {
-              AppLogger.debug(
-                'checkUploadDataValid 成功: ${checkDataResult.data}',
-              );
               ref
                   .read(uploadDataSyncServiceProvider)
                   .handleCheckResult(checkDataResult.data);
-            } else {
-              AppLogger.debug(
-                'checkUploadDataValid 失败: ${checkDataResult.message}',
-              );
-            }
+            } else {}
           } catch (e) {
             if (!mounted) return;
-            AppLogger.debug('checkUploadDataValid 请求异常: $e');
           }
 
           final progressResult = await ref
@@ -372,37 +343,22 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               .call();
           if (!mounted) return;
 
-          AppLogger.debug('进度查询响应: ${progressResult.data}');
-          AppLogger.debug('进度查询 isSuccess: ${progressResult.isSuccess}');
           if (progressResult.isSuccess && progressResult.data != null) {
             final progressData = progressResult.data!;
-            final filledStep = progressData.filledStep ?? 0;
-            AppLogger.debug(
-              '用户进度: filledStep=$filledStep, totalStep=${progressData.totalStep}',
-            );
-            AppLogger.debug('hasCompletedKyc: ${progressData.hasCompletedKyc}');
-            AppLogger.debug(
-              'processSteps: ${progressData.processSteps?.map((s) => 'step=${s.step}, pageType=${s.pageType}, pageTitle=${s.pageTitle}').join(', ')}',
-            );
-            AppLogger.debug('根据后端进度决定跳转页面');
+
             _navigateByProgress(progressData);
           } else {
-            AppLogger.debug('进度查询失败，默认跳转个人信息');
             context.go(AppRoutePaths.personalInfo);
           }
         } else {
-          AppLogger.debug('Token为空!');
           showToast(AppStrings.loginTokenMissing);
         }
       } else {
-        AppLogger.debug('登录失败: ${result.message}');
         _showLoginErrorToast(result.message);
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       if (!mounted) return;
       showToast(AppStrings.errorMessage);
-      AppLogger.debug('登录异常: $e');
-      AppLogger.debug('堆栈: $stackTrace');
     } finally {
       if (mounted) {
         setState(() => _isLoggingIn = false);

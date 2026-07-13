@@ -1,6 +1,5 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
-import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:easy_moni/pages/repay/models/payment_request_params.dart';
 import 'package:easy_moni/pages/repay/providers/payment_provider.dart';
 import 'package:easy_moni/utils/widgets/app_state_view.dart';
@@ -118,13 +117,12 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
   }
 
   void _handleJsMessage(JavaScriptMessage message) {
-    AppLogger.debug('Payment H5 message: ${message.message}');
     if (message.message == _goHomeMessage) {
       context.go(
         AppRoutePaths.homeWithTab(AppHomeTabs.loan, refreshLoanHome: true),
       );
     } else {
-      AppLogger.debug('Unsupported payment H5 message: ${message.message}');
+      return;
     }
   }
 }

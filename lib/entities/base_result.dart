@@ -1,5 +1,3 @@
-import 'package:easy_moni/core/utils/app_logger.dart';
-
 class BaseResult<T> {
   final int code;
   final String? message;
@@ -22,16 +20,11 @@ class BaseResult<T> {
       try {
         parsedData = fromJsonT(data);
       } catch (e) {
-        AppLogger.debug('BaseResult.fromJson callback error: $e');
         parsedData = data as T?;
       }
     } else {
       parsedData = data as T?;
     }
-
-    AppLogger.debug(
-      'BaseResult: code=$code, message=$message, data=$data, parsedData=$parsedData',
-    );
 
     return BaseResult(code: code, message: message, data: parsedData);
   }

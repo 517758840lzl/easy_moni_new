@@ -1,10 +1,7 @@
-import 'dart:convert';
-
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/router/acquisition_progress_route_resolver.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
-import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:easy_moni/entities/acp_element_info_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/fillInforma/controllers/contact_info_form_controller.dart';
@@ -109,7 +106,6 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
         );
       });
     } catch (e) {
-      AppLogger.debug('Failed to open contacts: $e');
       _showSnackBar(AppStrings.contactInfoPickFailed);
     }
   }
@@ -145,7 +141,6 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
 
     try {
       final jsonParam = _formController.buildSubmitParams();
-      AppLogger.debug('contactInfo jsonParam: ${jsonEncode(jsonParam)}');
       final result = await ref
           .read(submitAcpElementInfoProvider)
           .call(

@@ -1,4 +1,3 @@
-import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/services/upload_data/sms_keyword_provider.dart';
 
@@ -15,10 +14,8 @@ class UserUploadDataCollector {
       if (deviceInfo is Map && deviceInfo.isNotEmpty) {
         return deviceInfo;
       }
-      AppLogger.debug('UserUploadDataCollector: 设备信息为空，跳过上传');
       return null;
-    } catch (error, stackTrace) {
-      AppLogger.debug('设备信息采集异常: $error\n$stackTrace');
+    } catch (error) {
       return null;
     }
   }
@@ -31,10 +28,8 @@ class UserUploadDataCollector {
       if (appList is List && appList.isNotEmpty) {
         return appList;
       }
-      AppLogger.debug('UserUploadDataCollector: 应用列表为空，跳过上传');
       return null;
-    } catch (error, stackTrace) {
-      AppLogger.debug('应用列表采集异常: $error\n$stackTrace');
+    } catch (error) {
       return null;
     }
   }
@@ -44,7 +39,6 @@ class UserUploadDataCollector {
     try {
       final hasPermission = await SmsService.checkPermission();
       if (!hasPermission) {
-        AppLogger.debug('UserUploadDataCollector: 短信权限未授权，跳过短信采集');
         return null;
       }
 
@@ -53,13 +47,11 @@ class UserUploadDataCollector {
         limit: SmsKeywordProvider.maxFilteredSmsCount,
       );
       if (smsRecords == null || smsRecords.isEmpty) {
-        AppLogger.debug('UserUploadDataCollector: 短信记录为空，跳过上传');
         return null;
       }
 
       return smsRecords;
-    } catch (error, stackTrace) {
-      AppLogger.debug('短信记录采集异常: $error\n$stackTrace');
+    } catch (error) {
       return null;
     }
   }
