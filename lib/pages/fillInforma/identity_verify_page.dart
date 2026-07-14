@@ -13,7 +13,7 @@ import 'package:easy_moni/pages/fillInforma/providers/submit_acp_element_info_pr
 import 'package:easy_moni/pages/fillInforma/widgets/identity_verify_widgets.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/picker_bottom_sheet.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/progress_information.dart';
-import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
+import 'package:easy_moni/pages/loan/components/loan_rounded_page.dart';
 import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/utils/widgets/common_bottom_sheet.dart';
 import 'package:easy_moni/utils/widgets/limit_toast.dart';
@@ -766,7 +766,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   @override
   Widget build(BuildContext context) {
     return FundingLimitPopScope(
-      child: LoanRoundedPageShell(
+      child: LoanRoundedPage(
         contentTop: _contentTop,
         contentTopRadius: 12,
         backgroundColor: AppColors.primaryDark,

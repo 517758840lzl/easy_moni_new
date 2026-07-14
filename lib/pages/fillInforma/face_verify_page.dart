@@ -9,7 +9,7 @@ import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/fillInforma/models/face_verify_action_config.dart';
 import 'package:easy_moni/pages/fillInforma/models/face_verify_capture_result.dart';
 import 'package:easy_moni/pages/fillInforma/providers/upload_file_provider.dart';
-import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
+import 'package:easy_moni/pages/loan/components/loan_rounded_page.dart';
 import 'package:easy_moni/pages/login/providers/auth_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -556,7 +556,7 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
 
   @override
   Widget build(BuildContext context) {
-    return LoanRoundedPageShell(
+    return LoanRoundedPage(
       contentTop: (context) => MediaQuery.of(context).padding.top + 51,
       contentTopRadius: 0,
       backgroundColor: AppColors.primaryDark,

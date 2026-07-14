@@ -68,14 +68,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutePaths.home,
-        name: AppRouteNames.homeShell,
+        name: AppRouteNames.homeNavBar,
         builder: (context, state) {
           final initialTab =
               state.uri.queryParameters['tab'] ?? AppHomeTabs.loan;
           final tabRequestId = state.uri.queryParameters['tabRequestId'] ?? '';
           final loanHomeRefreshRequestId =
               state.uri.queryParameters['loanHomeRefreshRequestId'] ?? '';
-          return HomeShell(
+          return HomeNavBar(
             initialTab: initialTab,
             tabRequestId: tabRequestId,
             loanHomeRefreshRequestId: loanHomeRefreshRequestId,

@@ -11,7 +11,7 @@ import 'package:easy_moni/pages/fillInforma/utils/form_entry_input_type_helper.d
 import 'package:easy_moni/pages/fillInforma/widgets/personal_info_form_item.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/picker_bottom_sheet.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/progress_information.dart';
-import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
+import 'package:easy_moni/pages/loan/components/loan_rounded_page.dart';
 import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/utils/widgets/limit_toast.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
@@ -196,7 +196,7 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
   @override
   Widget build(BuildContext context) {
     return FundingLimitPopScope(
-      child: LoanRoundedPageShell(
+      child: LoanRoundedPage(
         contentTop: _contentTop,
         contentTopRadius: 12,
         backgroundColor: AppColors.primaryDark,

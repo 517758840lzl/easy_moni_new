@@ -2,7 +2,7 @@ import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/entities/repay/repay_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
-import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
+import 'package:easy_moni/pages/loan/components/loan_rounded_page.dart';
 import 'package:easy_moni/pages/repay/components/repay_bill_card.dart';
 import 'package:easy_moni/pages/repay/components/total_repay_amount_display.dart';
 import 'package:easy_moni/pages/repay/providers/repay_list_provider.dart';
@@ -14,7 +14,9 @@ import 'package:go_router/go_router.dart';
 
 /// 还款入口页，展示待还总额、待还账单列表和底部全部还款操作。
 class RepayEntryPage extends ConsumerStatefulWidget {
-  const RepayEntryPage({super.key});
+  const RepayEntryPage({super.key, this.refreshRequestId = ''});
+
+  final String refreshRequestId;
 
   @override
   ConsumerState<RepayEntryPage> createState() => _RepayEntryPageState();
@@ -23,6 +25,21 @@ class RepayEntryPage extends ConsumerStatefulWidget {
 class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
   final Set<String> _selectedBillKeys = <String>{};
   String _billListSignature = '';
+
+  @override
+  void didUpdateWidget(covariant RepayEntryPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.refreshRequestId.isEmpty ||
+        widget.refreshRequestId == oldWidget.refreshRequestId) {
+      return;
+    }
+
+    final refreshRequestId = widget.refreshRequestId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || widget.refreshRequestId != refreshRequestId) return;
+      ref.refresh(repayEntryBillsProvider.future).ignore();
+    });
+  }
 
   double _totalAmount(List<RepayResp> bills) {
     return bills.fold<double>(0, (sum, bill) => sum + (bill.repayAmount ?? 0));
@@ -108,7 +125,7 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
       loading: () => const CircularProgressIndicator(),
     );
 
-    return LoanRoundedPageShell(
+    return LoanRoundedPage(
       contentTop: (_) => topInset + (showTotalAmount ? 113 : 52),
       contentTopRadius: 16,
       backgroundDecoration: BoxDecoration(

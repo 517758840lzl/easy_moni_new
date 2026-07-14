@@ -3,7 +3,7 @@ import 'package:easy_moni/core/network/http_provider.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
-import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
+import 'package:easy_moni/pages/loan/components/loan_rounded_page.dart';
 import 'package:easy_moni/pages/mine/providers/delete_account_provider.dart';
 import 'package:easy_moni/utils/widgets/toast.dart';
 import 'package:flutter/material.dart';
@@ -79,7 +79,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Widget build(BuildContext context) {
     final topInset = MediaQuery.of(context).padding.top;
 
-    return LoanRoundedPageShell(
+    return LoanRoundedPage(
       contentTop: (_) => topInset + 64,
       contentTopRadius: 16,
       backgroundColor: AppColors.primaryDark,

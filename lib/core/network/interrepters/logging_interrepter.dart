@@ -16,6 +16,9 @@ class LoggingInterrepter extends Interceptor {
     if (options.data != null) {
       log.writeln('► Body: ${_formatJson(options.data)}');
     }
+    // TODO: 调试完成后删除。
+    // ignore: avoid_print
+    print(log.toString());
     takler.debug(log.toString());
     handler.next(options);
   }

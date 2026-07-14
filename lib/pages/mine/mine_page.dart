@@ -4,7 +4,7 @@ import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:easy_moni/entities/repay/repay_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
-import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
+import 'package:easy_moni/pages/loan/components/loan_rounded_page.dart';
 import 'package:easy_moni/pages/mine/components/mine_menu_section.dart';
 import 'package:easy_moni/pages/mine/components/pending_repay_card.dart';
 import 'package:easy_moni/pages/mine/providers/sign_out_provider.dart';
@@ -17,7 +17,9 @@ import 'package:go_router/go_router.dart';
 
 /// 我的页面，负责用户信息加载、入口事件和页面结构组装。
 class MinePage extends ConsumerStatefulWidget {
-  const MinePage({super.key});
+  const MinePage({super.key, this.refreshRequestId = ''});
+
+  final String refreshRequestId;
 
   @override
   ConsumerState<MinePage> createState() => _MinePageState();
@@ -27,6 +29,7 @@ class _MinePageState extends ConsumerState<MinePage> {
   String _userName = '';
   String _userPhone = '';
   bool _isUserInfoLoading = true;
+  int _userInfoRequestVersion = 0;
 
   @override
   void initState() {
@@ -35,9 +38,10 @@ class _MinePageState extends ConsumerState<MinePage> {
   }
 
   Future<void> _loadUserInfo() async {
+    final requestVersion = ++_userInfoRequestVersion;
     try {
       final result = await ref.read(userInfoProvider).call();
-      if (!mounted) return;
+      if (!mounted || requestVersion != _userInfoRequestVersion) return;
 
       if (result.isSuccess && result.data != null) {
         final userInfo = result.data!;
@@ -47,14 +51,30 @@ class _MinePageState extends ConsumerState<MinePage> {
         });
       } else {}
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || requestVersion != _userInfoRequestVersion) return;
     } finally {
-      if (mounted) {
+      if (mounted && requestVersion == _userInfoRequestVersion) {
         setState(() {
           _isUserInfoLoading = false;
         });
       }
     }
+  }
+
+  @override
+  void didUpdateWidget(covariant MinePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.refreshRequestId.isEmpty ||
+        widget.refreshRequestId == oldWidget.refreshRequestId) {
+      return;
+    }
+
+    final refreshRequestId = widget.refreshRequestId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || widget.refreshRequestId != refreshRequestId) return;
+      _loadUserInfo();
+      ref.refresh(repayEntryBillsProvider.future).ignore();
+    });
   }
 
   void _onRepayTap(List<RepayResp> pendingRepayOrders) {
@@ -155,7 +175,7 @@ class _MinePageState extends ConsumerState<MinePage> {
 
     return Stack(
       children: [
-        LoanRoundedPageShell(
+        LoanRoundedPage(
           contentTop: (_) => topInset + 212,
           contentTopRadius: 16,
           backgroundColor: AppColors.primaryDark,

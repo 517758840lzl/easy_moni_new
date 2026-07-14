@@ -9,7 +9,7 @@ import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/loan/components/coupon_bottom_sheet_loader.dart';
 import 'package:easy_moni/pages/loan/components/coupon_entry_card.dart';
 import 'package:easy_moni/pages/loan/components/loan_order_card.dart';
-import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
+import 'package:easy_moni/pages/loan/components/loan_rounded_page.dart';
 import 'package:easy_moni/pages/loan/providers/coupon_provider.dart';
 import 'package:easy_moni/pages/repay/components/overdue_badge.dart';
 import 'package:easy_moni/pages/repay/components/total_repay_amount_display.dart';
@@ -61,7 +61,7 @@ class _RepayOrderDetailPageState extends ConsumerState<RepayOrderDetailPage> {
         detail?.isExtensionSwitch == true && _firstOrder(detail) != null;
     final isActionReady = detail != null;
 
-    return LoanRoundedPageShell(
+    return LoanRoundedPage(
       contentTop: (_) => topInset + 138,
       contentTopRadius: 16,
       backgroundDecoration: BoxDecoration(

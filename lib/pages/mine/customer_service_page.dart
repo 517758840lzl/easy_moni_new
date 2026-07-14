@@ -4,7 +4,7 @@ import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:easy_moni/entities/service/service_info_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
-import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
+import 'package:easy_moni/pages/loan/components/loan_rounded_page.dart';
 import 'package:easy_moni/pages/mine/providers/customer_service_provider.dart';
 import 'package:easy_moni/services/external_source.dart';
 import 'package:easy_moni/services/platform_service.dart';
@@ -75,7 +75,7 @@ class _CustomerServiceTextPage extends StatelessWidget {
     final detail = data.appCustomerServiceInfo;
     final contacts = _CustomerServiceContact.fromDetail(detail);
 
-    return LoanRoundedPageShell(
+    return LoanRoundedPage(
       contentTop: (_) => topInset + 64,
       contentTopRadius: 16,
       backgroundColor: AppColors.primaryDark,

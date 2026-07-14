@@ -2,7 +2,7 @@ import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/loan/components/loan_order_detail_cards.dart';
-import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
+import 'package:easy_moni/pages/loan/components/loan_rounded_page.dart';
 import 'package:easy_moni/pages/loan/models/loan_order_detail_data.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +20,7 @@ class LoanOrderDetailPage extends StatelessWidget {
     final canRepay = data.statusCode == 4;
     final hasRepayOrderId = data.appOrderId.isNotEmpty;
 
-    return LoanRoundedPageShell(
+    return LoanRoundedPage(
       contentTop: (_) => topInset + 114,
       contentTopRadius: 12,
       backgroundDecoration: BoxDecoration(

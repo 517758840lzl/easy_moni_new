@@ -10,7 +10,7 @@ import 'package:easy_moni/pages/fillInforma/models/face_verify_capture_result.da
 import 'package:easy_moni/pages/fillInforma/providers/acp_element_info_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/submit_acp_element_info_provider.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/progress_information.dart';
-import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
+import 'package:easy_moni/pages/loan/components/loan_rounded_page.dart';
 import 'package:easy_moni/pages/mine/providers/user_info_provider.dart';
 import 'package:easy_moni/utils/widgets/limit_toast.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
@@ -190,7 +190,7 @@ class _FaceVerifyEntryPageState extends ConsumerState<FaceVerifyEntryPage> {
   @override
   Widget build(BuildContext context) {
     return FundingLimitPopScope(
-      child: LoanRoundedPageShell(
+      child: LoanRoundedPage(
         contentTop: _contentTop,
         contentTopRadius: 12,
         backgroundColor: AppColors.primaryDark,

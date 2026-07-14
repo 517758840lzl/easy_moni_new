@@ -2,7 +2,7 @@ import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/entities/order_list_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
-import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
+import 'package:easy_moni/pages/loan/components/loan_rounded_page.dart';
 import 'package:easy_moni/pages/loan/models/loan_order_detail_data.dart';
 import 'package:easy_moni/pages/mine/components/mine_order_summary_card.dart';
 import 'package:easy_moni/pages/mine/providers/mine_order_history_provider.dart';
@@ -86,7 +86,7 @@ class _MineOrderHistoryPageState extends ConsumerState<MineOrderHistoryPage> {
   Widget build(BuildContext context) {
     final topInset = MediaQuery.of(context).padding.top;
 
-    return LoanRoundedPageShell(
+    return LoanRoundedPage(
       contentTop: (_) => topInset + 108,
       contentTopRadius: 12,
       backgroundDecoration: const BoxDecoration(

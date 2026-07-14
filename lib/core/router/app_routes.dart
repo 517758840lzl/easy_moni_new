@@ -82,7 +82,7 @@ class AppRoutePaths {
   }
 }
 
-/// 首页底部导航 tab 标识，避免跨页面跳转时依赖 HomeShell 的历史状态。
+/// 首页底部导航 tab 标识，避免跨页面跳转时依赖 HomeNavBar 的历史状态。
 class AppHomeTabs {
   static const String loan = 'loan';
   static const String repay = 'repay';
@@ -97,7 +97,7 @@ class AppRouteNames {
   static const String permission = 'permission';
   static const String login = 'login';
   static const String customerService = 'customerService';
-  static const String homeShell = 'homeShell';
+  static const String homeNavBar = 'homeNavBar';
   static const String idCamera = 'idcamera';
   static const String orderDetail = 'orderDetail';
   static const String repayEntry = 'repayEntry';

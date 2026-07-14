@@ -113,7 +113,7 @@ class EnvironmentConfigs {
     referrer: '',
     userAgent: '',
     onlyLogin: 0,
-    enableNetworkLog: false,
+    enableNetworkLog: true,
   );
 
   static EnvironmentConfig get current => production;

@@ -14,8 +14,19 @@ final reviewAccountHomeProvider = FutureProvider.autoDispose<bool>((ref) {
   return AuthStorage.isReviewAccount();
 });
 
-class HomeShell extends ConsumerStatefulWidget {
-  const HomeShell({
+const _tabRefreshInterval = Duration(seconds: 5);
+
+@visibleForTesting
+bool isHomeTabRefreshDue({
+  required DateTime? lastRefreshTime,
+  required DateTime now,
+}) {
+  return lastRefreshTime == null ||
+      now.difference(lastRefreshTime) >= _tabRefreshInterval;
+}
+
+class HomeNavBar extends ConsumerStatefulWidget {
+  const HomeNavBar({
     super.key,
     this.initialTab = AppHomeTabs.loan,
     this.tabRequestId = '',
@@ -27,30 +38,40 @@ class HomeShell extends ConsumerStatefulWidget {
   final String loanHomeRefreshRequestId;
 
   @override
-  ConsumerState<HomeShell> createState() => _HomeShellState();
+  ConsumerState<HomeNavBar> createState() => _HomeNavBarState();
 }
 
-class _HomeShellState extends ConsumerState<HomeShell> {
+class _HomeNavBarState extends ConsumerState<HomeNavBar> {
   late int _currentIndex = _tabIndex(widget.initialTab);
   final Set<int> _visitedTabIndexes = <int>{};
+  final Map<int, DateTime> _lastTabRefreshTimes = <int, DateTime>{};
+  final Map<int, String> _tabRefreshRequestIds = <int, String>{};
 
   @override
   void initState() {
     super.initState();
     _visitedTabIndexes.add(_currentIndex);
+    _lastTabRefreshTimes[_currentIndex] = DateTime.now();
   }
 
   @override
-  void didUpdateWidget(covariant HomeShell oldWidget) {
+  void didUpdateWidget(covariant HomeNavBar oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.initialTab == widget.initialTab &&
-        oldWidget.tabRequestId == widget.tabRequestId) {
+        oldWidget.tabRequestId == widget.tabRequestId &&
+        oldWidget.loanHomeRefreshRequestId == widget.loanHomeRefreshRequestId) {
       return;
     }
 
+    final now = DateTime.now();
     setState(() {
       _currentIndex = _tabIndex(widget.initialTab);
       _visitedTabIndexes.add(_currentIndex);
+      _lastTabRefreshTimes.putIfAbsent(_currentIndex, () => now);
+      if (oldWidget.loanHomeRefreshRequestId !=
+          widget.loanHomeRefreshRequestId) {
+        _lastTabRefreshTimes[0] = now;
+      }
     });
   }
 
@@ -135,9 +156,25 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
     return GestureDetector(
       onTap: () {
+        if (_currentIndex == index) return;
+
+        final now = DateTime.now();
+        final isFirstVisit = !_visitedTabIndexes.contains(index);
+        final lastRefreshTime = _lastTabRefreshTimes[index];
+        final shouldRefresh =
+            !isFirstVisit &&
+            isHomeTabRefreshDue(lastRefreshTime: lastRefreshTime, now: now);
+
         setState(() {
           _currentIndex = index;
           _visitedTabIndexes.add(index);
+          if (isFirstVisit || shouldRefresh) {
+            _lastTabRefreshTimes[index] = now;
+          }
+          if (shouldRefresh) {
+            _tabRefreshRequestIds[index] = now.microsecondsSinceEpoch
+                .toString();
+          }
         });
       },
       behavior: HitTestBehavior.opaque,
@@ -170,21 +207,22 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   Widget _buildPage(int index, AsyncValue<bool> reviewAccountAsync) {
     switch (index) {
       case 0:
+        final refreshRequestId = [
+          widget.loanHomeRefreshRequestId,
+          _tabRefreshRequestIds[0],
+        ].join(':');
         // 根据登录接口 cacheData 字段选择贷款首页，审核账号展示审核员版本。
         return reviewAccountAsync.when(
           data: (isReviewAccount) => isReviewAccount
-              ? LoanHomeReviewPage(
-                  refreshRequestId: widget.loanHomeRefreshRequestId,
-                )
-              : LoanHomePage(refreshRequestId: widget.loanHomeRefreshRequestId),
-          error: (_, _) =>
-              LoanHomePage(refreshRequestId: widget.loanHomeRefreshRequestId),
+              ? LoanHomeReviewPage(refreshRequestId: refreshRequestId)
+              : LoanHomePage(refreshRequestId: refreshRequestId),
+          error: (_, _) => LoanHomePage(refreshRequestId: refreshRequestId),
           loading: () => const _HomeTabLoadingPage(),
         );
       case 1:
-        return const RepayEntryPage();
+        return RepayEntryPage(refreshRequestId: _tabRefreshRequestIds[1] ?? '');
       case 2:
-        return const MinePage();
+        return MinePage(refreshRequestId: _tabRefreshRequestIds[2] ?? '');
       default:
         return const SizedBox.shrink();
     }

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Shared rounded page shell for loan flows.
+/// Shared rounded page layout for loan flows.
 ///
 /// Handles only the background, header, and rounded white content area.
-class LoanRoundedPageShell extends StatelessWidget {
-  const LoanRoundedPageShell({
+class LoanRoundedPage extends StatelessWidget {
+  const LoanRoundedPage({
     super.key,
     required this.header,
     required this.content,

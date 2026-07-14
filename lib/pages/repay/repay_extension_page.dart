@@ -6,7 +6,7 @@ import 'package:easy_moni/entities/repay/repay_extension_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/loan/components/coupon_bottom_sheet_loader.dart';
 import 'package:easy_moni/pages/loan/components/coupon_entry_card.dart';
-import 'package:easy_moni/pages/loan/components/loan_page_shell.dart';
+import 'package:easy_moni/pages/loan/components/loan_rounded_page.dart';
 import 'package:easy_moni/pages/loan/providers/coupon_provider.dart';
 import 'package:easy_moni/pages/repay/components/total_repay_amount_display.dart';
 import 'package:easy_moni/pages/repay/models/payment_request_params.dart';
@@ -50,7 +50,7 @@ class _RepayExtensionPageState extends ConsumerState<RepayExtensionPage> {
       loading: () => null,
     );
 
-    return LoanRoundedPageShell(
+    return LoanRoundedPage(
       contentTop: (_) => topInset + 140,
       contentTopRadius: 16,
       backgroundDecoration: BoxDecoration(
