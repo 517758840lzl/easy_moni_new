@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:easy_moni/core/constants/app_strings.dart';
-import 'package:easy_moni/core/utils/app_logger.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/id_camera_widgets.dart';
 import 'package:easy_moni/utils/widgets/cardmask.dart';
