@@ -57,25 +57,33 @@ class _MineOrderHistoryPageState extends ConsumerState<MineOrderHistoryPage> {
       });
     }
 
-    final result = await ref.read(mineOrderHistoryApiProvider).call();
+    try {
+      final result = await ref.read(mineOrderHistoryApiProvider).call();
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (result.isSuccess) {
+      if (result.isSuccess) {
+        setState(() {
+          _ordersByTab = MineOrderHistoryTabs.groupOrdersByTab(
+            result.data ?? const <OrderListItem>[],
+          );
+          _isLoading = false;
+          _loadError = '';
+        });
+        return;
+      }
+
       setState(() {
-        _ordersByTab = MineOrderHistoryTabs.groupOrdersByTab(
-          result.data ?? const <OrderListItem>[],
-        );
         _isLoading = false;
-        _loadError = '';
+        _loadError = result.message ?? AppStrings.mineOrderHistoryLoadFailed;
       });
-      return;
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _loadError = AppStrings.mineOrderHistoryLoadFailed;
+      });
     }
-
-    setState(() {
-      _isLoading = false;
-      _loadError = result.message ?? AppStrings.mineOrderHistoryLoadFailed;
-    });
   }
 
   Future<void> _refreshOrders() async {

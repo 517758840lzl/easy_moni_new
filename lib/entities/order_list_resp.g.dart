@@ -24,10 +24,10 @@ Map<String, dynamic> _$OrderListRespToJson(_OrderListResp instance) =>
 
 _OrderListItem _$OrderListItemFromJson(Map<String, dynamic> json) =>
     _OrderListItem(
-      appOrderId: json['appOrderId'] as String?,
+      appOrderId: _nullableStringFromJson(json['appOrderId']),
       applicationTime: json['applicationTime'] as String?,
       productSetCode: json['productSetCode'] as String?,
-      productLevel: json['productLevel'] as String?,
+      productLevel: _nullableStringFromJson(json['productLevel']),
       orderStatus: (json['orderStatus'] as num?)?.toInt(),
       orderStatusStr: json['orderStatusStr'] as String?,
       repayAmount: json['repayAmount'] as num?,
@@ -45,7 +45,7 @@ _OrderListItem _$OrderListItemFromJson(Map<String, dynamic> json) =>
       repaidAmount: json['repaidAmount'] as num?,
       bankCardNo: json['bankCardNo'] as String?,
       bankCardName: json['bankCardName'] as String?,
-      bankCardType: json['bankCardType'] as String?,
+      bankCardType: _nullableStringFromJson(json['bankCardType']),
       updateTime: json['updateTime'] as String?,
       createTime: json['createTime'] as String?,
       effectiveTime: json['effectiveTime'] as String?,

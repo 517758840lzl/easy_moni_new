@@ -3,6 +3,11 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'order_list_resp.freezed.dart';
 part 'order_list_resp.g.dart';
 
+String? _nullableStringFromJson(dynamic value) {
+  if (value == null) return null;
+  return value.toString();
+}
+
 @freezed
 abstract class OrderListResp with _$OrderListResp {
   const factory OrderListResp({
@@ -18,10 +23,12 @@ abstract class OrderListResp with _$OrderListResp {
 @freezed
 abstract class OrderListItem with _$OrderListItem {
   const factory OrderListItem({
-    @JsonKey(name: 'appOrderId') String? appOrderId,
+    @JsonKey(name: 'appOrderId', fromJson: _nullableStringFromJson)
+    String? appOrderId,
     @JsonKey(name: 'applicationTime') String? applicationTime,
     @JsonKey(name: 'productSetCode') String? productSetCode,
-    @JsonKey(name: 'productLevel') String? productLevel,
+    @JsonKey(name: 'productLevel', fromJson: _nullableStringFromJson)
+    String? productLevel,
     @JsonKey(name: 'orderStatus') int? orderStatus,
     @JsonKey(name: 'orderStatusStr') String? orderStatusStr,
     @JsonKey(name: 'repayAmount') num? repayAmount,
@@ -39,7 +46,8 @@ abstract class OrderListItem with _$OrderListItem {
     @JsonKey(name: 'repaidAmount') num? repaidAmount,
     @JsonKey(name: 'bankCardNo') String? bankCardNo,
     @JsonKey(name: 'bankCardName') String? bankCardName,
-    @JsonKey(name: 'bankCardType') String? bankCardType,
+    @JsonKey(name: 'bankCardType', fromJson: _nullableStringFromJson)
+    String? bankCardType,
     @JsonKey(name: 'updateTime') String? updateTime,
     @JsonKey(name: 'createTime') String? createTime,
     @JsonKey(name: 'effectiveTime') String? effectiveTime,
