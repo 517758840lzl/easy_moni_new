@@ -277,7 +277,23 @@ class ContactInfoFormController {
   }
 
   String _normalizeContactPhone(String phoneNumber) {
-    return phoneNumber.trim().replaceAll(RegExp(r'\D'), '');
+    var digits = phoneNumber.trim().replaceAll(RegExp(r'\D'), '');
+    if (digits.isEmpty) return '';
+
+    // 去掉 +233 / 233 国家码，只保留本地号码。
+    if (digits.startsWith('233') && digits.length > 9) {
+      digits = digits.substring(3);
+    }
+
+    if (!digits.startsWith('0')) {
+      digits = '0$digits';
+    }
+
+    if (digits.length > 10) {
+      digits = digits.substring(0, 10);
+    }
+
+    return digits;
   }
 
   String _formatContactDisplay(String name, String phone) {

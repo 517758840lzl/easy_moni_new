@@ -12,6 +12,7 @@ import 'package:easy_moni/core/utils/request_security_util.dart';
 import 'package:easy_moni/entities/base_result.dart';
 import 'package:easy_moni/services/auth_storage.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:talker/talker.dart';
 
@@ -45,10 +46,9 @@ class HttpProvider {
     final headerInterceptor = HeaderInterrepter(config);
 
     dio.interceptors.add(headerInterceptor);
-    // 交付注释
-    // if (config.enableNetworkLog) {
-    //   dio.interceptors.add(LoggingInterrepter(takler: talker));
-    // }
+    if (kDebugMode && config.enableNetworkLog) {
+      dio.interceptors.add(LoggingInterrepter(takler: talker));
+    }
 
     instance = HttpProvider._(
       dio: dio,
