@@ -30,7 +30,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/router/app_route_extra_codec.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
-import 'package:easy_moni/pages/login/permission_page.dart';
 import 'package:easy_moni/pages/login/splash_page.dart';
 import 'package:easy_moni/pages/login/login_page.dart';
 import 'package:easy_moni/pages/home/homesell.dart';
@@ -50,11 +49,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutePaths.root,
         name: AppRouteNames.splash,
         builder: (context, state) => const SplashPage(),
-      ),
-      GoRoute(
-        path: AppRoutePaths.permission,
-        name: AppRouteNames.permission,
-        builder: (context, state) => const PermissionPage(),
       ),
       GoRoute(
         path: AppRoutePaths.login,

@@ -109,8 +109,12 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
     if (_isSubmitting) return;
 
     // 提交前确认用户已经授予短信读取权限；未授权时先展示隐私说明并引导去系统设置。
-    final hasSmsPermission = await SmsService.checkPermission();
+    var hasSmsPermission = await SmsService.checkPermission();
     if (!mounted) return;
+    if (!hasSmsPermission) {
+      hasSmsPermission = await SmsService.requestPermission();
+      if (!mounted) return;
+    }
     if (!hasSmsPermission) {
       await _showSmsPermissionSheet();
       return;

@@ -37,7 +37,7 @@ class _SplashPageState extends State<SplashPage> {
     await Future<void>.delayed(_displayDuration);
     if (!mounted) return;
 
-    context.go(AppRoutePaths.permission);
+    context.go(AppRoutePaths.login);
   }
 
   @override

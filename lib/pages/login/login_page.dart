@@ -49,7 +49,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     _codeFocusNode = FocusNode();
     _phoneController.addListener(_onPhoneChanged);
     _codeController.addListener(_onCodeChanged);
+    unawaited(_initializeTracking());
     unawaited(_routeBySavedSession());
+  }
+
+  Future<void> _initializeTracking() async {
+    try {
+      await AppsFlyerTracker.initializeAppsFlyerTracker();
+      await AppsFlyerTracker.logAppsFlyerFirstOpenIfNeeded();
+    } catch (_) {}
   }
 
   @override

@@ -6,6 +6,7 @@ import 'package:camera/camera.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:easy_moni/entities/startup_config_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
+import 'package:easy_moni/pages/fillInforma/face_capture/face_detection_service.dart';
 import 'package:easy_moni/pages/fillInforma/models/face_verify_action_config.dart';
 import 'package:easy_moni/pages/fillInforma/models/face_verify_capture_result.dart';
 import 'package:easy_moni/pages/fillInforma/providers/upload_file_provider.dart';
@@ -16,8 +17,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 
-import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
-
 /// 人脸活体采集页，负责相机预览、动作识别和最终照片上传。
 class FaceVerifyPage extends ConsumerStatefulWidget {
   const FaceVerifyPage({super.key});
@@ -26,24 +25,9 @@ class FaceVerifyPage extends ConsumerStatefulWidget {
   ConsumerState<FaceVerifyPage> createState() => _FaceVerifyPageState();
 }
 
-/// 维护相机、MLKit 检测和页面展示状态。
+/// 维护相机、人脸检测和页面展示状态。
 class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
-  static const Map<DeviceOrientation, int> _orientations = {
-    DeviceOrientation.portraitUp: 0,
-    DeviceOrientation.landscapeLeft: 90,
-    DeviceOrientation.portraitDown: 180,
-    DeviceOrientation.landscapeRight: 270,
-  };
-
-  final FaceDetector _faceDetector = FaceDetector(
-    options: FaceDetectorOptions(
-      performanceMode: FaceDetectorMode.accurate,
-      enableClassification: true,
-      enableLandmarks: true,
-      enableTracking: true,
-      minFaceSize: 0.15,
-    ),
-  );
+  final FaceDetectionService _faceDetectionService = FaceDetectionService.create();
 
   CameraController? _cameraController;
   StartupConfigResp? _startupConfig;
@@ -81,13 +65,15 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
   void dispose() {
     _cancelActionTimeout();
     unawaited(_releaseCameraController());
-    unawaited(_faceDetector.close());
+    unawaited(_faceDetectionService.dispose());
     super.dispose();
   }
 
   /// 初始化后端活体配置和前置摄像头。
   Future<void> _initialize() async {
     try {
+      await _faceDetectionService.init();
+
       final configResult = await ref.read(startupConfigProvider).call();
       if (!mounted) return;
 
@@ -210,22 +196,23 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
       return;
     }
 
-    final inputImage = _inputImageFromCameraImage(image);
-    if (inputImage == null) return;
-
     _isProcessingImage = true;
     try {
-      final faces = await _faceDetector.processImage(inputImage);
+      final faces = await _faceDetectionService.processCameraImage(
+        image,
+        _cameraController!.description,
+      );
       if (!mounted || _hasActionTimedOut || faces.isEmpty) {
         _resetActionProgress();
         return;
       }
 
-      final face = faces.first;
-      if (faces.length != 1 || !_isFaceCentered(face)) {
+      if (faces.length != 1) {
         _resetActionProgress();
         return;
       }
+
+      final face = faces.first;
 
       if (!_allActionsCompleted) {
         final currentStep = _livenessSteps[_currentStepIndex];
@@ -261,39 +248,27 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     }
   }
 
-  bool _isFaceCentered(Face face) {
-    final controller = _cameraController;
-    if (controller == null || !controller.value.isInitialized) return false;
-    final previewSize = controller.value.previewSize;
-    if (previewSize == null) return true;
-
-    final centerX = face.boundingBox.center.dx / previewSize.height;
-    final centerY = face.boundingBox.center.dy / previewSize.width;
-
-    return centerX > 0.25 && centerX < 0.75 && centerY > 0.2 && centerY < 0.8;
-  }
-
-  bool _matchesStep(Face face, FaceLivenessStep step) {
+  bool _matchesStep(DetectedFace face, FaceLivenessStep step) {
     if (step.action == FaceAction.faceFront) {
       return _isFrontalFace(face);
     }
     if (step.action == FaceAction.nodHead) {
       return _matchesHeadMovement(
-        angle: face.headEulerAngleX ?? 0,
+        angle: face.headPitch ?? 0,
         startDirection: _nodStartDirection,
         saveStartDirection: (direction) => _nodStartDirection = direction,
       );
     }
     if (step.action == FaceAction.shakeHead) {
       return _matchesHeadMovement(
-        angle: face.headEulerAngleY ?? 0,
+        angle: face.headYaw ?? 0,
         startDirection: _shakeStartDirection,
         saveStartDirection: (direction) => _shakeStartDirection = direction,
       );
     }
     if (step.action == FaceAction.blink) {
-      final left = face.leftEyeOpenProbability ?? 1;
-      final right = face.rightEyeOpenProbability ?? 1;
+      final left = face.leftEyeOpen ?? 1;
+      final right = face.rightEyeOpen ?? 1;
       if (left < 0.35 && right < 0.35) {
         _blinkClosedDetected = true;
       }
@@ -332,20 +307,10 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
   }
 
   /// 根据嘴部关键点比例判断是否张嘴。
-  bool _isMouthOpen(Face face) {
-    final leftMouth = face.landmarks[FaceLandmarkType.leftMouth]?.position;
-    final rightMouth = face.landmarks[FaceLandmarkType.rightMouth]?.position;
-    final bottomMouth = face.landmarks[FaceLandmarkType.bottomMouth]?.position;
-    if (leftMouth == null || rightMouth == null || bottomMouth == null) {
-      return false;
-    }
-
-    final mouthWidth = (rightMouth.x - leftMouth.x).abs();
-    if (mouthWidth == 0) return false;
-
-    final mouthCenterY = (leftMouth.y + rightMouth.y) / 2;
-    final mouthHeight = (bottomMouth.y - mouthCenterY).abs();
-    return mouthHeight / mouthWidth > 0.26;
+  bool _isMouthOpen(DetectedFace face) {
+    final opening = face.normalizedLipOpening;
+    if (opening == null) return false;
+    return opening > 0.26;
   }
 
   void _resetActionProgress() {
@@ -356,12 +321,12 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     _shakeStartDirection = 0;
   }
 
-  bool _isFrontalFace(Face face) {
-    final x = (face.headEulerAngleX ?? 0).abs();
-    final y = (face.headEulerAngleY ?? 0).abs();
-    final z = (face.headEulerAngleZ ?? 0).abs();
-    final left = face.leftEyeOpenProbability ?? 1;
-    final right = face.rightEyeOpenProbability ?? 1;
+  bool _isFrontalFace(DetectedFace face) {
+    final x = (face.headPitch ?? 0).abs();
+    final y = (face.headYaw ?? 0).abs();
+    final z = (face.headRoll ?? 0).abs();
+    final left = face.leftEyeOpen ?? 1;
+    final right = face.rightEyeOpen ?? 1;
     return x < 8 && y < 8 && z < 8 && left > 0.55 && right > 0.55;
   }
 
@@ -507,51 +472,6 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
         setState(() => _isUploading = false);
       }
     }
-  }
-
-  InputImage? _inputImageFromCameraImage(CameraImage image) {
-    final controller = _cameraController;
-    if (controller == null) return null;
-
-    final camera = controller.description;
-    final sensorOrientation = camera.sensorOrientation;
-    InputImageRotation? rotation;
-
-    if (Platform.isIOS) {
-      rotation = InputImageRotationValue.fromRawValue(sensorOrientation);
-    } else if (Platform.isAndroid) {
-      var rotationCompensation =
-          _orientations[controller.value.deviceOrientation];
-      if (rotationCompensation == null) return null;
-      if (camera.lensDirection == CameraLensDirection.front) {
-        rotationCompensation = (sensorOrientation + rotationCompensation) % 360;
-      } else {
-        rotationCompensation =
-            (sensorOrientation - rotationCompensation + 360) % 360;
-      }
-      rotation = InputImageRotationValue.fromRawValue(rotationCompensation);
-    }
-    if (rotation == null) return null;
-
-    final format = InputImageFormatValue.fromRawValue(image.format.raw);
-    if (format == null ||
-        (Platform.isAndroid && format != InputImageFormat.nv21) ||
-        (Platform.isIOS && format != InputImageFormat.bgra8888)) {
-      return null;
-    }
-
-    if (image.planes.length != 1) return null;
-    final plane = image.planes.first;
-
-    return InputImage.fromBytes(
-      bytes: plane.bytes,
-      metadata: InputImageMetadata(
-        size: Size(image.width.toDouble(), image.height.toDouble()),
-        rotation: rotation,
-        format: format,
-        bytesPerRow: plane.bytesPerRow,
-      ),
-    );
   }
 
   @override

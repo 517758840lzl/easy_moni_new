@@ -1,5 +1,5 @@
-# Uncomment this line to define a global platform for your project
-platform :ios, '15.5'
+platform :ios, '14.0'
+
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
@@ -26,10 +26,59 @@ require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelpe
 
 flutter_ios_podfile_setup
 
+# iOS min 14 + Vision：跳过真实 ML Kit（要求 15.5），改用 local stub 满足 Registrant。
+MLKIT_IOS_SKIP = %w[
+  google_mlkit_commons
+  google_mlkit_face_detection
+].freeze
+
+def flutter_install_plugin_pods(application_path = nil, relative_symlink_dir, platform)
+  application_path ||= File.dirname(defined_in_file.realpath) if respond_to?(:defined_in_file)
+  raise 'Could not find application path' unless application_path
+
+  symlink_dir = File.expand_path(relative_symlink_dir, application_path)
+  system('rm', '-rf', symlink_dir)
+  symlink_plugins_dir = File.expand_path('plugins', symlink_dir)
+  system('mkdir', '-p', symlink_plugins_dir)
+
+  plugins_file = File.join(application_path, '..', '.flutter-plugins-dependencies')
+  dependencies_hash = flutter_parse_plugins_file(plugins_file)
+  plugin_pods = flutter_get_plugins_list(dependencies_hash, platform)
+  swift_package_manager_enabled = flutter_get_swift_package_manager_enabled(dependencies_hash, platform)
+
+  plugin_pods.each do |plugin_hash|
+    plugin_name = plugin_hash['name']
+    plugin_path = plugin_hash['path']
+    has_native_build = plugin_hash.fetch('native_build', true)
+
+    next if platform == 'ios' && MLKIT_IOS_SKIP.include?(plugin_name)
+
+    shared_darwin_source = plugin_hash.fetch('shared_darwin_source', false)
+    platform_directory = shared_darwin_source ? 'darwin' : platform
+    next unless plugin_name && plugin_path && has_native_build
+
+    symlink = File.join(symlink_plugins_dir, plugin_name)
+    File.symlink(plugin_path, symlink)
+
+    relative = flutter_relative_path_from_podfile(symlink)
+
+    swift_package_exists = File.exist?(File.join(relative, platform_directory, plugin_name, 'Package.swift'))
+    next if swift_package_manager_enabled && swift_package_exists
+    next if swift_package_exists && !File.exist?(File.join(relative, platform_directory, "#{plugin_name}.podspec"))
+
+    pod plugin_name, path: File.join(relative, platform_directory)
+  end
+end
+
 target 'Runner' do
   use_frameworks!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+
+  # Stub ML Kit plugins (iOS face → Vision). Keep Android on real ML Kit via pubspec.
+  pod 'google_mlkit_commons', path: 'local_pods/google_mlkit_commons'
+  pod 'google_mlkit_face_detection', path: 'local_pods/google_mlkit_face_detection'
+
   target 'RunnerTests' do
     inherit! :search_paths
   end
@@ -38,5 +87,8 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
+    end
   end
 end

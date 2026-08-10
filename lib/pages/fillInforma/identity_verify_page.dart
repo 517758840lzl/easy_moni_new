@@ -321,6 +321,12 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
       return false;
     }
 
+    final granted = await CameraService.requestPermission();
+    if (!mounted) return false;
+    if (granted) {
+      return true;
+    }
+
     await CameraService.openAppSettings();
     if (!mounted) return false;
 

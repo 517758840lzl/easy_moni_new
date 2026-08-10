@@ -132,6 +132,52 @@ import CoreLocation
           result(FlutterMethodNotImplemented)
         }
       })
+
+      let visionChannel = FlutterMethodChannel(
+        name: "com.easy_moni/face_vision",
+        binaryMessenger: rvc.binaryMessenger
+      )
+      visionChannel.setMethodCallHandler { call, result in
+        switch call.method {
+        case "warmUp":
+          VisionFaceDetector.warmUp()
+          result(nil)
+        case "detectFromFile":
+          guard let args = call.arguments as? [String: Any],
+                let path = args["path"] as? String else {
+            result(FlutterError(code: "bad_args", message: "path required", details: nil))
+            return
+          }
+          DispatchQueue.global(qos: .userInitiated).async {
+            let faces = VisionFaceDetector.detectFromFile(path: path)
+            DispatchQueue.main.async { result(faces) }
+          }
+        case "detectFromBgra":
+          guard let args = call.arguments as? [String: Any],
+                let bytes = args["bytes"] as? FlutterStandardTypedData,
+                let width = args["width"] as? Int,
+                let height = args["height"] as? Int,
+                let bytesPerRow = args["bytesPerRow"] as? Int else {
+            result(FlutterError(code: "bad_args", message: "bgra frame required", details: nil))
+            return
+          }
+          let sensorOrientation = args["sensorOrientation"] as? Int ?? 90
+          let lensFacing = args["lensFacing"] as? String ?? "front"
+          DispatchQueue.global(qos: .userInitiated).async {
+            let faces = VisionFaceDetector.detectFromBgra(
+              bytes: bytes,
+              width: width,
+              height: height,
+              bytesPerRow: bytesPerRow,
+              sensorOrientation: sensorOrientation,
+              lensFacing: lensFacing
+            )
+            DispatchQueue.main.async { result(faces) }
+          }
+        default:
+          result(FlutterMethodNotImplemented)
+        }
+      }
     }
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
