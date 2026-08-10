@@ -1,4 +1,5 @@
 import 'package:easy_moni/core/config/app_environment.dart';
+import 'package:easy_moni/core/device/device_context.dart';
 import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
 
@@ -66,21 +67,40 @@ class EnvironmentConfig {
     final runtimeAttribution =
         await AppsFlyerTracker.getAppsFlyerLoginAttributionData();
     final runtimeAppVersion = await AppInfoService.getVersionCode();
+    final resolvedUserAgent = await DeviceContext.resolveUserAgent();
+
+    String pickString(String? runtime, String fallback) {
+      final value = runtime?.trim();
+      if (value != null && value.isNotEmpty) return value;
+      return fallback;
+    }
 
     return {
-      'afid': runtimeAttribution['afid'] ?? afid,
+      'afid': pickString(runtimeAttribution['afid']?.toString(), afid),
       'appVersion': runtimeAppVersion.isNotEmpty
           ? runtimeAppVersion
           : appVersion,
       'authCode': authCode,
       'clientType': clientType,
-      'deviceId': runtimeAttribution['deviceId'] ?? deviceId ?? defaultDeviceId,
-      'gaid': runtimeAttribution['gaid'] ?? gaid,
-      'mediaSource': runtimeAttribution['mediaSource'] ?? mediaSource,
+      'deviceId': pickString(
+        runtimeAttribution['deviceId']?.toString(),
+        deviceId ?? defaultDeviceId,
+      ),
+      'gaid': pickString(runtimeAttribution['gaid']?.toString(), gaid),
+      'mediaSource': pickString(
+        runtimeAttribution['mediaSource']?.toString(),
+        mediaSource,
+      ),
       'onlyLogin': onlyLogin,
       'phone': phone,
-      'referrer': runtimeAttribution['referrer'] ?? referrer,
-      'userAgent': runtimeAttribution['userAgent'] ?? userAgent,
+      'referrer': pickString(
+        runtimeAttribution['referrer']?.toString(),
+        referrer,
+      ),
+      'userAgent': pickString(
+        runtimeAttribution['userAgent']?.toString(),
+        resolvedUserAgent,
+      ),
     };
   }
 

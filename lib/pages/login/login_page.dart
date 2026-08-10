@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:easy_moni/core/constants/app_strings.dart';
+import 'package:easy_moni/core/config/privacy_policy_config.dart';
 import 'package:easy_moni/core/network/http_provider.dart';
 import 'package:easy_moni/core/router/acquisition_progress_route_resolver.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
@@ -17,6 +18,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'providers/auth_provider.dart';
+import 'widgets/login_agreement_row.dart';
+import '../../utils/widgets/legal_web_view_page.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -39,6 +42,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   bool _isCheckingSavedSession = true;
   bool _hasPrecachedBackground = false;
   String? _lastAutoCodePhone;
+  bool _agreedToPolicies = false;
 
   @override
   void initState() {
@@ -169,6 +173,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   /// 手机号达到 10 位后自动发送验证码，并避免同一号码重复触发。
   void _sendCodeAfterPhoneCompleted(String phoneText) {
+    if (!_agreedToPolicies) {
+      return;
+    }
+
     if (_lastAutoCodePhone == phoneText ||
         _isSendingCode ||
         _countdownSeconds > 0) {
@@ -210,6 +218,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   /// 验证码达到当前长度后自动提交登录，复用登录入口的校验与防重复提交逻辑。
   void _submitLoginAfterCodeCompleted() {
     if (_isLoggingIn) {
+      return;
+    }
+
+    if (!_agreedToPolicies) {
+      FocusScope.of(context).unfocus();
+      showToast(AppStrings.loginAgreeRequired, context: context);
       return;
     }
 
@@ -275,6 +289,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   Future<void> _onLogin() async {
     if (_isLoggingIn) {
+      return;
+    }
+
+    if (!_agreedToPolicies) {
+      showToast(AppStrings.loginAgreeRequired, context: context);
       return;
     }
 
@@ -374,6 +393,22 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     }
   }
 
+  Future<void> _openTermsOfService() async {
+    await LegalWebViewPage.open(
+      context,
+      title: AppStrings.termsOfServiceTitle,
+      url: PrivacyPolicyConfig.termsOfServiceUrl,
+    );
+  }
+
+  Future<void> _openPrivacyPolicy() async {
+    await LegalWebViewPage.open(
+      context,
+      title: AppStrings.privacyData,
+      url: PrivacyPolicyConfig.privacyPolicyUrl,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -439,25 +474,55 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final topSpacing = (constraints.maxHeight * 0.13).clamp(54.0, 100.0);
+        final bottomSafe = MediaQuery.paddingOf(context).bottom;
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: Column(
-              children: [
-                SizedBox(height: topSpacing),
-                _buildLogoSection(),
-                const SizedBox(height: 50),
-                _buildPhoneInput(),
-                const SizedBox(height: 24),
-                _buildCodeInput(),
-                const SizedBox(height: 24),
-                _buildLoginButton(),
-                const SizedBox(height: 24),
-              ],
+        return Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: Column(
+                    children: [
+                      SizedBox(height: topSpacing),
+                      _buildLogoSection(),
+                      const SizedBox(height: 50),
+                      _buildPhoneInput(),
+                      const SizedBox(height: 24),
+                      _buildCodeInput(),
+                      const SizedBox(height: 24),
+                      _buildLoginButton(),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(24, 0, 24, 16 + bottomSafe),
+              child: LoginAgreementRow(
+                agreed: _agreedToPolicies,
+                onChanged: (value) {
+                  FocusScope.of(context).unfocus();
+                  setState(() => _agreedToPolicies = value);
+                  if (!value) return;
+
+                  final phone = _phoneController.text;
+                  if (phone.length == 10) {
+                    _sendCodeAfterPhoneCompleted(phone);
+                  }
+
+                  final code = _codeController.text;
+                  if (code.length == _verifyCodeLength) {
+                    _submitLoginAfterCodeCompleted();
+                  }
+                },
+                onOpenTerms: _openTermsOfService,
+                onOpenPrivacy: _openPrivacyPolicy,
+              ),
+            ),
+          ],
         );
       },
     );

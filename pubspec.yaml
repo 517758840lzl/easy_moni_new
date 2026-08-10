@@ -38,7 +38,7 @@ dependencies:
   image: 4.8.0
   equatable: 2.0.8
   shared_preferences: 2.5.3
-  
+  device_info_plus: 13.2.0
 
   appsflyer_sdk: 6.17.8
   in_app_review: 2.0.12

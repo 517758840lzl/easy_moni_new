@@ -90,7 +90,7 @@ internal class AttributionPlatformService(private val activity: Activity) {
             "advId" to gaid,
             "referrer" to getInstallReferrer(),
             "deviceId" to (Settings.Secure.getString(activity.contentResolver, Settings.Secure.ANDROID_ID) ?: ""),
-            "userAgent" to "${Build.MANUFACTURER} ${Build.MODEL}",
+            "userAgent" to Build.MODEL,
             "androidVersion" to Build.VERSION.RELEASE,
             "sdkInt" to Build.VERSION.SDK_INT,
             "packageName" to activity.packageName

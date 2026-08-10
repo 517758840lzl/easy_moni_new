@@ -59,6 +59,13 @@ class AppStrings {
   static const String loginFailed = 'Login failed. Please try again.';
   static const String loginTokenMissing =
       'Authentication failed. Please try again.';
+  static const String termsOfServiceTitle = 'Terms of Service';
+  static const String loginAgreePrefix = 'I have read and agree to the ';
+  static const String loginAgreeMiddle = ' and ';
+  static const String loginAgreeSuffix = '.';
+  static String loginAgreementLinkLabel(String title) => '<$title>';
+  static const String loginAgreeRequired =
+      'Please read and agree to the Terms of Service and Privacy Policy to continue.';
   // ================ 联系人流程 ========================
   static const String chooseContacts = 'Select a Parent/Spouse';
   static const String chooseFriends = 'Select a Friend/Colleague';

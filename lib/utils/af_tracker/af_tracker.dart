@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:appsflyer_sdk/appsflyer_sdk.dart';
 import 'package:easy_moni/core/config/request_security_config.dart';
+import 'package:easy_moni/core/device/device_context.dart';
 import 'package:easy_moni/core/utils/request_security_util.dart';
 import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/utils/af_tracker/track_events.dart';
@@ -97,8 +98,14 @@ class AppsFlyerTracker {
   refreshAppsFlyerRuntimeAttribution() async {
     try {
       final attribution = await AttributionDeviceService.getAttributionData();
-      _runtimeAttribution = attribution;
-      return attribution;
+      final userAgent = await DeviceContext.resolveUserAgent();
+
+      final map = <String, dynamic>{
+        ...attribution,
+        if (userAgent.isNotEmpty) 'userAgent': userAgent,
+      };
+      _runtimeAttribution = map;
+      return map;
     } catch (e) {
       _runtimeAttribution = <String, dynamic>{};
       return _runtimeAttribution!;
