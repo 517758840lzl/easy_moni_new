@@ -193,7 +193,6 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     _startCurrentActionTimeout();
   }
 
-  /// Android 与 active-loan 一致：定时拍照再检测，避免 NV21 流式帧不稳定。
   void _startAndroidFramePolling() {
     _androidPollTimer?.cancel();
     _androidPollTimer = Timer.periodic(
@@ -340,7 +339,6 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     return false;
   }
 
-  /// 正脸判定：yaw + 睁眼，阈值适中，避免 iOS pitch 估算导致误判。
   bool _isStrictFrontalFace(DetectedFace face) {
     return FaceDetectionService.isHeadFacingForward(
       face,

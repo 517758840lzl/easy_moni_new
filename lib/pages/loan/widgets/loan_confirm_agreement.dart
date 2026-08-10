@@ -2,7 +2,6 @@ import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
-/// Confirm Loan 底部协议勾选 + 合同入口，样式对齐 active-loan。
 class LoanConfirmAgreement extends StatelessWidget {
   const LoanConfirmAgreement({
     super.key,

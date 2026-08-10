@@ -4,15 +4,12 @@ import 'package:dio/dio.dart';
 import 'package:easy_moni/core/config/environment_config.dart';
 import 'package:easy_moni/core/network/http_result.dart';
 import 'package:easy_moni/core/network/interrepters/header_interrepter.dart';
-import 'package:easy_moni/core/network/interrepters/logging_interrepter.dart';
-import 'package:easy_moni/core/network/network_log.dart';
 import 'package:easy_moni/core/router/app_router.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/core/utils/request_security_util.dart';
 import 'package:easy_moni/entities/base_result.dart';
 import 'package:easy_moni/services/auth_storage.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:talker/talker.dart';
 
@@ -46,9 +43,6 @@ class HttpProvider {
     final headerInterceptor = HeaderInterrepter(config);
 
     dio.interceptors.add(headerInterceptor);
-    if (kDebugMode && config.enableNetworkLog) {
-      dio.interceptors.add(LoggingInterrepter());
-    }
 
     instance = HttpProvider._(
       dio: dio,
@@ -179,10 +173,6 @@ class HttpProvider {
         );
       }
 
-      if (kDebugMode && _config.enableNetworkLog) {
-        NetworkLog.decrypted(method: 'GET', path: path, data: responseData);
-      }
-
       Map<String, dynamic>? map;
 
       try {
@@ -249,7 +239,7 @@ class HttpProvider {
     bool includeToken = true,
   }) async {
     try {
-      final requestData = _encryptPostDataIfNeeded(path, data);
+      final requestData = _encryptPostDataIfNeeded(data);
 
       // 使用 dynamic 而不是 T，避免 Dio 自动转换失败
       final response = await _dio.post<dynamic>(
@@ -268,10 +258,6 @@ class HttpProvider {
           'Response data is null',
           cancelToken: cancelToken,
         );
-      }
-
-      if (kDebugMode && _config.enableNetworkLog) {
-        NetworkLog.decrypted(method: 'POST', path: path, data: responseData);
       }
 
       Map<String, dynamic>? map;
@@ -349,14 +335,11 @@ class HttpProvider {
   }
 
   /// 按配置统一加密 POST 请求体，上传表单和空请求体保持原样。
-  dynamic _encryptPostDataIfNeeded(String path, dynamic data) {
+  dynamic _encryptPostDataIfNeeded(dynamic data) {
     if (!_shouldEncryptPostData(data)) {
       return data;
     }
 
-    if (kDebugMode && _config.enableNetworkLog) {
-      NetworkLog.plainBody(method: 'POST', path: path, body: data);
-    }
     return RequestSecurityUtil.encryptRequestBody(data);
   }
 

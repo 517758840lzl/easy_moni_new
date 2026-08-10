@@ -110,7 +110,6 @@ class ContactsService {
 class SmsService {
   static const MethodChannel _channel = MethodChannel('com.easy_moni/sms');
 
-  /// 短信读取仅 Android 原生端支持。
   static bool get isSupported =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 

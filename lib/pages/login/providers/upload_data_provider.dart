@@ -10,7 +10,6 @@ final submitUserUploadDataProvider = Provider<SubmitUserUploadDataApi>((ref) {
 });
 
 class SubmitUserUploadDataApi {
-  /// 上传压缩后的用户风控数据（格式与 active-loan 一致）。
   Future<HttpResult<dynamic>> call({
     required int trackId,
     String? deviceInfoBytes,

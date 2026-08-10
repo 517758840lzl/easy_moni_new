@@ -2,7 +2,6 @@ import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
-/// Figma 1616:2350 — login agreement checkbox + Terms / Privacy links.
 class LoginAgreementRow extends StatelessWidget {
   const LoginAgreementRow({
     super.key,

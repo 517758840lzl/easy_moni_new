@@ -12,7 +12,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// App 启动页：原生启动图无缝衔接到 Flutter 启动动画，再进入登录或已登录目标页。
 class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({super.key});
 

@@ -555,7 +555,6 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
       lastDate: now,
     );
 
-    // 生日字段由底部日期滚轮选择，避免手输造成格式不统一。
     final pickedDate = await showDatePickerBottomSheet(
       context: context,
       title: entry.showContent,

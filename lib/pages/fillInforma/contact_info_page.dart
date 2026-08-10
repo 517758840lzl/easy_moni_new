@@ -84,7 +84,6 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  /// 输入过程中避免整页 rebuild，防止 iOS 键盘被意外收起。
   void _handleTextChanged(FormEntry entry, String value) {
     final canContinueBefore = _canContinue;
     _formController.updateTextValue(entry, value);

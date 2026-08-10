@@ -3,7 +3,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 
-/// Debug 网络日志：解密 JSON 格式化按行输出，密文仅预览。
 class NetworkLog {
   NetworkLog._();
 
@@ -83,7 +82,6 @@ class NetworkLog {
     }
   }
 
-  /// 单行过长时按字符续打，但只在同一 JSON 行内分片，不截断内容。
   static void _printLongLine(String line) {
     if (line.length <= _maxLineLen) {
       debugPrint(line);

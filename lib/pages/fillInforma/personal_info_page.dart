@@ -225,7 +225,6 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
     });
   }
 
-  /// KYC step 1 进入个人信息页后请求位置权限，先尝试系统弹窗，再展示自定义说明弹窗。
   Future<void> _ensureLocationPermission() async {
     if (_hasPromptedLocationPermission) return;
     _hasPromptedLocationPermission = true;

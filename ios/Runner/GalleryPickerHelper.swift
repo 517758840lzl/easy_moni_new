@@ -2,7 +2,6 @@ import Flutter
 import PhotosUI
 import UIKit
 
-/// 系统相册单张选图（PHPicker，iOS 14+），无需 NSPhotoLibraryUsageDescription。
 final class GalleryPickerHelper: NSObject, PHPickerViewControllerDelegate {
   static let shared = GalleryPickerHelper()
 

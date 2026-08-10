@@ -3,7 +3,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-/// 通用 H5 法律文档容器页，用于服务条款、隐私政策等外链展示。
 class LegalWebViewPage extends StatefulWidget {
   const LegalWebViewPage({
     super.key,

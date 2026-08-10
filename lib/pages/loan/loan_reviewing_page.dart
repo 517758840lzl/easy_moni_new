@@ -60,7 +60,6 @@ class _LoanReviewingPageState extends ConsumerState<LoanReviewingPage> {
     int score,
   ) async {
     Navigator.of(sheetContext).pop();
-    // V1：仅关闭弹窗，不跳转 App Store / 系统评分，也不区分星级。
   }
 
   @override

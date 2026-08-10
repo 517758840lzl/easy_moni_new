@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:talker/talker.dart';
 
 /// 应用统一日志工具，集中管理日志实例、等级和输出开关。
@@ -6,7 +5,7 @@ class AppLogger {
   AppLogger._();
 
   static final Talker _talker = Talker(
-    settings: TalkerSettings(enabled: kDebugMode),
+    settings: TalkerSettings(enabled: false),
   );
 
   /// 共享 Talker 实例，供网络、Riverpod 等模块复用。

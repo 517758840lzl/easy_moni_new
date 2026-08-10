@@ -280,7 +280,6 @@ class ContactInfoFormController {
     var digits = phoneNumber.trim().replaceAll(RegExp(r'\D'), '');
     if (digits.isEmpty) return '';
 
-    // 去掉 +233 / 233 国家码，只保留本地号码。
     if (digits.startsWith('233') && digits.length > 9) {
       digits = digits.substring(3);
     }

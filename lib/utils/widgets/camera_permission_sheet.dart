@@ -6,11 +6,9 @@ import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/utils/widgets/permission_action_buttons.dart';
 import 'package:flutter/material.dart';
 
-/// 相机权限说明弹窗与授权流程（先系统弹窗，再自定义弹窗，最后跳转设置）。
 class CameraPermissionSheet {
   CameraPermissionSheet._();
 
-  /// 检查并在需要时引导用户授权；返回 `true` 表示可以继续使用相机。
   static Future<bool> ensure(
     BuildContext context, {
     String title = AppStrings.needsCamera,

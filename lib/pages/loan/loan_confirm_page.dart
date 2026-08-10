@@ -117,7 +117,6 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
       return;
     }
 
-    // 提交前仅在 Android 检查短信权限；iOS 不支持短信读取，不拦截借款流程。
     if (SmsService.isSupported) {
       var hasSmsPermission = await SmsService.checkPermission();
       if (!mounted) return;

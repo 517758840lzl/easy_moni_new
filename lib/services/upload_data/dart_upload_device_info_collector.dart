@@ -7,7 +7,6 @@ import 'package:easy_moni/core/device/device_context.dart';
 import 'package:easy_moni/core/network/http_provider.dart';
 import 'package:easy_moni/services/platform_service.dart';
 
-/// iOS 设备信息（Dart 采集，App Store 合规）；Android 优先走原生，失败时可回退。
 abstract final class DartUploadDeviceInfoCollector {
   DartUploadDeviceInfoCollector._();
 

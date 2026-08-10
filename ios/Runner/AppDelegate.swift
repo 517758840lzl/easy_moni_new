@@ -246,7 +246,6 @@ import CoreLocation
     _ application: UIApplication,
     supportedInterfaceOrientationsFor window: UIWindow?
   ) -> UIInterfaceOrientationMask {
-    // 交给 Flutter（SystemChrome.setPreferredOrientations）按页面控制方向。
     return super.application(application, supportedInterfaceOrientationsFor: window)
   }
 

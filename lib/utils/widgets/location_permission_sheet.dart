@@ -3,7 +3,6 @@ import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/utils/widgets/permission_action_buttons.dart';
 import 'package:flutter/material.dart';
 
-/// KYC 个人信息页位置权限弹窗（Figma 208:7688）。
 class LocationPermissionSheet {
   LocationPermissionSheet._();
 

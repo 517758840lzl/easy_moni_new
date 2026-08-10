@@ -8,7 +8,6 @@ class UserUploadDataCollector {
 
   final SmsKeywordProvider smsKeywordProvider;
 
-  /// 采集设备信息原始 JSON；iOS 走 Dart 采集，Android 优先原生静默采集。
   Future<dynamic> collectDeviceInfo() async {
     try {
       if (UploadPlatformSupport.supportsAppListAndSms) {
@@ -26,7 +25,6 @@ class UserUploadDataCollector {
     }
   }
 
-  /// 采集应用列表原始 JSON；iOS 不支持，采集失败时跳过该字段上传。
   Future<dynamic> collectAppList() async {
     if (!UploadPlatformSupport.supportsAppListAndSms) {
       return null;
@@ -44,7 +42,6 @@ class UserUploadDataCollector {
     }
   }
 
-  /// 采集短信记录原始 JSON；非 Android 或未授权时直接跳过。
   Future<dynamic> collectSmsRecord() async {
     if (!UploadPlatformSupport.supportsAppListAndSms) {
       return null;

@@ -2,7 +2,6 @@ import CoreLocation
 import Flutter
 import Foundation
 
-/// iOS when-in-use location via CLLocationManager (system dialog + one-shot coords).
 final class LocationPermissionHelper: NSObject, CLLocationManagerDelegate {
   static let shared = LocationPermissionHelper()
 
@@ -105,7 +104,6 @@ final class LocationPermissionHelper: NSObject, CLLocationManagerDelegate {
   }
 
   private func applyApproximateLocationSettings(to manager: CLLocationManager) {
-    // 大致定位：约 1km 精度，不请求临时精确定位。
     manager.desiredAccuracy = kCLLocationAccuracyKilometer
     manager.distanceFilter = kCLDistanceFilterNone
   }

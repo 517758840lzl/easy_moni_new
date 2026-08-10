@@ -10,7 +10,6 @@ import 'package:easy_moni/core/utils/request_security_util.dart';
 import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/utils/af_tracker/track_events.dart';
 import 'package:easy_moni/utils/extensions.dart';
-import 'package:flutter/foundation.dart';
 
 /// AppsFlyer 埋点工具，负责 SDK 初始化、归因缓存和统一事件上报。
 class AppsFlyerTracker {
@@ -28,10 +27,6 @@ class AppsFlyerTracker {
   static Future<void> _initializeAppsFlyerSdk() async {
     final devKey = AppConstants.afDevKey;
     if (devKey.isEmpty) {
-      if (kDebugMode) {
-        // ignore: avoid_print
-        print('[AF] afDevKey is empty — skip AppsFlyer init');
-      }
       return;
     }
 
@@ -39,14 +34,6 @@ class AppsFlyerTracker {
     if (Platform.isIOS) {
       final ok = RegExp(r'^\d{8,11}$').hasMatch(appleAppId);
       if (!ok) {
-        if (kDebugMode) {
-          // ignore: avoid_print
-          print(
-            '[AF] iOS requires AppConstants.afAppleAppId '
-            '(8–11 digit App Store ID, no "id" prefix). '
-            'DevKey is set; skipping init to avoid native abort.',
-          );
-        }
         return;
       }
     }
@@ -55,7 +42,7 @@ class AppsFlyerTracker {
       final options = AppsFlyerOptions(
         afDevKey: devKey,
         appId: Platform.isIOS ? appleAppId : '',
-        showDebug: kDebugMode,
+        showDebug: false,
         disableAdvertisingIdentifier: Platform.isIOS ? true : null,
       );
       final sdk = AppsflyerSdk(options);
@@ -70,21 +57,12 @@ class AppsFlyerTracker {
       );
 
       final uid = await sdk.getAppsFlyerUID();
-      if (kDebugMode) {
-        // ignore: avoid_print
-        print('[AF] AppsFlyer UID: $uid');
-      }
       await AttributionStore.setAfid(uid ?? '');
       await refreshAppsFlyerRuntimeAttribution();
     } catch (e) {
-      if (kDebugMode) {
-        // ignore: avoid_print
-        print('[AF] init failed: $e');
-      }
     }
   }
 
-  /// 获取 AppsFlyer UID，优先使用本地缓存。
   static Future<String> getAppsFlyerId() async {
     final cached = await AttributionStore.getAfid();
     if (cached.isNotEmpty) return cached;
@@ -99,10 +77,6 @@ class AppsFlyerTracker {
         return value;
       }
     } catch (e) {
-      if (kDebugMode) {
-        // ignore: avoid_print
-        print('[AF] getAppsFlyerId error: $e');
-      }
     }
     return AppConstants.defaultAfid;
   }
@@ -121,7 +95,6 @@ class AppsFlyerTracker {
     };
   }
 
-  /// 刷新 GAID、Install Referrer 与设备信息；Android 走原生归因通道。
   static Future<Map<String, dynamic>> refreshAppsFlyerRuntimeAttribution() async {
     try {
       if (Platform.isAndroid) {
@@ -185,10 +158,6 @@ class AppsFlyerTracker {
     dynamic msg,
   }) async {
     if (_sdk == null) {
-      if (kDebugMode) {
-        // ignore: avoid_print
-        print('[AF] skip $eventName — SDK not initialized');
-      }
       return false;
     }
 
@@ -210,10 +179,6 @@ class AppsFlyerTracker {
       final result = await _sdk!.logEvent(eventName, eventValueMap);
       return result ?? false;
     } catch (e) {
-      if (kDebugMode) {
-        // ignore: avoid_print
-        print('[AF] logEvent $eventName failed: $e');
-      }
       return false;
     }
   }
@@ -230,10 +195,6 @@ class AppsFlyerTracker {
         final mediaSource = parseAppsFlyerMediaSource(payload);
         await _saveMediaSourceIfNeeded(mediaSource);
       } catch (e) {
-        if (kDebugMode) {
-          // ignore: avoid_print
-          print('[AF] onInstallConversionData error: $e');
-        }
       }
     });
   }
