@@ -16,7 +16,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 /// 客服展示方式，和后端 showType 保持一致。
@@ -342,9 +341,9 @@ class _CustomerServiceWebViewPageState
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
 
     final platformController = _controller.platform;
-    if (platformController is! AndroidWebViewController) return;
+    final identifier = _androidWebViewIdentifier(platformController);
+    if (identifier == null) return;
 
-    final identifier = platformController.webViewIdentifier;
     _protectedWebViewId = identifier;
     try {
       await _webViewChannel.invokeMethod<bool>('protectWebViewRenderer', {
@@ -354,6 +353,14 @@ class _CustomerServiceWebViewPageState
       return;
     } on MissingPluginException {
       return;
+    }
+  }
+
+  int? _androidWebViewIdentifier(Object platformController) {
+    try {
+      return (platformController as dynamic).webViewIdentifier as int?;
+    } catch (_) {
+      return null;
     }
   }
 

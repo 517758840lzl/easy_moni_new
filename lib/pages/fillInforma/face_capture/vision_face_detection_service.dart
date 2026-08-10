@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 
 import 'face_detection_service.dart';
 
-/// iOS 活体检测 —— Apple Vision（原生 MethodChannel）。
 class VisionFaceDetectionService implements FaceDetectionService {
   static const MethodChannel _channel = MethodChannel(
     'com.easy_moni/face_vision',

@@ -25,7 +25,6 @@ class FaceVerifyPage extends ConsumerStatefulWidget {
   ConsumerState<FaceVerifyPage> createState() => _FaceVerifyPageState();
 }
 
-/// 维护相机、人脸检测和页面展示状态。
 class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
   final FaceDetectionService _faceDetectionService = FaceDetectionService.create();
 

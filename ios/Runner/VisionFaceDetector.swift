@@ -3,11 +3,6 @@ import Flutter
 import UIKit
 import Vision
 
-/// Apple Vision 人脸检测（活体），供 Flutter MethodChannel 调用。
-///
-/// - 最低部署：iOS 14
-/// - 姿态（yaw）：iOS 15+ 用 `VNDetectFaceRectanglesRequestRevision3`（连续值）；更低系统走默认 revision
-/// - 眼睛 / 嘴：`VNDetectFaceLandmarksRequest` 几何估算
 enum VisionFaceDetector {
   static func warmUp() {
     _ = VNDetectFaceRectanglesRequest()
@@ -124,7 +119,6 @@ enum VisionFaceDetector {
     return map
   }
 
-  /// 用鼻尖相对双眼连线的垂直偏移估算 pitch（度），供点头检测。
   private static func estimatedPitchDegrees(from landmarks: VNFaceLandmarks2D?) -> Double? {
     guard let landmarks,
           let nose = landmarks.nose,

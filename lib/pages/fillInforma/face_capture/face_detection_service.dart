@@ -3,12 +3,11 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 
 import 'detected_face.dart';
-import 'mlkit_face_detection_service.dart';
+import 'unsupported_face_detection_service.dart';
 import 'vision_face_detection_service.dart';
 
 export 'detected_face.dart';
 
-/// 活体人脸检测抽象：Android → ML Kit，iOS → Apple Vision。
 abstract class FaceDetectionService {
   bool get isInitialized;
 
@@ -27,7 +26,7 @@ abstract class FaceDetectionService {
     if (Platform.isIOS) {
       return VisionFaceDetectionService();
     }
-    return MlKitFaceDetectionService();
+    return UnsupportedFaceDetectionService();
   }
 
   static bool isEyeClosed(DetectedFace face, {double threshold = 0.3}) {

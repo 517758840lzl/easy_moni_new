@@ -1,6 +1,3 @@
-/// Platform-agnostic face metrics for liveness checks.
-///
-/// Android: filled from ML Kit. iOS: filled from Apple Vision.
 class DetectedFace {
   const DetectedFace({
     this.leftEyeOpen,
