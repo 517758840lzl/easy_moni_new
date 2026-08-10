@@ -474,58 +474,48 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final topSpacing = (constraints.maxHeight * 0.13).clamp(54.0, 100.0);
-        final bottomSafe = MediaQuery.paddingOf(context).bottom;
 
-        return Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                  child: Column(
-                    children: [
-                      SizedBox(height: topSpacing),
-                      _buildLogoSection(),
-                      const SizedBox(height: 50),
-                      _buildPhoneInput(),
-                      const SizedBox(height: 24),
-                      _buildCodeInput(),
-                      const SizedBox(height: 24),
-                      _buildLoginButton(),
-                      const SizedBox(height: 24),
-                    ],
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(height: topSpacing),
+                    _buildLogoSection(),
+                    const SizedBox(height: 50),
+                    _buildPhoneInput(),
+                    const SizedBox(height: 24),
+                    _buildCodeInput(),
+                    const SizedBox(height: 24),
+                    _buildLoginButton(),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 24, bottom: 16),
+                  child: LoginAgreementRow(
+                    agreed: _agreedToPolicies,
+                    onChanged: _onAgreementChanged,
+                    onOpenTerms: _openTermsOfService,
+                    onOpenPrivacy: _openPrivacyPolicy,
                   ),
                 ),
-              ),
+              ],
             ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(24, 0, 24, 16 + bottomSafe),
-              child: LoginAgreementRow(
-                agreed: _agreedToPolicies,
-                onChanged: (value) {
-                  FocusScope.of(context).unfocus();
-                  setState(() => _agreedToPolicies = value);
-                  if (!value) return;
-
-                  final phone = _phoneController.text;
-                  if (phone.length == 10) {
-                    _sendCodeAfterPhoneCompleted(phone);
-                  }
-
-                  final code = _codeController.text;
-                  if (code.length == _verifyCodeLength) {
-                    _submitLoginAfterCodeCompleted();
-                  }
-                },
-                onOpenTerms: _openTermsOfService,
-                onOpenPrivacy: _openPrivacyPolicy,
-              ),
-            ),
-          ],
+          ),
         );
       },
     );
+  }
+
+  void _onAgreementChanged(bool value) {
+    FocusScope.of(context).unfocus();
+    setState(() => _agreedToPolicies = value);
   }
 
   Widget _buildLogoSection() {
