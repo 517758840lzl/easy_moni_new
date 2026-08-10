@@ -8,7 +8,6 @@ import 'package:easy_moni/entities/acquisition_progress_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/fillInforma/providers/acquisition_progress_provider.dart';
 import 'package:easy_moni/services/auth_storage.dart';
-import 'package:easy_moni/services/saved_session_route_service.dart';
 import 'package:easy_moni/services/upload_data/upload_data_sync_service.dart';
 import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
 import 'package:easy_moni/utils/af_tracker/track_events.dart';
@@ -39,7 +38,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   int _countdownSeconds = 0;
   bool _isSendingCode = false;
   bool _isLoggingIn = false;
-  bool _isCheckingSavedSession = true;
   bool _hasPrecachedBackground = false;
   String? _lastAutoCodePhone;
   bool _agreedToPolicies = false;
@@ -53,15 +51,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     _codeFocusNode = FocusNode();
     _phoneController.addListener(_onPhoneChanged);
     _codeController.addListener(_onCodeChanged);
-    unawaited(_initializeTracking());
-    unawaited(_routeBySavedSession());
-  }
-
-  Future<void> _initializeTracking() async {
-    try {
-      await AppsFlyerTracker.initializeAppsFlyerTracker();
-      await AppsFlyerTracker.logAppsFlyerFirstOpenIfNeeded();
-    } catch (_) {}
   }
 
   @override
@@ -107,21 +96,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   void _navigateByProgress(AcquisitionProgressResp progressData) {
     final route = AcquisitionProgressRouteResolver.resolve(progressData);
     context.go(route);
-  }
-
-  /// 登录页启动时检查本地 token，token 有效则按 KYC 进度进入对应页面。
-  Future<void> _routeBySavedSession() async {
-    final route = await ref
-        .read(savedSessionRouteServiceProvider)
-        .resolveSavedSessionRoute();
-    if (!mounted) return;
-
-    if (route != null) {
-      context.go(route);
-      return;
-    }
-
-    setState(() => _isCheckingSavedSession = false);
   }
 
   /// 登录失败时弹出后端提示，验证码错误（如 code=50000）会透传到 message。
@@ -427,20 +401,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               ),
             ),
           ),
-          if (_isCheckingSavedSession)
-            const Center(child: CircularProgressIndicator(color: Colors.white))
-          else
-            // Main content
-            Positioned.fill(
-              child: SafeArea(
-                child: Column(
-                  children: [
-                    _buildHeader(context),
-                    Expanded(child: _buildLoginContent()),
-                  ],
-                ),
+          Positioned.fill(
+            child: SafeArea(
+              child: Column(
+                children: [
+                  _buildHeader(context),
+                  Expanded(child: _buildLoginContent()),
+                ],
               ),
             ),
+          ),
         ],
       ),
     );

@@ -10,6 +10,7 @@ import 'package:easy_moni/pages/login/widgets/permissionalert.dart';
 import 'package:easy_moni/services/auth_storage.dart';
 import 'package:easy_moni/services/permission_storage.dart';
 import 'package:easy_moni/services/platform_service.dart';
+import 'package:easy_moni/services/upload_data/upload_platform_support.dart';
 import 'package:easy_moni/services/saved_session_route_service.dart';
 import 'package:easy_moni/services/upload_data/upload_data_sync_service.dart';
 import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
@@ -93,9 +94,12 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
   Future<void> _requestRequiredNativePermissions() async {
     final permissionRequests = <Future<bool> Function()>[
       CameraService.requestPermission,
-      SmsService.requestPermission,
       LocationService.requestPermission,
     ];
+
+    if (UploadPlatformSupport.supportsAppListAndSms) {
+      permissionRequests.insert(1, SmsService.requestPermission);
+    }
 
     for (final requestPermission in permissionRequests) {
       try {

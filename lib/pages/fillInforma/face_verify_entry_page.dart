@@ -12,6 +12,7 @@ import 'package:easy_moni/pages/fillInforma/providers/submit_acp_element_info_pr
 import 'package:easy_moni/pages/fillInforma/widgets/progress_information.dart';
 import 'package:easy_moni/pages/loan/components/loan_rounded_page.dart';
 import 'package:easy_moni/pages/mine/providers/user_info_provider.dart';
+import 'package:easy_moni/utils/widgets/camera_permission_sheet.dart';
 import 'package:easy_moni/utils/widgets/limit_toast.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:easy_moni/utils/widgets/permission_action_buttons.dart';
@@ -102,6 +103,14 @@ class _FaceVerifyEntryPageState extends ConsumerState<FaceVerifyEntryPage> {
 
   Future<void> _onContinue() async {
     if (_isLoading || _isAwaitingFaceResult) return;
+
+    final canOpenCamera = await CameraPermissionSheet.ensure(
+      context,
+      description: AppStrings.faceVerifyCameraPermissionDesc,
+    );
+    if (!mounted || !canOpenCamera) {
+      return;
+    }
 
     setState(() => _isAwaitingFaceResult = true);
 

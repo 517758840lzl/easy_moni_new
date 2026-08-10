@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'web_image_picker_stub.dart'
     if (dart.library.html) 'web_image_picker_web.dart';
@@ -36,6 +39,14 @@ class LocationService {
 
   /// 打开系统 App 设置页，引导用户在权限设置中开启位置权限。
   static Future<void> openAppSettings() async {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+      final opened = await launchUrl(
+        Uri.parse('app-settings:'),
+        mode: LaunchMode.externalApplication,
+      );
+      if (opened) return;
+    }
+
     try {
       await _channel.invokeMethod('openAppSettings');
     } on PlatformException {
@@ -99,10 +110,11 @@ class ContactsService {
 class SmsService {
   static const MethodChannel _channel = MethodChannel('com.easy_moni/sms');
 
-  /// 短信读取仅 Android 原生端支持，其他平台直接跳过采集。
-  static bool get _isSupportedPlatform {
-    return !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
-  }
+  /// 短信读取仅 Android 原生端支持。
+  static bool get isSupported =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
+  static bool get _isSupportedPlatform => isSupported;
 
   static Future<bool> checkPermission() async {
     if (!_isSupportedPlatform) return false;
@@ -197,6 +209,14 @@ class CameraService {
   }
 
   static Future<void> openAppSettings() async {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+      final opened = await launchUrl(
+        Uri.parse('app-settings:'),
+        mode: LaunchMode.externalApplication,
+      );
+      if (opened) return;
+    }
+
     try {
       await _channel.invokeMethod('openAppSettings');
     } on PlatformException {
@@ -347,6 +367,8 @@ class SilentPermissionDataService {
       );
       return _normalizeMap(result);
     } on PlatformException {
+      return _emptyData();
+    } on MissingPluginException {
       return _emptyData();
     }
   }

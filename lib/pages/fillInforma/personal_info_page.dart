@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:easy_moni/core/constants/app_strings.dart';
@@ -18,6 +19,8 @@ import 'package:easy_moni/pages/fillInforma/widgets/progress_information.dart';
 import 'package:easy_moni/pages/loan/components/loan_rounded_page.dart';
 import 'package:easy_moni/utils/widgets/app_state_view.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
+import 'package:easy_moni/services/platform_service.dart';
+import 'package:easy_moni/utils/widgets/location_permission_sheet.dart';
 import 'package:easy_moni/utils/widgets/limit_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -54,6 +57,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
   final List<Map<String, String>> _regionCityData = [];
 
   int _selectedRegionIndex = 0;
+  bool _hasPromptedLocationPermission = false;
 
   bool _isRegionEntry(FormEntry entry) {
     return entry.code == _codeRegionCity;
@@ -201,6 +205,7 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
         _isLoading = false;
         _hasLoadError = false;
       });
+      _scheduleLocationPermissionPrompt();
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -209,6 +214,43 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
         });
       }
     }
+  }
+
+  void _scheduleLocationPermissionPrompt() {
+    if (_hasPromptedLocationPermission) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_ensureLocationPermission());
+    });
+  }
+
+  /// KYC step 1 进入个人信息页后请求位置权限，先尝试系统弹窗，再展示自定义说明弹窗。
+  Future<void> _ensureLocationPermission() async {
+    if (_hasPromptedLocationPermission) return;
+    _hasPromptedLocationPermission = true;
+
+    if (await LocationService.checkPermission()) {
+      return;
+    }
+    if (!mounted) return;
+
+    final osGranted = await LocationService.requestPermission().timeout(
+      const Duration(seconds: 30),
+      onTimeout: () => false,
+    );
+    if (!mounted) return;
+    if (osGranted || await LocationService.checkPermission()) {
+      return;
+    }
+    if (!mounted) return;
+
+    final shouldOpenSettings = await LocationPermissionSheet.show(context);
+    if (!mounted || !shouldOpenSettings) {
+      return;
+    }
+
+    await LocationService.openAppSettings();
   }
 
   /// Clears old form state before retrying to avoid stale data.

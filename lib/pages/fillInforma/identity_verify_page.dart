@@ -14,10 +14,10 @@ import 'package:easy_moni/pages/fillInforma/widgets/picker_bottom_sheet.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/progress_information.dart';
 import 'package:easy_moni/pages/loan/components/loan_rounded_page.dart';
 import 'package:easy_moni/services/platform_service.dart';
+import 'package:easy_moni/utils/widgets/camera_permission_sheet.dart';
 import 'package:easy_moni/utils/widgets/common_bottom_sheet.dart';
 import 'package:easy_moni/utils/widgets/limit_toast.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
-import 'package:easy_moni/utils/widgets/permission_action_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -309,115 +309,14 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
 
   /// 拍摄入口统一处理相机权限，避免进入横屏拍摄页后再触发权限弹窗。
   Future<bool> _ensureCameraPermission() async {
-    final hasPermission = await CameraService.checkPermission();
-    if (!mounted) return false;
-
-    if (hasPermission) {
-      return true;
-    }
-
-    final shouldRequestPermission = await _showCameraPermissionSheet();
-    if (!mounted || !shouldRequestPermission) {
-      return false;
-    }
-
-    final granted = await CameraService.requestPermission();
+    final granted = await CameraPermissionSheet.ensure(context);
     if (!mounted) return false;
     if (granted) {
       return true;
     }
 
-    await CameraService.openAppSettings();
-    if (!mounted) return false;
-
     _showSnackBar(AppStrings.identityVerifyCameraPermissionDenied);
     return false;
-  }
-
-  Future<bool> _showCameraPermissionSheet() async {
-    final result = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.6),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-      ),
-      builder: (context) {
-        final bottomPadding = MediaQuery.paddingOf(context).bottom;
-        return ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-          child: Material(
-            color: const Color(0xFFFDFEFF),
-            child: Stack(
-              children: [
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Assets.images.permissionCamera3d.image(
-                            width: 115,
-                            height: 120,
-                            fit: BoxFit.contain,
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            AppStrings.needsCamera,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16,
-                              height: 1.5,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF101314),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            AppStrings.idcardMessage,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 14,
-                              height: 1.5,
-                              fontWeight: FontWeight.w400,
-                              color: Color(0xFF3F4950),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    ColoredBox(
-                      color: Colors.white,
-                      child: Padding(
-                        padding: EdgeInsets.only(bottom: bottomPadding),
-                        child: PermissionActionButtons(
-                          secondaryText: AppStrings.cancel,
-                          primaryText: AppStrings.goSettings,
-                          onSecondaryPressed: () =>
-                              Navigator.of(context).pop(false),
-                          onPrimaryPressed: () =>
-                              Navigator.of(context).pop(true),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const Positioned(
-                  top: 5,
-                  left: 0,
-                  right: 0,
-                  child: Center(child: _CameraPermissionDragHandle()),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-    return result ?? false;
   }
 
   Future<void> _onImagesCaptured(_CapturedIdCardImages capturedImages) async {
@@ -861,19 +760,3 @@ class _CapturedIdCardImages {
   bool get hasAnyImage => frontImageData != null || backImageData != null;
 }
 
-/// 相机权限说明弹窗的顶部拖拽提示条。
-class _CameraPermissionDragHandle extends StatelessWidget {
-  const _CameraPermissionDragHandle();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 32,
-      height: 4,
-      decoration: BoxDecoration(
-        color: const Color(0xFFE7E7E7),
-        borderRadius: BorderRadius.circular(100),
-      ),
-    );
-  }
-}

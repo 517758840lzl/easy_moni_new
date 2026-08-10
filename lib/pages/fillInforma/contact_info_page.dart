@@ -84,6 +84,19 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
+  /// 输入过程中避免整页 rebuild，防止 iOS 键盘被意外收起。
+  void _handleTextChanged(FormEntry entry, String value) {
+    final canContinueBefore = _canContinue;
+    _formController.updateTextValue(entry, value);
+    if (_canContinue != canContinueBefore && mounted) {
+      setState(() {});
+    }
+  }
+
+  void _dismissKeyboard() {
+    FocusManager.instance.primaryFocus?.unfocus();
+  }
+
   Future<void> _pickContact(FormEntry entry) async {
     try {
       final contact = await ContactsService.pickContact();
@@ -223,21 +236,26 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return Scrollbar(
-      controller: _contentScrollController,
-      thumbVisibility: true,
-      radius: const Radius.circular(8),
-      child: SingleChildScrollView(
+    return GestureDetector(
+      onTap: _dismissKeyboard,
+      behavior: HitTestBehavior.translucent,
+      child: Scrollbar(
         controller: _contentScrollController,
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            for (var i = 0; i < _formController.entries.length; i++)
-              _buildEntryItem(
-                entry: _formController.entries[i],
-                showDivider: i != _formController.entries.length - 1,
-              ),
-          ],
+        thumbVisibility: true,
+        radius: const Radius.circular(8),
+        child: SingleChildScrollView(
+          controller: _contentScrollController,
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              for (var i = 0; i < _formController.entries.length; i++)
+                _buildEntryItem(
+                  entry: _formController.entries[i],
+                  showDivider: i != _formController.entries.length - 1,
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -297,9 +315,7 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
             ? Assets.images.notebook.image(width: 22, height: 22)
             : null,
         onInputTrailingTap: isContactInput ? () => _pickContact(entry) : null,
-        onChanged: (value) {
-          setState(() => _formController.updateTextValue(entry, value));
-        },
+        onChanged: (value) => _handleTextChanged(entry, value),
       );
     }
 

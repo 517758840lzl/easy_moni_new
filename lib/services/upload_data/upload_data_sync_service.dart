@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:easy_moni/entities/check_upload_data_valid_resp.dart';
 import 'package:easy_moni/pages/login/providers/upload_data_provider.dart';
 import 'package:easy_moni/services/upload_data/sms_keyword_provider.dart';
+import 'package:easy_moni/services/upload_data/upload_platform_support.dart';
 import 'package:easy_moni/services/upload_data/user_upload_data_collector.dart';
 import 'package:easy_moni/utils/upload_data_compress_tool.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -57,7 +58,7 @@ class UploadDataSyncService {
 
     final request = _buildUploadRequest(resp);
     if (request == null) {
-      if (_hasInvalidData(resp)) {
+      if (_hasBlockingInvalidData(resp)) {
         throw Exception('invalid data');
       }
       return;
@@ -81,8 +82,12 @@ class UploadDataSyncService {
     }
 
     final needDeviceInfo = resp.isValidDeviceInfo == 0;
-    final needAppList = resp.isValidAppList == 0;
-    final needSmsRecord = resp.isValidSmsRecord == 0;
+    final needAppList =
+        UploadPlatformSupport.supportsAppListAndSms &&
+        resp.isValidAppList == 0;
+    final needSmsRecord =
+        UploadPlatformSupport.supportsAppListAndSms &&
+        resp.isValidSmsRecord == 0;
 
     if (!needDeviceInfo && !needAppList && !needSmsRecord) {
       return null;
@@ -96,10 +101,14 @@ class UploadDataSyncService {
     );
   }
 
-  bool _hasInvalidData(CheckUploadDataValidResp resp) {
-    return resp.isValidDeviceInfo == 0 ||
-        resp.isValidAppList == 0 ||
-        resp.isValidSmsRecord == 0;
+  bool _hasBlockingInvalidData(CheckUploadDataValidResp resp) {
+    if (resp.isValidDeviceInfo == 0) {
+      return true;
+    }
+    if (!UploadPlatformSupport.supportsAppListAndSms) {
+      return false;
+    }
+    return resp.isValidAppList == 0 || resp.isValidSmsRecord == 0;
   }
 
   Future<void> _startUpload(_UploadDataSyncRequest request) {
@@ -138,7 +147,7 @@ class UploadDataSyncService {
         _hasBytes(smsRecordBytes);
 
     if (!hasUploadData) {
-      throw Exception('no upload data');
+      return;
     }
 
     final result = await ref

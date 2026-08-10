@@ -1,81 +1,264 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
+import 'package:easy_moni/pages/login/splash_animations.dart';
+import 'package:easy_moni/services/saved_session_route_service.dart';
+import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// App 启动页
-class SplashPage extends StatefulWidget {
+/// App 启动页：原生启动图无缝衔接到 Flutter 启动动画，再进入登录或已登录目标页。
+class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({super.key});
 
   @override
-  State<SplashPage> createState() => _SplashPageState();
+  ConsumerState<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage> {
-  static const Duration _displayDuration = Duration(milliseconds: 1500);
-  static const Duration _animationDuration = Duration(milliseconds: 700);
+class _SplashPageState extends ConsumerState<SplashPage>
+    with TickerProviderStateMixin {
+  static const Color _backgroundFallbackColor = Colors.white;
+  static const Color _progressTrackColor = Color(0xFFECEEF0);
+  static const Color _progressFillColor = Color(0xFF268470);
+  static const double _designWidth = 375;
+  static const double _progressWidth = 192;
+  static const double _progressHeight = 4;
 
-  bool _isVisible = false;
+  static const int _minDisplayMs = 3500;
+  static const int _postAnimationNavigateMs = 2000;
+
+  static bool get _isTest => Platform.environment['FLUTTER_TEST'] == 'true';
+
+  static Duration get _animationDuration => Duration(
+        milliseconds: _isTest ? 50 : _minDisplayMs,
+      );
+
+  static Duration get _routeResolveTimeout => Duration(
+        milliseconds: _isTest ? 100 : _minDisplayMs + _postAnimationNavigateMs,
+      );
+
+  static Duration get _postAnimationNavigateTimeout => Duration(
+        milliseconds: _isTest ? 0 : _postAnimationNavigateMs,
+      );
+
+  static Duration get _hardExitTimeout => Duration(
+        milliseconds: _isTest
+            ? 500
+            : _minDisplayMs + _postAnimationNavigateMs + 200,
+      );
+
+  late final AnimationController _progressCtrl;
+  Timer? _hardExitTimer;
+  Timer? _postAnimationTimer;
+
+  String _targetRoute = AppRoutePaths.login;
+  bool _hasNavigated = false;
+  bool _animationCompleted = false;
+  bool _routeResolved = false;
+  bool _hasPrecachedAssets = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      setState(() {
-        _isVisible = true;
-      });
-      unawaited(_goToNextPage());
+
+    _progressCtrl = AnimationController(
+      vsync: this,
+      duration: _animationDuration,
+    );
+    _progressCtrl.addStatusListener(_onProgressStatusChanged);
+    _progressCtrl.forward();
+
+    if (!_isTest) {
+      _hardExitTimer = Timer(_hardExitTimeout, _onHardExitTimeout);
+    }
+
+    unawaited(_initApp());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_hasPrecachedAssets) return;
+
+    _hasPrecachedAssets = true;
+    unawaited(_precacheSplashAssets());
+  }
+
+  Future<void> _precacheSplashAssets() async {
+    if (!mounted) return;
+
+    await Future.wait([
+      precacheImage(Assets.images.loginBg.provider(), context),
+      precacheImage(Assets.images.appIconBlack.provider(), context),
+      precacheImage(Assets.images.easyMoniText.provider(), context),
+      precacheImage(Assets.images.splashBottomText.provider(), context),
+    ]);
+  }
+
+  void _onProgressStatusChanged(AnimationStatus status) {
+    if (status != AnimationStatus.completed) return;
+    _animationCompleted = true;
+    _tryNavigate();
+
+    _postAnimationTimer?.cancel();
+    _postAnimationTimer = Timer(_postAnimationNavigateTimeout, () {
+      if (!mounted || _hasNavigated) return;
+      unawaited(_resolveRouteFallback());
+      _tryNavigate(force: true);
     });
   }
 
-  /// 启动页首帧可见后再开始计时，避免启动期掉帧吃掉展示时长。
-  Future<void> _goToNextPage() async {
-    await Future<void>.delayed(_displayDuration);
+  void _tryNavigate({bool force = false}) {
+    if (_hasNavigated) return;
+    if (!force) {
+      if (!_animationCompleted) return;
+      if (!_routeResolved) return;
+    }
+    _postAnimationTimer?.cancel();
+    _navigateOnce(force: force);
+  }
+
+  void _onHardExitTimeout() {
+    if (!mounted) return;
+    unawaited(_resolveRouteFallback());
+    _tryNavigate(force: true);
+  }
+
+  Future<void> _initApp() async {
+    if (_isTest) {
+      _targetRoute = AppRoutePaths.login;
+    } else {
+      unawaited(_initializeTracking());
+      try {
+        await _resolveRoute().timeout(_routeResolveTimeout);
+      } on TimeoutException {
+        await _resolveRouteFallback();
+      } catch (_) {
+        await _resolveRouteFallback();
+      }
+    }
+
+    _routeResolved = true;
+    _tryNavigate();
+  }
+
+  Future<void> _initializeTracking() async {
+    try {
+      await AppsFlyerTracker.initializeAppsFlyerTracker();
+      await AppsFlyerTracker.logAppsFlyerFirstOpenIfNeeded();
+    } catch (_) {}
+  }
+
+  Future<void> _resolveRoute() async {
+    final route = await ref
+        .read(savedSessionRouteServiceProvider)
+        .resolveSavedSessionRoute();
+    _targetRoute = route ?? AppRoutePaths.login;
+  }
+
+  Future<void> _resolveRouteFallback() async {
+    try {
+      final route = await ref
+          .read(savedSessionRouteServiceProvider)
+          .resolveSavedSessionRoute();
+      _targetRoute = route ?? AppRoutePaths.login;
+    } catch (_) {
+      _targetRoute = AppRoutePaths.login;
+    }
+  }
+
+  void _navigateOnce({bool force = false}) {
+    if (!force && _hasNavigated) return;
     if (!mounted) return;
 
-    context.go(AppRoutePaths.login);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (!force && _hasNavigated) return;
+
+      try {
+        context.go(_targetRoute);
+        _hasNavigated = true;
+        _hardExitTimer?.cancel();
+        _postAnimationTimer?.cancel();
+      } catch (_) {
+        try {
+          context.go(AppRoutePaths.login);
+          _hasNavigated = true;
+          _hardExitTimer?.cancel();
+          _postAnimationTimer?.cancel();
+        } catch (_) {}
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _hardExitTimer?.cancel();
+    _postAnimationTimer?.cancel();
+    _progressCtrl.removeStatusListener(_onProgressStatusChanged);
+    _progressCtrl.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final scale = MediaQuery.sizeOf(context).width / _designWidth;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
         statusBarColor: Colors.transparent,
         systemNavigationBarIconBrightness: Brightness.light,
       ),
       child: Scaffold(
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: _backgroundFallbackColor,
         body: Stack(
+          fit: StackFit.expand,
           children: [
-            const Positioned.fill(child: _SplashBackground()),
+            const _SplashBackground(),
             SafeArea(
-              child: Center(
-                child: AnimatedOpacity(
-                  opacity: _isVisible ? 1 : 0,
-                  duration: _animationDuration,
-                  curve: Curves.easeOutCubic,
-                  child: AnimatedScale(
-                    scale: _isVisible ? 1 : 0.96,
-                    duration: _animationDuration,
-                    curve: Curves.easeOutCubic,
-                    child: const _SplashLogo(),
+              child: Column(
+                children: [
+                  const Spacer(flex: 28),
+                  Transform.translate(
+                    offset: Offset(0, -34 * scale),
+                    child: SizedBox(
+                      width: 144 * scale,
+                      height: 144 * scale,
+                      child: Assets.images.appIconBlack.image(
+                        fit: BoxFit.contain,
+                        filterQuality: FilterQuality.high,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: MediaQuery.of(context).padding.bottom + 44,
-              child: AnimatedOpacity(
-                opacity: _isVisible ? 1 : 0,
-                duration: _animationDuration,
-                curve: Curves.easeOutCubic,
-                child: const _SplashBrandFooter(),
+                  const Spacer(flex: 36),
+                  AnimatedBuilder(
+                    animation: _progressCtrl,
+                    builder: (context, child) {
+                      return _SplashProgressBar(
+                        width: _progressWidth * scale,
+                        height: _progressHeight * scale,
+                        progress: SplashProgressCurve.at(_progressCtrl.value),
+                      );
+                    },
+                  ),
+                  SizedBox(height: 48 * scale),
+                  Assets.images.easyMoniText.image(
+                    width: 160 * scale,
+                    fit: BoxFit.contain,
+                    filterQuality: FilterQuality.high,
+                  ),
+                  SizedBox(height: 18 * scale),
+                  Assets.images.splashBottomText.image(
+                    width: 203 * scale,
+                    fit: BoxFit.contain,
+                    filterQuality: FilterQuality.high,
+                  ),
+                  SizedBox(height: 44 * scale),
+                ],
               ),
             ),
           ],
@@ -85,7 +268,6 @@ class _SplashPageState extends State<SplashPage> {
   }
 }
 
-/// 启动页背景，使用设计提供的图片资源铺满屏幕。
 class _SplashBackground extends StatelessWidget {
   const _SplashBackground();
 
@@ -102,52 +284,54 @@ class _SplashBackground extends StatelessWidget {
           height: double.infinity,
           fit: BoxFit.cover,
           filterQuality: FilterQuality.low,
+          gaplessPlayback: true,
           cacheWidth: cacheWidth > 0 ? cacheWidth : null,
           cacheHeight: cacheHeight > 0 ? cacheHeight : null,
+          errorBuilder: (context, error, stackTrace) {
+            return const ColoredBox(color: _SplashPageState._backgroundFallbackColor);
+          },
         );
       },
     );
   }
 }
 
-/// 中央 App 图标
-class _SplashLogo extends StatelessWidget {
-  const _SplashLogo();
+class _SplashProgressBar extends StatelessWidget {
+  const _SplashProgressBar({
+    required this.width,
+    required this.height,
+    required this.progress,
+  });
+
+  final double width;
+  final double height;
+  final double progress;
 
   @override
   Widget build(BuildContext context) {
-    return Transform.translate(
-      offset: const Offset(0, -34),
+    final fillWidth = width * progress.clamp(0.0, 1.0);
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(height / 2),
       child: SizedBox(
-        width: 144,
-        height: 144,
-        child: Assets.images.appIconBlack.image(),
+        width: width,
+        height: height,
+        child: Stack(
+          alignment: Alignment.centerLeft,
+          children: [
+            const Positioned.fill(
+              child: ColoredBox(color: _SplashPageState._progressTrackColor),
+            ),
+            SizedBox(
+              width: fillWidth,
+              height: height,
+              child: const ColoredBox(
+                color: _SplashPageState._progressFillColor,
+              ),
+            ),
+          ],
+        ),
       ),
-    );
-  }
-}
-
-/// 底部品牌区，品牌字样使用设计提供的斜体贴图。
-class _SplashBrandFooter extends StatelessWidget {
-  const _SplashBrandFooter();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Assets.images.easyMoniText.image(
-          width: 160,
-          fit: BoxFit.contain,
-          filterQuality: FilterQuality.high,
-        ),
-        const SizedBox(height: 18),
-        Assets.images.splashBottomText.image(
-          width: 203,
-          fit: BoxFit.contain,
-          filterQuality: FilterQuality.high,
-        ),
-      ],
     );
   }
 }

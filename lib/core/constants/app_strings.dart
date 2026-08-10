@@ -93,6 +93,8 @@ class AppStrings {
   static const String takephotos = 'Take Photo';
   static const String idcardMessage =
       'Camera access is required to capture your Ghana Card.';
+  static const String faceVerifyCameraPermissionDesc =
+      'Camera access is required for facial liveness verification.';
   static const String idcardVer = 'Identity Verification';
   static const String informationPersonalStep = 'Personal Information';
   static const String informationIdentityStep = 'Identity Verification';
@@ -113,7 +115,7 @@ class AppStrings {
   static const String questionnaireSubmitWaiting = 'Just a moment...';
   static const String locationPermissionTitle = 'Location Permission Required';
   static const String locationPermissionDesc =
-      'We use your location to protect your account and prevent fraud. Please allow location access to continue.';
+      'We use your approximate location to protect your account and prevent fraud. Please allow location access to continue.';
   static const String homeTab = 'Home';
   static const String repayTab = 'Repay';
   static const String mineTab = 'Me';
