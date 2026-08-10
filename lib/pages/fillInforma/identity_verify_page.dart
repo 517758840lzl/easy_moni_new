@@ -9,6 +9,7 @@ import 'package:easy_moni/pages/fillInforma/id_camera_page.dart';
 import 'package:easy_moni/pages/fillInforma/providers/acp_element_info_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/ocr_verification_provider.dart';
 import 'package:easy_moni/pages/fillInforma/providers/submit_acp_element_info_provider.dart';
+import 'package:easy_moni/pages/fillInforma/widgets/date_picker_bottom_sheet.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/identity_verify_widgets.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/picker_bottom_sheet.dart';
 import 'package:easy_moni/pages/fillInforma/widgets/progress_information.dart';
@@ -41,6 +42,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   final IdentityVerifyFormController _formController =
       IdentityVerifyFormController();
   final ScrollController _scrollController = ScrollController();
+  final Map<String, GlobalKey> _entryItemKeys = {};
 
   StepInfo? _stepInfo;
   int? _processId;
@@ -55,6 +57,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   bool _isOcrLoading = false;
   bool _isFrontImageProcessing = false;
   bool _isBackImageProcessing = false;
+  String? _emphasizedEntryKey;
 
   bool get _canContinue {
     final requiredSides = _formController.requiredIdCardImageSides;
@@ -150,7 +153,47 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
 
     if (confirmed == true) {
       await _submitIdentityInfo();
+      return;
     }
+
+    if (confirmed == false) {
+      final entry = _formController.recognizedIdNumberEntry;
+      if (entry != null) {
+        await _focusAndEmphasizeEntry(entry);
+      }
+    }
+  }
+
+  Future<void> _focusAndEmphasizeEntry(FormEntry entry) async {
+    setState(() => _emphasizedEntryKey = entry.key);
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) {
+      return;
+    }
+
+    final itemContext = _entryItemKeys[entry.key]?.currentContext;
+    if (itemContext != null && itemContext.mounted) {
+      await Scrollable.ensureVisible(
+        itemContext,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
+        alignment: 0.2,
+      );
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    final focusNode = _formController.focusNodeFor(entry);
+    if (!mounted) {
+      return;
+    }
+    focusNode.requestFocus();
+  }
+
+  GlobalKey _entryItemKeyFor(FormEntry entry) {
+    return _entryItemKeys.putIfAbsent(entry.key, GlobalKey.new);
   }
 
   Future<void> _submitIdentityInfo() async {
@@ -512,35 +555,13 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
       lastDate: now,
     );
 
-    // 生日字段由系统日期选择器录入，避免用户手输造成日期格式不统一。
-    final pickedDate = await showDatePicker(
+    // 生日字段由底部日期滚轮选择，避免手输造成格式不统一。
+    final pickedDate = await showDatePickerBottomSheet(
       context: context,
+      title: entry.showContent,
       initialDate: initialDate,
-      firstDate: firstDate,
-      lastDate: now,
-      helpText: entry.showContent,
-      cancelText: AppStrings.cancel,
-      confirmText: AppStrings.confirm,
-      builder: (context, child) {
-        final theme = Theme.of(context);
-        return Theme(
-          data: theme.copyWith(
-            colorScheme: theme.colorScheme.copyWith(
-              primary: AppColors.primaryDark,
-              onPrimary: Colors.white,
-              surface: const Color(0xFFFDFEFF),
-              onSurface: AppColors.textPrimary,
-            ),
-            datePickerTheme: const DatePickerThemeData(
-              backgroundColor: Color(0xFFFDFEFF),
-              headerBackgroundColor: AppColors.primaryDark,
-              headerForegroundColor: Colors.white,
-              surfaceTintColor: Colors.transparent,
-            ),
-          ),
-          child: child!,
-        );
-      },
+      minimumDate: firstDate,
+      maximumDate: now,
     );
     if (pickedDate == null || !mounted) {
       return;
@@ -716,15 +737,17 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
                         const SizedBox(height: 8),
                         ..._formController.visibleEntries.map(
                           (entry) => IdentityFormEntryItem(
+                            key: _entryItemKeyFor(entry),
                             entry: entry,
                             formController: _formController,
+                            emphasized: _emphasizedEntryKey == entry.key,
                             onTextChanged: (value) {
-                              setState(
-                                () => _formController.updateTextValue(
-                                  entry,
-                                  value,
-                                ),
-                              );
+                              setState(() {
+                                if (_emphasizedEntryKey == entry.key) {
+                                  _emphasizedEntryKey = null;
+                                }
+                                _formController.updateTextValue(entry, value);
+                              });
                             },
                             onTextSubmitted: (entry) =>
                                 _focusNextVisibleEntryAfter(entry),

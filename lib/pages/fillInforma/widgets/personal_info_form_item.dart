@@ -19,6 +19,7 @@ class PersonalInfoFormItem extends StatelessWidget {
     this.inputFormatters,
     this.showDivider = true,
     this.isLoading = false,
+    this.emphasized = false,
     this.trailing,
     this.inputTrailing,
     this.onInputTrailingTap,
@@ -38,6 +39,7 @@ class PersonalInfoFormItem extends StatelessWidget {
   final List<TextInputFormatter>? inputFormatters;
   final bool showDivider;
   final bool isLoading;
+  final bool emphasized;
   final Widget? trailing;
   final Widget? inputTrailing;
   final VoidCallback? onInputTrailingTap;
@@ -112,7 +114,7 @@ class PersonalInfoFormItem extends StatelessWidget {
   }
 
   Widget _buildTextField() {
-    return TextField(
+    final field = TextField(
       controller: controller,
       focusNode: focusNode,
       keyboardType: keyboardType,
@@ -124,7 +126,7 @@ class PersonalInfoFormItem extends StatelessWidget {
         hintText: placeholder,
         hintStyle: const TextStyle(fontSize: 14, color: Color(0xFFCCCCCC)),
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
         border: InputBorder.none,
         enabledBorder: InputBorder.none,
         focusedBorder: InputBorder.none,
@@ -146,6 +148,18 @@ class PersonalInfoFormItem extends StatelessWidget {
       style: const TextStyle(fontSize: 14, color: Colors.black),
       onChanged: onChanged,
       onSubmitted: onSubmitted,
+    );
+
+    if (!emphasized) {
+      return field;
+    }
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE53935)),
+      ),
+      child: field,
     );
   }
 

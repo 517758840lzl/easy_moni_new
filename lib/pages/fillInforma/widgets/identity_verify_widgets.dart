@@ -226,6 +226,7 @@ class IdentityFormEntryItem extends StatelessWidget {
     required this.onTextSubmitted,
     required this.onPickerTap,
     required this.onDatePickerTap,
+    this.emphasized = false,
   });
 
   final FormEntry entry;
@@ -234,6 +235,7 @@ class IdentityFormEntryItem extends StatelessWidget {
   final ValueChanged<FormEntry> onTextSubmitted;
   final ValueChanged<FormEntry> onPickerTap;
   final ValueChanged<FormEntry> onDatePickerTap;
+  final bool emphasized;
 
   @override
   Widget build(BuildContext context) {
@@ -242,6 +244,7 @@ class IdentityFormEntryItem extends StatelessWidget {
         title: entry.showContent,
         isRequired: entry.must == 1,
         placeholder: entry.defaultText,
+        emphasized: emphasized,
         controller: formController.controllerFor(entry),
         focusNode: formController.focusNodeFor(entry),
         keyboardType: FormEntryInputTypeHelper.keyboardTypeFor(entry),

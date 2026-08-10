@@ -226,12 +226,18 @@ class IdentityVerifyFormController {
   int selectedIndexFor(FormEntry entry) => _selectedIndices[entry.key] ?? 0;
 
   String get recognizedIdNumber {
-    final entry = visibleEntries.where(_isRecognizedIdNumberEntry).firstOrNull;
+    final entry = recognizedIdNumberEntry;
     if (entry == null) {
       return '';
     }
     return (_submitValues[entry.key] ?? _displayValues[entry.key] ?? '').trim();
   }
+
+  FormEntry? get recognizedIdNumberEntry =>
+      visibleEntries.where(_isRecognizedIdNumberEntry).firstOrNull;
+
+  bool isRecognizedIdNumberEntry(FormEntry entry) =>
+      _isRecognizedIdNumberEntry(entry);
 
   void updateTextValue(FormEntry entry, String value) {
     final trimmedValue = value.trim();

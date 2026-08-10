@@ -92,6 +92,12 @@ import CoreLocation
         }
       case "openAppSettings":
         Self.openSystemSettings(result: result)
+      case "pickFromGallery":
+        guard let controller = Self.keyFlutterViewController() else {
+          result(FlutterError(code: "unavailable", message: "No Flutter view controller", details: nil))
+          return
+        }
+        GalleryPickerHelper.shared.pickImage(from: controller, result: result)
       default:
         result(FlutterMethodNotImplemented)
       }
@@ -221,8 +227,8 @@ import CoreLocation
     _ application: UIApplication,
     supportedInterfaceOrientationsFor window: UIWindow?
   ) -> UIInterfaceOrientationMask {
-    // 全局限制竖屏，确保原生启动页和 Flutter 页面方向一致。
-    return .portrait
+    // 交给 Flutter（SystemChrome.setPreferredOrientations）按页面控制方向。
+    return super.application(application, supportedInterfaceOrientationsFor: window)
   }
 
   func contactPicker(_ picker: CNContactPickerViewController, didSelect contact: CNContact) {

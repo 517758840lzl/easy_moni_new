@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'dart:math' as math;
 
 import 'package:easy_moni/core/constants/app_strings.dart';
@@ -207,7 +208,6 @@ class _IdCameraScreenState extends State<IdCameraScreen>
 
   /// 先完成横屏与沉浸式布局切换，再初始化相机，降低 Activity 旋转期间抢占相机的概率。
   Future<void> _prepareCameraPageAndInit() async {
-    // 证件拍摄需要横屏，以匹配 Ghana Card 的宽版比例。
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
@@ -263,7 +263,9 @@ class _IdCameraScreenState extends State<IdCameraScreen>
             camera,
             resolutionPreset,
             enableAudio: false,
-            imageFormatGroup: ImageFormatGroup.jpeg,
+            imageFormatGroup: Platform.isIOS
+                ? ImageFormatGroup.bgra8888
+                : ImageFormatGroup.jpeg,
           );
           nextController.addListener(_onCameraControllerChanged);
           await nextController.initialize();
