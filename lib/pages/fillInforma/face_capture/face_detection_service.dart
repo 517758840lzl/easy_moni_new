@@ -29,4 +29,46 @@ abstract class FaceDetectionService {
     }
     return MlKitFaceDetectionService();
   }
+
+  static bool isEyeClosed(DetectedFace face, {double threshold = 0.3}) {
+    final avg = face.avgEyeOpen;
+    if (avg == null) return false;
+    return avg < threshold;
+  }
+
+  static bool isEyeOpen(DetectedFace face, {double threshold = 0.7}) {
+    final avg = face.avgEyeOpen;
+    if (avg == null) return false;
+    return avg > threshold;
+  }
+
+  static bool isHeadTurnedAway(
+    DetectedFace face, {
+    double angleThreshold = 6.0,
+  }) {
+    final yaw = face.headYaw;
+    if (yaw == null) return false;
+    return yaw.abs() >= angleThreshold;
+  }
+
+  static bool isHeadTurnedOpposite(
+    DetectedFace face, {
+    required double firstYawSign,
+    double angleThreshold = 6.0,
+  }) {
+    final yaw = face.headYaw;
+    if (yaw == null) return false;
+    if (firstYawSign < 0) return yaw >= angleThreshold;
+    return yaw <= -angleThreshold;
+  }
+
+  static bool isHeadFacingForward(
+    DetectedFace face, {
+    double angleThreshold = 12.0,
+    double eyeOpenThreshold = 0.5,
+  }) {
+    final yaw = face.headYaw;
+    if (yaw == null || yaw.abs() > angleThreshold) return false;
+    return isEyeOpen(face, threshold: eyeOpenThreshold);
+  }
 }

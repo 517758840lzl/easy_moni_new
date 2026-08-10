@@ -1,22 +1,21 @@
-import 'package:talker/talker.dart';
 import 'package:dio/dio.dart';
+import 'package:easy_moni/core/network/network_log.dart';
 
 class LoggingInterrepter extends Interceptor {
-  final Talker takler;
+  final Map<String, DateTime> _startTimes = {};
 
-  LoggingInterrepter({required this.takler});
+  String _requestKey(RequestOptions options) =>
+      '${options.method}:${options.uri}';
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    final log = StringBuffer();
-    log.writeln('╔══════ REQUEST ══════');
-    log.writeln('► ${options.method} ${options.uri}');
-    log.writeln('► Headers: ${options.headers}');
-
-    if (options.data != null) {
-      log.writeln('► Body: ${_formatJson(options.data)}');
-    }
-    takler.debug(log.toString());
+    _startTimes[_requestKey(options)] = DateTime.now();
+    NetworkLog.request(
+      method: options.method,
+      uri: options.uri,
+      headers: options.headers,
+      body: options.data,
+    );
     handler.next(options);
   }
 
@@ -25,43 +24,30 @@ class LoggingInterrepter extends Interceptor {
     Response<dynamic> response,
     ResponseInterceptorHandler handler,
   ) {
-    final log = StringBuffer();
-    log.writeln('║');
-    log.writeln('╠══════ RESPONSE ══════');
-    log.writeln('◄ ${response.statusCode} ${response.requestOptions.uri}');
-    log.writeln('◄ Data: ${_formatJson(response.data)}');
-    log.writeln('╚═════════════════════');
+    final key = _requestKey(response.requestOptions);
+    final startedAt = _startTimes.remove(key);
+    final duration = startedAt == null
+        ? null
+        : DateTime.now().difference(startedAt);
 
-    takler.debug(log.toString());
+    NetworkLog.response(
+      method: response.requestOptions.method,
+      uri: response.requestOptions.uri,
+      statusCode: response.statusCode,
+      wireData: response.data,
+      duration: duration,
+    );
     handler.next(response);
   }
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    final log = StringBuffer();
-    log.write('=============');
-    log.write('=====error=========');
-    log.write('type==${err.type}=');
-    log.write('message====${err.message}=======');
-    log.write('URL==========${err.requestOptions.uri}');
-    if (err.response != null) {
-      log.write('response======${err.response?.data}');
-    }
-    log.write('===============error======================');
-    takler.error(log.toString(), err, err.stackTrace);
+    _startTimes.remove(_requestKey(err.requestOptions));
+    NetworkLog.error(
+      method: err.requestOptions.method,
+      uri: err.requestOptions.uri,
+      message: '${err.type.name}: ${err.message ?? 'unknown'}',
+    );
     handler.next(err);
-  }
-
-  String _formatJson(dynamic data) {
-    if (data == null) return 'null';
-    if (data is String) {
-      try {
-        final decode = data;
-        return decode;
-      } catch (_) {
-        return data;
-      }
-    }
-    return data.toString();
   }
 }

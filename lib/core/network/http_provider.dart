@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:easy_moni/core/config/environment_config.dart';
-import 'package:easy_moni/core/constants/api_constants.dart';
 import 'package:easy_moni/core/network/http_result.dart';
 import 'package:easy_moni/core/network/interrepters/header_interrepter.dart';
 import 'package:easy_moni/core/network/interrepters/logging_interrepter.dart';
+import 'package:easy_moni/core/network/network_log.dart';
 import 'package:easy_moni/core/router/app_router.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/core/utils/request_security_util.dart';
@@ -47,7 +47,7 @@ class HttpProvider {
 
     dio.interceptors.add(headerInterceptor);
     if (kDebugMode && config.enableNetworkLog) {
-      dio.interceptors.add(LoggingInterrepter(takler: talker));
+      dio.interceptors.add(LoggingInterrepter());
     }
 
     instance = HttpProvider._(
@@ -179,9 +179,11 @@ class HttpProvider {
         );
       }
 
+      if (kDebugMode && _config.enableNetworkLog) {
+        NetworkLog.decrypted(method: 'GET', path: path, data: responseData);
+      }
+
       Map<String, dynamic>? map;
-      final dataType = responseData.runtimeType.toString();
-      _talker.debug('GET response.data type: $dataType');
 
       try {
         final sourceMap = responseData as Map;
@@ -247,12 +249,7 @@ class HttpProvider {
     bool includeToken = true,
   }) async {
     try {
-      // 登录调试：打印加密前的 loginParams，便于排查登录参数组装问题。
-      if (path == ApiConstants.login) {
-        _talker.debug('loginParams: $data');
-      }
-
-      final requestData = _encryptPostDataIfNeeded(data);
+      final requestData = _encryptPostDataIfNeeded(path, data);
 
       // 使用 dynamic 而不是 T，避免 Dio 自动转换失败
       final response = await _dio.post<dynamic>(
@@ -273,9 +270,11 @@ class HttpProvider {
         );
       }
 
+      if (kDebugMode && _config.enableNetworkLog) {
+        NetworkLog.decrypted(method: 'POST', path: path, data: responseData);
+      }
+
       Map<String, dynamic>? map;
-      final dataType = responseData.runtimeType.toString();
-      _talker.debug('POST response.data type: $dataType');
 
       try {
         // 使用 Map.from 来确保正确转换
@@ -350,18 +349,15 @@ class HttpProvider {
   }
 
   /// 按配置统一加密 POST 请求体，上传表单和空请求体保持原样。
-  dynamic _encryptPostDataIfNeeded(dynamic data) {
+  dynamic _encryptPostDataIfNeeded(String path, dynamic data) {
     if (!_shouldEncryptPostData(data)) {
-      if (data is Map && RequestSecurityUtil.isEncryptedTransportBody(data)) {
-        _talker.debug('POST encrypted request body: $data');
-      }
       return data;
     }
 
-    _talker.debug('POST request body before encryption: $data');
-    final encryptedData = RequestSecurityUtil.encryptRequestBody(data);
-    _talker.debug('POST encrypted request body: $encryptedData');
-    return encryptedData;
+    if (kDebugMode && _config.enableNetworkLog) {
+      NetworkLog.plainBody(method: 'POST', path: path, body: data);
+    }
+    return RequestSecurityUtil.encryptRequestBody(data);
   }
 
   /// 解密后端返回的整体响应体，再交给统一解析流程处理。

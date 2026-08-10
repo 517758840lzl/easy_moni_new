@@ -13,7 +13,7 @@ import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/services/upload_data/upload_platform_support.dart';
 import 'package:easy_moni/services/saved_session_route_service.dart';
 import 'package:easy_moni/services/upload_data/upload_data_sync_service.dart';
-import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
+import 'package:easy_moni/core/tracking/tracking_bootstrap.dart';
 import 'package:easy_moni/utils/widgets/permission_action_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -74,11 +74,7 @@ class _PermissionPageState extends ConsumerState<PermissionPage> {
 
   /// 用户同意隐私政策后再初始化归因 SDK 和首次打开上报，避免同意前采集数据。
   void _startPrivacyAwareTracking() {
-    unawaited(
-      AppsFlyerTracker.initializeAppsFlyerTracker()
-          .then((_) => AppsFlyerTracker.logAppsFlyerFirstOpenIfNeeded())
-          .catchError((Object error, StackTrace stackTrace) {}),
-    );
+    unawaited(TrackingBootstrap.ensureStarted());
   }
 
   /// 用户接受授权后，后台静默采集风控所需数据，不阻塞后续页面跳转。

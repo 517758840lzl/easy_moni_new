@@ -448,6 +448,11 @@ class AppStrings {
   static const String loanConfirmActualAmountLabel = 'Amount to Receive';
   static const String loanConfirmRepayAmountLabel = 'Amount Due';
   static const String loanConfirmRepaymentDateLabel = 'Repayment Date';
+  static const String loanAgreementTitle = 'Loan Agreement';
+  static const String loanConfirmAgreePrefix = 'I have read and agree to the ';
+  static const String loanConfirmAgreeLink = 'Loan Agreement';
+  static const String loanConfirmAgreeRequired =
+      'Please read and agree to the Loan Agreement first';
 
   // ==================== 状态 =====================
   static const String errorMessage = 'Failed to load. Please try again.';

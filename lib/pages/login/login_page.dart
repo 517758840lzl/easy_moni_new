@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:easy_moni/core/tracking/tracking_bootstrap.dart';
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/config/privacy_policy_config.dart';
 import 'package:easy_moni/core/network/http_provider.dart';
@@ -8,6 +9,7 @@ import 'package:easy_moni/entities/acquisition_progress_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/fillInforma/providers/acquisition_progress_provider.dart';
 import 'package:easy_moni/services/auth_storage.dart';
+import 'package:easy_moni/services/permission_storage.dart';
 import 'package:easy_moni/services/upload_data/upload_data_sync_service.dart';
 import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
 import 'package:easy_moni/utils/af_tracker/track_events.dart';
@@ -51,6 +53,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     _codeFocusNode = FocusNode();
     _phoneController.addListener(_onPhoneChanged);
     _codeController.addListener(_onCodeChanged);
+    unawaited(_restoreAgreementState());
+  }
+
+  Future<void> _restoreAgreementState() async {
+    final agreed = await PermissionStorage.isPrivacyAgreed();
+    if (!mounted || !agreed) return;
+
+    setState(() => _agreedToPolicies = true);
+    unawaited(TrackingBootstrap.ensureStarted());
   }
 
   @override
@@ -147,10 +158,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   /// 手机号达到 10 位后自动发送验证码，并避免同一号码重复触发。
   void _sendCodeAfterPhoneCompleted(String phoneText) {
-    if (!_agreedToPolicies) {
-      return;
-    }
-
     if (_lastAutoCodePhone == phoneText ||
         _isSendingCode ||
         _countdownSeconds > 0) {
@@ -486,6 +493,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   void _onAgreementChanged(bool value) {
     FocusScope.of(context).unfocus();
     setState(() => _agreedToPolicies = value);
+    if (value) {
+      unawaited(_startTrackingAfterPrivacyAgreed());
+    }
+  }
+
+  Future<void> _startTrackingAfterPrivacyAgreed() async {
+    await PermissionStorage.setPrivacyAgreed(true);
+    await TrackingBootstrap.ensureStarted();
   }
 
   Widget _buildLogoSection() {

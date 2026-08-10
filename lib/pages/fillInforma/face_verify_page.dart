@@ -47,9 +47,10 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
   int _stableFrontCount = 0;
   int _actionTimeoutToken = 0;
   Timer? _actionTimeoutTimer;
+  Timer? _androidPollTimer;
   bool _blinkClosedDetected = false;
   int _nodStartDirection = 0;
-  int _shakeStartDirection = 0;
+  double? _shakeFirstYawSign;
   String? _cameraError;
   String? _hintText;
 
@@ -64,6 +65,7 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
   @override
   void dispose() {
     _cancelActionTimeout();
+    _androidPollTimer?.cancel();
     unawaited(_releaseCameraController());
     unawaited(_faceDetectionService.dispose());
     super.dispose();
@@ -165,14 +167,13 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
 
     final controller = CameraController(
       targetCamera,
-      ResolutionPreset.high,
+      ResolutionPreset.medium,
       enableAudio: false,
       imageFormatGroup: imageFormatGroup,
     );
 
     await controller.initialize();
     await controller.lockCaptureOrientation(DeviceOrientation.portraitUp);
-    await controller.startImageStream(_processCameraImage);
 
     if (!mounted) {
       await controller.dispose();
@@ -183,7 +184,48 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
       _cameraController = controller;
       _isCameraReady = true;
     });
+
+    if (Platform.isIOS) {
+      await controller.startImageStream(_processCameraImage);
+    } else {
+      _startAndroidFramePolling();
+    }
     _startCurrentActionTimeout();
+  }
+
+  /// Android 与 active-loan 一致：定时拍照再检测，避免 NV21 流式帧不稳定。
+  void _startAndroidFramePolling() {
+    _androidPollTimer?.cancel();
+    _androidPollTimer = Timer.periodic(
+      const Duration(milliseconds: 350),
+      (_) => unawaited(_pollAndroidFrame()),
+    );
+  }
+
+  Future<void> _pollAndroidFrame() async {
+    if (!mounted ||
+        _isProcessingImage ||
+        _isUploading ||
+        _hasCapturedFinalImage ||
+        _hasActionTimedOut ||
+        _cameraController == null) {
+      return;
+    }
+
+    _isProcessingImage = true;
+    try {
+      final photo = await _cameraController!.takePicture();
+      final faces = await _faceDetectionService.processImageFile(photo.path);
+      await File(photo.path).delete();
+      if (!mounted || _hasActionTimedOut) {
+        return;
+      }
+      _handleDetectedFaces(faces);
+    } catch (_) {
+      return;
+    } finally {
+      _isProcessingImage = false;
+    }
   }
 
   Future<void> _processCameraImage(CameraImage image) async {
@@ -202,45 +244,10 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
         image,
         _cameraController!.description,
       );
-      if (!mounted || _hasActionTimedOut || faces.isEmpty) {
-        _resetActionProgress();
+      if (!mounted || _hasActionTimedOut) {
         return;
       }
-
-      if (faces.length != 1) {
-        _resetActionProgress();
-        return;
-      }
-
-      final face = faces.first;
-
-      if (!_allActionsCompleted) {
-        final currentStep = _livenessSteps[_currentStepIndex];
-        final matched = _matchesStep(face, currentStep);
-        if (matched) {
-          _stableMatchCount += 1;
-          if (_stableMatchCount >= currentStep.stableFrameThreshold) {
-            _completeCurrentStep();
-          }
-        } else {
-          _stableMatchCount = 0;
-        }
-        return;
-      }
-
-      final finalCaptureStep = FaceVerifyActionConfig.finalCaptureStep;
-      if (_matchesStep(face, finalCaptureStep)) {
-        _stableFrontCount += 1;
-        if (_stableFrontCount >=
-            FaceVerifyActionConfig.finalCaptureStableFrameThreshold) {
-          await _captureFinalFacePhoto();
-        }
-      } else {
-        _stableFrontCount = 0;
-        if (_hintText != finalCaptureStep.description) {
-          setState(() => _hintText = finalCaptureStep.description);
-        }
-      }
+      _handleDetectedFaces(faces);
     } catch (e) {
       return;
     } finally {
@@ -248,9 +255,46 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     }
   }
 
+  void _handleDetectedFaces(List<DetectedFace> faces) {
+    if (faces.isEmpty || faces.length != 1) {
+      _resetActionProgress();
+      return;
+    }
+
+    final face = faces.first;
+
+    if (!_allActionsCompleted) {
+      final currentStep = _livenessSteps[_currentStepIndex];
+      final matched = _matchesStep(face, currentStep);
+      if (matched) {
+        _stableMatchCount += 1;
+        if (_stableMatchCount >= currentStep.stableFrameThreshold) {
+          _completeCurrentStep();
+        }
+      } else {
+        _stableMatchCount = 0;
+      }
+      return;
+    }
+
+    final finalCaptureStep = FaceVerifyActionConfig.finalCaptureStep;
+    if (_matchesStep(face, finalCaptureStep)) {
+      _stableFrontCount += 1;
+      if (_stableFrontCount >=
+          FaceVerifyActionConfig.finalCaptureStableFrameThreshold) {
+        unawaited(_captureFinalFacePhoto());
+      }
+    } else {
+      _stableFrontCount = 0;
+      if (_hintText != finalCaptureStep.description) {
+        setState(() => _hintText = finalCaptureStep.description);
+      }
+    }
+  }
+
   bool _matchesStep(DetectedFace face, FaceLivenessStep step) {
     if (step.action == FaceAction.faceFront) {
-      return _isFrontalFace(face);
+      return _isStrictFrontalFace(face);
     }
     if (step.action == FaceAction.nodHead) {
       return _matchesHeadMovement(
@@ -260,10 +304,22 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
       );
     }
     if (step.action == FaceAction.shakeHead) {
-      return _matchesHeadMovement(
-        angle: face.headYaw ?? 0,
-        startDirection: _shakeStartDirection,
-        saveStartDirection: (direction) => _shakeStartDirection = direction,
+      final turnThreshold = FaceVerifyActionConfig.shakeHeadTurnThreshold;
+      if (_shakeFirstYawSign == null) {
+        final yaw = face.headYaw;
+        if (yaw != null &&
+            FaceDetectionService.isHeadTurnedAway(
+              face,
+              angleThreshold: turnThreshold,
+            )) {
+          _shakeFirstYawSign = yaw > 0 ? 1.0 : -1.0;
+        }
+        return false;
+      }
+      return FaceDetectionService.isHeadTurnedOpposite(
+        face,
+        firstYawSign: _shakeFirstYawSign!,
+        angleThreshold: turnThreshold,
       );
     }
     if (step.action == FaceAction.blink) {
@@ -282,6 +338,15 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
       return _isMouthOpen(face);
     }
     return false;
+  }
+
+  /// 正脸判定：yaw + 睁眼，阈值适中，避免 iOS pitch 估算导致误判。
+  bool _isStrictFrontalFace(DetectedFace face) {
+    return FaceDetectionService.isHeadFacingForward(
+      face,
+      angleThreshold: FaceVerifyActionConfig.frontFaceYawThreshold,
+      eyeOpenThreshold: FaceVerifyActionConfig.frontFaceEyeOpenThreshold,
+    );
   }
 
   /// 检测需要往返动作的头部动作，例如点头和摇头。
@@ -318,16 +383,7 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     _stableFrontCount = 0;
     _blinkClosedDetected = false;
     _nodStartDirection = 0;
-    _shakeStartDirection = 0;
-  }
-
-  bool _isFrontalFace(DetectedFace face) {
-    final x = (face.headPitch ?? 0).abs();
-    final y = (face.headYaw ?? 0).abs();
-    final z = (face.headRoll ?? 0).abs();
-    final left = face.leftEyeOpen ?? 1;
-    final right = face.rightEyeOpen ?? 1;
-    return x < 8 && y < 8 && z < 8 && left > 0.55 && right > 0.55;
+    _shakeFirstYawSign = null;
   }
 
   void _completeCurrentStep() {
@@ -373,6 +429,8 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
 
   /// 退出人脸页前完整停止图像流并释放相机，避免下个相机页抢占未解绑的 CameraX 用例。
   Future<void> _releaseCameraController() async {
+    _androidPollTimer?.cancel();
+    _androidPollTimer = null;
     final controller = _cameraController;
     _cameraController = null;
     _isCameraReady = false;

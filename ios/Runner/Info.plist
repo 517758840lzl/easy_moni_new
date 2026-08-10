@@ -2,7 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>NSCameraUsageDescription</key>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>whatsapp</string>
+		<string>tel</string>
+	</array>
+	<key>NSCameraUsageDescription</key>
     <string>Easy Moni uses your camera to capture your ID and complete facial verification.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>Easy Moni uses your approximate location to help prevent fraud and assess risk.</string>

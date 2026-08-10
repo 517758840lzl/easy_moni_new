@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:easy_moni/core/config/privacy_policy_config.dart';
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/entities/coupon_resp.dart';
@@ -13,6 +14,7 @@ import 'package:easy_moni/pages/loan/components/loan_order_card.dart';
 import 'package:easy_moni/pages/loan/models/loan_confirm_request_product.dart';
 import 'package:easy_moni/pages/loan/providers/coupon_provider.dart';
 import 'package:easy_moni/pages/loan/providers/loan_confirm_provider.dart';
+import 'package:easy_moni/pages/loan/widgets/loan_confirm_agreement.dart';
 import 'package:easy_moni/pages/login/providers/auth_provider.dart';
 import 'package:easy_moni/pages/repay/components/total_repay_amount_display.dart';
 import 'package:easy_moni/services/platform_service.dart';
@@ -22,6 +24,7 @@ import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
 import 'package:easy_moni/utils/af_tracker/track_events.dart';
 import 'package:easy_moni/utils/loan_confirm_content_edge.dart';
 import 'package:easy_moni/utils/widgets/common_bottom_sheet.dart';
+import 'package:easy_moni/utils/widgets/legal_web_view_page.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:easy_moni/utils/widgets/selected_coupon_card.dart';
 
@@ -39,6 +42,7 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
   // 页面级状态：分别控制首次加载、提交按钮、错误提示和接口返回数据。
   bool _isLoading = true;
   bool _isSubmitting = false;
+  bool _agreedToContract = false;
   bool _isCouponSheetOpen = false;
   String? _loadError;
   LoanConfirmResp? _loanConfirmResp;
@@ -107,6 +111,11 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
 
   Future<void> _submitOrder() async {
     if (_isSubmitting) return;
+
+    if (!_agreedToContract) {
+      context.showSnackBar(AppStrings.loanConfirmAgreeRequired, isError: true);
+      return;
+    }
 
     // 提交前仅在 Android 检查短信权限；iOS 不支持短信读取，不拦截借款流程。
     if (SmsService.isSupported) {
@@ -196,6 +205,20 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
       }
       return false;
     }
+  }
+
+  Future<void> _openLoanAgreement({String? url}) async {
+    final target = url?.trim();
+    final resolved = target != null && target.isNotEmpty
+        ? target
+        : PrivacyPolicyConfig.loanAgreementUrl;
+    if (resolved.isEmpty) return;
+
+    await LegalWebViewPage.open(
+      context,
+      title: AppStrings.loanAgreementTitle,
+      url: resolved,
+    );
   }
 
   Future<void> _showSmsPermissionSheet() {
@@ -397,12 +420,46 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
         ),
       ),
       bottomNavigationBar: hasData
-          ? LoanBottomActionButton(
-              enabled: !_isSubmitting,
-              text: _isSubmitting
-                  ? AppStrings.loanConfirmButtonLoadingText
-                  : AppStrings.loanConfirmButtonText,
-              onPressed: _isSubmitting ? null : _submitOrder,
+          ? DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  top: BorderSide(
+                    color: const Color(0xFFC3C6D5).withValues(alpha: 0.25),
+                  ),
+                ),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(17, 12, 17, 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      LoanConfirmAgreement(
+                        agreed: _agreedToContract,
+                        onChanged: _isSubmitting
+                            ? (_) {}
+                            : (value) =>
+                                  setState(() => _agreedToContract = value),
+                        onOpenAgreement: _isSubmitting
+                            ? () {}
+                            : () => _openLoanAgreement(),
+                      ),
+                      const SizedBox(height: 12),
+                      LoanBottomActionButton(
+                        enabled: !_isSubmitting,
+                        useSafeArea: false,
+                        padding: EdgeInsets.zero,
+                        text: _isSubmitting
+                            ? AppStrings.loanConfirmButtonLoadingText
+                            : AppStrings.loanConfirmButtonText,
+                        onPressed: _isSubmitting ? null : _submitOrder,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             )
           : null,
     );
@@ -495,7 +552,7 @@ class _LoanConfirmOrderList extends StatelessWidget {
         10,
         34,
         10,
-        88 + MediaQuery.of(context).padding.bottom,
+        88 + 52 + MediaQuery.of(context).padding.bottom,
       ),
       child: Column(
         children: [
@@ -670,15 +727,8 @@ class _Hero extends StatelessWidget {
             child: Center(
               child: FittedBox(
                 fit: BoxFit.scaleDown,
-                child: isLoading || isCouponAmountLoading
-                    ? const SizedBox(
-                        width: 32,
-                        height: 32,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
+                child: isLoading
+                    ? const SizedBox(height: 32)
                     : showCouponAmount
                     ? Column(
                         children: [

@@ -6,6 +6,13 @@ import 'package:device_info_plus/device_info_plus.dart';
 abstract final class DeviceContext {
   DeviceContext._();
 
+  /// 登录 `clientType`：`android` / `ios`。
+  static String resolveClientType() {
+    if (Platform.isAndroid) return 'android';
+    if (Platform.isIOS) return 'ios';
+    return 'unknown';
+  }
+
   /// 登录 `userAgent` — 设备型号（如 `SM-A136U` / `iPhone13,4`），非 OS 版本。
   static Future<String> resolveUserAgent() async {
     try {

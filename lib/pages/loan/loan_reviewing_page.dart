@@ -7,11 +7,9 @@ import 'package:easy_moni/pages/loan/components/loan_review_rating_sheet.dart';
 import 'package:easy_moni/pages/loan/models/review_pop_config.dart';
 import 'package:easy_moni/pages/loan/providers/review_pop_provider.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
-import 'package:easy_moni/utils/widgets/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:in_app_review/in_app_review.dart';
 
 class LoanReviewingPage extends ConsumerStatefulWidget {
   const LoanReviewingPage({super.key});
@@ -62,22 +60,7 @@ class _LoanReviewingPageState extends ConsumerState<LoanReviewingPage> {
     int score,
   ) async {
     Navigator.of(sheetContext).pop();
-
-    if (config.isLowScore(score)) {
-      _showScoreSuccessToast();
-      return;
-    }
-
-    final inAppReview = InAppReview.instance;
-    if (await inAppReview.isAvailable()) {
-      await inAppReview.requestReview();
-      return;
-    }
-  }
-
-  void _showScoreSuccessToast() {
-    if (!mounted) return;
-    showToast(AppStrings.scoreSuccess, context: context);
+    // V1：仅关闭弹窗，不跳转 App Store / 系统评分，也不区分星级。
   }
 
   @override

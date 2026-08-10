@@ -2,10 +2,11 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:easy_moni/core/router/app_routes.dart';
+import 'package:easy_moni/core/tracking/tracking_bootstrap.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/login/splash_animations.dart';
+import 'package:easy_moni/services/permission_storage.dart';
 import 'package:easy_moni/services/saved_session_route_service.dart';
-import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -132,7 +133,10 @@ class _SplashPageState extends ConsumerState<SplashPage>
     if (_isTest) {
       _targetRoute = AppRoutePaths.login;
     } else {
-      unawaited(_initializeTracking());
+      if (await PermissionStorage.isPrivacyAgreed()) {
+        unawaited(TrackingBootstrap.ensureStarted());
+      }
+
       try {
         await _resolveRoute().timeout(_routeResolveTimeout);
       } on TimeoutException {
@@ -144,13 +148,6 @@ class _SplashPageState extends ConsumerState<SplashPage>
 
     _routeResolved = true;
     _tryNavigate();
-  }
-
-  Future<void> _initializeTracking() async {
-    try {
-      await AppsFlyerTracker.initializeAppsFlyerTracker();
-      await AppsFlyerTracker.logAppsFlyerFirstOpenIfNeeded();
-    } catch (_) {}
   }
 
   Future<void> _resolveRoute() async {

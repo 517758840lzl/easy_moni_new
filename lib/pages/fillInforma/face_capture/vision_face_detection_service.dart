@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/services.dart';
 
@@ -49,7 +51,7 @@ class VisionFaceDetectionService implements FaceDetectionService {
       final raw = await _channel.invokeMethod<List<dynamic>>(
         'detectFromBgra',
         <String, dynamic>{
-          'bytes': plane.bytes,
+          'bytes': Uint8List.fromList(plane.bytes),
           'width': cameraImage.width,
           'height': cameraImage.height,
           'bytesPerRow': plane.bytesPerRow,

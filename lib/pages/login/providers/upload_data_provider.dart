@@ -1,8 +1,8 @@
-import 'dart:typed_data';
-
 import 'package:easy_moni/core/constants/api_constants.dart';
 import 'package:easy_moni/core/network/http_provider.dart';
 import 'package:easy_moni/core/network/http_result.dart';
+import 'package:easy_moni/services/platform_service.dart';
+import 'package:easy_moni/services/upload_data/upload_platform_support.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final submitUserUploadDataProvider = Provider<SubmitUserUploadDataApi>((ref) {
@@ -10,21 +10,34 @@ final submitUserUploadDataProvider = Provider<SubmitUserUploadDataApi>((ref) {
 });
 
 class SubmitUserUploadDataApi {
-  /// 上传重新采集并压缩后的用户风控数据。
+  /// 上传压缩后的用户风控数据（格式与 active-loan 一致）。
   Future<HttpResult<dynamic>> call({
     required int trackId,
-    Uint8List? deviceInfoBytes,
-    Uint8List? appListBytes,
-    Uint8List? smsRecordBytes,
-  }) {
+    String? deviceInfoBytes,
+    String? appListBytes,
+    String? smsRecordBytes,
+  }) async {
+    final hasGpsPermission =
+        (await LocationService.checkPermission()) ? 1 : 0;
+    final hasSmsPermission =
+        UploadPlatformSupport.supportsAppListAndSms &&
+            (await SmsService.checkPermission())
+        ? 1
+        : 0;
+
     final data = <String, dynamic>{
       'trackId': trackId,
-      if (appListBytes != null && appListBytes.isNotEmpty)
-        'submitUserAppListBytes': appListBytes.toList(),
-      if (deviceInfoBytes != null && deviceInfoBytes.isNotEmpty)
-        'submitUserDeviceInfoBytes': deviceInfoBytes.toList(),
-      if (smsRecordBytes != null && smsRecordBytes.isNotEmpty)
-        'submitUserSmsBytes': smsRecordBytes.toList(),
+      'hasContactPermission': 0,
+      'hasGpsPermission': hasGpsPermission,
+      'hasSmsPermission': hasSmsPermission,
+      'submitUserConnectBytes': '',
+      'submitUserConnectReq': const [],
+      'submitUserAppListBytes': appListBytes ?? '',
+      'submitUserAppListReq': const [],
+      'submitUserDeviceInfoBytes': deviceInfoBytes ?? '',
+      'submitUserDeviceInfoReq': const {},
+      'submitUserSmsBytes': smsRecordBytes ?? '',
+      'submitUserSmsReq': const [],
     };
 
     return HttpProvider.instance.post<dynamic>(

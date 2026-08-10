@@ -1,4 +1,5 @@
 import 'package:easy_moni/services/platform_service.dart';
+import 'package:easy_moni/services/upload_data/dart_upload_device_info_collector.dart';
 import 'package:easy_moni/services/upload_data/sms_keyword_provider.dart';
 import 'package:easy_moni/services/upload_data/upload_platform_support.dart';
 
@@ -7,15 +8,19 @@ class UserUploadDataCollector {
 
   final SmsKeywordProvider smsKeywordProvider;
 
-  /// 采集设备信息原始 JSON；采集失败或数据为空时跳过该字段上传。
+  /// 采集设备信息原始 JSON；iOS 走 Dart 采集，Android 优先原生静默采集。
   Future<dynamic> collectDeviceInfo() async {
     try {
-      final data = await SilentPermissionDataService.collect();
-      final deviceInfo = data['deviceInfo'];
-      if (deviceInfo is Map && deviceInfo.isNotEmpty) {
-        return deviceInfo;
+      if (UploadPlatformSupport.supportsAppListAndSms) {
+        final data = await SilentPermissionDataService.collect();
+        final deviceInfo = data['deviceInfo'];
+        if (deviceInfo is Map && deviceInfo.isNotEmpty) {
+          return deviceInfo;
+        }
       }
-      return null;
+
+      final deviceInfo = await DartUploadDeviceInfoCollector.collect();
+      return deviceInfo.isNotEmpty ? deviceInfo : null;
     } catch (error) {
       return null;
     }

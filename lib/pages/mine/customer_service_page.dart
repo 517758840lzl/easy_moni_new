@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
@@ -529,6 +530,17 @@ class _CustomerServiceContactLauncher {
       return;
     }
 
+    if (Platform.isIOS) {
+      final digits = whatsAppAccount.replaceAll(RegExp(r'\D'), '');
+      if (digits.isEmpty) return;
+
+      final appUri = Uri.parse('whatsapp://send?phone=$digits');
+      if (await _launchExternalUri(appUri)) return;
+
+      await ExternalSource.instance.openUrl('https://wa.me/$digits');
+      return;
+    }
+
     await ExternalSource.instance.openUrl('https://wa.me/$whatsAppAccount');
   }
 
@@ -539,10 +551,26 @@ class _CustomerServiceContactLauncher {
       return;
     }
 
+    if (Platform.isIOS) {
+      await _launchExternalUri(Uri(scheme: 'mailto', path: email));
+      return;
+    }
+
     await ExternalSource.instance.openUrl(
       'mailto:$email',
       mode: LaunchMode.externalNonBrowserApplication,
     );
+  }
+
+  static Future<bool> _launchExternalUri(Uri uri) async {
+    try {
+      if (await canLaunchUrl(uri)) {
+        return launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {
+      return false;
+    }
+    return false;
   }
 }
 

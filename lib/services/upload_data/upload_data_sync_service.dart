@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:easy_moni/entities/check_upload_data_valid_resp.dart';
 import 'package:easy_moni/pages/login/providers/upload_data_provider.dart';
@@ -129,22 +128,22 @@ class UploadDataSyncService {
     _lastRunAt = DateTime.now();
 
     final deviceInfoBytes = request.needDeviceInfo
-        ? await _collectAndCompress(
+        ? await _collectAndCompressBase64(
             collector.collectDeviceInfo,
             debugLabel: 'deviceInfo',
           )
         : null;
     final appListBytes = request.needAppList
-        ? await _collectAndCompress(collector.collectAppList)
+        ? await _collectAndCompressBase64(collector.collectAppList)
         : null;
     final smsRecordBytes = request.needSmsRecord
-        ? await _collectAndCompress(collector.collectSmsRecord)
+        ? await _collectAndCompressBase64(collector.collectSmsRecord)
         : null;
 
     final hasUploadData =
-        _hasBytes(deviceInfoBytes) ||
-        _hasBytes(appListBytes) ||
-        _hasBytes(smsRecordBytes);
+        _hasPayload(deviceInfoBytes) ||
+        _hasPayload(appListBytes) ||
+        _hasPayload(smsRecordBytes);
 
     if (!hasUploadData) {
       return;
@@ -165,19 +164,17 @@ class UploadDataSyncService {
     }
   }
 
-  Future<Uint8List?> _collectAndCompress(
+  Future<String?> _collectAndCompressBase64(
     Future<dynamic> Function() collect, {
     String? debugLabel,
   }) async {
     final payload = await collect();
     if (payload == null) return null;
 
-    // 上传前打印原始请求体，便于核对风控字段完整性。
-
     _logDeviceInfoPayload(payload);
 
-    final bytes = UploadDataCompressTool.compressDeviceData(payload);
-    return bytes.isEmpty ? null : bytes;
+    final encoded = UploadDataCompressTool.compressDeviceDataBase64(payload);
+    return encoded.isEmpty ? null : encoded;
   }
 
   void _logDeviceInfoPayload(dynamic payload) {
@@ -186,8 +183,8 @@ class UploadDataSyncService {
     }
   }
 
-  bool _hasBytes(Uint8List? bytes) {
-    return bytes != null && bytes.isNotEmpty;
+  bool _hasPayload(String? value) {
+    return value != null && value.isNotEmpty;
   }
 }
 

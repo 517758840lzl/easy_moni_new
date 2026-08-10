@@ -29,6 +29,7 @@ import CoreLocation
     registerCameraChannel(messenger: messenger)
     registerContactsChannel(messenger: messenger)
     registerAppInfoChannel(messenger: messenger)
+    registerDialerChannel(messenger: messenger)
     registerVisionChannel(messenger: messenger)
   }
 
@@ -147,6 +148,24 @@ import CoreLocation
       case "getVersionCode":
         let versionCode = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""
         result(versionCode)
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+  }
+
+  private func registerDialerChannel(messenger: FlutterBinaryMessenger) {
+    let dialerChannel = FlutterMethodChannel(
+      name: "com.easy_moni/dialer",
+      binaryMessenger: messenger
+    )
+
+    dialerChannel.setMethodCallHandler { call, result in
+      switch call.method {
+      case "openDialer":
+        let phone = call.arguments as? [String: Any]
+        let number = phone?["phone"] as? String ?? ""
+        result(CustomerServiceLauncher.openPhoneDialer(phone: number))
       default:
         result(FlutterMethodNotImplemented)
       }

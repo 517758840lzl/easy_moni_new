@@ -77,6 +77,14 @@ class FaceVerifyActionConfig {
 
   static const String finalCaptureAction = FaceAction.faceFront;
   static const int finalCaptureStableFrameThreshold = 4;
+
+  /// 正脸：主要看 yaw + 睁眼；pitch/roll 在 iOS Vision 上噪声大，不参与判定。
+  static const double frontFaceYawThreshold = 10.0;
+  static const double frontFaceEyeOpenThreshold = 0.55;
+
+  /// 摇头：先转到足够角度，再摆到对侧才算完成。
+  static const double shakeHeadTurnThreshold = 10.0;
+
   // TODO: 后续接入后端动作配置时，确认动作超时阈值是否由接口下发。
   static const Duration defaultActionTimeout = Duration(seconds: 15);
 
@@ -122,7 +130,8 @@ class FaceVerifyActionConfig {
 
   static int stableFrameThresholdFor(String action) {
     return switch (action) {
-      FaceAction.nodHead || FaceAction.shakeHead || FaceAction.blink => 1,
+      FaceAction.shakeHead => 2,
+      FaceAction.nodHead || FaceAction.blink => 1,
       FaceAction.faceFront => 3,
       FaceAction.openMouth => 3,
       _ => 1,

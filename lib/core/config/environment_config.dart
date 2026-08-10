@@ -15,7 +15,6 @@ class EnvironmentConfig {
     required this.disableEncBody,
     required this.appInstanceId,
     required this.appVersion,
-    required this.clientType,
     required this.defaultDeviceId,
     required this.advId,
     required this.afid,
@@ -36,7 +35,6 @@ class EnvironmentConfig {
   final String disableEncBody;
   final String appInstanceId;
   final String appVersion;
-  final String clientType;
   final String defaultDeviceId;
   final String advId;
   final String afid;
@@ -81,7 +79,7 @@ class EnvironmentConfig {
           ? runtimeAppVersion
           : appVersion,
       'authCode': authCode,
-      'clientType': clientType,
+      'clientType': DeviceContext.resolveClientType(),
       'deviceId': pickString(
         runtimeAttribution['deviceId']?.toString(),
         deviceId ?? defaultDeviceId,
@@ -124,7 +122,6 @@ class EnvironmentConfigs {
     disableEncBody: 'true',
     appInstanceId: '',
     appVersion: '',
-    clientType: 'android',
     defaultDeviceId: '',
     advId: '',
     afid: '',

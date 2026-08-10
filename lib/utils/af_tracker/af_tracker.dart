@@ -1,82 +1,110 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:appsflyer_sdk/appsflyer_sdk.dart';
+import 'package:easy_moni/core/config/app_constants.dart';
 import 'package:easy_moni/core/config/request_security_config.dart';
 import 'package:easy_moni/core/device/device_context.dart';
+import 'package:easy_moni/core/storage/attribution_store.dart';
 import 'package:easy_moni/core/utils/request_security_util.dart';
 import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/utils/af_tracker/track_events.dart';
 import 'package:easy_moni/utils/extensions.dart';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 /// AppsFlyer 埋点工具，负责 SDK 初始化、归因缓存和统一事件上报。
 class AppsFlyerTracker {
   AppsFlyerTracker._();
 
-  // TODO 正式环境替换_devKey
-  static const String _devKey = 'PFfRT77vnCVpKaZuU3Pghg';
-  static const String _keyUid = 'af_tracker_uid';
-  static const String _keyMediaSource = 'af_tracker_media_source';
-  static const String _keyFirstOpenTracked = 'af_tracker_first_open_tracked';
-
   static AppsflyerSdk? _sdk;
-  static String? _uid;
   static Map<String, dynamic>? _runtimeAttribution;
   static Future<void>? _initFuture;
 
   /// 初始化 AppsFlyer SDK，并异步缓存 AFID 与安装归因数据。
-  static Future<void> initializeAppsFlyerTracker() async {
-    final runningInit = _initFuture;
-    if (runningInit != null) {
-      return runningInit;
-    }
-
-    _initFuture = _initializeAppsFlyerSdk();
-    return _initFuture!;
+  static Future<void> initializeAppsFlyerTracker() {
+    return _initFuture ??= _initializeAppsFlyerSdk();
   }
 
   static Future<void> _initializeAppsFlyerSdk() async {
+    final devKey = AppConstants.afDevKey;
+    if (devKey.isEmpty) {
+      if (kDebugMode) {
+        // ignore: avoid_print
+        print('[AF] afDevKey is empty — skip AppsFlyer init');
+      }
+      return;
+    }
+
+    final appleAppId = AppConstants.afAppleAppId.trim();
+    if (Platform.isIOS) {
+      final ok = RegExp(r'^\d{8,11}$').hasMatch(appleAppId);
+      if (!ok) {
+        if (kDebugMode) {
+          // ignore: avoid_print
+          print(
+            '[AF] iOS requires AppConstants.afAppleAppId '
+            '(8–11 digit App Store ID, no "id" prefix). '
+            'DevKey is set; skipping init to avoid native abort.',
+          );
+        }
+        return;
+      }
+    }
+
     try {
       final options = AppsFlyerOptions(
-        afDevKey: _devKey,
+        afDevKey: devKey,
+        appId: Platform.isIOS ? appleAppId : '',
         showDebug: kDebugMode,
+        disableAdvertisingIdentifier: Platform.isIOS ? true : null,
       );
       final sdk = AppsflyerSdk(options);
       _sdk = sdk;
+
+      _listenAppsFlyerInstallConversionData();
 
       await sdk.initSdk(
         registerConversionDataCallback: true,
         registerOnAppOpenAttributionCallback: true,
         registerOnDeepLinkingCallback: true,
       );
-      _listenAppsFlyerInstallConversionData();
-      await _cacheAppsFlyerUid();
+
+      final uid = await sdk.getAppsFlyerUID();
+      if (kDebugMode) {
+        // ignore: avoid_print
+        print('[AF] AppsFlyer UID: $uid');
+      }
+      await AttributionStore.setAfid(uid ?? '');
       await refreshAppsFlyerRuntimeAttribution();
     } catch (e) {
-      return;
+      if (kDebugMode) {
+        // ignore: avoid_print
+        print('[AF] init failed: $e');
+      }
     }
   }
 
-  /// 获取 AppsFlyer UID，优先使用内存和本地缓存。
+  /// 获取 AppsFlyer UID，优先使用本地缓存。
   static Future<String> getAppsFlyerId() async {
-    final cachedUid = _uid;
-    if (cachedUid != null && cachedUid.isNotEmpty) {
-      return cachedUid;
-    }
+    final cached = await AttributionStore.getAfid();
+    if (cached.isNotEmpty) return cached;
+
+    if (_sdk == null) return AppConstants.defaultAfid;
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final storedUid = prefs.getString(_keyUid) ?? '';
-      if (storedUid.isNotEmpty) {
-        _uid = storedUid;
-        return storedUid;
+      final uid = await _sdk!.getAppsFlyerUID();
+      final value = uid ?? '';
+      if (value.isNotEmpty) {
+        await AttributionStore.setAfid(value);
+        return value;
       }
     } catch (e) {
-      return '';
+      if (kDebugMode) {
+        // ignore: avoid_print
+        print('[AF] getAppsFlyerId error: $e');
+      }
     }
-
-    return _cacheAppsFlyerUid();
+    return AppConstants.defaultAfid;
   }
 
   /// 运行时归因数据，供登录参数使用真实 AFID、GAID、referrer 等设备参数。
@@ -93,15 +121,35 @@ class AppsFlyerTracker {
     };
   }
 
-  /// 刷新 Android 原生侧获取的 GAID、Install Referrer 与设备信息。
-  static Future<Map<String, dynamic>>
-  refreshAppsFlyerRuntimeAttribution() async {
+  /// 刷新 GAID、Install Referrer 与设备信息；Android 走原生归因通道。
+  static Future<Map<String, dynamic>> refreshAppsFlyerRuntimeAttribution() async {
     try {
-      final attribution = await AttributionDeviceService.getAttributionData();
-      final userAgent = await DeviceContext.resolveUserAgent();
+      if (Platform.isAndroid) {
+        final attribution = await AttributionDeviceService.getAttributionData();
+        final gaid = attribution['gaid']?.toString().trim() ?? '';
+        if (gaid.isNotEmpty) {
+          await AttributionStore.setGaid(gaid);
+        }
 
+        final referrer = attribution['referrer']?.toString().trim() ?? '';
+        if (referrer.isNotEmpty) {
+          await AttributionStore.setReferrer(referrer);
+        }
+
+        final userAgent = await DeviceContext.resolveUserAgent();
+        final deviceId = attribution['deviceId']?.toString().trim() ?? '';
+        final map = <String, dynamic>{
+          if (gaid.isNotEmpty) 'gaid': gaid,
+          if (referrer.isNotEmpty) 'referrer': referrer,
+          if (userAgent.isNotEmpty) 'userAgent': userAgent,
+          if (deviceId.isNotEmpty) 'deviceId': deviceId,
+        };
+        _runtimeAttribution = map;
+        return map;
+      }
+
+      final userAgent = await DeviceContext.resolveUserAgent();
       final map = <String, dynamic>{
-        ...attribution,
         if (userAgent.isNotEmpty) 'userAgent': userAgent,
       };
       _runtimeAttribution = map;
@@ -114,31 +162,19 @@ class AppsFlyerTracker {
 
   /// 首次打开事件，每台设备只上报一次。
   static Future<void> logAppsFlyerFirstOpenIfNeeded() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final hasTracked = prefs.getBool(_keyFirstOpenTracked) ?? false;
-      if (hasTracked) return;
+    if (!await AttributionStore.isFirstOpen()) return;
 
-      final tracked = await logAppsFlyerActionEvent(
-        AppsFlyerEventNames.easFirstOpen,
-      );
-      if (tracked) {
-        await prefs.setBool(_keyFirstOpenTracked, true);
-      }
-    } catch (e) {
-      return;
+    final tracked = await logAppsFlyerActionEvent(
+      AppsFlyerEventNames.easFirstOpen,
+    );
+    if (tracked) {
+      await AttributionStore.markFirstOpenReported();
     }
   }
 
   /// 获取缓存的归因渠道。
   static Future<String> getAppsFlyerMediaSource() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final mediaSource = prefs.getString(_keyMediaSource) ?? '';
-      return mediaSource;
-    } catch (e) {
-      return '';
-    }
+    return AttributionStore.getMediaSource();
   }
 
   /// 统一事件上报入口，body 与 msg 使用 AES 加密后再上送。
@@ -148,10 +184,15 @@ class AppsFlyerTracker {
     dynamic heads,
     dynamic msg,
   }) async {
-    try {
-      if (_sdk == null) {
-        await initializeAppsFlyerTracker();
+    if (_sdk == null) {
+      if (kDebugMode) {
+        // ignore: avoid_print
+        print('[AF] skip $eventName — SDK not initialized');
       }
+      return false;
+    }
+
+    try {
       final eventValueMap = <String, dynamic>{
         'create_time': DateTime.now().formatAfCreateTime,
       };
@@ -166,9 +207,13 @@ class AppsFlyerTracker {
         eventValueMap['msg'] = _encryptValue(msg);
       }
 
-      final result = await _sdk?.logEvent(eventName, eventValueMap);
+      final result = await _sdk!.logEvent(eventName, eventValueMap);
       return result ?? false;
     } catch (e) {
+      if (kDebugMode) {
+        // ignore: avoid_print
+        print('[AF] logEvent $eventName failed: $e');
+      }
       return false;
     }
   }
@@ -176,16 +221,19 @@ class AppsFlyerTracker {
   static void _listenAppsFlyerInstallConversionData() {
     _sdk?.onInstallConversionData((res) async {
       try {
-        final sourceMap = res is Map ? Map<String, dynamic>.from(res) : null;
-        final payload = sourceMap?['payload'];
-        if (sourceMap?['status'] == 'success' && payload is Map) {
-          final mediaSource = parseAppsFlyerMediaSource(
-            Map<String, dynamic>.from(payload),
-          );
-          await _saveMediaSourceIfNeeded(mediaSource);
-        }
+        if (res is! Map) return;
+
+        final map = Map<String, dynamic>.from(res);
+        if (map['status'] != 'success' || map['payload'] is! Map) return;
+
+        final payload = Map<String, dynamic>.from(map['payload'] as Map);
+        final mediaSource = parseAppsFlyerMediaSource(payload);
+        await _saveMediaSourceIfNeeded(mediaSource);
       } catch (e) {
-        return;
+        if (kDebugMode) {
+          // ignore: avoid_print
+          print('[AF] onInstallConversionData error: $e');
+        }
       }
     });
   }
@@ -214,30 +262,16 @@ class AppsFlyerTracker {
     return 'No-Organic';
   }
 
-  static Future<String> _cacheAppsFlyerUid() async {
-    try {
-      final uid = await _sdk?.getAppsFlyerUID() ?? '';
-      _uid = uid;
-      if (uid.isNotEmpty) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(_keyUid, uid);
-      }
-
-      return uid;
-    } catch (e) {
-      return '';
-    }
-  }
-
   static Future<void> _saveMediaSourceIfNeeded(String mediaSource) async {
     if (mediaSource.isEmpty) return;
 
-    final prefs = await SharedPreferences.getInstance();
-    final stored = prefs.getString(_keyMediaSource) ?? '';
-    final normalizedStored = stored.toLowerCase();
-    if (stored.isEmpty || normalizedStored == 'organic') {
-      await prefs.setString(_keyMediaSource, mediaSource);
+    final existing = await AttributionStore.getMediaSource();
+    if (existing.isNotEmpty &&
+        existing != 'Organic' &&
+        existing != 'organic') {
+      return;
     }
+    await AttributionStore.setMediaSource(mediaSource);
   }
 
   static Map<String, dynamic> _encryptValue(dynamic value) {
