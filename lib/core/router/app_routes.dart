@@ -1,7 +1,6 @@
 /// 路由路径常量，集中维护页面跳转使用的 path，避免页面中散落字符串。
 class AppRoutePaths {
   static const String root = '/';
-  static const String permission = '/permission';
   static const String login = '/login';
   static const String customerService = '/customer-service';
   static const String home = '/home';
@@ -94,7 +93,6 @@ class AppHomeTabs {
 /// 路由名称常量，供 GoRouter 的 name 和后续 goNamed/pushNamed 统一复用。
 class AppRouteNames {
   static const String splash = 'splash';
-  static const String permission = 'permission';
   static const String login = 'login';
   static const String customerService = 'customerService';
   static const String homeNavBar = 'homeNavBar';

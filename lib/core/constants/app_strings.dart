@@ -6,43 +6,13 @@ class AppStrings {
   // ==================== App ====================
   // ==================== 通用组件文本 ====================
   static const String appTitle = 'Easy Moni';
-  static const String appinstrunctions = 'Permissions';
-  static const String decline = 'Decline';
   static const String continueStr = 'Continue';
-  static const String agrees = 'Agree';
-  static const String receives = 'Accpet';
   static const String back = 'Back';
   static const String cancel = 'Cancel';
   static const String confirm = 'Confirm';
   static const String goSettings = 'Go to Settings';
   // ==================== KYC流程 ====================
-  static const String messageReceive = 'SMS Permission';
-  static const String messageReceiveDetail =
-      'With your authorization, we may access SMS messages related to financial transactions, such as bank transaction notifications, credit card repayment reminders, loan approval notifications, and mobile payment transaction alerts. This information is used solely to support credit assessment, risk management, and fraud prevention. We do not collect SMS messages unrelated to financial services. All relevant information is encrypted during transmission and storage, and access is strictly restricted.';
-  static const String gainLocation = 'Location Permission';
-  static const String gainLocationDetail =
-      'With your authorization, we may access your device\'s approximate location to perform security verification, detect abnormal application activities, and prevent fraudulent behavior, helping protect your account and funds. Your location information will not be used for purposes unrelated to those described above.';
-  static const String appdiscrptions =
-      'To assess your loan eligibility and provide you with secure and reliable credit services, we may request the following device permissions after obtaining your authorization. We are committed to processing your personal information in a lawful, transparent, and secure manner, and in compliance with the applicable data protection laws and regulations of Ghana.';
-  static const String carema = 'Camera Permission';
-  static const String caremaDetail =
-      'With your authorization, we will access your device\'s camera to capture images of your identification document and perform facial liveness verification. This helps verify your identity and prevent identity theft and fraudulent activities. The captured images are used solely for identity verification, security validation, and fraud prevention. They are securely transmitted and stored and will not be used for purposes unrelated to those described above.';
-  static const String installAppData = 'App List Permission';
-  static const String installAppDataDetail =
-      'With your authorization, we may obtain information about installed financial applications on your device, such as banking, lending, and mobile payment applications. This information is used solely to support credit assessment, risk management, and the identification of potential fraud risks. We do not collect information about applications unrelated to risk management, and the collected data is used only for risk assessment models.';
-
-  static const String receiveData =
-      'By tapping "Agree & Continue", you confirm that you have read, understood, and agreed to the statement above.';
-  static const String deviceinformation = 'Device Info';
-  static const String campaign = 'In-app Activity';
-  static const String agreeandContinue = 'Agree & Continue';
-  static const String campaignDetail =
-      'To maintain the security and stability of our application, we may collect necessary app activity information, such as application status and crash logs. This information is used solely for security monitoring, system troubleshooting, risk management, and fraud prevention, helping us continuously improve system stability and service quality.';
-  static const String deviceInformationDetail =
-      'To ensure the proper operation of our services and enhance system security, we may collect limited basic device information, such as your device model and operating system version. This information is used solely to ensure service compatibility, support risk management, prevent duplicate applications, and identify abnormal devices. It will not be used for purposes unrelated to those described above.';
   static const String privacyData = 'Privacy Policy';
-  static const String grantedData =
-      '''GATED LTDINTELLIGENCE LTD ("we", "us", or "our") is he developer and he developer and he developer and he developer and he developer and he developer and he developer and he developer and he developer and he developer and he developer and he developer and he developer and the developer and operator of the Palm Loan application. This Privacy Policy also applies to our official website www.gatedintelligence.com.We understand the importance of your personal information and are committed to complying fully with applicable privacy protection laws in Ghana. This policy explains how we collect, use, store, and share your personal information.By using the Palm Loan service, you agree to the processing of your information as described in this Privacy Policy. The information we collect is used solely for providing, maintaining, and improving our services. Unless explicitly stated in this policy, we will not share your personal information with any third party.''';
   static const String wellcome = 'Welcome to Easy Moni';
   static const String wellcomedeailData =
       'Manage your credit, get funds faster, and borrow with confidence—all in one place.';
@@ -71,10 +41,7 @@ class AppStrings {
   static const String chooseFriends = 'Select a Friend/Colleague';
   static const String contactPlaceholder = 'Select from Contacts';
   static const String needsContacts = 'Contacts permission required';
-  static const String needsSms = 'SMS permission required';
   static const String needsCamera = 'Camera permission required';
-  static const String smsPermissionDesc =
-      'Reads deposit and repayment SMS for credit assessment and fraud prevention. Your data is encrypted and protected.';
   static const String contactsEmpty = 'No contacts found';
   static const String chooseContactsPhone = 'Parent/Spouse Phone Number';
   static const String contactInfoTitle = 'Contact information';

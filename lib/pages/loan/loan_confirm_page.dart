@@ -17,7 +17,6 @@ import 'package:easy_moni/pages/loan/providers/loan_confirm_provider.dart';
 import 'package:easy_moni/pages/loan/widgets/loan_confirm_agreement.dart';
 import 'package:easy_moni/pages/login/providers/auth_provider.dart';
 import 'package:easy_moni/pages/repay/components/total_repay_amount_display.dart';
-import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/services/upload_data/upload_data_sync_service.dart';
 import 'package:easy_moni/utils/extensions.dart';
 import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
@@ -117,19 +116,6 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
       return;
     }
 
-    if (SmsService.isSupported) {
-      var hasSmsPermission = await SmsService.checkPermission();
-      if (!mounted) return;
-      if (!hasSmsPermission) {
-        hasSmsPermission = await SmsService.requestPermission();
-        if (!mounted) return;
-      }
-      if (!hasSmsPermission) {
-        await _showSmsPermissionSheet();
-        return;
-      }
-    }
-
     final data = _confirmData;
     final orders = data?.list ?? const <LoanConfirmOrder>[];
     if (data == null || orders.isEmpty) {
@@ -217,25 +203,6 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
       context,
       title: AppStrings.loanAgreementTitle,
       url: resolved,
-    );
-  }
-
-  Future<void> _showSmsPermissionSheet() {
-    return CommonBottomSheet.show<void>(
-      context: context,
-      title: AppStrings.needsSms,
-      description: AppStrings.smsPermissionDesc,
-      image: Assets.images.permissionSms.image(width: 122, height: 114),
-      actions: [
-        const CommonBottomSheetAction<void>(
-          text: AppStrings.cancel,
-          isPrimary: false,
-        ),
-        CommonBottomSheetAction<void>(
-          text: AppStrings.goSettings,
-          onPressed: SmsService.openAppSettings,
-        ),
-      ],
     );
   }
 
