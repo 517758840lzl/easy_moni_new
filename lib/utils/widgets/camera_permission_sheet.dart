@@ -25,6 +25,7 @@ class CameraPermissionSheet {
     );
     if (!context.mounted) return false;
     if (osGranted || await CameraService.checkPermission()) {
+      await CameraService.settleAfterRecentPermissionGrant();
       return true;
     }
     if (!context.mounted) return false;

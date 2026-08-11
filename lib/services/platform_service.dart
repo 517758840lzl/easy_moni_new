@@ -180,6 +180,7 @@ class SmsService {
 
 class CameraService {
   static const MethodChannel _channel = MethodChannel('com.easy_moni/camera');
+  static DateTime? _lastPermissionGrantAt;
 
   /// 检查相机权限；拍摄页只在已授权后进入，避免相机插件再次触发权限流程。
   static Future<bool> checkPermission() async {
@@ -199,12 +200,43 @@ class CameraService {
       final bool result = await _channel.invokeMethod(
         'requestCameraPermission',
       );
+      if (result) {
+        _lastPermissionGrantAt = DateTime.now();
+      }
       return result;
     } on PlatformException {
       return false;
     } on MissingPluginException {
       return false;
     }
+  }
+
+  static Future<void> settleAfterRecentPermissionGrant() async {
+    if (kIsWeb || !Platform.isIOS) return;
+
+    final grantedAt = _lastPermissionGrantAt;
+    if (grantedAt == null) return;
+
+    const settleDelay = Duration(milliseconds: 450);
+    final elapsed = DateTime.now().difference(grantedAt);
+    final remaining = settleDelay - elapsed;
+    if (remaining > Duration.zero) {
+      await Future<void>.delayed(remaining);
+    }
+  }
+
+  static Future<bool> ensureReadyForCapture() async {
+    if (await checkPermission()) {
+      return true;
+    }
+
+    final granted = await requestPermission();
+    if (!granted && !await checkPermission()) {
+      return false;
+    }
+
+    await settleAfterRecentPermissionGrant();
+    return checkPermission();
   }
 
   static Future<void> openAppSettings() async {

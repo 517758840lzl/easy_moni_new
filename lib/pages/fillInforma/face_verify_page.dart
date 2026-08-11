@@ -12,6 +12,7 @@ import 'package:easy_moni/pages/fillInforma/models/face_verify_capture_result.da
 import 'package:easy_moni/pages/fillInforma/providers/upload_file_provider.dart';
 import 'package:easy_moni/pages/loan/components/loan_rounded_page.dart';
 import 'package:easy_moni/pages/login/providers/auth_provider.dart';
+import 'package:easy_moni/services/platform_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,6 +27,10 @@ class FaceVerifyPage extends ConsumerStatefulWidget {
 }
 
 class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
+  static const int _maxCameraInitAttempts = 3;
+  static const Duration _cameraInitTimeout = Duration(seconds: 10);
+  static const Duration _cameraInitRetryDelay = Duration(milliseconds: 350);
+
   final FaceDetectionService _faceDetectionService = FaceDetectionService.create();
 
   CameraController? _cameraController;
@@ -148,48 +153,94 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
       return;
     }
 
-    final cameras = await availableCameras();
-    final frontCamera = cameras.cast<CameraDescription?>().firstWhere(
-      (camera) => camera?.lensDirection == CameraLensDirection.front,
-      orElse: () => null,
-    );
-    final targetCamera =
-        frontCamera ?? (cameras.isNotEmpty ? cameras.first : null);
-    if (targetCamera == null) {
-      _cameraError = AppStrings.faceVerifyNoCamera;
+    if (!await CameraService.ensureReadyForCapture()) {
+      _cameraError = AppStrings.identityVerifyCameraPermissionDenied;
       return;
     }
 
-    final imageFormatGroup = Platform.isIOS
-        ? ImageFormatGroup.bgra8888
-        : ImageFormatGroup.nv21;
+    await CameraService.settleAfterRecentPermissionGrant();
 
-    final controller = CameraController(
-      targetCamera,
-      ResolutionPreset.medium,
-      enableAudio: false,
-      imageFormatGroup: imageFormatGroup,
-    );
+    for (var attempt = 0; attempt < _maxCameraInitAttempts; attempt++) {
+      if (attempt > 0) {
+        await Future<void>.delayed(_cameraInitRetryDelay);
+        if (!mounted) return;
+      }
 
-    await controller.initialize();
-    await controller.lockCaptureOrientation(DeviceOrientation.portraitUp);
-
-    if (!mounted) {
-      await controller.dispose();
-      return;
+      try {
+        final initialized = await _tryInitializeCameraOnce();
+        if (initialized) {
+          return;
+        }
+      } on TimeoutException catch (e) {
+        if (attempt == _maxCameraInitAttempts - 1) {
+          _cameraError = AppStrings.faceVerifyCameraInitFailed(e);
+        }
+      } on CameraException catch (e) {
+        if (attempt == _maxCameraInitAttempts - 1) {
+          _cameraError = AppStrings.faceVerifyCameraInitFailed(e);
+        }
+      } catch (e) {
+        if (attempt == _maxCameraInitAttempts - 1) {
+          _cameraError = AppStrings.faceVerifyCameraInitFailed(e);
+        }
+      }
     }
 
-    setState(() {
-      _cameraController = controller;
-      _isCameraReady = true;
-    });
+    _cameraError ??= AppStrings.identityVerifyCameraError;
+  }
 
-    if (Platform.isIOS) {
-      await controller.startImageStream(_processCameraImage);
-    } else {
-      _startAndroidFramePolling();
+  Future<bool> _tryInitializeCameraOnce() async {
+    CameraController? controller;
+    try {
+      final cameras = await availableCameras().timeout(_cameraInitTimeout);
+      final frontCamera = cameras.cast<CameraDescription?>().firstWhere(
+        (camera) => camera?.lensDirection == CameraLensDirection.front,
+        orElse: () => null,
+      );
+      final targetCamera =
+          frontCamera ?? (cameras.isNotEmpty ? cameras.first : null);
+      if (targetCamera == null) {
+        _cameraError = AppStrings.faceVerifyNoCamera;
+        return false;
+      }
+
+      final imageFormatGroup = Platform.isIOS
+          ? ImageFormatGroup.bgra8888
+          : ImageFormatGroup.nv21;
+
+      controller = CameraController(
+        targetCamera,
+        ResolutionPreset.medium,
+        enableAudio: false,
+        imageFormatGroup: imageFormatGroup,
+      );
+
+      await controller.initialize().timeout(_cameraInitTimeout);
+      await controller.lockCaptureOrientation(DeviceOrientation.portraitUp);
+
+      if (!mounted) {
+        return false;
+      }
+
+      setState(() {
+        _cameraController = controller;
+        _isCameraReady = true;
+      });
+      controller = null;
+
+      final activeController = _cameraController!;
+      if (Platform.isIOS) {
+        await activeController.startImageStream(_processCameraImage);
+      } else {
+        _startAndroidFramePolling();
+      }
+      _startCurrentActionTimeout();
+      return true;
+    } finally {
+      if (controller != null) {
+        await controller.dispose();
+      }
     }
-    _startCurrentActionTimeout();
   }
 
   void _startAndroidFramePolling() {

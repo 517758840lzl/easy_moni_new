@@ -1,8 +1,9 @@
 import 'dart:async';
-import 'package:easy_moni/core/tracking/tracking_bootstrap.dart';
-import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/config/privacy_policy_config.dart';
+import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/network/http_provider.dart';
+import 'package:easy_moni/core/network/http_result.dart';
+import 'package:easy_moni/core/tracking/tracking_bootstrap.dart';
 import 'package:easy_moni/core/router/acquisition_progress_route_resolver.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/entities/acquisition_progress_resp.dart';
@@ -32,6 +33,8 @@ class LoginPage extends ConsumerStatefulWidget {
 class _LoginPageState extends ConsumerState<LoginPage> {
   static const Color _backgroundFallbackColor = Color(0xFF20754F);
   static const int _verifyCodeLength = 4;
+  static const int _sendCodeMaxAttempts = 3;
+  static const Duration _sendCodeRetryDelay = Duration(milliseconds: 800);
 
   late final TextEditingController _phoneController;
   late final TextEditingController _codeController;
@@ -54,6 +57,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     _phoneController.addListener(_onPhoneChanged);
     _codeController.addListener(_onCodeChanged);
     unawaited(_restoreAgreementState());
+    unawaited(HttpProvider.warmupNetwork());
   }
 
   Future<void> _restoreAgreementState() async {
@@ -245,9 +249,23 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     try {
       setState(() => _isSendingCode = true);
 
-      final result = await ref.read(sendVerifyCodeProvider).call('233|$phone');
+      HttpResult<dynamic>? result;
+      for (var attempt = 0; attempt < _sendCodeMaxAttempts; attempt++) {
+        if (attempt > 0) {
+          await Future<void>.delayed(_sendCodeRetryDelay);
+          if (!mounted) return;
+          await HttpProvider.warmupNetwork();
+        }
 
-      if (!mounted) return;
+        result = await ref.read(sendVerifyCodeProvider).call('233|$phone');
+        if (!mounted) return;
+        if (result.isSuccess ||
+            result.status != HttpResultStatus.networkError) {
+          break;
+        }
+      }
+
+      if (!mounted || result == null) return;
       if (result.isSuccess) {
         showToast(AppStrings.loginCodeSent);
         _startCountdown();
@@ -500,6 +518,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   Future<void> _startTrackingAfterPrivacyAgreed() async {
     await PermissionStorage.setPrivacyAgreed(true);
+    unawaited(HttpProvider.warmupNetwork());
     await TrackingBootstrap.ensureStarted();
   }
 

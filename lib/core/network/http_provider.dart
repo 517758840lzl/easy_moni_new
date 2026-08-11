@@ -52,6 +52,24 @@ class HttpProvider {
     );
   }
 
+  static Future<void> warmupNetwork() async {
+    try {
+      await instance._dio.get<dynamic>(
+        '/',
+        options: Options(
+          receiveTimeout: const Duration(seconds: 8),
+          sendTimeout: const Duration(seconds: 8),
+          validateStatus: (_) => true,
+          extra: const {'skipToken': true},
+        ),
+      );
+    } on DioException {
+      return;
+    } catch (_) {
+      return;
+    }
+  }
+
   EnvironmentConfig get config => _config;
 
   /// 恢复本地登录态到请求头，避免启动或页面分流时重复写入本地存储。
