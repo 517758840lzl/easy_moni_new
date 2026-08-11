@@ -280,7 +280,7 @@ import CoreLocation
     _ application: UIApplication,
     supportedInterfaceOrientationsFor window: UIWindow?
   ) -> UIInterfaceOrientationMask {
-    return super.application(application, supportedInterfaceOrientationsFor: window)
+    return [.portrait, .landscapeLeft, .landscapeRight]
   }
 
   func contactPicker(_ picker: CNContactPickerViewController, didSelect contact: CNContact) {

@@ -206,24 +206,46 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     });
   }
 
-  /// 先完成横屏与沉浸式布局切换，再初始化相机，降低 Activity 旋转期间抢占相机的概率。
+  static const List<DeviceOrientation> _portraitOrientations = [
+    DeviceOrientation.portraitUp,
+  ];
+
+  static const List<DeviceOrientation> _landscapeOrientations = [
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ];
+
+  static const List<DeviceOrientation> _allCameraOrientations = [
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ];
+
+  /// 先完成横屏与沉浸式布局切换，再初始化相机，降低旋转期间抢占相机的概率。
   Future<void> _prepareCameraPageAndInit() async {
-    await SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
+    await _enterLandscapeOrientation();
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    await _waitForOrientationLayoutToSettle();
     if (!mounted || _isLeavingCameraPage) {
       return;
     }
     await _initCamera();
   }
 
+  /// iOS 需先把目标方向加入 supported set，再锁定，否则 UIScene Code=101。
+  Future<void> _enterLandscapeOrientation() async {
+    await SystemChrome.setPreferredOrientations(_allCameraOrientations);
+    await _waitForOrientationLayoutToSettle(preferLongerDelay: true);
+    await SystemChrome.setPreferredOrientations(_landscapeOrientations);
+    await _waitForOrientationLayoutToSettle(preferLongerDelay: true);
+  }
+
   /// 等待 Flutter 完成方向切换后的布局刷新，避免相机初始化撞上窗口尺寸变化。
-  Future<void> _waitForOrientationLayoutToSettle() async {
+  Future<void> _waitForOrientationLayoutToSettle({
+    bool preferLongerDelay = false,
+  }) async {
     await WidgetsBinding.instance.endOfFrame;
-    await Future<void>.delayed(const Duration(milliseconds: 120));
+    final delayMs = preferLongerDelay && Platform.isIOS ? 280 : 120;
+    await Future<void>.delayed(Duration(milliseconds: delayMs));
     await WidgetsBinding.instance.endOfFrame;
   }
 
@@ -272,6 +294,14 @@ class _IdCameraScreenState extends State<IdCameraScreen>
           if (!_isCurrentCameraInit(initToken)) {
             await _disposeCameraControllerSerially(nextController);
             return;
+          }
+
+          try {
+            await nextController.lockCaptureOrientation(
+              DeviceOrientation.landscapeLeft,
+            );
+          } catch (_) {
+            // 个别机型 lock 失败时不阻断拍摄流程。
           }
 
           _controller = nextController;
@@ -502,12 +532,15 @@ class _IdCameraScreenState extends State<IdCameraScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _cameraInitToken++;
-    if (!_hasRestoredPortraitOrientation) {
-      unawaited(_restorePortraitOrientation());
-    }
     final controller = _controller;
     _controller = null;
-    unawaited(_disposeCameraControllerSerially(controller));
+    // 先释放相机再恢复竖屏，避免 iOS 在横屏 VC 状态下强切 portrait 报错。
+    unawaited(() async {
+      await _disposeCameraControllerSerially(controller);
+      if (!_hasRestoredPortraitOrientation) {
+        await _restorePortraitOrientation();
+      }
+    }());
     super.dispose();
   }
 
@@ -737,10 +770,11 @@ class _IdCameraScreenState extends State<IdCameraScreen>
       return;
     }
 
-    // 离开完整拍摄流程后恢复主流程竖屏显示。
-    await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    await SystemChrome.setPreferredOrientations(_allCameraOrientations);
+    await _waitForOrientationLayoutToSettle(preferLongerDelay: true);
+    await SystemChrome.setPreferredOrientations(_portraitOrientations);
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    await _waitForOrientationLayoutToSettle();
+    await _waitForOrientationLayoutToSettle(preferLongerDelay: true);
     _hasRestoredPortraitOrientation = true;
   }
 
