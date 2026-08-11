@@ -67,9 +67,7 @@ class LoginAgreementRow extends StatelessWidget {
                     alignment: PlaceholderAlignment.baseline,
                     baseline: TextBaseline.alphabetic,
                     child: _AgreementLink(
-                      label: AppStrings.loginAgreementLinkLabel(
-                        AppStrings.termsOfServiceTitle,
-                      ),
+                      label: '<${AppStrings.termsOfServiceTitle}>',
                       style: textStyle,
                       onTap: onOpenTerms,
                     ),
@@ -79,9 +77,7 @@ class LoginAgreementRow extends StatelessWidget {
                     alignment: PlaceholderAlignment.baseline,
                     baseline: TextBaseline.alphabetic,
                     child: _AgreementLink(
-                      label: AppStrings.loginAgreementLinkLabel(
-                        AppStrings.privacyData,
-                      ),
+                      label: '<${AppStrings.privacyData}>',
                       style: textStyle,
                       onTap: onOpenPrivacy,
                     ),

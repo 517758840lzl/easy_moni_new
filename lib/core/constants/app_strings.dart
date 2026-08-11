@@ -33,7 +33,6 @@ class AppStrings {
   static const String loginAgreePrefix = 'I have read and agree to the ';
   static const String loginAgreeMiddle = ' and ';
   static const String loginAgreeSuffix = '.';
-  static String loginAgreementLinkLabel(String title) => '<$title>';
   static const String loginAgreeRequired =
       'Please read and agree to the Terms of Service and Privacy Policy to continue.';
   // ================ 联系人流程 ========================
