@@ -81,7 +81,7 @@ final class LocationPermissionHelper: NSObject, CLLocationManagerDelegate {
     applyApproximateLocationSettings(to: mgr)
 
     if let loc = mgr.location, loc.horizontalAccuracy >= 0 {
-      result(coordsDict(loc.coordinate))
+      result(locationDict(loc))
       return
     }
 
@@ -125,6 +125,14 @@ final class LocationPermissionHelper: NSObject, CLLocationManagerDelegate {
     ["latitude": coordinate.latitude, "longitude": coordinate.longitude]
   }
 
+  private func locationDict(_ location: CLLocation) -> [String: Double] {
+    [
+      "latitude": location.coordinate.latitude,
+      "longitude": location.coordinate.longitude,
+      "accuracy": location.horizontalAccuracy,
+    ]
+  }
+
   private func finishPendingAuthIfNeeded(status: CLAuthorizationStatus) {
     guard let pending = pendingAuthResult else { return }
     if status == .notDetermined { return }
@@ -133,13 +141,13 @@ final class LocationPermissionHelper: NSObject, CLLocationManagerDelegate {
     pending(granted)
   }
 
-  private func finishPendingLocation(_ coordinate: CLLocationCoordinate2D?) {
+  private func finishPendingLocation(_ location: CLLocation?) {
     locationTimeoutWork?.cancel()
     locationTimeoutWork = nil
     guard let pending = pendingLocationResult else { return }
     pendingLocationResult = nil
-    if let coordinate {
-      pending(coordsDict(coordinate))
+    if let location, location.horizontalAccuracy >= 0 {
+      pending(locationDict(location))
     } else {
       pending(zeroCoords())
     }
@@ -164,7 +172,7 @@ final class LocationPermissionHelper: NSObject, CLLocationManagerDelegate {
   func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
     guard pendingLocationResult != nil else { return }
     let best = locations.last { $0.horizontalAccuracy >= 0 } ?? locations.last
-    finishPendingLocation(best?.coordinate)
+    finishPendingLocation(best)
   }
 
   func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {

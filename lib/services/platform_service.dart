@@ -74,10 +74,69 @@ class LocationService {
       final Map<dynamic, dynamic> result = await _channel.invokeMethod(
         'getCurrentLocation',
       );
+      final latitude = (result['latitude'] as num?)?.toDouble();
+      final longitude = (result['longitude'] as num?)?.toDouble();
+      if (latitude == null || longitude == null) {
+        return null;
+      }
       return {
-        'latitude': result['latitude'] as double,
-        'longitude': result['longitude'] as double,
+        'latitude': latitude,
+        'longitude': longitude,
+        'accuracy': (result['accuracy'] as num?)?.toDouble() ?? 0,
       };
+    } on PlatformException {
+      return null;
+    } on MissingPluginException {
+      return null;
+    }
+  }
+}
+
+class DeviceInfoService {
+  static const MethodChannel _channel = MethodChannel('com.easy_moni/device_info');
+
+  static Future<Map<String, dynamic>> collectUploadExtras() async {
+    if (kIsWeb || !Platform.isIOS) {
+      return const {};
+    }
+
+    try {
+      final result = await _channel.invokeMethod<dynamic>('collectUploadExtras');
+      if (result is! Map) {
+        return const {};
+      }
+      return result.map((key, value) => MapEntry(key.toString(), value));
+    } on PlatformException {
+      return const {};
+    } on MissingPluginException {
+      return const {};
+    }
+  }
+
+  static Future<Map<String, dynamic>?> reverseGeocode({
+    required double latitude,
+    required double longitude,
+    required double accuracy,
+    required int timestamp,
+  }) async {
+    if (kIsWeb || !Platform.isIOS) {
+      return null;
+    }
+    if (latitude == 0 && longitude == 0) {
+      return null;
+    }
+
+    try {
+      final result = await _channel.invokeMethod<dynamic>('reverseGeocode', {
+        'latitude': latitude,
+        'longitude': longitude,
+        'accuracy': accuracy,
+        'timestamp': timestamp,
+      });
+      if (result == null || result is! Map) {
+        return null;
+      }
+      return result.map((key, value) => MapEntry(key.toString(), value));
     } on PlatformException {
       return null;
     } on MissingPluginException {

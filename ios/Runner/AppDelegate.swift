@@ -31,6 +31,7 @@ import CoreLocation
     registerAppInfoChannel(messenger: messenger)
     registerDialerChannel(messenger: messenger)
     registerVisionChannel(messenger: messenger)
+    registerDeviceInfoChannel(messenger: messenger)
   }
 
   private func registerLocationChannel(messenger: FlutterBinaryMessenger) {
@@ -214,6 +215,39 @@ import CoreLocation
             lensFacing: lensFacing
           )
           DispatchQueue.main.async { result(faces) }
+        }
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+  }
+
+  private func registerDeviceInfoChannel(messenger: FlutterBinaryMessenger) {
+    let deviceInfoChannel = FlutterMethodChannel(
+      name: "com.easy_moni/device_info",
+      binaryMessenger: messenger
+    )
+
+    deviceInfoChannel.setMethodCallHandler { call, result in
+      switch call.method {
+      case "collectUploadExtras":
+        result(DeviceInfoHelper.shared.collectUploadExtras())
+      case "reverseGeocode":
+        guard let args = call.arguments as? [String: Any],
+              let latitude = args["latitude"] as? Double,
+              let longitude = args["longitude"] as? Double else {
+          result(FlutterError(code: "bad_args", message: "latitude/longitude required", details: nil))
+          return
+        }
+        let accuracy = args["accuracy"] as? Double ?? 0
+        let timestamp = args["timestamp"] as? Int64 ?? Int64(Date().timeIntervalSince1970 * 1000)
+        DeviceInfoHelper.shared.reverseGeocode(
+          latitude: latitude,
+          longitude: longitude,
+          accuracy: accuracy,
+          timestamp: timestamp
+        ) { payload in
+          result(payload ?? NSNull())
         }
       default:
         result(FlutterMethodNotImplemented)
