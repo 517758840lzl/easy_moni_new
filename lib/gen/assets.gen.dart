@@ -21,10 +21,6 @@ class $AssetsImagesGen {
   AssetGenImage get dangerCircle =>
       const AssetGenImage('assets/images/DangerCircle.png');
 
-  /// File path: assets/images/DangerCircle_normal.png
-  AssetGenImage get dangerCircleNormal =>
-      const AssetGenImage('assets/images/DangerCircle_normal.png');
-
   /// File path: assets/images/Easy_Moni_text.png
   AssetGenImage get easyMoniText =>
       const AssetGenImage('assets/images/Easy_Moni_text.png');
@@ -41,14 +37,6 @@ class $AssetsImagesGen {
   AssetGenImage get appIconBlack =>
       const AssetGenImage('assets/images/app_icon_black.png');
 
-  /// File path: assets/images/app_logo_512.png
-  AssetGenImage get appLogo512 =>
-      const AssetGenImage('assets/images/app_logo_512.png');
-
-  /// File path: assets/images/biaoqian.png
-  AssetGenImage get biaoqian =>
-      const AssetGenImage('assets/images/biaoqian.png');
-
   /// File path: assets/images/camera_button.png
   AssetGenImage get cameraButton =>
       const AssetGenImage('assets/images/camera_button.png');
@@ -60,10 +48,6 @@ class $AssetsImagesGen {
   AssetGenImage get couponBg =>
       const AssetGenImage('assets/images/coupon_bg.png');
 
-  /// File path: assets/images/coupon_card_border.png
-  AssetGenImage get couponCardBorder =>
-      const AssetGenImage('assets/images/coupon_card_border.png');
-
   /// File path: assets/images/coupon_selected_bg.png
   AssetGenImage get couponSelectedBg =>
       const AssetGenImage('assets/images/coupon_selected_bg.png');
@@ -71,9 +55,6 @@ class $AssetsImagesGen {
   /// File path: assets/images/customer.png
   AssetGenImage get customer =>
       const AssetGenImage('assets/images/customer.png');
-
-  /// File path: assets/images/dotss.png
-  AssetGenImage get dotss => const AssetGenImage('assets/images/dotss.png');
 
   /// File path: assets/images/face_verify_circle.png
   AssetGenImage get faceVerifyCircle =>
@@ -135,10 +116,6 @@ class $AssetsImagesGen {
   AssetGenImage get inforamtionIdw =>
       const AssetGenImage('assets/images/inforamtion_idw.png');
 
-  /// File path: assets/images/inforamtion_location.png
-  AssetGenImage get inforamtionLocation =>
-      const AssetGenImage('assets/images/inforamtion_location.png');
-
   /// File path: assets/images/inforamtion_o.png
   AssetGenImage get inforamtionO =>
       const AssetGenImage('assets/images/inforamtion_o.png');
@@ -193,22 +170,6 @@ class $AssetsImagesGen {
   /// File path: assets/images/loan_check.png
   AssetGenImage get loanCheck =>
       const AssetGenImage('assets/images/loan_check.png');
-
-  /// File path: assets/images/loan_circle_check.png
-  AssetGenImage get loanCircleCheck =>
-      const AssetGenImage('assets/images/loan_circle_check.png');
-
-  /// File path: assets/images/loan_circle_green.png
-  AssetGenImage get loanCircleGreen =>
-      const AssetGenImage('assets/images/loan_circle_green.png');
-
-  /// File path: assets/images/loan_circle_suo.png
-  AssetGenImage get loanCircleSuo =>
-      const AssetGenImage('assets/images/loan_circle_suo.png');
-
-  /// File path: assets/images/loan_data.png
-  AssetGenImage get loanData =>
-      const AssetGenImage('assets/images/loan_data.png');
 
   /// File path: assets/images/loan_discovery.png
   AssetGenImage get loanDiscovery =>
@@ -266,14 +227,6 @@ class $AssetsImagesGen {
   AssetGenImage get loanReviewing =>
       const AssetGenImage('assets/images/loan_reviewing.png');
 
-  /// File path: assets/images/loan_security.png
-  AssetGenImage get loanSecurity =>
-      const AssetGenImage('assets/images/loan_security.png');
-
-  /// File path: assets/images/loan_select.png
-  AssetGenImage get loanSelect =>
-      const AssetGenImage('assets/images/loan_select.png');
-
   /// File path: assets/images/loan_star.png
   AssetGenImage get loanStar =>
       const AssetGenImage('assets/images/loan_star.png');
@@ -281,10 +234,6 @@ class $AssetsImagesGen {
   /// File path: assets/images/loan_star_normal.png
   AssetGenImage get loanStarNormal =>
       const AssetGenImage('assets/images/loan_star_normal.png');
-
-  /// File path: assets/images/loan_vip.png
-  AssetGenImage get loanVip =>
-      const AssetGenImage('assets/images/loan_vip.png');
 
   /// File path: assets/images/loan_wallect.png
   AssetGenImage get loanWallect =>
@@ -302,17 +251,6 @@ class $AssetsImagesGen {
   AssetGenImage get loginBg =>
       const AssetGenImage('assets/images/login_bg.png');
 
-  /// File path: assets/images/login_close.png
-  AssetGenImage get loginClose =>
-      const AssetGenImage('assets/images/login_close.png');
-
-  /// File path: assets/images/login_setting.png
-  AssetGenImage get loginSetting =>
-      const AssetGenImage('assets/images/login_setting.png');
-
-  /// File path: assets/images/message.png
-  AssetGenImage get message => const AssetGenImage('assets/images/message.png');
-
   /// File path: assets/images/mine_anth_bg.png
   AssetGenImage get mineAnthBg =>
       const AssetGenImage('assets/images/mine_anth_bg.png');
@@ -328,10 +266,6 @@ class $AssetsImagesGen {
   AssetGenImage get mineBillList =>
       const AssetGenImage('assets/images/mine_bill_list.png');
 
-  /// File path: assets/images/mine_close.png
-  AssetGenImage get mineClose =>
-      const AssetGenImage('assets/images/mine_close.png');
-
   /// File path: assets/images/mine_email.png
   AssetGenImage get mineEmail =>
       const AssetGenImage('assets/images/mine_email.png');
@@ -339,10 +273,6 @@ class $AssetsImagesGen {
   /// File path: assets/images/mine_file.png
   AssetGenImage get mineFile =>
       const AssetGenImage('assets/images/mine_file.png');
-
-  /// File path: assets/images/mine_login_line.png
-  AssetGenImage get mineLoginLine =>
-      const AssetGenImage('assets/images/mine_login_line.png');
 
   /// File path: assets/images/mine_pencil.png
   AssetGenImage get minePencil =>
@@ -352,24 +282,13 @@ class $AssetsImagesGen {
   AssetGenImage get minePhone =>
       const AssetGenImage('assets/images/mine_phone.png');
 
-  /// File path: assets/images/mine_waiting.png
-  AssetGenImage get mineWaiting =>
-      const AssetGenImage('assets/images/mine_waiting.png');
-
   /// File path: assets/images/mine_wallet.png
   AssetGenImage get mineWallet =>
       const AssetGenImage('assets/images/mine_wallet.png');
 
-  /// File path: assets/images/moban.png
-  AssetGenImage get moban => const AssetGenImage('assets/images/moban.png');
-
   /// File path: assets/images/permission_camera_3d.png
   AssetGenImage get permissionCamera3d =>
       const AssetGenImage('assets/images/permission_camera_3d.png');
-
-  /// File path: assets/images/permission_sms.png
-  AssetGenImage get permissionSms =>
-      const AssetGenImage('assets/images/permission_sms.png');
 
   /// File path: assets/images/repay_header_rectangle.png
   AssetGenImage get repayHeaderRectangle =>
@@ -395,10 +314,6 @@ class $AssetsImagesGen {
   AssetGenImage get rightArrow =>
       const AssetGenImage('assets/images/right_arrow.png');
 
-  /// File path: assets/images/safe_Icon.png
-  AssetGenImage get safeIcon =>
-      const AssetGenImage('assets/images/safe_Icon.png');
-
   /// File path: assets/images/service_right_arrow.png
   AssetGenImage get serviceRightArrow =>
       const AssetGenImage('assets/images/service_right_arrow.png');
@@ -419,28 +334,19 @@ class $AssetsImagesGen {
   AssetGenImage get starIcon =>
       const AssetGenImage('assets/images/star_icon.png');
 
-  /// File path: assets/images/takepicture.png
-  AssetGenImage get takepicture =>
-      const AssetGenImage('assets/images/takepicture.png');
-
   /// List of all assets
   List<dynamic> get values => [
     cameraM,
     dangerCircle,
-    dangerCircleNormal,
     easyMoniText,
     gallerySend,
     notebook,
     appIconBlack,
-    appLogo512,
-    biaoqian,
     cameraButton,
     couponIcon,
     couponBg,
-    couponCardBorder,
     couponSelectedBg,
     customer,
-    dotss,
     faceVerifyCircle,
     faceVerifyRectangle,
     idBackArrowIcon,
@@ -456,7 +362,6 @@ class $AssetsImagesGen {
     inforamtionIdthNormal,
     inforamtionIdthSelect,
     inforamtionIdw,
-    inforamtionLocation,
     inforamtionO,
     inforamtionScan,
     inforamtionStar,
@@ -471,10 +376,6 @@ class $AssetsImagesGen {
     loanCalender,
     loanCard,
     loanCheck,
-    loanCircleCheck,
-    loanCircleGreen,
-    loanCircleSuo,
-    loanData,
     loanDiscovery,
     loanDiscoveryNormal,
     loanGhs,
@@ -489,46 +390,33 @@ class $AssetsImagesGen {
     loanOrderLoading,
     loanOrderWarning,
     loanReviewing,
-    loanSecurity,
-    loanSelect,
     loanStar,
     loanStarNormal,
-    loanVip,
     loanWallect,
     loanYellowCard,
     location,
     loginBg,
-    loginClose,
-    loginSetting,
-    message,
     mineAnthBg,
     mineArrow,
     mineBg,
     mineBillList,
-    mineClose,
     mineEmail,
     mineFile,
-    mineLoginLine,
     minePencil,
     minePhone,
-    mineWaiting,
     mineWallet,
-    moban,
     permissionCamera3d,
-    permissionSms,
     repayHeaderRectangle,
     review1,
     review2,
     review3,
     reviewBanner,
     rightArrow,
-    safeIcon,
     serviceRightArrow,
     serviceSafe,
     settingsDeleteAccount,
     splashBottomText,
     starIcon,
-    takepicture,
   ];
 }
 
