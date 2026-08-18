@@ -15,10 +15,7 @@ final class LocationPermissionHelper: NSObject, CLLocationManagerDelegate {
   }
 
   private func authStatus() -> CLAuthorizationStatus {
-    if #available(iOS 14.0, *) {
-      return ensureManager().authorizationStatus
-    }
-    return CLLocationManager.authorizationStatus()
+    ensureManager().authorizationStatus
   }
 
   func hasWhenInUse() -> Bool {
@@ -154,19 +151,7 @@ final class LocationPermissionHelper: NSObject, CLLocationManagerDelegate {
   }
 
   func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-    if #available(iOS 14.0, *) {
-      finishPendingAuthIfNeeded(status: manager.authorizationStatus)
-    }
-  }
-
-  func locationManager(
-    _ manager: CLLocationManager,
-    didChangeAuthorization status: CLAuthorizationStatus
-  ) {
-    if #available(iOS 14.0, *) {
-      return
-    }
-    finishPendingAuthIfNeeded(status: status)
+    finishPendingAuthIfNeeded(status: manager.authorizationStatus)
   }
 
   func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
