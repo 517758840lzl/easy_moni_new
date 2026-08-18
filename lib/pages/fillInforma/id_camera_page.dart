@@ -610,7 +610,6 @@ class _IdCameraScreenState extends State<IdCameraScreen>
                       ),
                     ),
                     IdCameraUiLayer(
-                      cardRect: cardRect,
                       isTakingPicture: _isTakingPicture,
                       onBack: _popWithoutResult,
                       onTakePicture: _takePicture,
