@@ -1,8 +1,9 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
-class LoginAgreementRow extends StatelessWidget {
+class LoginAgreementRow extends StatefulWidget {
   const LoginAgreementRow({
     super.key,
     required this.agreed,
@@ -16,16 +17,46 @@ class LoginAgreementRow extends StatelessWidget {
   final VoidCallback onOpenTerms;
   final VoidCallback onOpenPrivacy;
 
-  void _toggle() => onChanged(!agreed);
+  @override
+  State<LoginAgreementRow> createState() => _LoginAgreementRowState();
+}
+
+class _LoginAgreementRowState extends State<LoginAgreementRow> {
+  late final TapGestureRecognizer _termsRecognizer;
+  late final TapGestureRecognizer _privacyRecognizer;
+
+  @override
+  void initState() {
+    super.initState();
+    _termsRecognizer = TapGestureRecognizer()..onTap = widget.onOpenTerms;
+    _privacyRecognizer = TapGestureRecognizer()..onTap = widget.onOpenPrivacy;
+  }
+
+  @override
+  void didUpdateWidget(LoginAgreementRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _termsRecognizer.onTap = widget.onOpenTerms;
+    _privacyRecognizer.onTap = widget.onOpenPrivacy;
+  }
+
+  @override
+  void dispose() {
+    _termsRecognizer.dispose();
+    _privacyRecognizer.dispose();
+    super.dispose();
+  }
+
+  void _toggle() => widget.onChanged(!widget.agreed);
 
   @override
   Widget build(BuildContext context) {
-    const textColor = Colors.white;
+    final isCompact = MediaQuery.sizeOf(context).width < 375;
+    final fontSize = isCompact ? 12.0 : 14.0;
     final textStyle = TextStyle(
-      color: textColor,
-      fontSize: 14,
+      color: Colors.white,
+      fontSize: fontSize,
       fontWeight: FontWeight.w400,
-      height: 22.75 / 14,
+      height: isCompact ? 18 / 12 : 22.75 / 14,
     );
 
     return Row(
@@ -46,7 +77,7 @@ class LoginAgreementRow extends StatelessWidget {
                   height: 28,
                   child: Padding(
                     padding: const EdgeInsets.only(top: 4),
-                    child: _LoginAgreementCheckbox(value: agreed),
+                    child: _LoginAgreementCheckbox(value: widget.agreed),
                   ),
                 ),
               ),
@@ -63,24 +94,16 @@ class LoginAgreementRow extends StatelessWidget {
                 style: textStyle,
                 children: [
                   const TextSpan(text: AppStrings.loginAgreePrefix),
-                  WidgetSpan(
-                    alignment: PlaceholderAlignment.baseline,
-                    baseline: TextBaseline.alphabetic,
-                    child: _AgreementLink(
-                      label: '<${AppStrings.termsOfServiceTitle}>',
-                      style: textStyle,
-                      onTap: onOpenTerms,
-                    ),
+                  TextSpan(
+                    text: '<${AppStrings.termsOfServiceTitle}>',
+                    style: textStyle,
+                    recognizer: _termsRecognizer,
                   ),
                   const TextSpan(text: AppStrings.loginAgreeMiddle),
-                  WidgetSpan(
-                    alignment: PlaceholderAlignment.baseline,
-                    baseline: TextBaseline.alphabetic,
-                    child: _AgreementLink(
-                      label: '<${AppStrings.privacyData}>',
-                      style: textStyle,
-                      onTap: onOpenPrivacy,
-                    ),
+                  TextSpan(
+                    text: '<${AppStrings.privacyData}>',
+                    style: textStyle,
+                    recognizer: _privacyRecognizer,
                   ),
                   const TextSpan(text: AppStrings.loginAgreeSuffix),
                 ],
@@ -89,27 +112,6 @@ class LoginAgreementRow extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _AgreementLink extends StatelessWidget {
-  const _AgreementLink({
-    required this.label,
-    required this.style,
-    required this.onTap,
-  });
-
-  final String label;
-  final TextStyle style;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Text(label, style: style),
     );
   }
 }

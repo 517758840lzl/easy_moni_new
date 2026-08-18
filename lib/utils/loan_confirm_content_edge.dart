@@ -1,50 +1,57 @@
 import 'package:flutter/material.dart';
 
-// 借款确认页内容区顶部阴影，和裁剪路径使用同一组曲线参数保持贴合。
-class LoanConfirmContentEdge extends StatelessWidget {
-  const LoanConfirmContentEdge({super.key});
+/// 借款确认页内容区顶部弧线参数与白色背景绘制。
+class LoanConfirmContentShape {
+  LoanConfirmContentShape._();
 
   static const sideHeight = 16.0;
   static const centerHeight = 30.0;
 
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(painter: _LoanConfirmContentEdgePainter());
+  static Path topArcPath(Size size) {
+    return Path()
+      ..moveTo(0, sideHeight)
+      ..quadraticBezierTo(0, 0, sideHeight, 0)
+      ..cubicTo(
+        size.width * 0.28,
+        centerHeight,
+        size.width * 0.72,
+        centerHeight,
+        size.width - sideHeight,
+        0,
+      )
+      ..quadraticBezierTo(size.width, 0, size.width, sideHeight)
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
   }
 }
 
-class _LoanConfirmContentEdgePainter extends CustomPainter {
+/// 绘制带顶部弧线的白色背景，不使用 ClipPath，避免绿色底上产生暗边。
+class LoanConfirmWhiteBackground extends StatelessWidget {
+  const LoanConfirmWhiteBackground({super.key, this.child});
+
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: const _LoanConfirmWhiteBackgroundPainter(),
+      child: child,
+    );
+  }
+}
+
+class _LoanConfirmWhiteBackgroundPainter extends CustomPainter {
+  const _LoanConfirmWhiteBackgroundPainter();
+
   @override
   void paint(Canvas canvas, Size size) {
-    final curve = Path()
-      ..moveTo(0, LoanConfirmContentEdge.sideHeight)
-      ..quadraticBezierTo(0, 0, LoanConfirmContentEdge.sideHeight, 0)
-      ..cubicTo(
-        size.width * 0.28,
-        LoanConfirmContentEdge.centerHeight,
-        size.width * 0.72,
-        LoanConfirmContentEdge.centerHeight,
-        size.width - LoanConfirmContentEdge.sideHeight,
-        0,
-      )
-      ..quadraticBezierTo(
-        size.width,
-        0,
-        size.width,
-        LoanConfirmContentEdge.sideHeight,
-      );
-
     canvas.drawPath(
-      curve.shift(const Offset(0, -1)),
-      Paint()
-        ..color = const Color(0x663D250C)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 7
-        ..strokeCap = StrokeCap.round
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+      LoanConfirmContentShape.topArcPath(size),
+      Paint()..color = Colors.white,
     );
   }
 
   @override
-  bool shouldRepaint(_LoanConfirmContentEdgePainter oldDelegate) => false;
+  bool shouldRepaint(_LoanConfirmWhiteBackgroundPainter oldDelegate) => false;
 }

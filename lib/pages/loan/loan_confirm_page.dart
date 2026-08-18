@@ -21,7 +21,6 @@ import 'package:easy_moni/services/upload_data/upload_data_sync_service.dart';
 import 'package:easy_moni/utils/extensions.dart';
 import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
 import 'package:easy_moni/utils/af_tracker/track_events.dart';
-import 'package:easy_moni/utils/loan_confirm_content_edge.dart';
 import 'package:easy_moni/utils/widgets/common_bottom_sheet.dart';
 import 'package:easy_moni/utils/widgets/legal_web_view_page.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
@@ -359,29 +358,18 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
               ),
             ),
             if (hasData)
-              // 收款账户卡片悬浮在顶部信息区和白色内容区之间。
-              Positioned(
+              Positioned.fill(
                 top: cardTop,
-                left: 0,
-                right: 0,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: _MomoAccountCard(data: data),
+                child: _buildScrollableBody(
+                  data: data,
+                  orders: orders,
                 ),
+              )
+            else
+              Positioned.fill(
+                top: contentTop,
+                child: _buildContent(data: data, orders: orders),
               ),
-            // 主内容区：包含异形白底、加载/错误/空态和订单列表。
-            Positioned.fill(
-              top: contentTop,
-              child: _buildContent(data: data, orders: orders),
-            ),
           ],
         ),
       ),
@@ -431,23 +419,46 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
     );
   }
 
+  Widget _buildScrollableBody({
+    required LoanConfirmData data,
+    required List<LoanConfirmOrder> orders,
+  }) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final loadError = _loadError;
+    if (loadError != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(loadError, style: const TextStyle(color: Color(0xFF909399))),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: _loadData,
+              child: const Text(AppStrings.errorMessage),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return _LoanConfirmScrollBody(
+      data: data,
+      orders: orders,
+      selectedCoupon: _selectedCoupon,
+      onCouponTap: _showCoupons,
+    );
+  }
+
   Widget _buildContent({
     required LoanConfirmData? data,
     required List<LoanConfirmOrder> orders,
   }) {
-    // 先画顶部曲线阴影，再用同样的路径裁剪白色内容区。
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        const LoanConfirmContentEdge(),
-        ClipPath(
-          clipper: const _LoanConfirmContentClipper(),
-          child: ColoredBox(
-            color: Colors.white,
-            child: _buildContentState(data: data, orders: orders),
-          ),
-        ),
-      ],
+    return ColoredBox(
+      color: Colors.white,
+      child: _buildContentState(data: data, orders: orders),
     );
   }
 
@@ -491,64 +502,96 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
       );
     }
 
-    return _LoanConfirmOrderList(
-      orders: orders,
-      selectedCoupon: _selectedCoupon,
-      onCouponTap: _showCoupons,
-    );
+    return const SizedBox.shrink();
   }
 }
 
-// 确认页订单列表，只负责组合优惠券入口和订单卡片。
-class _LoanConfirmOrderList extends StatelessWidget {
-  const _LoanConfirmOrderList({
+// 中间滚动区：固定白底 + MoMo / 优惠券 / 订单列表同步滚动。
+class _LoanConfirmScrollBody extends StatelessWidget {
+  const _LoanConfirmScrollBody({
+    required this.data,
     required this.orders,
     required this.selectedCoupon,
     required this.onCouponTap,
   });
 
+  static const _listTopPadding = 17.0;
+  static const _momoBottomPadding = 7.0;
+
+  final LoanConfirmData data;
   final List<LoanConfirmOrder> orders;
   final CouponItem? selectedCoupon;
   final VoidCallback onCouponTap;
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(
-        10,
-        34,
-        10,
-        88 + 52 + MediaQuery.of(context).padding.bottom,
-      ),
-      child: Column(
-        children: [
-          // 优惠券入口固定在订单列表最上方。
-          if (selectedCoupon == null)
-            CouponEntryCard(onTap: onCouponTap)
-          else
-            SelectedCouponCard(
-              couponName: _couponName(selectedCoupon!),
-              amountText: _couponAmountText(selectedCoupon!),
-              onTap: onCouponTap,
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      fit: StackFit.expand,
+      children: [
+        const Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
             ),
-          const SizedBox(height: 14),
-          ...List.generate(orders.length, (index) {
-            final order = orders[index];
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: index == orders.length - 1 ? 0 : 16,
+          ),
+        ),
+        CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, _momoBottomPadding),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                ),
+                child: _MomoAccountCard(data: data),
               ),
-              child: LoanOrderCard(
-                productName:
-                    order.productName?.trim() ??
-                    AppStrings.loanOrderProductFallback,
-                productLogo: order.productLogo,
-                rows: _loanConfirmOrderRows(order),
+            ),
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(
+                10,
+                _listTopPadding,
+                10,
+                16 + bottomInset,
               ),
-            );
-          }),
-        ],
-      ),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  if (selectedCoupon == null)
+                    CouponEntryCard(onTap: onCouponTap)
+                  else
+                    SelectedCouponCard(
+                      couponName: _couponName(selectedCoupon!),
+                      amountText: _couponAmountText(selectedCoupon!),
+                      onTap: onCouponTap,
+                    ),
+                  const SizedBox(height: 14),
+                  ...List.generate(orders.length, (index) {
+                    final order = orders[index];
+                    return Padding(
+                      padding: EdgeInsets.only(
+                        bottom: index == orders.length - 1 ? 0 : 16,
+                      ),
+                      child: LoanOrderCard(
+                        productName:
+                            order.productName?.trim() ??
+                            AppStrings.loanOrderProductFallback,
+                        productLogo: order.productLogo,
+                        rows: _loanConfirmOrderRows(order),
+                      ),
+                    );
+                  }),
+                ]),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -581,37 +624,6 @@ List<LoanOrderCardRowData> _loanConfirmOrderRows(LoanConfirmOrder item) {
       value: dueDate,
     ),
   ];
-}
-
-// 裁剪白色内容区的顶部形状：两侧圆角，中间向下形成柔和弧线。
-class _LoanConfirmContentClipper extends CustomClipper<Path> {
-  const _LoanConfirmContentClipper();
-
-  static const sideHeight = LoanConfirmContentEdge.sideHeight;
-  static const centerHeight = LoanConfirmContentEdge.centerHeight;
-
-  @override
-  Path getClip(Size size) {
-    // 这条路径只定义上边缘曲线，底部保持普通矩形填满剩余区域。
-    return Path()
-      ..moveTo(0, sideHeight)
-      ..quadraticBezierTo(0, 0, sideHeight, 0)
-      ..cubicTo(
-        size.width * 0.28,
-        centerHeight,
-        size.width * 0.72,
-        centerHeight,
-        size.width - sideHeight,
-        0,
-      )
-      ..quadraticBezierTo(size.width, 0, size.width, sideHeight)
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-  }
-
-  @override
-  bool shouldReclip(_LoanConfirmContentClipper oldClipper) => false;
 }
 
 // 页面头图区域：展示导航、客服入口、借款总额和三项关键确认信息。
@@ -855,62 +867,57 @@ class _MomoAccountCard extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(4, 11, 12, 0),
+      padding: const EdgeInsets.fromLTRB(4, 0, 12, 0),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           _SimIcon(),
           const SizedBox(width: 1),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    accountName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFF5C2B0B),
-                      fontWeight: FontWeight.w900,
-                      height: 20 / 16,
-                    ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  accountName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Color(0xFF5C2B0B),
+                    fontWeight: FontWeight.w900,
+                    height: 20 / 16,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    accountNo,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFF471A07),
-                      fontWeight: FontWeight.w600,
-                      height: 18 / 16,
-                    ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  accountNo,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Color(0xFF471A07),
+                    fontWeight: FontWeight.w600,
+                    height: 18 / 16,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 12),
           Flexible(
             child: Align(
-              alignment: Alignment.topRight,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 7),
-                child: Text(
-                  AppStrings.loanOrderAccountLabel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF5C2B0B),
-                    fontWeight: FontWeight.w500,
-                    height: 16 / 12,
-                  ),
+              alignment: Alignment.centerRight,
+              child: Text(
+                AppStrings.loanOrderAccountLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.right,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF5C2B0B),
+                  fontWeight: FontWeight.w500,
+                  height: 16 / 12,
                 ),
               ),
             ),

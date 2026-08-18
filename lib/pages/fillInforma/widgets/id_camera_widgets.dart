@@ -47,6 +47,11 @@ class IdCameraUiLayer extends StatelessWidget {
     super.key,
   });
 
+  static const _captureButtonSize = 70.0;
+  static const _rightPadding = 24.0;
+  static const _guideToButtonGap = 20.0;
+  static const _guideGridWidth = 196.0;
+
   final Rect cardRect;
   final bool isTakingPicture;
   final VoidCallback onBack;
@@ -54,62 +59,41 @@ class IdCameraUiLayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          const rightPadding = 24.0;
-          const captureButtonSize = 48.0;
-          const guideButtonGap = 24.0;
-          final guideRight = rightPadding + captureButtonSize + guideButtonGap;
-          final availableGuideWidth = constraints.maxWidth - guideRight - 24.0;
-          final preferredGuideWidth = (constraints.maxWidth * 0.34).clamp(
-            260.0,
-            320.0,
-          );
-          final sideWidth = availableGuideWidth <= 0
-              ? 0.0
-              : preferredGuideWidth.clamp(0.0, availableGuideWidth);
+    final guideRight = _rightPadding + _captureButtonSize + _guideToButtonGap;
 
-          return Stack(
-            children: [
-              Positioned(
-                top: 24,
-                left: 0,
-                right: 56,
-                child: Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _CameraBackButton(onPressed: onBack),
-                      const SizedBox(width: 12),
-                      const Flexible(child: _CameraTip()),
-                    ],
-                  ),
-                ),
-              ),
-              // 示例图组按证件框中心线定位，确保引导区和拍摄框视觉对齐。
-              Positioned(
-                right: guideRight,
-                top: cardRect.center.dy,
-                width: sideWidth,
-                child: const FractionalTranslation(
-                  translation: Offset(0, -0.5),
-                  child: _PhotoGuideGrid(),
-                ),
-              ),
-              // 按钮单独居中展示
-              Positioned(
-                right: rightPadding,
-                top: 0,
-                bottom: 0,
-                child: _CaptureButton(
-                  isTakingPicture: isTakingPicture,
-                  onPressed: onTakePicture,
-                ),
-              ),
-            ],
-          );
-        },
+    return SafeArea(
+      child: Stack(
+        children: [
+          Positioned(
+            top: 8,
+            left: 4,
+            child: _CameraBackButton(onPressed: onBack),
+          ),
+          Positioned(
+            top: 12,
+            left: 52,
+            right: 16,
+            child: const Center(child: _CameraTip()),
+          ),
+          Positioned(
+            right: guideRight,
+            top: cardRect.center.dy,
+            width: _guideGridWidth,
+            child: const FractionalTranslation(
+              translation: Offset(0, -0.5),
+              child: _PhotoGuideGrid(),
+            ),
+          ),
+          Positioned(
+            right: _rightPadding,
+            top: 0,
+            bottom: 0,
+            child: _CaptureButton(
+              isTakingPicture: isTakingPicture,
+              onPressed: onTakePicture,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -143,7 +127,6 @@ class _CameraTip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(maxWidth: 680),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.1),
@@ -158,12 +141,13 @@ class _CameraTip extends StatelessWidget {
           Flexible(
             child: Text(
               AppStrings.takeOcrPictures,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+              textAlign: TextAlign.left,
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
+                height: 1.25,
               ),
             ),
           ),
@@ -195,7 +179,7 @@ class _PhotoGuideGrid extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -224,16 +208,16 @@ class _PhotoGuideItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 110,
+      width: 90,
       child: Column(
-        mainAxisSize: MainAxisSize.max,
+        mainAxisSize: MainAxisSize.min,
         children: [
           SizedBox(width: 90, height: 67.2, child: image),
-          const SizedBox(height: 12),
+          const SizedBox(height: 4.8),
           Text(
             label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            maxLines: 2,
+            textAlign: TextAlign.center,
             style: const TextStyle(
               color: Color(0xFF808080),
               fontSize: 12,
@@ -258,8 +242,8 @@ class _CaptureButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 70,
-      height: 70,
+      width: IdCameraUiLayer._captureButtonSize,
+      height: IdCameraUiLayer._captureButtonSize,
       child: GestureDetector(
         onTap: isTakingPicture ? null : onPressed,
         child: Stack(
@@ -268,8 +252,8 @@ class _CaptureButton extends StatelessWidget {
             Opacity(
               opacity: isTakingPicture ? 0.6 : 1,
               child: Assets.images.cameraButton.image(
-                width: 70,
-                height: 70,
+                width: IdCameraUiLayer._captureButtonSize,
+                height: IdCameraUiLayer._captureButtonSize,
                 fit: BoxFit.contain,
               ),
             ),
@@ -281,7 +265,7 @@ class _CaptureButton extends StatelessWidget {
               ),
           ],
         ),
-          ),
+      ),
     );
   }
 }
