@@ -12,7 +12,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// 历史订单页面，负责 tab 切换、接口加载状态和订单列表展示。
 class MineOrderHistoryPage extends ConsumerStatefulWidget {
   const MineOrderHistoryPage({super.key});
 

@@ -15,7 +15,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// 我的页面，负责用户信息加载、入口事件和页面结构组装。
 class MinePage extends ConsumerStatefulWidget {
   const MinePage({super.key, this.refreshRequestId = ''});
 
@@ -141,7 +140,7 @@ class _MinePageState extends ConsumerState<MinePage> {
       if (result.isSuccess) {
         await HttpProvider.instance.clearAuth();
         if (!mounted) return;
-        // 退出登录后回到 GoRouter 管理的登录页，避免原生 Navigator 覆盖路由栈
+        
         context.go(AppRoutePaths.login);
         showToast(AppStrings.mineLogoutSuccess);
       } else {
