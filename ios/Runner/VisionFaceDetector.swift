@@ -70,8 +70,8 @@ enum VisionFaceDetector {
       return []
     }
 
-    let poseFaces = (poseRequest.results as? [VNFaceObservation]) ?? []
-    let landmarkFaces = (landmarksRequest.results as? [VNFaceObservation]) ?? []
+    let poseFaces = poseRequest.results ?? []
+    let landmarkFaces = landmarksRequest.results ?? []
 
     if poseFaces.isEmpty && landmarkFaces.isEmpty {
       return []
