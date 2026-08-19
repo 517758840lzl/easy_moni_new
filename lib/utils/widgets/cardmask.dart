@@ -16,18 +16,19 @@ class IdCardCameraLayout {
       size.width * _maxCardWidthRatio,
     );
     final height = width / _cardAspectRatio;
-    const shutterReserve = 110.0;
-    final availableWidth = (size.width - shutterReserve).clamp(
-      width,
-      size.width,
+
+    const edgePadding = 16.0;
+    // 顶部提示条占用高度，证件框在剩余区域垂直居中。
+    const topBarReserve = 48.0;
+
+    final left = ((size.width - width) / 2).clamp(
+      edgePadding,
+      size.width - width - edgePadding,
     );
-    final left = ((availableWidth - width) / 2).clamp(
-      16.0,
-      size.width - width - 16,
-    );
-    final top = ((size.height - height) / 2).clamp(
-      16.0,
-      size.height - height - 16,
+    final top = (topBarReserve + (size.height - topBarReserve - height) / 2)
+        .clamp(
+      topBarReserve,
+      size.height - height - edgePadding,
     );
 
     return Rect.fromLTWH(left, top, width, height);
