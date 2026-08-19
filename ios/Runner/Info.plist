@@ -8,9 +8,9 @@
 		<string>tel</string>
 	</array>
 	<key>NSCameraUsageDescription</key>
-    <string>Easy Moni uses your camera to capture your ID and complete facial verification.</string>
+    <string>Prime Cedi Loan uses your camera to capture your ID and complete facial verification.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>Easy Moni uses your approximate location to help prevent fraud and assess risk.</string>
+    <string>Prime Cedi Loan uses your approximate location to help prevent fraud and assess risk.</string>
 	<key>NSLocationDefaultAccuracyReduced</key>
 	<true/>
 	<key>ITSAppUsesNonExemptEncryption</key>
@@ -20,7 +20,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Easy Moni</string>
+	<string>Prime Cedi Loan</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

@@ -5,7 +5,7 @@ class AppStrings {
 
   // ==================== App ====================
   // ==================== 通用组件文本 ====================
-  static const String appTitle = 'Easy Moni';
+  static const String appTitle = 'Prime Cedi Loan';
   static const String continueStr = 'Continue';
   static const String back = 'Back';
   static const String cancel = 'Cancel';
@@ -13,7 +13,7 @@ class AppStrings {
   static const String goSettings = 'Go to Settings';
   // ==================== KYC流程 ====================
   static const String privacyData = 'Privacy Policy';
-  static const String wellcome = 'Welcome to Easy Moni';
+  static const String wellcome = 'Welcome to Prime Cedi Loan';
   static const String wellcomedeailData =
       'Manage your credit, get funds faster, and borrow with confidence—all in one place.';
   static const String phoneStr = 'Mobile Money Number';
@@ -154,6 +154,7 @@ class AppStrings {
   static const String identityVerifyOcrFailed = 'ID recognition failed.';
   static const String identityVerifySaveFailed = 'Submission failed.';
   static const String identityVerifyEdit = 'Edit';
+  static const String identityVerifyBirthdayPickerTitle = 'Date of Birth';
   static const String confirmOwnerData = 'Please verify yourself';
   static const String standard = 'Standard shooting';
   static const String toolBright = 'Too bright';

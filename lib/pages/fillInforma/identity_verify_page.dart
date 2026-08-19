@@ -557,7 +557,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
 
     final pickedDate = await showDatePickerBottomSheet(
       context: context,
-      title: entry.showContent,
+      title: AppStrings.identityVerifyBirthdayPickerTitle,
       initialDate: initialDate,
       minimumDate: firstDate,
       maximumDate: now,
@@ -706,10 +706,15 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
                 controller: _scrollController,
                 thumbVisibility: true,
                 radius: const Radius.circular(8),
-                child: SingleChildScrollView(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onTap: _clearFormTextFocus,
+                  child: SingleChildScrollView(
+                    controller: _scrollController,
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
                     children: [
                       const SizedBox(height: 16),
                       const IdentityCheckNotice(),
@@ -758,6 +763,7 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
                       const SizedBox(height: 20),
                     ],
                   ),
+                ),
                 ),
               ),
         bottomNavigationBar: LoanBottomActionButton(
