@@ -251,6 +251,10 @@ class $AssetsImagesGen {
   AssetGenImage get loginBg =>
       const AssetGenImage('assets/images/login_bg.png');
 
+  /// File path: assets/images/login_logo.png
+  AssetGenImage get loginLogo =>
+      const AssetGenImage('assets/images/login_logo.png');
+
   /// File path: assets/images/mine_anth_bg.png
   AssetGenImage get mineAnthBg =>
       const AssetGenImage('assets/images/mine_anth_bg.png');
@@ -396,6 +400,7 @@ class $AssetsImagesGen {
     loanYellowCard,
     location,
     loginBg,
+    loginLogo,
     mineAnthBg,
     mineArrow,
     mineBg,

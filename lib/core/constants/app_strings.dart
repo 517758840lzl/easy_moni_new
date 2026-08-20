@@ -6,6 +6,7 @@ class AppStrings {
   // ==================== App ====================
   // ==================== 通用组件文本 ====================
   static const String appTitle = 'Prime Cedi Loan';
+  static const String splashTagline = 'YOUR CREDIT, MADE EASY';
   static const String continueStr = 'Continue';
   static const String back = 'Back';
   static const String cancel = 'Cancel';

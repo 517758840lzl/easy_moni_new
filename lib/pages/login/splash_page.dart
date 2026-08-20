@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/core/tracking/tracking_bootstrap.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
@@ -94,8 +95,6 @@ class _SplashPageState extends ConsumerState<SplashPage>
     await Future.wait([
       precacheImage(Assets.images.loginBg.provider(), context),
       precacheImage(Assets.images.appIconBlack.provider(), context),
-      precacheImage(Assets.images.easyMoniText.provider(), context),
-      precacheImage(Assets.images.splashBottomText.provider(), context),
     ]);
   }
 
@@ -221,12 +220,15 @@ class _SplashPageState extends ConsumerState<SplashPage>
                   const Spacer(flex: 28),
                   Transform.translate(
                     offset: Offset(0, -34 * scale),
-                    child: SizedBox(
-                      width: 144 * scale,
-                      height: 144 * scale,
-                      child: Assets.images.appIconBlack.image(
-                        fit: BoxFit.contain,
-                        filterQuality: FilterQuality.high,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(144 * scale * 0.22),
+                      child: SizedBox(
+                        width: 144 * scale,
+                        height: 144 * scale,
+                        child: Assets.images.appIconBlack.image(
+                          fit: BoxFit.contain,
+                          filterQuality: FilterQuality.high,
+                        ),
                       ),
                     ),
                   ),
@@ -242,16 +244,30 @@ class _SplashPageState extends ConsumerState<SplashPage>
                     },
                   ),
                   SizedBox(height: 48 * scale),
-                  Assets.images.easyMoniText.image(
-                    width: 160 * scale,
-                    fit: BoxFit.contain,
-                    filterQuality: FilterQuality.high,
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24 * scale),
+                    child: Text(
+                      AppStrings.appTitle,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 28 * scale,
+                        fontWeight: FontWeight.w700,
+                        fontStyle: FontStyle.italic,
+                        height: 1.1,
+                      ),
+                    ),
                   ),
                   SizedBox(height: 18 * scale),
-                  Assets.images.splashBottomText.image(
-                    width: 203 * scale,
-                    fit: BoxFit.contain,
-                    filterQuality: FilterQuality.high,
+                  Text(
+                    AppStrings.splashTagline,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12 * scale,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.6 * scale,
+                    ),
                   ),
                   SizedBox(height: 44 * scale),
                 ],

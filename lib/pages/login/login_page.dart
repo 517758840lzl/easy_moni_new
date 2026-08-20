@@ -87,6 +87,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     _hasPrecachedBackground = true;
     // 提前解码登录背景图，减少首帧露出底色的时间。
     precacheImage(Assets.images.loginBg.provider(), context);
+    precacheImage(Assets.images.loginLogo.provider(), context);
   }
 
   String _normalizedPhone() {
@@ -525,7 +526,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget _buildLogoSection() {
     return Column(
       children: [
-        Assets.images.starIcon.image(width: 103, height: 103),
+        Assets.images.loginLogo.image(
+          width: 103,
+          height: 103,
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.high,
+        ),
         const Text(
           AppStrings.wellcome,
           textAlign: TextAlign.center,
