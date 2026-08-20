@@ -19,7 +19,7 @@ import CoreLocation
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
 
     guard let messenger = engineBridge.pluginRegistry
-      .registrar(forPlugin: "EasyMoniPlatformChannels")?
+      .registrar(forPlugin: "PrimeCediLoanPlatformChannels")?
       .messenger()
     else {
       return

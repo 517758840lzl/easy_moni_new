@@ -134,7 +134,7 @@ final class DeviceInfoHelper {
       semaphore.signal()
     }
 
-    let queue = DispatchQueue(label: "com.easy_moni.device_info.network")
+    let queue = DispatchQueue(label: "com.primecediloan.device_info.network")
     monitor.start(queue: queue)
     _ = semaphore.wait(timeout: .now() + 0.5)
     monitor.cancel()

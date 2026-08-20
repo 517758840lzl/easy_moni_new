@@ -28,10 +28,15 @@ class _ReviewFeatureSection extends StatelessWidget {
   static const _titleColor = Color(0xFF101010);
   static const _descColor = Color(0xFF343434);
 
+  static const _featureTitles = [
+    AppStrings.reviewFeatureApplyTitle,
+    AppStrings.reviewFeatureDisburseTitle,
+    AppStrings.reviewFeatureFlexibleTitle,
+  ];
+
   @override
   Widget build(BuildContext context) {
     final isCompactScreen = MediaQuery.sizeOf(context).height <= 667;
-    final titleFontSize = isCompactScreen ? 9.0 : 13.0;
     final descFontSize = isCompactScreen ? 9.0 : 10.0;
 
     return Column(
@@ -55,41 +60,82 @@ class _ReviewFeatureSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
-        Row(
-          children: [
-            Expanded(
-              child: _FeatureCard(
-                image: Assets.images.review1,
-                title: AppStrings.reviewFeatureApplyTitle,
-                desc: AppStrings.reviewFeatureApplyDesc,
-                titleFontSize: titleFontSize,
-                descFontSize: descFontSize,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: _FeatureCard(
-                image: Assets.images.review2,
-                title: AppStrings.reviewFeatureDisburseTitle,
-                desc: AppStrings.reviewFeatureDisburseDesc,
-                titleFontSize: titleFontSize,
-                descFontSize: descFontSize,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: _FeatureCard(
-                image: Assets.images.review3,
-                title: AppStrings.reviewFeatureFlexibleTitle,
-                desc: AppStrings.reviewFeatureFlexibleDesc,
-                titleFontSize: titleFontSize,
-                descFontSize: descFontSize,
-              ),
-            ),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final titleMaxWidth = (constraints.maxWidth - 28) / 3 - 8;
+            final titleFontSize = isCompactScreen
+                ? 9.0
+                : _resolveUnifiedTitleFontSize(
+                    titles: _featureTitles,
+                    maxWidth: titleMaxWidth,
+                    textScaler: MediaQuery.textScalerOf(context),
+                  );
+
+            return Row(
+              children: [
+                Expanded(
+                  child: _FeatureCard(
+                    image: Assets.images.review1,
+                    title: AppStrings.reviewFeatureApplyTitle,
+                    desc: AppStrings.reviewFeatureApplyDesc,
+                    titleFontSize: titleFontSize,
+                    descFontSize: descFontSize,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: _FeatureCard(
+                    image: Assets.images.review2,
+                    title: AppStrings.reviewFeatureDisburseTitle,
+                    desc: AppStrings.reviewFeatureDisburseDesc,
+                    titleFontSize: titleFontSize,
+                    descFontSize: descFontSize,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: _FeatureCard(
+                    image: Assets.images.review3,
+                    title: AppStrings.reviewFeatureFlexibleTitle,
+                    desc: AppStrings.reviewFeatureFlexibleDesc,
+                    titleFontSize: titleFontSize,
+                    descFontSize: descFontSize,
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ],
     );
+  }
+
+  static double _resolveUnifiedTitleFontSize({
+    required List<String> titles,
+    required double maxWidth,
+    required TextScaler textScaler,
+  }) {
+    if (maxWidth <= 0) {
+      return 13;
+    }
+
+    for (var size = 13.0; size >= 7.0; size -= 0.5) {
+      final style = TextStyle(fontSize: size, fontWeight: FontWeight.w700);
+      final allFit = titles.every((title) {
+        final painter = TextPainter(
+          text: TextSpan(text: title, style: style),
+          maxLines: 1,
+          textDirection: TextDirection.ltr,
+          textScaler: textScaler,
+        )..layout();
+        return painter.width <= maxWidth;
+      });
+      if (allFit) {
+        return size;
+      }
+    }
+
+    return 7;
   }
 }
 
@@ -120,16 +166,20 @@ class _FeatureCard extends StatelessWidget {
         children: [
           image.image(width: 48, height: 48, fit: BoxFit.contain),
           const SizedBox(height: 8),
-          Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: titleFontSize,
-              fontWeight: FontWeight.w700,
-              color: _ReviewFeatureSection._titleColor,
-              height: 16 / 13,
+          Align(
+            alignment: Alignment.center,
+            widthFactor: 1,
+            child: Text(
+              title,
+              maxLines: 1,
+              softWrap: false,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: titleFontSize,
+                fontWeight: FontWeight.w700,
+                color: _ReviewFeatureSection._titleColor,
+                height: 16 / 13,
+              ),
             ),
           ),
           const SizedBox(height: 12),
