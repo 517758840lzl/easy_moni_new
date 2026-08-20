@@ -94,7 +94,7 @@ class _SplashPageState extends ConsumerState<SplashPage>
 
     await Future.wait([
       precacheImage(Assets.images.loginBg.provider(), context),
-      precacheImage(Assets.images.appIconBlack.provider(), context),
+      precacheImage(Assets.images.loginLogo.provider(), context),
     ]);
   }
 
@@ -220,15 +220,12 @@ class _SplashPageState extends ConsumerState<SplashPage>
                   const Spacer(flex: 28),
                   Transform.translate(
                     offset: Offset(0, -34 * scale),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(144 * scale * 0.22),
-                      child: SizedBox(
-                        width: 144 * scale,
-                        height: 144 * scale,
-                        child: Assets.images.appIconBlack.image(
-                          fit: BoxFit.contain,
-                          filterQuality: FilterQuality.high,
-                        ),
+                    child: SizedBox(
+                      width: 144 * scale,
+                      height: 144 * scale,
+                      child: Assets.images.loginLogo.image(
+                        fit: BoxFit.contain,
+                        filterQuality: FilterQuality.high,
                       ),
                     ),
                   ),

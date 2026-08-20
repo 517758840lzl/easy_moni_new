@@ -409,6 +409,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 
+  void _dismissKeyboard() {
+    FocusManager.instance.primaryFocus?.unfocus();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -428,12 +432,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             ),
           ),
           Positioned.fill(
-            child: SafeArea(
-              child: Column(
-                children: [
-                  _buildHeader(context),
-                  Expanded(child: _buildLoginContent()),
-                ],
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: _dismissKeyboard,
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    _buildHeader(context),
+                    Expanded(child: _buildLoginContent()),
+                  ],
+                ),
               ),
             ),
           ),
@@ -442,12 +450,28 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 
+  /// iPhone 8 / SE 等小屏机使用更紧凑的顶部间距。
+  bool _isCompactLoginScreen(BuildContext context) {
+    return MediaQuery.sizeOf(context).height <= 667;
+  }
+
+  double _loginHeaderHeight(BuildContext context) {
+    return _isCompactLoginScreen(context) ? 32 : 44;
+  }
+
+  double _loginTopSpacing(BuildContext context, double contentHeight) {
+    if (_isCompactLoginScreen(context)) {
+      return 12;
+    }
+    return (contentHeight * 0.13).clamp(54.0, 100.0);
+  }
+
   /// 构建顶部客服入口
   Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: SizedBox(
-        height: 44,
+        height: _loginHeaderHeight(context),
         child: Row(
           children: [
             const Spacer(),
@@ -469,9 +493,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget _buildLoginContent() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final topSpacing = (constraints.maxHeight * 0.13).clamp(54.0, 100.0);
+        final topSpacing = _loginTopSpacing(context, constraints.maxHeight);
 
         return SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: ConstrainedBox(
             constraints: BoxConstraints(minHeight: constraints.maxHeight),
