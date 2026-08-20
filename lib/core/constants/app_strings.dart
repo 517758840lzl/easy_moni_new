@@ -245,7 +245,7 @@ class AppStrings {
       'Funds in as little as 10 minutes.';
   static const String reviewFeatureFlexibleTitle = 'Flexible Repayment';
   static const String reviewFeatureFlexibleDesc =
-      'Borrow anytime and manage everything online.';
+      'Borrow and repay anytime online.';
 
   // ==================== 贷款详情 ====================
   static const String loanDetailTitle = 'Loan Details';

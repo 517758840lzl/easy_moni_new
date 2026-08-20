@@ -30,6 +30,10 @@ class _ReviewFeatureSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isCompactScreen = MediaQuery.sizeOf(context).height <= 667;
+    final titleFontSize = isCompactScreen ? 9.0 : 13.0;
+    final descFontSize = isCompactScreen ? 9.0 : 10.0;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -58,6 +62,8 @@ class _ReviewFeatureSection extends StatelessWidget {
                 image: Assets.images.review1,
                 title: AppStrings.reviewFeatureApplyTitle,
                 desc: AppStrings.reviewFeatureApplyDesc,
+                titleFontSize: titleFontSize,
+                descFontSize: descFontSize,
               ),
             ),
             const SizedBox(width: 14),
@@ -66,6 +72,8 @@ class _ReviewFeatureSection extends StatelessWidget {
                 image: Assets.images.review2,
                 title: AppStrings.reviewFeatureDisburseTitle,
                 desc: AppStrings.reviewFeatureDisburseDesc,
+                titleFontSize: titleFontSize,
+                descFontSize: descFontSize,
               ),
             ),
             const SizedBox(width: 14),
@@ -74,6 +82,8 @@ class _ReviewFeatureSection extends StatelessWidget {
                 image: Assets.images.review3,
                 title: AppStrings.reviewFeatureFlexibleTitle,
                 desc: AppStrings.reviewFeatureFlexibleDesc,
+                titleFontSize: titleFontSize,
+                descFontSize: descFontSize,
               ),
             ),
           ],
@@ -88,11 +98,15 @@ class _FeatureCard extends StatelessWidget {
     required this.image,
     required this.title,
     required this.desc,
+    required this.titleFontSize,
+    required this.descFontSize,
   });
 
   final AssetGenImage image;
   final String title;
   final String desc;
+  final double titleFontSize;
+  final double descFontSize;
 
   @override
   Widget build(BuildContext context) {
@@ -111,8 +125,8 @@ class _FeatureCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 13,
+            style: TextStyle(
+              fontSize: titleFontSize,
               fontWeight: FontWeight.w700,
               color: _ReviewFeatureSection._titleColor,
               height: 16 / 13,
@@ -124,8 +138,8 @@ class _FeatureCard extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 10,
+            style: TextStyle(
+              fontSize: descFontSize,
               fontWeight: FontWeight.w400,
               color: _ReviewFeatureSection._descColor,
               height: 16 / 10,
