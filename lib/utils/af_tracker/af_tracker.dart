@@ -122,8 +122,10 @@ class AppsFlyerTracker {
       }
 
       final userAgent = await DeviceContext.resolveUserAgent();
+      final deviceId = await DeviceContext.resolveDeviceId();
       final map = <String, dynamic>{
         if (userAgent.isNotEmpty) 'userAgent': userAgent,
+        if (deviceId.isNotEmpty) 'deviceId': deviceId,
       };
       _runtimeAttribution = map;
       return map;
