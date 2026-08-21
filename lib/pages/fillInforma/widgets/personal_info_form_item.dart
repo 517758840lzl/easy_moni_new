@@ -62,7 +62,9 @@ class PersonalInfoFormItem extends StatelessWidget {
               const SizedBox(height: 10),
             ],
             Padding(
-              padding: EdgeInsets.only(left: 16),
+              padding: EdgeInsets.only(
+                left: hasTitle && !isRequired ? 0 : _requiredMarkWidth,
+              ),
               child: _isTextInput ? _buildTextField() : _buildPickerValue(),
             ),
           ],
@@ -75,7 +77,7 @@ class PersonalInfoFormItem extends StatelessWidget {
         _isTextInput ? itemContent : _buildFocusablePicker(itemContent),
         if (showDivider)
           Container(
-            margin: EdgeInsets.only(left: _isTextInput ? 0 : 20),
+            margin: EdgeInsets.zero,
             height: 1,
             color: _isTextInput
                 ? const Color(0xFFE7E7E7)
@@ -126,7 +128,7 @@ class PersonalInfoFormItem extends StatelessWidget {
         hintText: placeholder,
         hintStyle: const TextStyle(fontSize: 14, color: Color(0xFFCCCCCC)),
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+        contentPadding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
         border: InputBorder.none,
         enabledBorder: InputBorder.none,
         focusedBorder: InputBorder.none,
@@ -177,14 +179,11 @@ class PersonalInfoFormItem extends StatelessWidget {
           )
         else
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(left: 4.0),
-              child: Text(
-                value ?? placeholder,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: value != null ? Colors.black : const Color(0xFFCCCCCC),
-                ),
+            child: Text(
+              value ?? placeholder,
+              style: TextStyle(
+                fontSize: 14,
+                color: value != null ? Colors.black : const Color(0xFFCCCCCC),
               ),
             ),
           ),
@@ -235,6 +234,8 @@ class PersonalInfoDisplayFormItem extends StatelessWidget {
   }
 }
 
+const double _requiredMarkWidth = 16;
+
 /// 表单项标题，负责必填星号和标题文本的统一排版。
 class _FormItemTitle extends StatelessWidget {
   const _FormItemTitle({required this.title, required this.isRequired});
@@ -247,22 +248,30 @@ class _FormItemTitle extends StatelessWidget {
     return SizedBox(
       height: 20,
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (isRequired)
-            const Text(
-              '*',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.red,
-                letterSpacing: 0.4,
+            const SizedBox(
+              width: _requiredMarkWidth,
+              height: 20,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '*',
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.red,
+                  ),
+                ),
               ),
             ),
-          if (isRequired) const SizedBox(width: 8),
           Text(
             title,
             style: const TextStyle(
               fontSize: 14,
+              height: 1,
               fontWeight: FontWeight.w600,
               color: Colors.black,
               letterSpacing: 0.4,

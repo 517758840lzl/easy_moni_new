@@ -15,16 +15,24 @@ class IdentityCheckNotice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          '*',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.red,
+        SizedBox(
+          width: 16,
+          height: 20,
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              '*',
+              style: TextStyle(
+                fontSize: 14,
+                height: 1,
+                fontWeight: FontWeight.w600,
+                color: Colors.red,
+              ),
+            ),
           ),
         ),
-        SizedBox(width: 8),
         Expanded(
           child: Text(
             AppStrings.identityVerifyCheckInfo,
@@ -32,6 +40,7 @@ class IdentityCheckNotice extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 14,
+              height: 1,
               fontWeight: FontWeight.w600,
               color: Colors.black,
               letterSpacing: 0.4,

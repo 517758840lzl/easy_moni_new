@@ -847,6 +847,8 @@ class _MomoAccountCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final accountName = _emptyWhenNull(data.bankCardName);
     final accountNo = _maskAccountNo(_emptyWhenNull(data.bankCardNo));
+    final isCompactScreen = MediaQuery.sizeOf(context).height <= 667;
+    final titleFontSize = isCompactScreen ? 15.0 : 16.0;
 
     return Container(
       height: 92,
@@ -882,9 +884,9 @@ class _MomoAccountCard extends StatelessWidget {
                   accountName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Color(0xFF5C2B0B),
+                  style: TextStyle(
+                    fontSize: titleFontSize,
+                    color: const Color(0xFF5C2B0B),
                     fontWeight: FontWeight.w900,
                     height: 20 / 16,
                   ),
