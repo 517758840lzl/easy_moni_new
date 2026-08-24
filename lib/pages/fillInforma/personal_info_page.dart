@@ -19,7 +19,6 @@ import 'package:easy_moni/pages/fillInforma/widgets/progress_information.dart';
 import 'package:easy_moni/pages/loan/components/loan_rounded_page.dart';
 import 'package:easy_moni/utils/widgets/app_state_view.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
-import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/utils/widgets/location_permission_sheet.dart';
 import 'package:easy_moni/utils/widgets/limit_toast.dart';
 import 'package:flutter/material.dart';
@@ -226,30 +225,9 @@ class _PersonalInfoPageState extends ConsumerState<PersonalInfoPage> {
   }
 
   Future<void> _ensureLocationPermission() async {
-    if (_hasPromptedLocationPermission) return;
+    if (_hasPromptedLocationPermission || !mounted) return;
     _hasPromptedLocationPermission = true;
-
-    if (await LocationService.checkPermission()) {
-      return;
-    }
-    if (!mounted) return;
-
-    final osGranted = await LocationService.requestPermission().timeout(
-      const Duration(seconds: 30),
-      onTimeout: () => false,
-    );
-    if (!mounted) return;
-    if (osGranted || await LocationService.checkPermission()) {
-      return;
-    }
-    if (!mounted) return;
-
-    final shouldOpenSettings = await LocationPermissionSheet.show(context);
-    if (!mounted || !shouldOpenSettings) {
-      return;
-    }
-
-    await LocationService.openAppSettings();
+    await LocationPermissionSheet.ensure(context);
   }
 
   /// Clears old form state before retrying to avoid stale data.

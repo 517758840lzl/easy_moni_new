@@ -1,10 +1,39 @@
+import 'dart:async';
+
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
+import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/utils/widgets/permission_action_buttons.dart';
 import 'package:flutter/material.dart';
 
 class LocationPermissionSheet {
   LocationPermissionSheet._();
+
+  /// 先弹系统定位权限，用户拒绝后再弹自定义引导去设置。
+  static Future<bool> ensure(BuildContext context) async {
+    if (await LocationService.checkPermission()) {
+      return true;
+    }
+    if (!context.mounted) return false;
+
+    final osGranted = await LocationService.requestPermission().timeout(
+      const Duration(seconds: 30),
+      onTimeout: () => false,
+    );
+    if (!context.mounted) return false;
+    if (osGranted || await LocationService.checkPermission()) {
+      return true;
+    }
+    if (!context.mounted) return false;
+
+    final shouldOpenSettings = await show(context);
+    if (!context.mounted || !shouldOpenSettings) {
+      return false;
+    }
+
+    await LocationService.openAppSettings();
+    return false;
+  }
 
   static Future<bool> show(BuildContext context) async {
     final result = await showModalBottomSheet<bool>(

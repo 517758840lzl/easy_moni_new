@@ -2,6 +2,7 @@ import CoreLocation
 import Flutter
 import Foundation
 
+/// iOS when-in-use location via CLLocationManager (system dialog + one-shot coords).
 final class LocationPermissionHelper: NSObject, CLLocationManagerDelegate {
   static let shared = LocationPermissionHelper()
 
@@ -15,7 +16,10 @@ final class LocationPermissionHelper: NSObject, CLLocationManagerDelegate {
   }
 
   private func authStatus() -> CLAuthorizationStatus {
-    ensureManager().authorizationStatus
+    if #available(iOS 14.0, *), let manager {
+      return manager.authorizationStatus
+    }
+    return CLLocationManager.authorizationStatus()
   }
 
   func hasWhenInUse() -> Bool {
@@ -27,6 +31,7 @@ final class LocationPermissionHelper: NSObject, CLLocationManagerDelegate {
     }
   }
 
+  /// Shows the system location dialog when status is `.notDetermined`.
   func requestWhenInUse(_ result: @escaping FlutterResult) {
     if Thread.isMainThread {
       performRequest(result)
@@ -41,11 +46,6 @@ final class LocationPermissionHelper: NSObject, CLLocationManagerDelegate {
     let status = authStatus()
     if status == .authorizedWhenInUse || status == .authorizedAlways {
       result(true)
-      return
-    }
-
-    if status == .denied || status == .restricted {
-      result(false)
       return
     }
 
@@ -75,7 +75,7 @@ final class LocationPermissionHelper: NSObject, CLLocationManagerDelegate {
     }
 
     let mgr = ensureManager()
-    applyApproximateLocationSettings(to: mgr)
+    mgr.desiredAccuracy = kCLLocationAccuracyKilometer
 
     if let loc = mgr.location, loc.horizontalAccuracy >= 0 {
       result(locationDict(loc))
@@ -100,26 +100,16 @@ final class LocationPermissionHelper: NSObject, CLLocationManagerDelegate {
     mgr.requestLocation()
   }
 
-  private func applyApproximateLocationSettings(to manager: CLLocationManager) {
-    manager.desiredAccuracy = kCLLocationAccuracyKilometer
-    manager.distanceFilter = kCLDistanceFilterNone
-  }
-
   private func ensureManager() -> CLLocationManager {
     if let manager { return manager }
     let mgr = CLLocationManager()
     mgr.delegate = self
-    applyApproximateLocationSettings(to: mgr)
     manager = mgr
     return mgr
   }
 
   private func zeroCoords() -> [String: Double] {
     ["latitude": 0.0, "longitude": 0.0]
-  }
-
-  private func coordsDict(_ coordinate: CLLocationCoordinate2D) -> [String: Double] {
-    ["latitude": coordinate.latitude, "longitude": coordinate.longitude]
   }
 
   private func locationDict(_ location: CLLocation) -> [String: Double] {
@@ -151,7 +141,19 @@ final class LocationPermissionHelper: NSObject, CLLocationManagerDelegate {
   }
 
   func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-    finishPendingAuthIfNeeded(status: manager.authorizationStatus)
+    if #available(iOS 14.0, *) {
+      finishPendingAuthIfNeeded(status: manager.authorizationStatus)
+    }
+  }
+
+  func locationManager(
+    _ manager: CLLocationManager,
+    didChangeAuthorization status: CLAuthorizationStatus
+  ) {
+    if #available(iOS 14.0, *) {
+      return
+    }
+    finishPendingAuthIfNeeded(status: status)
   }
 
   func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
