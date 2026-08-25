@@ -62,7 +62,7 @@ class _ReviewFeatureSection extends StatelessWidget {
         const SizedBox(height: 24),
         LayoutBuilder(
           builder: (context, constraints) {
-            final titleMaxWidth = (constraints.maxWidth - 28) / 3 - 8;
+            final titleMaxWidth = (constraints.maxWidth - 28) / 3 - 12;
             final titleFontSize = isCompactScreen
                 ? 9.0
                 : _resolveUnifiedTitleFontSize(
@@ -127,8 +127,8 @@ class _ReviewFeatureSection extends StatelessWidget {
           maxLines: 1,
           textDirection: TextDirection.ltr,
           textScaler: textScaler,
-        )..layout();
-        return painter.width <= maxWidth;
+        )..layout(maxWidth: maxWidth);
+        return !painter.didExceedMaxLines;
       });
       if (allFit) {
         return size;
