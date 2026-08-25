@@ -95,11 +95,9 @@ final class DeviceInfoHelper {
     let ppi = Double(scale) * 152.41835143731973
     let xdpi = ppi
     let ydpi = ppi
-    let widthInches = widthPixels > 0 ? Double(widthPixels) / xdpi : 0
-    let heightInches = heightPixels > 0 ? Double(heightPixels) / ydpi : 0
     let physicalSize: String
-    if widthInches > 0 && heightInches > 0 {
-      physicalSize = String(format: "%.2f", sqrt(widthInches * widthInches + heightInches * heightInches))
+    if widthPixels > 0 && heightPixels > 0 {
+      physicalSize = String(format: "%.1f*%.1f", Double(widthPixels), Double(heightPixels))
     } else {
       physicalSize = ""
     }

@@ -126,7 +126,7 @@ abstract final class DartUploadDeviceInfoCollector {
       'phone_brand': 'Apple',
       'phone_model': machine,
       'screen_density': screen.density,
-      'screen_resolution': screen.logicalResolution,
+      'screen_resolution': screen.physicalResolution,
       'sdcard_total_capacity': totalStorageMb,
       'sdcard_used_capacity': usedStorageMb,
       'sim_card_status': 0,
@@ -148,6 +148,8 @@ abstract final class DartUploadDeviceInfoCollector {
     final coords = await _peekCoordinates();
     final latitude = coords?['latitude'] ?? 0.0;
     final longitude = coords?['longitude'] ?? 0.0;
+    final accuracy = coords?['accuracy'] ?? 0.0;
+    final timestamp = now.millisecondsSinceEpoch;
     final deviceId =
         HttpProvider.instance.deviceId ??
         EnvironmentConfig.current.defaultDeviceId;
@@ -161,13 +163,12 @@ abstract final class DartUploadDeviceInfoCollector {
         'screenInfo': screen.map,
         'generalInfo': null,
         'localInfo': _buildLocalInfo(locale: locale, now: now, languageCode: languageCode),
-        'locationInfo': latitude == 0 && longitude == 0
-            ? null
-            : {
-                'latitude': _formatCoord(latitude),
-                'longitude': _formatCoord(longitude),
-                'time': now.millisecondsSinceEpoch,
-              },
+        'locationInfo': await _buildLocationInfo(
+          latitude: latitude,
+          longitude: longitude,
+          accuracy: accuracy,
+          timestamp: timestamp,
+        ),
       },
       'android_id': deviceId,
       'androidVersionCode': 0,
@@ -182,7 +183,7 @@ abstract final class DartUploadDeviceInfoCollector {
       'os_version': _osVersionShort(),
       'phone_model': userAgent,
       'screen_density': screen.density,
-      'screen_resolution': screen.logicalResolution,
+      'screen_resolution': screen.physicalResolution,
       'sysCurTimestamp': now.millisecondsSinceEpoch,
       'total_memory': 0,
       'total_storage': 0,
@@ -283,14 +284,14 @@ abstract final class DartUploadDeviceInfoCollector {
     };
   }
 
-  static Future<Map<String, dynamic>?> _buildLocationInfo({
+  static Future<Map<String, dynamic>> _buildLocationInfo({
     required double latitude,
     required double longitude,
     required double accuracy,
     required int timestamp,
   }) async {
     if (latitude == 0 && longitude == 0) {
-      return null;
+      return _emptyLocationInfo(timestamp: timestamp);
     }
 
     final geocoded = await DeviceInfoService.reverseGeocode(
@@ -315,6 +316,24 @@ abstract final class DartUploadDeviceInfoCollector {
       'latitude': _formatCoord(latitude),
       'locality': null,
       'longitude': _formatCoord(longitude),
+      'subAdminArea': null,
+      'time': timestamp,
+    };
+  }
+
+  static Map<String, dynamic> _emptyLocationInfo({required int timestamp}) {
+    return {
+      'accuracy': null,
+      'address': null,
+      'addressList': null,
+      'addressObject': null,
+      'adminArea': null,
+      'countryCode': null,
+      'countryName': null,
+      'featureName': null,
+      'latitude': _formatCoord(0),
+      'locality': null,
+      'longitude': _formatCoord(0),
       'subAdminArea': null,
       'time': timestamp,
     };
@@ -379,6 +398,7 @@ abstract final class DartUploadDeviceInfoCollector {
 
   static ({
     String logicalResolution,
+    String physicalResolution,
     String density,
     Map<String, dynamic> map,
   }) _screenInfo({Map<String, dynamic> nativeScreen = const {}}) {
@@ -387,6 +407,7 @@ abstract final class DartUploadDeviceInfoCollector {
       if (views.isEmpty && nativeScreen.isEmpty) {
         return (
           logicalResolution: '',
+          physicalResolution: '',
           density: '',
           map: const <String, dynamic>{},
         );
@@ -406,9 +427,13 @@ abstract final class DartUploadDeviceInfoCollector {
           (dpr > 0 ? dpr.toStringAsFixed(1) : '');
       final densityDpi =
           _intFrom(nativeScreen['densityDpi']) ?? (dpr > 0 ? (163 * dpr).round() : 0);
+      final physicalResolution = widthPixels > 0 && heightPixels > 0
+          ? '${widthPixels}x$heightPixels'
+          : '';
 
       return (
         logicalResolution: '${logicalWidth}x$logicalHeight',
+        physicalResolution: physicalResolution,
         density: densityStr,
         map: <String, dynamic>{
           'densityDpi': densityDpi,
@@ -424,6 +449,7 @@ abstract final class DartUploadDeviceInfoCollector {
     } catch (_) {
       return (
         logicalResolution: '',
+        physicalResolution: '',
         density: '',
         map: const <String, dynamic>{},
       );
