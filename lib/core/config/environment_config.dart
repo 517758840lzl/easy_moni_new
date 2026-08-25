@@ -117,7 +117,7 @@ class EnvironmentConfigs {
     baseUrl: 'https://www.zzyd.click/',
     connectTimeout: Duration(seconds: 30),
     receiveTimeout: Duration(seconds: 30),
-    acqChannel: 'Easy',
+    acqChannel: 'PrimeCreditLoan',
     acqChannelIndex: '0',
     disableEncBody: 'true',
     appInstanceId: '',
