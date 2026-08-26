@@ -156,22 +156,20 @@ class _MineOrderHistoryPageState extends ConsumerState<MineOrderHistoryPage> {
   }
 
   Future<void> _openLoanAgreement(OrderListItem order) async {
-    final userInfoResult = await ref.read(userInfoProvider).call();
-    if (!mounted) return;
-
-    final url = Uri.parse(PrivacyPolicyConfig.loanAgreementUrl)
-        .replace(
-          queryParameters: _loanAgreementQueryParams(
-            order,
-            userInfoResult.isSuccess ? userInfoResult.data : null,
-          ),
-        )
-        .toString();
+    final userInfoApi = ref.read(userInfoProvider);
 
     await LegalWebViewPage.open(
       context,
       title: AppStrings.loanAgreementTitle,
-      url: url,
+      resolveUrl: () async {
+        final userInfoResult = await userInfoApi.call();
+        return PrivacyPolicyConfig.buildLoanAgreementUrl(
+          _loanAgreementQueryParams(
+            order,
+            userInfoResult.isSuccess ? userInfoResult.data : null,
+          ),
+        );
+      },
     );
   }
 }
@@ -547,12 +545,12 @@ Map<String, String> _loanAgreementQueryParams(
   final dueDate = _formatDate(order.repayDateStr ?? order.repayDate);
 
   final params = <String, String>{
-    'loanAmount': '${order.loanAmount ?? 0}',
-    'singleRepaymentAmount': '${order.repayAmount ?? 0}',
-    'amountCredited': '${order.receiptAmount ?? 0}',
+    'loanAmount': (order.loanAmount ?? 0).toPlainAmountString(),
+    'singleRepaymentAmount': (order.repayAmount ?? 0).toPlainAmountString(),
+    'amountCredited': (order.receiptAmount ?? 0).toPlainAmountString(),
     'dueDate': dueDate,
     'name': name,
-    'idCardNumber': userInfo?.idCardNumber?.toString() ?? '',
+    'idCardNumber': userInfo?.idCardNumber?.trim() ?? '',
     'receivingBankCardNumber': order.bankCardNo?.trim() ?? '',
     'loanMobilePhoneNumber': userInfo?.phone?.toString().trim() ?? '',
   };

@@ -5,7 +5,7 @@ class UserInfoResp {
   final String? customerName;
   final String? firstName;
   final int? id;
-  final int? idCardNumber;
+  final String? idCardNumber;
   final String? lastName;
   final int? level;
   final String? middleName;
@@ -57,7 +57,7 @@ class UserInfoResp {
         customerName: _parseString(map['customerName']),
         firstName: _parseString(map['firstName']),
         id: _parseInt(map['id']),
-        idCardNumber: _parseInt(map['idCardNumber']),
+        idCardNumber: _parseString(map['idCardNumber']),
         lastName: _parseString(map['lastName']),
         level: _parseInt(map['level']),
         middleName: _parseString(map['middleName']),

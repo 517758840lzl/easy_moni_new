@@ -9,11 +9,25 @@ class PrivacyPolicyConfig {
       'https://www.yaalexfinance.com/profile/customer-agremment/terms.html';
 
   static const String _loanAgreementUrl =
-      'https://www.yaalexfinance.com/profile/customer-agremment/contract.html';
+      'https://www.yaalexfinance.com/profile/customer-contract/contract.html';
 
   static String get privacyPolicyUrl => _privacyPolicyUrl;
 
   static String get termsOfServiceUrl => _termsOfServiceUrl;
 
   static String get loanAgreementUrl => _loanAgreementUrl;
+
+  /// H5 合同 URL：用 [Uri.encodeComponent] 编码 query，空格为 %20（不用
+  /// encodeQueryComponent，它会把空格编成 +，H5 可能当字面量显示）。
+  static String buildLoanAgreementUrl(Map<String, String> queryParameters) {
+    final entries = queryParameters.entries
+        .where((entry) => entry.value.trim().isNotEmpty)
+        .map(
+          (entry) =>
+              '${Uri.encodeComponent(entry.key)}=${Uri.encodeComponent(entry.value.trim())}',
+        );
+    final query = entries.join('&');
+    if (query.isEmpty) return loanAgreementUrl;
+    return '$loanAgreementUrl?$query';
+  }
 }

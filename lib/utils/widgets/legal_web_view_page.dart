@@ -4,24 +4,37 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class LegalWebViewPage extends StatefulWidget {
-  const LegalWebViewPage({
+  LegalWebViewPage({
     super.key,
     required this.title,
-    required this.url,
-  });
+    this.url,
+    this.resolveUrl,
+  }) : assert(
+         (url != null && url.trim().isNotEmpty) || resolveUrl != null,
+         'Provide url or resolveUrl',
+       );
 
   final String title;
-  final String url;
+  final String? url;
+  final Future<String> Function()? resolveUrl;
 
   static Future<void> open(
     BuildContext context, {
     required String title,
-    required String url,
+    String? url,
+    Future<String> Function()? resolveUrl,
   }) {
-    _logOpenUrl(title: title, url: url);
+    final target = url?.trim();
+    if (target != null && target.isNotEmpty) {
+      _logOpenUrl(title: title, url: target);
+    }
     return Navigator.of(context, rootNavigator: true).push<void>(
       MaterialPageRoute<void>(
-        builder: (_) => LegalWebViewPage(title: title, url: url),
+        builder: (_) => LegalWebViewPage(
+          title: title,
+          url: target,
+          resolveUrl: resolveUrl,
+        ),
       ),
     );
   }
@@ -56,6 +69,7 @@ class LegalWebViewPage extends StatefulWidget {
 
 class _LegalWebViewPageState extends State<LegalWebViewPage> {
   late final WebViewController _controller;
+  bool _isResolvingUrl = false;
   bool _isLoading = false;
   String? _loadedUrl;
 
@@ -76,12 +90,41 @@ class _LegalWebViewPageState extends State<LegalWebViewPage> {
           },
         ),
       );
+
+    final initialUrl = widget.url?.trim();
+    if (initialUrl != null && initialUrl.isNotEmpty) {
+      _loadUrlIfNeeded(initialUrl);
+      return;
+    }
+
+    final resolveUrl = widget.resolveUrl;
+    if (resolveUrl != null) {
+      _isResolvingUrl = true;
+      _resolveAndLoad(resolveUrl);
+    }
+  }
+
+  Future<void> _resolveAndLoad(Future<String> Function() resolveUrl) async {
+    try {
+      final resolved = (await resolveUrl()).trim();
+      if (!mounted) return;
+      if (resolved.isEmpty) {
+        Navigator.of(context).pop();
+        return;
+      }
+
+      LegalWebViewPage._logOpenUrl(title: widget.title, url: resolved);
+      setState(() => _isResolvingUrl = false);
+      _loadUrlIfNeeded(resolved);
+    } catch (_) {
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    _loadUrlIfNeeded(widget.url);
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -103,7 +146,8 @@ class _LegalWebViewPageState extends State<LegalWebViewPage> {
                 ),
               },
             ),
-            if (_isLoading) const Center(child: CircularProgressIndicator()),
+            if (_isResolvingUrl || _isLoading)
+              const Center(child: CircularProgressIndicator()),
           ],
         ),
       ),

@@ -207,23 +207,22 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
     final data = _confirmData;
     if (data == null) return;
 
-    final userInfoResult = await ref.read(userInfoProvider).call();
-    if (!mounted) return;
-
-    final resolved = Uri.parse(PrivacyPolicyConfig.loanAgreementUrl)
-        .replace(
-          queryParameters: _loanAgreementQueryParamsFromConfirm(
-            data: data,
-            couponPreview: _couponAmountPreview,
-            userInfo: userInfoResult.isSuccess ? userInfoResult.data : null,
-          ),
-        )
-        .toString();
+    final couponPreview = _couponAmountPreview;
+    final userInfoApi = ref.read(userInfoProvider);
 
     await LegalWebViewPage.open(
       context,
       title: AppStrings.loanAgreementTitle,
-      url: resolved,
+      resolveUrl: () async {
+        final userInfoResult = await userInfoApi.call();
+        return PrivacyPolicyConfig.buildLoanAgreementUrl(
+          _loanAgreementQueryParamsFromConfirm(
+            data: data,
+            couponPreview: couponPreview,
+            userInfo: userInfoResult.isSuccess ? userInfoResult.data : null,
+          ),
+        );
+      },
     );
   }
 
@@ -1063,12 +1062,13 @@ Map<String, String> _loanAgreementQueryParamsFromConfirm({
       : userName ?? '';
 
   final params = <String, String>{
-    'loanAmount': '$loanAmount',
-    'singleRepaymentAmount': repayTotal != null ? '$repayTotal' : '',
-    'amountCredited': '$amountCredited',
+    'loanAmount': loanAmount.toPlainAmountString(),
+    'singleRepaymentAmount':
+        repayTotal != null ? repayTotal.toPlainAmountString() : '',
+    'amountCredited': amountCredited.toPlainAmountString(),
     'dueDate': _dateText(data.repayDate),
     'name': name,
-    'idCardNumber': userInfo?.idCardNumber?.toString() ?? '',
+    'idCardNumber': userInfo?.idCardNumber?.trim() ?? '',
     'receivingBankCardNumber': data.bankCardNo?.trim() ?? '',
     'loanMobilePhoneNumber': userInfo?.phone?.toString().trim() ?? '',
   };

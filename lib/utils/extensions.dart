@@ -105,6 +105,9 @@ extension NumExtension on num {
     return '${(this * 100).toStringAsFixed(decimals)}%';
   }
 
+  /// 合同 H5 等纯数字场景：两位小数后去掉无意义的 .00（570.0 → 570）。
+  String toPlainAmountString() => toStringAsFixed(2).trimZeroDecimal();
+
   /// 格式化金额，可控制是否展示金额单位，如 1000 -> "GHS 1,000"。
   String formatAmount({
     String currencySymbol = 'GHS',
