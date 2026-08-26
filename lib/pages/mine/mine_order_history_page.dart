@@ -441,7 +441,6 @@ class _MineOrderHistoryStatusCodes {
         statusCode == transferFailed;
   }
 
-  /// 参照 ghana 活跃订单卡片：仅进行中订单展示借款合同入口。
   static bool showsLoanAgreement(int? statusCode) {
     return statusCode == reviewing ||
         statusCode == disbursing ||

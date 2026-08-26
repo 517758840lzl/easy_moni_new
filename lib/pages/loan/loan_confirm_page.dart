@@ -25,6 +25,7 @@ import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
 import 'package:easy_moni/utils/af_tracker/track_events.dart';
 import 'package:easy_moni/utils/widgets/common_bottom_sheet.dart';
 import 'package:easy_moni/utils/widgets/legal_web_view_page.dart';
+import 'package:easy_moni/utils/non_repeatable_click.dart';
 import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:easy_moni/utils/widgets/selected_coupon_card.dart';
 
@@ -123,9 +124,8 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
       return;
     }
 
-    setState(() {
-      _isSubmitting = true;
-    });
+    _isSubmitting = true;
+    setState(() {});
 
     try {
       final uploadDataReady = await _checkUploadDataValidBeforeSubmit();
@@ -430,7 +430,14 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
                         text: _isSubmitting
                             ? AppStrings.loanConfirmButtonLoadingText
                             : AppStrings.loanConfirmButtonText,
-                        onPressed: _isSubmitting ? null : _submitOrder,
+                        onPressed: _isSubmitting
+                            ? null
+                            : () {
+                                NonRepeatableClick.checkClick(
+                                  debounceDuration: const Duration(seconds: 1),
+                                  click: _submitOrder,
+                                );
+                              },
                       ),
                     ],
                   ),
