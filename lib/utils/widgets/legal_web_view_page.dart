@@ -18,11 +18,36 @@ class LegalWebViewPage extends StatefulWidget {
     required String title,
     required String url,
   }) {
+    _logOpenUrl(title: title, url: url);
     return Navigator.of(context, rootNavigator: true).push<void>(
       MaterialPageRoute<void>(
         builder: (_) => LegalWebViewPage(title: title, url: url),
       ),
     );
+  }
+
+  static void _logOpenUrl({required String title, required String url}) {
+    if (kReleaseMode) return;
+
+    final uri = Uri.tryParse(url.trim());
+    // ignore: avoid_print
+    print('[H5] open: $title');
+    // ignore: avoid_print
+    print('[H5]   url: $url');
+
+    final query = uri?.queryParameters ?? const <String, String>{};
+    if (query.isEmpty) {
+      // ignore: avoid_print
+      print('[H5]   query: (empty)');
+      return;
+    }
+
+    // ignore: avoid_print
+    print('[H5]   query:');
+    for (final entry in query.entries) {
+      // ignore: avoid_print
+      print('[H5]   │ ${entry.key}: ${entry.value}');
+    }
   }
 
   @override

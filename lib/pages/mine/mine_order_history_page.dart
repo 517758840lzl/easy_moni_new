@@ -1,13 +1,17 @@
+import 'package:easy_moni/core/config/privacy_policy_config.dart';
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/entities/order_list_resp.dart';
+import 'package:easy_moni/entities/user_info_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/loan/components/loan_rounded_page.dart';
 import 'package:easy_moni/pages/loan/models/loan_order_detail_data.dart';
 import 'package:easy_moni/pages/mine/components/mine_order_summary_card.dart';
 import 'package:easy_moni/pages/mine/providers/mine_order_history_provider.dart';
+import 'package:easy_moni/pages/mine/providers/user_info_provider.dart';
 import 'package:easy_moni/utils/extensions.dart';
 import 'package:easy_moni/utils/widgets/app_state_view.dart';
+import 'package:easy_moni/utils/widgets/legal_web_view_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -133,6 +137,7 @@ class _MineOrderHistoryPageState extends ConsumerState<MineOrderHistoryPage> {
     return _MineOrderHistoryList(
       orders: _selectedOrders,
       onOrderTap: _openOrderDetail,
+      onLoanAgreementTap: _openLoanAgreement,
     );
   }
 
@@ -148,6 +153,26 @@ class _MineOrderHistoryPageState extends ConsumerState<MineOrderHistoryPage> {
     if (detailData.appOrderId.isEmpty) return;
 
     context.push(AppRoutePaths.loanOrderDetail, extra: detailData);
+  }
+
+  Future<void> _openLoanAgreement(OrderListItem order) async {
+    final userInfoResult = await ref.read(userInfoProvider).call();
+    if (!mounted) return;
+
+    final url = Uri.parse(PrivacyPolicyConfig.loanAgreementUrl)
+        .replace(
+          queryParameters: _loanAgreementQueryParams(
+            order,
+            userInfoResult.isSuccess ? userInfoResult.data : null,
+          ),
+        )
+        .toString();
+
+    await LegalWebViewPage.open(
+      context,
+      title: AppStrings.loanAgreementTitle,
+      url: url,
+    );
   }
 }
 
@@ -351,10 +376,15 @@ class _MineOrderHistoryTabItem extends StatelessWidget {
 }
 
 class _MineOrderHistoryList extends StatelessWidget {
-  const _MineOrderHistoryList({required this.orders, required this.onOrderTap});
+  const _MineOrderHistoryList({
+    required this.orders,
+    required this.onOrderTap,
+    required this.onLoanAgreementTap,
+  });
 
   final List<OrderListItem> orders;
   final ValueChanged<OrderListItem> onOrderTap;
+  final ValueChanged<OrderListItem> onLoanAgreementTap;
 
   @override
   Widget build(BuildContext context) {
@@ -376,12 +406,19 @@ class _MineOrderHistoryList extends StatelessWidget {
       separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         final order = orders[index];
+        final showLoanAgreement = _MineOrderHistoryStatusCodes.showsLoanAgreement(
+          order.orderStatus,
+        );
+
         return MineOrderSummaryCard(
           productName: _valueOrEmpty(order.productName),
           productLogo: order.productLogo,
           statusCode: order.orderStatus,
           remainingDays: order.remainingDays,
           columns: _buildOrderInfoColumns(order),
+          onLoanAgreementTap: showLoanAgreement
+              ? () => onLoanAgreementTap(order)
+              : null,
           onTap: () => onOrderTap(order),
         );
       },
@@ -402,6 +439,13 @@ class _MineOrderHistoryStatusCodes {
     return statusCode == reviewing ||
         statusCode == disbursing ||
         statusCode == transferFailed;
+  }
+
+  /// 参照 ghana 活跃订单卡片：仅进行中订单展示借款合同入口。
+  static bool showsLoanAgreement(int? statusCode) {
+    return statusCode == reviewing ||
+        statusCode == disbursing ||
+        statusCode == waitingRepayment;
   }
 }
 
@@ -486,4 +530,31 @@ String _formatDate(String? value) {
 
   final datePart = trimmed.contains(' ') ? trimmed.split(' ').first : trimmed;
   return datePart.formatBackendDate();
+}
+
+Map<String, String> _loanAgreementQueryParams(
+  OrderListItem order,
+  UserInfoResp? userInfo,
+) {
+  final middleName = userInfo?.middleName?.trim();
+  final customerName = userInfo?.customerName?.trim();
+  final userName = userInfo?.userName?.trim();
+  final name = middleName != null && middleName.isNotEmpty
+      ? middleName
+      : customerName != null && customerName.isNotEmpty
+      ? customerName
+      : userName ?? '';
+
+  final params = <String, String>{
+    'loanAmount': '${order.loanAmount ?? 0}',
+    'singleRepaymentAmount': '${order.repayAmount ?? 0}',
+    'amountCredited': '${order.receiptAmount ?? 0}',
+    'dueDate': order.repayDateStr?.trim() ?? order.repayDate?.trim() ?? '',
+    'name': name,
+    'idCardNumber': userInfo?.idCardNumber?.toString() ?? '',
+    'receivingBankCardNumber': order.bankCardNo?.trim() ?? '',
+    'loanMobilePhoneNumber': userInfo?.phone?.toString().trim() ?? '',
+  };
+  params.removeWhere((_, value) => value.isEmpty);
+  return params;
 }

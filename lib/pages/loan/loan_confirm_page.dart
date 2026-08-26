@@ -7,6 +7,7 @@ import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/entities/coupon_resp.dart';
 import 'package:easy_moni/entities/loan_confirm/loan_confirm_resp.dart';
 import 'package:easy_moni/entities/use_coupon_resp/use_coupon_resp.dart';
+import 'package:easy_moni/entities/user_info_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/loan/components/coupon_bottom_sheet_loader.dart';
 import 'package:easy_moni/pages/loan/components/coupon_entry_card.dart';
@@ -16,6 +17,7 @@ import 'package:easy_moni/pages/loan/providers/coupon_provider.dart';
 import 'package:easy_moni/pages/loan/providers/loan_confirm_provider.dart';
 import 'package:easy_moni/pages/loan/widgets/loan_confirm_agreement.dart';
 import 'package:easy_moni/pages/login/providers/auth_provider.dart';
+import 'package:easy_moni/pages/mine/providers/user_info_provider.dart';
 import 'package:easy_moni/pages/repay/components/total_repay_amount_display.dart';
 import 'package:easy_moni/services/upload_data/upload_data_sync_service.dart';
 import 'package:easy_moni/utils/extensions.dart';
@@ -193,10 +195,30 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
 
   Future<void> _openLoanAgreement({String? url}) async {
     final target = url?.trim();
-    final resolved = target != null && target.isNotEmpty
-        ? target
-        : PrivacyPolicyConfig.loanAgreementUrl;
-    if (resolved.isEmpty) return;
+    if (target != null && target.isNotEmpty) {
+      await LegalWebViewPage.open(
+        context,
+        title: AppStrings.loanAgreementTitle,
+        url: target,
+      );
+      return;
+    }
+
+    final data = _confirmData;
+    if (data == null) return;
+
+    final userInfoResult = await ref.read(userInfoProvider).call();
+    if (!mounted) return;
+
+    final resolved = Uri.parse(PrivacyPolicyConfig.loanAgreementUrl)
+        .replace(
+          queryParameters: _loanAgreementQueryParamsFromConfirm(
+            data: data,
+            couponPreview: _couponAmountPreview,
+            userInfo: userInfoResult.isSuccess ? userInfoResult.data : null,
+          ),
+        )
+        .toString();
 
     await LegalWebViewPage.open(
       context,
@@ -1007,6 +1029,57 @@ String _dateText(String? value) {
   return text == null || text.isEmpty
       ? AppStrings.loanOrderEmptyValue
       : text.formatBackendDate();
+}
+
+Map<String, String> _loanAgreementQueryParamsFromConfirm({
+  required LoanConfirmData data,
+  UseCouponRespData? couponPreview,
+  UserInfoResp? userInfo,
+}) {
+  final orders = data.list ?? const <LoanConfirmOrder>[];
+  final loanAmount = couponPreview?.newLoanAmount ?? data.loanAmount ?? 0;
+  final amountCredited =
+      couponPreview?.actualToAccountMoney ?? data.actualToAccountMoney ?? 0;
+
+  num repayTotal = 0;
+  if (couponPreview != null) {
+    final newLoanAmount = couponPreview.newLoanAmount;
+    final rent = couponPreview.rent;
+    if (newLoanAmount != null || rent != null) {
+      repayTotal = (newLoanAmount ?? 0) + (rent ?? 0);
+    }
+  }
+  if (repayTotal <= 0) {
+    for (final item in orders) {
+      repayTotal += item.repayAmount ?? 0;
+    }
+  }
+  if (repayTotal <= 0) {
+    repayTotal =
+        (data.loanAmount ?? 0) + (data.serviceFee ?? 0) + (data.rent ?? 0);
+  }
+
+  final middleName = userInfo?.middleName?.trim();
+  final customerName = userInfo?.customerName?.trim();
+  final userName = userInfo?.userName?.trim();
+  final name = middleName != null && middleName.isNotEmpty
+      ? middleName
+      : customerName != null && customerName.isNotEmpty
+      ? customerName
+      : userName ?? '';
+
+  final params = <String, String>{
+    'loanAmount': loanAmount.toString(),
+    'singleRepaymentAmount': repayTotal.toString(),
+    'amountCredited': amountCredited.toString(),
+    'dueDate': data.repayDate?.trim() ?? '',
+    'name': name,
+    'idCardNumber': userInfo?.idCardNumber?.toString() ?? '',
+    'receivingBankCardNumber': data.bankCardNo?.trim() ?? '',
+    'loanMobilePhoneNumber': userInfo?.phone?.toString().trim() ?? '',
+  };
+  params.removeWhere((_, value) => value.isEmpty);
+  return params;
 }
 
 // 字符串清理工具：处理接口返回 null、空串或全空格的情况。

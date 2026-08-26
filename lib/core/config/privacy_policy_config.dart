@@ -3,9 +3,10 @@ class PrivacyPolicyConfig {
   PrivacyPolicyConfig._();
 
   static const String _privacyPolicyUrl =
-      'https://www.ereekotechsolutions.com/privacy/index.html';
+      'https://www.yaalexfinance.com/profile/privacy-consent/provision.html';
 
-  static const String _termsOfServiceUrl = _privacyPolicyUrl;
+  static const String _termsOfServiceUrl =
+      'https://www.yaalexfinance.com/profile/customer-agremment/terms.html';
 
   static const String _loanAgreementUrl =
       'https://www.ereekotechsolutions.com/terms/index.html';

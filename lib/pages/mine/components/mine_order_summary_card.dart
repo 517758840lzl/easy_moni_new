@@ -23,6 +23,7 @@ class MineOrderSummaryCard extends StatelessWidget {
     this.statusCode,
     this.remainingDays,
     this.onTap,
+    this.onLoanAgreementTap,
   });
 
   final String productName;
@@ -31,6 +32,7 @@ class MineOrderSummaryCard extends StatelessWidget {
   final int? statusCode;
   final int? remainingDays;
   final VoidCallback? onTap;
+  final VoidCallback? onLoanAgreementTap;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +43,12 @@ class MineOrderSummaryCard extends StatelessWidget {
     final card = Container(
       width: double.infinity,
       constraints: const BoxConstraints(minHeight: 91),
-      padding: const EdgeInsets.fromLTRB(15, 10, 15, 14),
+      padding: EdgeInsets.fromLTRB(
+        15,
+        10,
+        15,
+        onLoanAgreementTap != null ? 12 : 14,
+      ),
       decoration: BoxDecoration(
         color: const Color(0xFFFDF5EE),
         borderRadius: BorderRadius.circular(4.375),
@@ -59,6 +66,48 @@ class MineOrderSummaryCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _MineOrderInfoColumns(columns: columns),
+              if (onLoanAgreementTap != null) ...[
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: GestureDetector(
+                    onTap: onLoanAgreementTap,
+                    behavior: HitTestBehavior.opaque,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFF216A4A),
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.description_outlined,
+                            size: 14,
+                            color: Color(0xFF216A4A),
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            AppStrings.loanConfirmAgreeLink,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF216A4A),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
           if (statusCode != null)
