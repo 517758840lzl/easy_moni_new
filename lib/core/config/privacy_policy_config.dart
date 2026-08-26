@@ -9,7 +9,7 @@ class PrivacyPolicyConfig {
       'https://www.yaalexfinance.com/profile/customer-agremment/terms.html';
 
   static const String _loanAgreementUrl =
-      'https://www.ereekotechsolutions.com/terms/index.html';
+      'https://www.yaalexfinance.com/profile/customer-agremment/contract.html';
 
   static String get privacyPolicyUrl => _privacyPolicyUrl;
 

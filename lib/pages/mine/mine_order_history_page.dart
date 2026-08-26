@@ -544,11 +544,13 @@ Map<String, String> _loanAgreementQueryParams(
       ? customerName
       : userName ?? '';
 
+  final dueDate = _formatDate(order.repayDateStr ?? order.repayDate);
+
   final params = <String, String>{
     'loanAmount': '${order.loanAmount ?? 0}',
     'singleRepaymentAmount': '${order.repayAmount ?? 0}',
     'amountCredited': '${order.receiptAmount ?? 0}',
-    'dueDate': order.repayDateStr?.trim() ?? order.repayDate?.trim() ?? '',
+    'dueDate': dueDate,
     'name': name,
     'idCardNumber': userInfo?.idCardNumber?.toString() ?? '',
     'receivingBankCardNumber': order.bankCardNo?.trim() ?? '',

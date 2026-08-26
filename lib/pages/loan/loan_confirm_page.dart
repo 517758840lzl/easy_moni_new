@@ -1048,23 +1048,10 @@ Map<String, String> _loanAgreementQueryParamsFromConfirm({
   final amountCredited =
       couponPreview?.actualToAccountMoney ?? data.actualToAccountMoney ?? 0;
 
-  num repayTotal = 0;
-  if (couponPreview != null) {
-    final newLoanAmount = couponPreview.newLoanAmount;
-    final rent = couponPreview.rent;
-    if (newLoanAmount != null || rent != null) {
-      repayTotal = (newLoanAmount ?? 0) + (rent ?? 0);
-    }
-  }
-  if (repayTotal <= 0) {
-    for (final item in orders) {
-      repayTotal += item.repayAmount ?? 0;
-    }
-  }
-  if (repayTotal <= 0) {
-    repayTotal =
-        (data.loanAmount ?? 0) + (data.serviceFee ?? 0) + (data.rent ?? 0);
-  }
+  num? repayTotal = _previewRepayTotal(
+    orders: orders,
+    preview: couponPreview,
+  );
 
   final middleName = userInfo?.middleName?.trim();
   final customerName = userInfo?.customerName?.trim();
@@ -1076,10 +1063,10 @@ Map<String, String> _loanAgreementQueryParamsFromConfirm({
       : userName ?? '';
 
   final params = <String, String>{
-    'loanAmount': loanAmount.toString(),
-    'singleRepaymentAmount': repayTotal.toString(),
-    'amountCredited': amountCredited.toString(),
-    'dueDate': data.repayDate?.trim() ?? '',
+    'loanAmount': '$loanAmount',
+    'singleRepaymentAmount': repayTotal != null ? '$repayTotal' : '',
+    'amountCredited': '$amountCredited',
+    'dueDate': _dateText(data.repayDate),
     'name': name,
     'idCardNumber': userInfo?.idCardNumber?.toString() ?? '',
     'receivingBankCardNumber': data.bankCardNo?.trim() ?? '',
