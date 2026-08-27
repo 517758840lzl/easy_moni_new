@@ -3,13 +3,13 @@ class PrivacyPolicyConfig {
   PrivacyPolicyConfig._();
 
   static const String _privacyPolicyUrl =
-      'https://www.yaalexfinance.com/profile/privacy-consent/provision.html';
+      'https://www.bluebirdfintech.com/profile/privacy-consent/provision.html';
 
   static const String _termsOfServiceUrl =
-      'https://www.yaalexfinance.com/profile/customer-agremment/terms.html';
+      'https://www.bluebirdfintech.com/profile/customer-agremment/terms.html';
 
   static const String _loanAgreementUrl =
-      'https://www.yaalexfinance.com/profile/customer-contract/contract.html';
+      'https://www.bluebirdfintech.com/profile/customer-contract/contract.html';
 
   static String get privacyPolicyUrl => _privacyPolicyUrl;
 

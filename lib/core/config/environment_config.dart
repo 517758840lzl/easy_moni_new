@@ -114,7 +114,7 @@ class EnvironmentConfigs {
 
   static const EnvironmentConfig production = EnvironmentConfig(
     name: AppEnvironment.production,
-    baseUrl: 'https://www.zzyd.click/',
+    baseUrl: 'https://www.bluebirdfintech.com/',
     connectTimeout: Duration(seconds: 30),
     receiveTimeout: Duration(seconds: 30),
     acqChannel: 'PrimeCreditLoan',
