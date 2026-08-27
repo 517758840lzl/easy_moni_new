@@ -14,6 +14,7 @@ class UserInfoApi {
   Future<HttpResult<UserInfoResp>> call() async {
     final cached = await UserInfoCache.load();
     if (cached != null) {
+      logUserInfoCacheHit();
       return HttpResult.success(cached);
     }
 
