@@ -146,9 +146,8 @@ class CouponTicketCard extends StatelessWidget {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: isUsable ? onTap : null,
-      child: SizedBox(
-        height: 104,
-        width: double.infinity,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 104),
         child: DecoratedBox(
           decoration: BoxDecoration(
             image: DecorationImage(
@@ -159,7 +158,7 @@ class CouponTicketCard extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(10.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // title
@@ -187,16 +186,14 @@ class CouponTicketCard extends StatelessWidget {
                     CouponBadge(couponType: couponType),
                   ],
                 ),
-                // 描述可换行，右侧保留选中态入口。
+                const SizedBox(height: 8),
+                // 描述随内容自适应换行，右侧保留选中态入口。
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: Text(
                         desc,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 12,
                           height: 14 / 12,
