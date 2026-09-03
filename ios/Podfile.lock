@@ -2,11 +2,9 @@ PODS:
   - appsflyer_sdk (6.17.8):
     - appsflyer_sdk/Core (= 6.17.8)
   - appsflyer_sdk/Core (6.17.8):
-    - AppsFlyerFramework (= 6.17.8)
+    - AppsFlyerFramework/Strict (= 6.17.8)
     - Flutter
-  - AppsFlyerFramework (6.17.8):
-    - AppsFlyerFramework/Main (= 6.17.8)
-  - AppsFlyerFramework/Main (6.17.8)
+  - AppsFlyerFramework/Strict (6.17.8)
   - Flutter (1.0.0)
 
 DEPENDENCIES:
@@ -24,10 +22,10 @@ EXTERNAL SOURCES:
     :path: Flutter
 
 SPEC CHECKSUMS:
-  appsflyer_sdk: 8e77c7f47570e4596545b9fa16eb9114676c71e3
+  appsflyer_sdk: b778e6698d7cf8203f1a9106abcb9edf52fd1e3a
   AppsFlyerFramework: 63577b60d6b9fcdab60135289979e7d1c9ec79b9
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
 
-PODFILE CHECKSUM: fa5510e2d66f7c8ba86c80d806859352df6186d3
+PODFILE CHECKSUM: 0fb3dd71c9612b0b4ca195a5aad7395acba6e285
 
 COCOAPODS: 1.13.0
