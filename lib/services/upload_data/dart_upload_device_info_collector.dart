@@ -136,7 +136,6 @@ abstract final class DartUploadDeviceInfoCollector {
       'systemName': ios.systemName,
       'systemVersion': ios.systemVersion,
       'model': ios.model,
-      'name': ios.name,
     };
   }
 
