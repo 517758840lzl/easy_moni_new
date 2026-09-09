@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'dart:ui' show Locale, PlatformDispatcher;
+import 'dart:ui' show PlatformDispatcher;
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_moni/core/config/environment_config.dart';
@@ -21,7 +21,6 @@ abstract final class DartUploadDeviceInfoCollector {
   static Future<Map<String, dynamic>> _collectIos() async {
     final now = DateTime.now();
     final timestamp = now.millisecondsSinceEpoch;
-    final locale = PlatformDispatcher.instance.locale;
     final ios = await _iosInfo();
     final extras = await DeviceInfoService.collectUploadExtras();
     final coords = await _peekCoordinates();
@@ -36,7 +35,6 @@ abstract final class DartUploadDeviceInfoCollector {
         ? ios!.systemVersion.trim()
         : _osVersionShort();
     final isSimulator = ios != null && !ios.isPhysicalDevice ? 1 : 0;
-    final languageCode = locale.languageCode;
     final nativeScreen = _mapFromDynamic(extras['screenMetrics']);
     final screen = _screenInfo(nativeScreen: nativeScreen);
     final locationInfo = await _buildLocationInfo(
@@ -63,7 +61,7 @@ abstract final class DartUploadDeviceInfoCollector {
         'fileInfo': null,
         'generalInfo': null,
         'imieInfo': null,
-        'localInfo': _buildLocalInfo(locale: locale, now: now, languageCode: languageCode),
+        'localInfo': null,
         'locationInfo': locationInfo,
         'networkInfo': extras['networkInfo'],
         'newFingerprint': null,
@@ -102,7 +100,6 @@ abstract final class DartUploadDeviceInfoCollector {
       'hours_since_last_launch': 0,
       'imei': '',
       'is_simulator': isSimulator,
-      'language': languageCode,
       'latitude': _formatCoord(latitude),
       'longitude': _formatCoord(longitude),
       'mac': '',
@@ -131,7 +128,6 @@ abstract final class DartUploadDeviceInfoCollector {
 
   static Future<Map<String, dynamic>> _collectFallback() async {
     final now = DateTime.now();
-    final locale = PlatformDispatcher.instance.locale;
     final screen = _screenInfo();
     final coords = await _peekCoordinates();
     final latitude = coords?['latitude'] ?? 0.0;
@@ -143,14 +139,13 @@ abstract final class DartUploadDeviceInfoCollector {
         EnvironmentConfig.current.defaultDeviceId;
     final appVersion = await AppInfoService.getVersionCode();
     final userAgent = await DeviceContext.resolveUserAgent();
-    final languageCode = locale.languageCode;
 
     return {
       'advertising_id': '',
       'advinceDeviceInfoBean': {
         'screenInfo': screen.map,
         'generalInfo': null,
-        'localInfo': _buildLocalInfo(locale: locale, now: now, languageCode: languageCode),
+        'localInfo': null,
         'locationInfo': await _buildLocationInfo(
           latitude: latitude,
           longitude: longitude,
@@ -165,7 +160,6 @@ abstract final class DartUploadDeviceInfoCollector {
           : EnvironmentConfig.current.appVersion,
       'device_id': deviceId,
       'is_simulator': 0,
-      'language': languageCode,
       'latitude': _formatCoord(latitude),
       'longitude': _formatCoord(longitude),
       'os_version': _osVersionShort(),
@@ -230,22 +224,6 @@ abstract final class DartUploadDeviceInfoCollector {
       'release': systemVersion,
       'sdkVersion': 0,
       'serialNumber': deviceId,
-    };
-  }
-
-  static Map<String, dynamic> _buildLocalInfo({
-    required Locale locale,
-    required DateTime now,
-    required String languageCode,
-  }) {
-    return {
-      'language': languageCode,
-      'localeDisplayLanguage': null,
-      'localeIso3Country': '_',
-      'localeIso3Language': '_',
-      'networkOperatorName': null,
-      'simCountryIso': null,
-      'timeZoneId': _formatTimeZoneOffset(now),
     };
   }
 
@@ -338,15 +316,6 @@ abstract final class DartUploadDeviceInfoCollector {
 
   static String _formatCoord(double value) {
     return value.toString();
-  }
-
-  static String _formatTimeZoneOffset(DateTime now) {
-    final offset = now.timeZoneOffset;
-    final hours = offset.inHours;
-    if (hours >= 0) {
-      return '+${hours.toString().padLeft(2, '0')}';
-    }
-    return hours.toString().padLeft(3, '0');
   }
 
   static Map<String, dynamic> _mapFromDynamic(dynamic value) {

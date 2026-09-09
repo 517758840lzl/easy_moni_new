@@ -141,9 +141,6 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
 
   }
 
-  int get _availableProductCount =>
-      _products.where((p) => p.state.canConfirm).length;
-
   double get _selectedLoanAmount {
     return _selectedProductIndexes.fold<double>(0, (total, index) {
       if (index < 0 || index >= _products.length) return total;
@@ -449,42 +446,6 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
               left: 20,
               right: 20,
               child: TotalRepayAmountDisplay(amount: selectedLoanAmount),
-            ),
-            Positioned(
-              top: topInset + 107,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: const Color(0xFFDDDDDD)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Assets.images.loanCheck.image(
-                        width: 22.5,
-                        height: 22.5,
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        '${AppStrings.homeAvailableString} : $_availableProductCount',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
             ),
           ],
         ),
