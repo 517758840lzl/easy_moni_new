@@ -1,4 +1,5 @@
 import CoreLocation
+import Darwin
 import Flutter
 import Network
 import UIKit
@@ -12,6 +13,29 @@ final class DeviceInfoHelper {
     [
       "networkInfo": networkInfo(),
       "screenMetrics": screenMetrics(),
+    ]
+  }
+
+  func collectIosDeviceInfo() -> [String: Any] {
+    let device = UIDevice.current
+    let machine = IosDeviceInfoReader.machineIdentifier()
+    let isPhysicalDevice = IosDeviceInfoReader.isPhysicalDevice
+
+    var isiOSAppOnMac = false
+    if #available(iOS 14.0, *) {
+      isiOSAppOnMac = ProcessInfo.processInfo.isiOSAppOnMac
+    }
+
+    return [
+      "identifierForVendor": device.identifierForVendor?.uuidString ?? "",
+      "machine": machine,
+      "systemVersion": device.systemVersion,
+      "systemName": device.systemName,
+      "model": device.model,
+      "localizedModel": device.localizedModel,
+      "modelName": DeviceModelNames.userKnownDeviceModel(machine),
+      "isPhysicalDevice": isPhysicalDevice,
+      "isiOSAppOnMac": isiOSAppOnMac,
     ]
   }
 

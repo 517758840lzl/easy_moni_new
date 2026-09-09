@@ -30,6 +30,7 @@ import CoreLocation
     registerContactsChannel(messenger: messenger)
     registerAppInfoChannel(messenger: messenger)
     registerDialerChannel(messenger: messenger)
+    registerExternalLinkChannel(messenger: messenger)
     registerVisionChannel(messenger: messenger)
     registerDeviceInfoChannel(messenger: messenger)
   }
@@ -173,6 +174,24 @@ import CoreLocation
     }
   }
 
+  private func registerExternalLinkChannel(messenger: FlutterBinaryMessenger) {
+    let externalLinkChannel = FlutterMethodChannel(
+      name: "com.easy_moni/external_link",
+      binaryMessenger: messenger
+    )
+
+    externalLinkChannel.setMethodCallHandler { call, result in
+      switch call.method {
+      case "openUrl":
+        let args = call.arguments as? [String: Any]
+        let url = args?["url"] as? String ?? ""
+        CustomerServiceLauncher.openExternalURL(url, result: result)
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+  }
+
   private func registerVisionChannel(messenger: FlutterBinaryMessenger) {
     let visionChannel = FlutterMethodChannel(
       name: "com.easy_moni/face_vision",
@@ -232,6 +251,8 @@ import CoreLocation
       switch call.method {
       case "collectUploadExtras":
         result(DeviceInfoHelper.shared.collectUploadExtras())
+      case "collectIosDeviceInfo":
+        result(DeviceInfoHelper.shared.collectIosDeviceInfo())
       case "reverseGeocode":
         guard let args = call.arguments as? [String: Any],
               let latitude = args["latitude"] as? Double,

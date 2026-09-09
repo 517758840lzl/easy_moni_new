@@ -7,7 +7,6 @@ import 'package:easy_moni/entities/service/service_info_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/loan/components/loan_rounded_page.dart';
 import 'package:easy_moni/pages/mine/providers/customer_service_provider.dart';
-import 'package:easy_moni/services/external_source.dart';
 import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/utils/widgets/app_state_view.dart';
 import 'package:flutter/foundation.dart';
@@ -15,7 +14,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 /// 客服展示方式，和后端 showType 保持一致。
@@ -537,18 +535,14 @@ class _CustomerServiceContactLauncher {
       return;
     }
 
-    if (Platform.isIOS) {
-      final digits = whatsAppAccount.replaceAll(RegExp(r'\D'), '');
-      if (digits.isEmpty) return;
+    final digits = whatsAppAccount.replaceAll(RegExp(r'\D'), '');
+    if (digits.isEmpty) return;
 
-      final appUri = Uri.parse('whatsapp://send?phone=$digits');
-      if (await _launchExternalUri(appUri)) return;
-
-      await ExternalSource.instance.openUrl('https://wa.me/$digits');
+    if (await ExternalLinkService.openUrl('whatsapp://send?phone=$digits')) {
       return;
     }
 
-    await ExternalSource.instance.openUrl('https://wa.me/$whatsAppAccount');
+    await ExternalLinkService.openUrl('https://wa.me/$digits');
   }
 
   /// 通过 mailto 协议拉起系统邮箱应用。
@@ -558,26 +552,7 @@ class _CustomerServiceContactLauncher {
       return;
     }
 
-    if (Platform.isIOS) {
-      await _launchExternalUri(Uri(scheme: 'mailto', path: email));
-      return;
-    }
-
-    await ExternalSource.instance.openUrl(
-      'mailto:$email',
-      mode: LaunchMode.externalNonBrowserApplication,
-    );
-  }
-
-  static Future<bool> _launchExternalUri(Uri uri) async {
-    try {
-      if (await canLaunchUrl(uri)) {
-        return launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-    } catch (_) {
-      return false;
-    }
-    return false;
+    await ExternalLinkService.openUrl('mailto:$email');
   }
 }
 

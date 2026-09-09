@@ -14,7 +14,6 @@ dependencies:
   riverpod_annotation: 4.0.3-dev.2
   # Routing
   go_router: 17.2.3
-  url_launcher: 6.3.2
   webview_flutter: 4.13.0
 
   # Networking
@@ -34,8 +33,6 @@ dependencies:
   image: 4.8.0
   equatable: 2.0.8
   shared_preferences: 2.5.3
-  device_info_plus: 13.2.0
-
   appsflyer_sdk: 6.17.8
   app_tracking_transparency: 2.0.6+1
   encrypt: 5.0.3

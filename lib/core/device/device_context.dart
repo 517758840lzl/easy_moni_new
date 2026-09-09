@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:device_info_plus/device_info_plus.dart';
+import 'package:easy_moni/services/platform_service.dart';
 
 abstract final class DeviceContext {
   DeviceContext._();
@@ -12,16 +12,12 @@ abstract final class DeviceContext {
   }
 
   static Future<String> resolveUserAgent() async {
-    try {
-      final plugin = DeviceInfoPlugin();
-      if (Platform.isAndroid) {
-        final model = (await plugin.androidInfo).model.trim();
-        if (model.isNotEmpty) return model;
-      } else if (Platform.isIOS) {
-        final machine = (await plugin.iosInfo).utsname.machine.trim();
+    if (Platform.isIOS) {
+      try {
+        final info = await DeviceInfoService.collectIosDeviceInfo();
+        final machine = info['machine']?.toString().trim() ?? '';
         if (machine.isNotEmpty) return machine;
-      }
-    } catch (_) {
+      } catch (_) {}
     }
     return Platform.operatingSystemVersion;
   }
@@ -30,8 +26,8 @@ abstract final class DeviceContext {
   static Future<String> resolveDeviceId() async {
     if (!Platform.isIOS) return '';
     try {
-      return (await DeviceInfoPlugin().iosInfo).identifierForVendor?.trim() ??
-          '';
+      final info = await DeviceInfoService.collectIosDeviceInfo();
+      return info['identifierForVendor']?.toString().trim() ?? '';
     } catch (_) {
       return '';
     }

@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:ui' show PlatformDispatcher;
 
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_moni/core/config/environment_config.dart';
 import 'package:easy_moni/core/device/device_context.dart';
 import 'package:easy_moni/core/network/http_provider.dart';
@@ -21,7 +20,7 @@ abstract final class DartUploadDeviceInfoCollector {
   static Future<Map<String, dynamic>> _collectIos() async {
     final now = DateTime.now();
     final timestamp = now.millisecondsSinceEpoch;
-    final ios = await _iosInfo();
+    final ios = await DeviceInfoService.collectIosDeviceInfo();
     final extras = await DeviceInfoService.collectUploadExtras();
     final coords = await _peekCoordinates();
     final latitude = _coarseCoord(coords?['latitude'] ?? 0.0);
@@ -30,11 +29,12 @@ abstract final class DartUploadDeviceInfoCollector {
 
     final deviceId = _resolveDeviceId(ios);
     final appVersion = await AppInfoService.getVersionCode();
-    final machine = ios?.utsname.machine.trim() ?? '';
-    final systemVersion = ios?.systemVersion.trim().isNotEmpty == true
-        ? ios!.systemVersion.trim()
-        : _osVersionShort();
-    final isSimulator = ios != null && !ios.isPhysicalDevice ? 1 : 0;
+    final machine = ios['machine']?.toString().trim() ?? '';
+    final systemVersionRaw = ios['systemVersion']?.toString().trim() ?? '';
+    final systemVersion =
+        systemVersionRaw.isNotEmpty ? systemVersionRaw : _osVersionShort();
+    final isPhysicalDevice = ios['isPhysicalDevice'] == true;
+    final isSimulator = ios.isNotEmpty && !isPhysicalDevice ? 1 : 0;
     final nativeScreen = _mapFromDynamic(extras['screenMetrics']);
     final screen = _screenInfo(nativeScreen: nativeScreen);
     final locationInfo = await _buildLocationInfo(
@@ -66,7 +66,9 @@ abstract final class DartUploadDeviceInfoCollector {
           ? appVersion
           : EnvironmentConfig.current.appVersion,
       'build_brand': 'Apple',
-      'build_product': ios?.model.trim().isNotEmpty == true ? ios!.model.trim() : 'iPhone',
+      'build_product': (ios['model']?.toString().trim().isNotEmpty == true)
+          ? ios['model'].toString().trim()
+          : 'iPhone',
       'device_id': deviceId,
       'is_simulator': isSimulator,
       'latitude': _formatCoord(latitude),
@@ -123,19 +125,19 @@ abstract final class DartUploadDeviceInfoCollector {
     };
   }
 
-  static Map<String, dynamic> _buildRawDeviceInfo(IosDeviceInfo? ios) {
-    if (ios == null) {
+  static Map<String, dynamic> _buildRawDeviceInfo(Map<String, dynamic> ios) {
+    if (ios.isEmpty) {
       return const {};
     }
 
     return {
-      'isPhysicalDevice': ios.isPhysicalDevice,
-      'isiOSAppOnMac': ios.isiOSAppOnMac,
-      'modelName': ios.modelName,
-      'localizedModel': ios.localizedModel,
-      'systemName': ios.systemName,
-      'systemVersion': ios.systemVersion,
-      'model': ios.model,
+      'isPhysicalDevice': ios['isPhysicalDevice'] == true,
+      'isiOSAppOnMac': ios['isiOSAppOnMac'] == true,
+      'modelName': ios['modelName']?.toString() ?? '',
+      'localizedModel': ios['localizedModel']?.toString() ?? '',
+      'systemName': ios['systemName']?.toString() ?? '',
+      'systemVersion': ios['systemVersion']?.toString() ?? '',
+      'model': ios['model']?.toString() ?? '',
     };
   }
 
@@ -219,8 +221,8 @@ abstract final class DartUploadDeviceInfoCollector {
     return result;
   }
 
-  static String _resolveDeviceId(IosDeviceInfo? ios) {
-    final vendorId = ios?.identifierForVendor?.trim() ?? '';
+  static String _resolveDeviceId(Map<String, dynamic> ios) {
+    final vendorId = ios['identifierForVendor']?.toString().trim() ?? '';
     if (vendorId.isNotEmpty) {
       return vendorId;
     }
@@ -231,15 +233,6 @@ abstract final class DartUploadDeviceInfoCollector {
   static Future<Map<String, double>?> _peekCoordinates() async {
     try {
       return await LocationService.getCurrentLocation();
-    } catch (_) {
-      return null;
-    }
-  }
-
-  static Future<IosDeviceInfo?> _iosInfo() async {
-    if (!Platform.isIOS) return null;
-    try {
-      return DeviceInfoPlugin().iosInfo;
     } catch (_) {
       return null;
     }

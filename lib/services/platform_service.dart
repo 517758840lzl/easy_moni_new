@@ -3,7 +3,6 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'web_image_picker_stub.dart'
     if (dart.library.html) 'web_image_picker_web.dart';
@@ -39,13 +38,7 @@ class LocationService {
 
   /// 打开系统 App 设置页，引导用户在权限设置中开启位置权限。
   static Future<void> openAppSettings() async {
-    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
-      final opened = await launchUrl(
-        Uri.parse('app-settings:'),
-        mode: LaunchMode.externalApplication,
-      );
-      if (opened) return;
-    }
+    if (kIsWeb) return;
 
     try {
       await _channel.invokeMethod('openAppSettings');
@@ -94,6 +87,24 @@ class LocationService {
 
 class DeviceInfoService {
   static const MethodChannel _channel = MethodChannel('com.easy_moni/device_info');
+
+  static Future<Map<String, dynamic>> collectIosDeviceInfo() async {
+    if (kIsWeb || !Platform.isIOS) {
+      return const {};
+    }
+
+    try {
+      final result = await _channel.invokeMethod<dynamic>('collectIosDeviceInfo');
+      if (result is! Map) {
+        return const {};
+      }
+      return result.map((key, value) => MapEntry(key.toString(), value));
+    } on PlatformException {
+      return const {};
+    } on MissingPluginException {
+      return const {};
+    }
+  }
 
   static Future<Map<String, dynamic>> collectUploadExtras() async {
     if (kIsWeb || !Platform.isIOS) {
@@ -228,13 +239,7 @@ class CameraService {
   }
 
   static Future<void> openAppSettings() async {
-    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
-      final opened = await launchUrl(
-        Uri.parse('app-settings:'),
-        mode: LaunchMode.externalApplication,
-      );
-      if (opened) return;
-    }
+    if (kIsWeb) return;
 
     try {
       await _channel.invokeMethod('openAppSettings');
@@ -267,6 +272,29 @@ class CameraService {
       return null;
     } on PlatformException {
       return null;
+    }
+  }
+}
+
+/// 外部链接服务，通过 iOS 原生打开 mailto、WhatsApp、浏览器等系统跳转。
+class ExternalLinkService {
+  static const MethodChannel _channel = MethodChannel('com.easy_moni/external_link');
+
+  static Future<bool> openUrl(String url) async {
+    if (kIsWeb) return false;
+
+    final target = url.trim();
+    if (target.isEmpty) return false;
+
+    try {
+      final bool result = await _channel.invokeMethod('openUrl', {
+        'url': target,
+      });
+      return result;
+    } on PlatformException {
+      return false;
+    } on MissingPluginException {
+      return false;
     }
   }
 }
