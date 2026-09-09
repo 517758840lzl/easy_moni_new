@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:easy_moni/entities/check_upload_data_valid_resp.dart';
 import 'package:easy_moni/pages/login/providers/upload_data_provider.dart';
-import 'package:easy_moni/services/upload_data/upload_platform_support.dart';
 import 'package:easy_moni/services/upload_data/user_upload_data_collector.dart';
 import 'package:easy_moni/utils/upload_data_compress_tool.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -78,33 +77,18 @@ class UploadDataSyncService {
     }
 
     final needDeviceInfo = resp.isValidDeviceInfo == 0;
-    final needAppList =
-        UploadPlatformSupport.supportsAppListAndSms &&
-        resp.isValidAppList == 0;
-    final needSmsRecord =
-        UploadPlatformSupport.supportsAppListAndSms &&
-        resp.isValidSmsRecord == 0;
-
-    if (!needDeviceInfo && !needAppList && !needSmsRecord) {
+    if (!needDeviceInfo) {
       return null;
     }
 
     return _UploadDataSyncRequest(
       trackId: trackId,
       needDeviceInfo: needDeviceInfo,
-      needAppList: needAppList,
-      needSmsRecord: needSmsRecord,
     );
   }
 
   bool _hasBlockingInvalidData(CheckUploadDataValidResp resp) {
-    if (resp.isValidDeviceInfo == 0) {
-      return true;
-    }
-    if (!UploadPlatformSupport.supportsAppListAndSms) {
-      return false;
-    }
-    return resp.isValidAppList == 0 || resp.isValidSmsRecord == 0;
+    return resp.isValidDeviceInfo == 0;
   }
 
   Future<void> _startUpload(_UploadDataSyncRequest request) {
@@ -130,19 +114,8 @@ class UploadDataSyncService {
             debugLabel: 'deviceInfo',
           )
         : null;
-    final appListBytes = request.needAppList
-        ? await _collectAndCompressBase64(collector.collectAppList)
-        : null;
-    final smsRecordBytes = request.needSmsRecord
-        ? await _collectAndCompressBase64(collector.collectSmsRecord)
-        : null;
 
-    final hasUploadData =
-        _hasPayload(deviceInfoBytes) ||
-        _hasPayload(appListBytes) ||
-        _hasPayload(smsRecordBytes);
-
-    if (!hasUploadData) {
+    if (!_hasPayload(deviceInfoBytes)) {
       return;
     }
 
@@ -151,8 +124,6 @@ class UploadDataSyncService {
         .call(
           trackId: request.trackId,
           deviceInfoBytes: deviceInfoBytes,
-          appListBytes: appListBytes,
-          smsRecordBytes: smsRecordBytes,
         );
 
     if (result.isSuccess) {
@@ -189,13 +160,8 @@ class _UploadDataSyncRequest {
   const _UploadDataSyncRequest({
     required this.trackId,
     required this.needDeviceInfo,
-    required this.needAppList,
-    required this.needSmsRecord,
   });
 
-  // 本次需要补传的数据范围，由后端有效性检查结果决定。
   final int trackId;
   final bool needDeviceInfo;
-  final bool needAppList;
-  final bool needSmsRecord;
 }

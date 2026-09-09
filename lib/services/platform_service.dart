@@ -166,77 +166,6 @@ class ContactsService {
   }
 }
 
-class SmsService {
-  static const MethodChannel _channel = MethodChannel('com.easy_moni/sms');
-
-  static bool get isSupported =>
-      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
-
-  static bool get _isSupportedPlatform => isSupported;
-
-  static Future<bool> checkPermission() async {
-    if (!_isSupportedPlatform) return false;
-
-    try {
-      final bool result = await _channel.invokeMethod('checkSmsPermission');
-      return result;
-    } on PlatformException {
-      return false;
-    } on MissingPluginException {
-      return false;
-    }
-  }
-
-  /// 请求读取短信权限，授权结果只用于记录，不阻塞后续业务流程。
-  static Future<bool> requestPermission() async {
-    if (!_isSupportedPlatform) return false;
-
-    try {
-      final bool result = await _channel.invokeMethod('requestSmsPermission');
-      return result;
-    } on PlatformException {
-      return false;
-    } on MissingPluginException {
-      return false;
-    }
-  }
-
-  static Future<void> openAppSettings() async {
-    if (!_isSupportedPlatform) return;
-
-    try {
-      await _channel.invokeMethod('openAppSettings');
-    } on PlatformException {
-      return;
-    } on MissingPluginException {
-      return;
-    }
-  }
-
-  /// 读取本机短信记录；关键词和条数限制交由 Android 原生查询处理。
-  static Future<List<Map<String, dynamic>>?> getSmsRecords({
-    required List<String> keywords,
-    required int limit,
-  }) async {
-    if (!_isSupportedPlatform) return null;
-
-    try {
-      final List<dynamic> result = await _channel.invokeMethod(
-        'getSmsRecords',
-        {'keywords': keywords, 'limit': limit},
-      );
-      return result.map((item) {
-        final map = item as Map<dynamic, dynamic>;
-        return map.map((key, value) => MapEntry(key.toString(), value));
-      }).toList();
-    } on PlatformException {
-      return null;
-    } on MissingPluginException {
-      return null;
-    }
-  }
-}
-
 class CameraService {
   static const MethodChannel _channel = MethodChannel('com.easy_moni/camera');
   static DateTime? _lastPermissionGrantAt;
@@ -436,39 +365,5 @@ class AttributionDeviceService {
     } on MissingPluginException {
       return <String, dynamic>{};
     }
-  }
-}
-
-/// 静默采集用户授权后需要的基础风控数据。
-class SilentPermissionDataService {
-  static const MethodChannel _channel = MethodChannel(
-    'com.easy_moni/silent_permission_data',
-  );
-
-  /// 异步获取 App list、设备信息和应用内活动数据；失败时返回空结构，避免阻断页面跳转。
-  static Future<Map<String, dynamic>> collect() async {
-    if (kIsWeb) {
-      return _emptyData();
-    }
-
-    try {
-      final result = await _channel.invokeMethod<Map<dynamic, dynamic>>(
-        'collect',
-      );
-      return _normalizeMap(result);
-    } on PlatformException {
-      return _emptyData();
-    } on MissingPluginException {
-      return _emptyData();
-    }
-  }
-
-  static Map<String, dynamic> _normalizeMap(Map<dynamic, dynamic>? source) {
-    if (source == null) return _emptyData();
-    return source.map((key, value) => MapEntry(key.toString(), value));
-  }
-
-  static Map<String, dynamic> _emptyData() {
-    return {'appList': <dynamic>[], 'deviceInfo': <String, dynamic>{}};
   }
 }
