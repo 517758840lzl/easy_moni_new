@@ -1,18 +1,12 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
-import 'package:easy_moni/pages/loan/loan_home_review_page.dart';
 import 'package:easy_moni/pages/mine/mine_page.dart';
 import 'package:easy_moni/pages/loan/loan_home_page.dart';
 import 'package:easy_moni/pages/repay/repay_entry_page.dart';
-import 'package:easy_moni/services/auth_storage.dart';
 import 'package:easy_moni/services/platform_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-final reviewAccountHomeProvider = FutureProvider.autoDispose<bool>((ref) {
-  return AuthStorage.isReviewAccount();
-});
 
 const _tabRefreshInterval = Duration(seconds: 5);
 
@@ -77,13 +71,12 @@ class _HomeNavBarState extends ConsumerState<HomeNavBar> {
 
   @override
   Widget build(BuildContext context) {
-    final reviewAccountAsync = ref.watch(reviewAccountHomeProvider);
     final pages = List<Widget>.generate(3, (index) {
       // 底部 Tab 首次访问时再挂载，避免进入首页时同时触发三个页面接口。
       if (!_visitedTabIndexes.contains(index)) {
         return const SizedBox.shrink();
       }
-      return _buildPage(index, reviewAccountAsync);
+      return _buildPage(index);
     });
 
     return PopScope<void>(
@@ -204,21 +197,14 @@ class _HomeNavBarState extends ConsumerState<HomeNavBar> {
     );
   }
 
-  Widget _buildPage(int index, AsyncValue<bool> reviewAccountAsync) {
+  Widget _buildPage(int index) {
     switch (index) {
       case 0:
         final refreshRequestId = [
           widget.loanHomeRefreshRequestId,
           _tabRefreshRequestIds[0],
         ].join(':');
-        // 根据登录接口 cacheData 字段选择贷款首页，审核账号展示审核员版本。
-        return reviewAccountAsync.when(
-          data: (isReviewAccount) => isReviewAccount
-              ? LoanHomeReviewPage(refreshRequestId: refreshRequestId)
-              : LoanHomePage(refreshRequestId: refreshRequestId),
-          error: (_, _) => LoanHomePage(refreshRequestId: refreshRequestId),
-          loading: () => const _HomeTabLoadingPage(),
-        );
+        return LoanHomePage(refreshRequestId: refreshRequestId);
       case 1:
         return RepayEntryPage(refreshRequestId: _tabRefreshRequestIds[1] ?? '');
       case 2:
@@ -226,18 +212,6 @@ class _HomeNavBarState extends ConsumerState<HomeNavBar> {
       default:
         return const SizedBox.shrink();
     }
-  }
-}
-
-class _HomeTabLoadingPage extends StatelessWidget {
-  const _HomeTabLoadingPage();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(child: CircularProgressIndicator()),
-    );
   }
 }
 

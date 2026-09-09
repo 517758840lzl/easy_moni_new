@@ -2,14 +2,12 @@ import 'dart:convert';
 
 class LoginResp {
   final String? token;
-  final int? cacheData;
   final int? isFirstRegister;
   final int? userId;
   final String? uuid;
 
   const LoginResp({
     this.token,
-    this.cacheData,
     this.isFirstRegister,
     this.userId,
     this.uuid,
@@ -30,7 +28,6 @@ class LoginResp {
 
       return LoginResp(
         token: map['token'] as String?,
-        cacheData: _parseInt(map['cacheData']),
         isFirstRegister: _parseInt(map['isFirstRegister']),
         userId: _parseInt(map['userId']),
         uuid: map['uuid'] as String?,
@@ -40,14 +37,10 @@ class LoginResp {
     }
   }
 
-  /// cacheData 为 1 时表示审核账号，首页需要展示审核员版本。
-  bool get isReviewAccount => cacheData == 1;
-
   /// 转换为完整登录响应结构，供加密埋点和调试日志统一使用。
   Map<String, dynamic> toJson() {
     return {
       'token': token,
-      'cacheData': cacheData,
       'isFirstRegister': isFirstRegister,
       'userId': userId,
       'uuid': uuid,
@@ -64,6 +57,6 @@ class LoginResp {
 
   @override
   String toString() {
-    return 'LoginResp(token: $token, cacheData: $cacheData, isFirstRegister: $isFirstRegister)';
+    return 'LoginResp(token: $token, isFirstRegister: $isFirstRegister)';
   }
 }

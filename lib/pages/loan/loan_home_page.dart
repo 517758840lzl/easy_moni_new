@@ -31,16 +31,10 @@ class LoanHomePage extends StatelessWidget {
 class LoanHomeScaffold extends ConsumerStatefulWidget {
   const LoanHomeScaffold({
     super.key,
-    this.bottomContent,
     this.refreshRequestId = '',
-    this.showAvailableProductCount = true,
-    this.contentPanelTopOffset = 154,
   });
 
-  final Widget? bottomContent;
   final String refreshRequestId;
-  final bool showAvailableProductCount;
-  final double contentPanelTopOffset;
 
   @override
   ConsumerState<LoanHomeScaffold> createState() => _LoanHomeScaffoldState();
@@ -204,7 +198,7 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
 
   double _contentPanelTop(BuildContext context) {
     final topInset = MediaQuery.of(context).padding.top;
-    return topInset + widget.contentPanelTopOffset;
+    return topInset + 154;
   }
 
   // 跳转确认借款页面
@@ -264,10 +258,6 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
           padding: const EdgeInsets.fromLTRB(10, 17, 10, 92),
           children: [
             const AppEmptyStateView(text: AppStrings.noLoanProducts),
-            if (widget.bottomContent != null) ...[
-              const SizedBox(height: 16),
-              widget.bottomContent!,
-            ],
           ],
         ),
       );
@@ -280,15 +270,12 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(10, 17, 10, 92),
-        itemCount: homeSections.length + (widget.bottomContent == null ? 0 : 1),
+        itemCount: homeSections.length,
         separatorBuilder: (context, index) {
           return const SizedBox(height: 16);
         },
         itemBuilder: (context, index) {
-          if (index < homeSections.length) {
-            return homeSections[index];
-          }
-          return widget.bottomContent!;
+          return homeSections[index];
         },
       ),
     );
@@ -459,44 +446,42 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
               right: 20,
               child: TotalRepayAmountDisplay(amount: selectedLoanAmount),
             ),
-            // 审核首页复用普通首页时，需要隐藏顶部可借产品数量提示。
-            if (widget.showAvailableProductCount)
-              Positioned(
-                top: topInset + 107,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xFFDDDDDD)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Assets.images.loanCheck.image(
-                          width: 22.5,
-                          height: 22.5,
+            Positioned(
+              top: topInset + 107,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFFDDDDDD)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Assets.images.loanCheck.image(
+                        width: 22.5,
+                        height: 22.5,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        '${AppStrings.homeAvailableString} : $_availableProductCount',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
                         ),
-                        const SizedBox(width: 10),
-                        Text(
-                          '${AppStrings.homeAvailableString} : $_availableProductCount',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
+            ),
           ],
         ),
       ),

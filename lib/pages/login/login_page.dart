@@ -12,7 +12,6 @@ import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/entities/acquisition_progress_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/fillInforma/providers/acquisition_progress_provider.dart';
-import 'package:easy_moni/services/auth_storage.dart';
 import 'package:easy_moni/services/user_info_cache.dart';
 import 'package:easy_moni/services/permission_storage.dart';
 import 'package:easy_moni/services/upload_data/upload_data_sync_service.dart';
@@ -338,9 +337,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             );
           }
           await HttpProvider.instance.setToken(authenticatedLoginData.token);
-          await AuthStorage.saveReviewAccountFlag(
-            authenticatedLoginData.isReviewAccount,
-          );
           await UserInfoCache.clear();
 
           // 登录后请求 startup/config 接口

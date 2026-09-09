@@ -9,7 +9,6 @@ final reviewPopProvider = Provider<ReviewPopApi>((ref) {
   return ReviewPopApi();
 });
 
-/// 好评弹窗接口服务，集中处理审核页进入后的弹窗配置获取。
 class ReviewPopApi {
   Future<HttpResult<ReviewPopConfig>> fetchConfig() {
     return HttpProvider.instance.get<ReviewPopConfig>(

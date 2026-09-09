@@ -300,7 +300,6 @@ class _FaceVerifyEntryPageState extends ConsumerState<FaceVerifyEntryPage> {
     );
   }
 
-  /// 照片回显后的审核风险提示。
   Widget _buildPhotoQualityPrompt() {
     return Center(
       child: ConstrainedBox(

@@ -236,16 +236,6 @@ class AppStrings {
   static const String homeAvailableString = 'Available Offers';
   static const String homeMultiSelectHint = 'Multiple Selection Available';
   static const String backToHomeText = 'Back to Home';
-  static const String reviewFeatureTitle = 'Why Choose Us';
-  static const String reviewFeatureApplyTitle = 'Easy Application';
-  static const String reviewFeatureApplyDesc =
-      'Apply in 3 steps with fast approval.';
-  static const String reviewFeatureDisburseTitle = 'Fast Funding';
-  static const String reviewFeatureDisburseDesc =
-      'Funds in as little as 10 minutes.';
-  static const String reviewFeatureFlexibleTitle = 'Flexible Repayment';
-  static const String reviewFeatureFlexibleDesc =
-      'Borrow and repay anytime online.';
 
   // ==================== 贷款详情 ====================
   static const String loanDetailTitle = 'Loan Details';
@@ -387,7 +377,7 @@ class AppStrings {
   static String orderDetailRepayButtonText(num? amount) =>
       '$orderDetailRepayNow $orderDetailCurrencyCode ${amount?.toStringAsFixed(2) ?? orderDetailZeroAmount}';
 
-  // ==================== 借款审核 ====================
+  // ==================== 借款申请 ====================
   static const String loanReviewTitle = 'Under Review';
   static const String loanReviewAppBarTitle = 'Loan Application';
   static const String loanReviewDesc =
