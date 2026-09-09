@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math' as math;
 import 'dart:ui' show Locale, PlatformDispatcher;
 
 import 'package:device_info_plus/device_info_plus.dart';
@@ -40,10 +39,6 @@ abstract final class DartUploadDeviceInfoCollector {
     final languageCode = locale.languageCode;
     final nativeScreen = _mapFromDynamic(extras['screenMetrics']);
     final screen = _screenInfo(nativeScreen: nativeScreen);
-    final totalStorageMb = _bytesToMb(ios?.totalDiskSize ?? 0);
-    final usedStorageMb = _bytesToMb(
-      (ios?.totalDiskSize ?? 0) - (ios?.freeDiskSize ?? 0),
-    );
     final locationInfo = await _buildLocationInfo(
       latitude: latitude,
       longitude: longitude,
@@ -59,17 +54,10 @@ abstract final class DartUploadDeviceInfoCollector {
       isSimulator: isSimulator,
       timestamp: timestamp,
     );
-    final storageInfo = _buildStorageInfo(
-      totalStorageMb: totalStorageMb,
-      usedStorageMb: usedStorageMb,
-      ramTotalMb: ios?.physicalRamSize ?? 0,
-      ramUsableMb: ios?.availableRamSize ?? 0,
-    );
-
     return {
       'advertising_id': '',
       'advinceDeviceInfoBean': {
-        'batteryStatusInfo': extras['batteryStatusInfo'],
+        'batteryStatusInfo': null,
         'calendarEventList': null,
         'deviceBaseInfo': deviceBaseInfo,
         'fileInfo': null,
@@ -87,7 +75,7 @@ abstract final class DartUploadDeviceInfoCollector {
         'phoneSignalInfo': null,
         'screenInfo': screen.map,
         'sensorList': null,
-        'storageInfo': storageInfo,
+        'storageInfo': null,
       },
       'android_id': deviceId,
       'androidVersionCode': 0,
@@ -127,15 +115,15 @@ abstract final class DartUploadDeviceInfoCollector {
       'phone_model': machine,
       'screen_density': screen.density,
       'screen_resolution': screen.physicalResolution,
-      'sdcard_total_capacity': totalStorageMb,
-      'sdcard_used_capacity': usedStorageMb,
+      'sdcard_total_capacity': 0,
+      'sdcard_used_capacity': 0,
       'sim_card_status': 0,
       'sim_code': '',
       'sn': deviceId,
       'sn_an9': '',
       'sysCurTimestamp': timestamp,
-      'total_memory': ios?.physicalRamSize ?? 0,
-      'total_storage': totalStorageMb,
+      'total_memory': 0,
+      'total_storage': 0,
       'used_memory': 0,
       'rawDeviceInfo': rawDeviceInfo,
     };
@@ -208,13 +196,9 @@ abstract final class DartUploadDeviceInfoCollector {
       },
       'modelName': ios.modelName,
       'localizedModel': ios.localizedModel,
-      'totalDiskSize': ios.totalDiskSize,
       'systemName': ios.systemName,
       'systemVersion': ios.systemVersion,
       'identifierForVendor': ios.identifierForVendor,
-      'physicalRamSize': ios.physicalRamSize,
-      'freeDiskSize': ios.freeDiskSize,
-      'availableRamSize': ios.availableRamSize,
       'model': ios.model,
       'name': ios.name,
     };
@@ -246,25 +230,6 @@ abstract final class DartUploadDeviceInfoCollector {
       'release': systemVersion,
       'sdkVersion': 0,
       'serialNumber': deviceId,
-    };
-  }
-
-  static Map<String, dynamic> _buildStorageInfo({
-    required int totalStorageMb,
-    required int usedStorageMb,
-    required int ramTotalMb,
-    required int ramUsableMb,
-  }) {
-    final usableStorage = math.max(totalStorageMb - usedStorageMb, 0);
-    return {
-      'internalStorageTotal': totalStorageMb,
-      'internalStorageUsable': usableStorage,
-      'memoryCardSize': null,
-      'memoryCardSizeUse': null,
-      'ramTotalSize': ramTotalMb,
-      'ramUsableSize': ramUsableMb,
-      'storageDirSize': null,
-      'storageDirSizeUsable': null,
     };
   }
 
@@ -369,11 +334,6 @@ abstract final class DartUploadDeviceInfoCollector {
     final raw = Platform.operatingSystemVersion;
     final match = RegExp(r'(\d+(?:\.\d+)*)').firstMatch(raw);
     return match?.group(1) ?? raw;
-  }
-
-  static int _bytesToMb(int bytes) {
-    if (bytes <= 0) return 0;
-    return (bytes / (1024 * 1024)).round();
   }
 
   static String _formatCoord(double value) {

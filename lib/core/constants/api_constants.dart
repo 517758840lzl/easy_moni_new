@@ -35,8 +35,6 @@ class ApiConstants {
   static const String customerCouponList = '/primecl/reward/cluster';  // /api/customer/coupon/v2/list
   //确认订单
   static const String confirmOrder = '/primecl/flow/order/commit';  // /api/order/loanOrder/confirmOrder
-  //好评引导弹窗 GET
-  static const String popconfig = '/primecl/system/pop?type=1';  // /api/common/pop/config?type=1
   //获取待还款列表
   static const String userRepayment = '/primecl/ledger/pay/run';  // /api/order/loanOrder/userRepayment
   //获取用户要还款的订单详情 POST

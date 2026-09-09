@@ -392,8 +392,6 @@ class AppStrings {
   static const String loanReviewAppBarTitle = 'Loan Application';
   static const String loanReviewDesc =
       'Your loan application is under review. \nThe review is usually completed within a few minutes. \nWe\'ll notify you as soon as the result is available.';
-  static const String loanReviewRatingTitle = 'Rate Our App';
-  static const String scoreSuccess = 'Thanks for your rating!';
 
   // ===================== 优惠券 ========================
   static const String couponEmptyDesc =
