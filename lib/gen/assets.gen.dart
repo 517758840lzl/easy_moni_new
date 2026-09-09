@@ -64,6 +64,22 @@ class $AssetsImagesGen {
   AssetGenImage get faceVerifyRectangle =>
       const AssetGenImage('assets/images/face_verify_rectangle.png');
 
+  /// File path: assets/images/home_promo_banner.png
+  AssetGenImage get homePromoBanner =>
+      const AssetGenImage('assets/images/home_promo_banner.png');
+
+  /// File path: assets/images/home_promo_feature_1.png
+  AssetGenImage get homePromoFeature1 =>
+      const AssetGenImage('assets/images/home_promo_feature_1.png');
+
+  /// File path: assets/images/home_promo_feature_2.png
+  AssetGenImage get homePromoFeature2 =>
+      const AssetGenImage('assets/images/home_promo_feature_2.png');
+
+  /// File path: assets/images/home_promo_feature_3.png
+  AssetGenImage get homePromoFeature3 =>
+      const AssetGenImage('assets/images/home_promo_feature_3.png');
+
   /// File path: assets/images/id_back_arrow_Icon.png
   AssetGenImage get idBackArrowIcon =>
       const AssetGenImage('assets/images/id_back_arrow_Icon.png');
@@ -298,22 +314,6 @@ class $AssetsImagesGen {
   AssetGenImage get repayHeaderRectangle =>
       const AssetGenImage('assets/images/repay_header_rectangle.png');
 
-  /// File path: assets/images/review_1.png
-  AssetGenImage get review1 =>
-      const AssetGenImage('assets/images/review_1.png');
-
-  /// File path: assets/images/review_2.png
-  AssetGenImage get review2 =>
-      const AssetGenImage('assets/images/review_2.png');
-
-  /// File path: assets/images/review_3.png
-  AssetGenImage get review3 =>
-      const AssetGenImage('assets/images/review_3.png');
-
-  /// File path: assets/images/review_banner.png
-  AssetGenImage get reviewBanner =>
-      const AssetGenImage('assets/images/review_banner.png');
-
   /// File path: assets/images/right_arrow.png
   AssetGenImage get rightArrow =>
       const AssetGenImage('assets/images/right_arrow.png');
@@ -353,6 +353,10 @@ class $AssetsImagesGen {
     customer,
     faceVerifyCircle,
     faceVerifyRectangle,
+    homePromoBanner,
+    homePromoFeature1,
+    homePromoFeature2,
+    homePromoFeature3,
     idBackArrowIcon,
     idCardRectangle,
     inforamtionBgheader,
@@ -412,10 +416,6 @@ class $AssetsImagesGen {
     mineWallet,
     permissionCamera3d,
     repayHeaderRectangle,
-    review1,
-    review2,
-    review3,
-    reviewBanner,
     rightArrow,
     serviceRightArrow,
     serviceSafe,

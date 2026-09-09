@@ -1,5 +1,6 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/router/app_routes.dart';
+import 'package:easy_moni/pages/loan/components/loan_home_single_product_promo.dart';
 import 'package:easy_moni/pages/loan/components/loan_order_card.dart';
 import 'package:easy_moni/pages/loan/components/loan_product_card.dart';
 import 'package:easy_moni/pages/loan/models/loan_confirm_request_product.dart';
@@ -143,6 +144,8 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
   int get _availableProductCount =>
       _products.where((p) => p.state.canConfirm).length;
 
+  bool get _shouldShowSingleProductPromo => _products.length == 1;
+
   double get _selectedLoanAmount {
     return _selectedProductIndexes.fold<double>(0, (total, index) {
       if (index < 0 || index >= _products.length) return total;
@@ -264,18 +267,22 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
     }
 
     final homeSections = _buildHomeSections();
+    final footerCount = _shouldShowSingleProductPromo ? 1 : 0;
 
     return RefreshIndicator(
       onRefresh: _refreshHomeData,
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(10, 17, 10, 92),
-        itemCount: homeSections.length,
+        itemCount: homeSections.length + footerCount,
         separatorBuilder: (context, index) {
           return const SizedBox(height: 16);
         },
         itemBuilder: (context, index) {
-          return homeSections[index];
+          if (index < homeSections.length) {
+            return homeSections[index];
+          }
+          return const LoanHomeSingleProductPromo();
         },
       ),
     );
