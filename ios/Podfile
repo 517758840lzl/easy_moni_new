@@ -25,10 +25,9 @@ require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelpe
 
 flutter_ios_podfile_setup
 
-# AppsFlyer Strict：使用 NSPrivacyTracking=false 的 Privacy Manifest，
-# 与 Runner「不追踪」声明对齐。官方 Flutter 插件默认依赖 Main（nonStrict）。
-# 见：appsflyer_sdk doc/Installation.md → Strict mode
-def ensure_appsflyer_strict_podspec!
+# AppsFlyer 追踪模式：使用 Main（nonStrict）以支持 IDFA。
+# 若本地 podspec 曾被改成 Strict，这里恢复为 AppsFlyerFramework。
+def ensure_appsflyer_tracking_podspec!
   candidates = [
     File.join(__dir__, '.symlinks', 'plugins', 'appsflyer_sdk', 'ios', 'appsflyer_sdk.podspec'),
     File.join(Dir.home, '.pub-cache', 'hosted', 'pub.flutter-io.cn', 'appsflyer_sdk-6.17.8', 'ios', 'appsflyer_sdk.podspec'),
@@ -38,20 +37,20 @@ def ensure_appsflyer_strict_podspec!
   raise 'appsflyer_sdk.podspec not found; run flutter pub get first' if path.nil?
 
   contents = File.read(path)
-  return if contents.include?("AppsFlyerFramework/Strict")
+  return unless contents.include?("AppsFlyerFramework/Strict")
 
   updated = contents.gsub(
-    /ss\.ios\.dependency ['"]AppsFlyerFramework['"],\s*['"]([^'"]+)['"]/,
-    "ss.ios.dependency 'AppsFlyerFramework/Strict', '\\1'"
+    /ss\.ios\.dependency ['"]AppsFlyerFramework\/Strict['"],\s*['"]([^'"]+)['"]/,
+    "ss.ios.dependency 'AppsFlyerFramework', '\\1'"
   )
   if updated == contents
-    raise "Failed to switch AppsFlyerFramework to Strict in #{path}"
+    raise "Failed to restore AppsFlyerFramework (non-Strict) in #{path}"
   end
   File.write(path, updated)
-  Pod::UI.puts "Patched AppsFlyer → Strict: #{path}"
+  Pod::UI.puts "Restored AppsFlyer → Main (tracking): #{path}"
 end
 
-ensure_appsflyer_strict_podspec!
+ensure_appsflyer_tracking_podspec!
 
 target 'Runner' do
   use_frameworks!

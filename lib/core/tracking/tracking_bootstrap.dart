@@ -10,14 +10,16 @@ abstract final class TrackingBootstrap {
 
   static Future<void>? _startFuture;
 
+  /// 仅初始化 AF / 上报，不弹 ATT。
+  /// ATT 只在登录页勾选隐私同意时请求。
   static Future<void> ensureStarted() {
-    return _startFuture ??= _start();
+    return _startFuture ??= _startAppsFlyer();
   }
 
-  static Future<void> _start() async {
+  static Future<void> _startAppsFlyer() async {
     try {
       await AppsFlyerTracker.initializeAppsFlyerTracker().timeout(
-        const Duration(seconds: 5),
+        const Duration(seconds: 8),
       );
 
       if (Platform.isAndroid) {

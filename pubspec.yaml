@@ -37,6 +37,7 @@ dependencies:
   device_info_plus: 13.2.0
 
   appsflyer_sdk: 6.17.8
+  app_tracking_transparency: 2.0.6+1
   encrypt: 5.0.3
 dev_dependencies:
   flutter_test:

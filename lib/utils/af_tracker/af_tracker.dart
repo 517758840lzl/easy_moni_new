@@ -43,7 +43,9 @@ class AppsFlyerTracker {
         afDevKey: devKey,
         appId: Platform.isIOS ? appleAppId : '',
         showDebug: false,
-        disableAdvertisingIdentifier: Platform.isIOS ? true : null,
+        // iOS：开启广告标识符（IDFA）采集；配合 ATT 弹窗。
+        disableAdvertisingIdentifier: false,
+        timeToWaitForATTUserAuthorization: Platform.isIOS ? 60 : null,
       );
       final sdk = AppsflyerSdk(options);
       _sdk = sdk;

@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:io';
+
+import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:easy_moni/core/config/privacy_policy_config.dart';
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/core/network/http_provider.dart';
@@ -544,10 +547,37 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     }
   }
 
+  bool _attRequestAttempted = false;
+
   Future<void> _startTrackingAfterPrivacyAgreed() async {
     await PermissionStorage.setPrivacyAgreed(true);
-    unawaited(HttpProvider.warmupNetwork());
+    // 追踪授权整次进程只请求一次（系统本身也只会弹一次框）。
+    await _requestTrackingAuthorizationIfNeeded();
     await TrackingBootstrap.ensureStarted();
+  }
+
+  Future<void> _requestTrackingAuthorizationIfNeeded() async {
+    if (!Platform.isIOS) return;
+    if (_attRequestAttempted) return;
+    _attRequestAttempted = true;
+
+    try {
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+
+      var status = await AppTrackingTransparency.trackingAuthorizationStatus;
+      if (status == TrackingStatus.notDetermined) {
+        await AppTrackingTransparency.requestTrackingAuthorization();
+      }
+    } catch (e) {
+      if (!mounted) return;
+      final msg = e.toString();
+      if (msg.contains('MissingPluginException')) {
+        showToast(
+          'ATT plugin not loaded. Stop app and full reinstall (not hot reload).',
+          context: context,
+        );
+      }
+    }
   }
 
   Widget _buildLogoSection() {

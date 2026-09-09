@@ -39,6 +39,8 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Prime Cedi Loan uses your approximate location to help prevent fraud and assess risk.</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Prime Cedi Loan uses your device advertising identifier to measure ad performance and attribute installs.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

@@ -7,7 +7,7 @@ abstract final class AppConstants {
 
   static const afDevKey = 'PFfRT77vnCVpKaZuU3Pghg';
 
-  static const _afAppleAppIdEnv = String.fromEnvironment('AF_APPLE_APP_ID');
+  static const _afAppleAppIdEnv = '';
   static const _afAppleAppIdFallback = '';
 
   static String get afAppleAppId {
