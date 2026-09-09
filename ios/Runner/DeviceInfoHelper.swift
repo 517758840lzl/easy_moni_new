@@ -26,12 +26,12 @@ final class DeviceInfoHelper {
       completion(nil)
       return
     }
+    _ = accuracy
 
     let location = CLLocation(latitude: latitude, longitude: longitude)
     CLGeocoder().reverseGeocodeLocation(location) { placemarks, _ in
       let placemark = placemarks?.first
       let addressParts = [
-        placemark?.subLocality,
         placemark?.locality,
         placemark?.administrativeArea,
         placemark?.country,
@@ -40,18 +40,9 @@ final class DeviceInfoHelper {
         .filter { !$0.isEmpty }
 
       completion([
-        "accuracy": String(accuracy),
         "address": addressParts.isEmpty ? nil : addressParts.joined(separator: ", "),
-        "addressList": nil,
-        "addressObject": nil,
-        "adminArea": placemark?.administrativeArea,
-        "countryCode": placemark?.isoCountryCode,
-        "countryName": placemark?.country,
-        "featureName": placemark?.name,
-        "latitude": String(latitude),
-        "locality": placemark?.locality,
-        "longitude": String(longitude),
-        "subAdminArea": placemark?.subAdministrativeArea,
+        "latitude": String(format: "%.2f", latitude),
+        "longitude": String(format: "%.2f", longitude),
         "time": timestamp,
       ])
     }

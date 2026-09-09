@@ -334,7 +334,7 @@ class AppStrings {
   static const String repayEntryHeaderTitle = 'Total Outstanding Amount';
   static const String repayDefaultTitle = 'Repayment';
   static const String repayEntryBillTitle = 'Outstanding Bills';
-  static const String repayEntryRepayAll = 'Repay All';
+  static const String repayEntryRepayAll = 'Repay Now';
   static const String repayEntryEmpty = 'No outstanding bills';
   static const String repayEntryLoadFailed = 'Failed to load outstanding bills';
   static const String userRepaymentLoadFailed =

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:easy_moni/entities/check_upload_data_valid_resp.dart';
 import 'package:easy_moni/pages/login/providers/upload_data_provider.dart';
-import 'package:easy_moni/services/upload_data/sms_keyword_provider.dart';
 import 'package:easy_moni/services/upload_data/upload_platform_support.dart';
 import 'package:easy_moni/services/upload_data/user_upload_data_collector.dart';
 import 'package:easy_moni/utils/upload_data_compress_tool.dart';
@@ -11,9 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final uploadDataSyncServiceProvider = Provider<UploadDataSyncService>((ref) {
   return UploadDataSyncService(
     ref: ref,
-    collector: UserUploadDataCollector(
-      smsKeywordProvider: SmsKeywordProvider(),
-    ),
+    collector: UserUploadDataCollector(),
   );
 });
 
