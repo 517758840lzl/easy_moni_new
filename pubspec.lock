@@ -25,14 +25,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "0.3.3"
-  ansicolor:
-    dependency: transitive
-    description:
-      name: ansicolor
-      sha256: "50e982d500bc863e1d703448afdbf9e5a72eb48840a4f766fa361ffd6877055f"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "2.0.3"
   app_tracking_transparency:
     dependency: "direct main"
     description:
@@ -893,30 +885,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.4.1"
-  talker:
-    dependency: "direct main"
-    description:
-      name: talker
-      sha256: f1a14d623f1d1bec42bb3bb77674eb766ffe8d26e5f79af652d85cb097c3e757
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "5.1.17"
-  talker_logger:
-    dependency: transitive
-    description:
-      name: talker_logger
-      sha256: b24550d115f209a1b84a697d65f5ec0fa9eb483735c802f18077692fa83cb5f8
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "5.1.20"
-  talker_riverpod_logger:
-    dependency: "direct main"
-    description:
-      name: talker_riverpod_logger
-      sha256: "0d2e3c436122a602e7f3cfa572c418b96b63dd9b9b6b51871e828501693550c6"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "5.1.17"
   term_glyph:
     dependency: transitive
     description:

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'service_info_resp.dart';
@@ -9,6 +9,7 @@ part of 'service_info_resp.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $ServiceInfoRespCopyWith<ServiceInfoResp> get copyWith => _$ServiceInfoRespCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServiceInfoResp&&(identical(other.code, code) || other.code == code)&&(identical(other.msg, msg) || other.msg == msg)&&(identical(other.data, data) || other.data == data));
+  final _this = this as ServiceInfoResp;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServiceInfoResp&&(identical(other.code, _this.code) || other.code == _this.code)&&(identical(other.msg, _this.msg) || other.msg == _this.msg)&&(identical(other.data, _this.data) || other.data == _this.data));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,code,msg,data);
+int get hashCode {
+  final _this = this as ServiceInfoResp;
+  return Object.hash(runtimeType,_this.code,_this.msg,_this.data);
+}
 
 @override
 String toString() {
-  return 'ServiceInfoResp(code: $code, msg: $msg, data: $data)';
+  final _this = this as ServiceInfoResp;
+  return 'ServiceInfoResp(code: ${_this.code}, msg: ${_this.msg}, data: ${_this.data})';
 }
 
 
@@ -66,7 +72,7 @@ class _$ServiceInfoRespCopyWithImpl<$Res>
 /// Create a copy of ServiceInfoResp
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? code = freezed,Object? msg = freezed,Object? data = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(ServiceInfoResp(
 code: freezed == code ? _self.code : code // ignore: cast_nullable_to_non_nullable
 as int?,msg: freezed == msg ? _self.msg : msg // ignore: cast_nullable_to_non_nullable
 as String?,data: freezed == data ? _self.data : data // ignore: cast_nullable_to_non_nullable
@@ -243,16 +249,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServiceInfoResp&&(identical(other.code, code) || other.code == code)&&(identical(other.msg, msg) || other.msg == msg)&&(identical(other.data, data) || other.data == data));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServiceInfoResp&&(identical(other.code, code) || other.code == code)&&(identical(other.msg, msg) || other.msg == msg)&&(identical(other.data, data) || other.data == data));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,code,msg,data);
+int get hashCode {
+    return Object.hash(runtimeType,code,msg,data);
+}
 
 @override
 String toString() {
-  return 'ServiceInfoResp(code: $code, msg: $msg, data: $data)';
+    return 'ServiceInfoResp(code: $code, msg: $msg, data: $data)';
 }
 
 
@@ -321,16 +329,21 @@ $ServiceInfoRespDataCopyWith<ServiceInfoRespData> get copyWith => _$ServiceInfoR
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServiceInfoRespData&&(identical(other.showType, showType) || other.showType == showType)&&const DeepCollectionEquality().equals(other.appCustomerServiceInfoResps, appCustomerServiceInfoResps)&&(identical(other.appCustomerServiceInfo, appCustomerServiceInfo) || other.appCustomerServiceInfo == appCustomerServiceInfo));
+  final _this = this as ServiceInfoRespData;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServiceInfoRespData&&(identical(other.showType, _this.showType) || other.showType == _this.showType)&&const DeepCollectionEquality().equals(other.appCustomerServiceInfoResps, _this.appCustomerServiceInfoResps)&&(identical(other.appCustomerServiceInfo, _this.appCustomerServiceInfo) || other.appCustomerServiceInfo == _this.appCustomerServiceInfo));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,showType,const DeepCollectionEquality().hash(appCustomerServiceInfoResps),appCustomerServiceInfo);
+int get hashCode {
+  final _this = this as ServiceInfoRespData;
+  return Object.hash(runtimeType,_this.showType,const DeepCollectionEquality().hash(_this.appCustomerServiceInfoResps),_this.appCustomerServiceInfo);
+}
 
 @override
 String toString() {
-  return 'ServiceInfoRespData(showType: $showType, appCustomerServiceInfoResps: $appCustomerServiceInfoResps, appCustomerServiceInfo: $appCustomerServiceInfo)';
+  final _this = this as ServiceInfoRespData;
+  return 'ServiceInfoRespData(showType: ${_this.showType}, appCustomerServiceInfoResps: ${_this.appCustomerServiceInfoResps}, appCustomerServiceInfo: ${_this.appCustomerServiceInfo})';
 }
 
 
@@ -359,7 +372,7 @@ class _$ServiceInfoRespDataCopyWithImpl<$Res>
 /// Create a copy of ServiceInfoRespData
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? showType = freezed,Object? appCustomerServiceInfoResps = freezed,Object? appCustomerServiceInfo = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(ServiceInfoRespData(
 showType: freezed == showType ? _self.showType : showType // ignore: cast_nullable_to_non_nullable
 as int?,appCustomerServiceInfoResps: freezed == appCustomerServiceInfoResps ? _self.appCustomerServiceInfoResps : appCustomerServiceInfoResps // ignore: cast_nullable_to_non_nullable
 as List<ServiceInfoRespDataAppCustomerServiceInfo>?,appCustomerServiceInfo: freezed == appCustomerServiceInfo ? _self.appCustomerServiceInfo : appCustomerServiceInfo // ignore: cast_nullable_to_non_nullable
@@ -516,7 +529,7 @@ return $default(_that.showType,_that.appCustomerServiceInfoResps,_that.appCustom
 @JsonSerializable()
 
 class _ServiceInfoRespData implements ServiceInfoRespData {
-  const _ServiceInfoRespData({@JsonKey(name: 'showType') this.showType, @JsonKey(name: 'appCustomerServiceInfoResps') final  List<ServiceInfoRespDataAppCustomerServiceInfo>? appCustomerServiceInfoResps, @JsonKey(name: 'appCustomerServiceInfo') this.appCustomerServiceInfo}): _appCustomerServiceInfoResps = appCustomerServiceInfoResps;
+  const _ServiceInfoRespData({@JsonKey(name: 'showType') this.showType, @JsonKey(name: 'appCustomerServiceInfoResps')  List<ServiceInfoRespDataAppCustomerServiceInfo>? appCustomerServiceInfoResps, @JsonKey(name: 'appCustomerServiceInfo') this.appCustomerServiceInfo}): _appCustomerServiceInfoResps = appCustomerServiceInfoResps;
   factory _ServiceInfoRespData.fromJson(Map<String, dynamic> json) => _$ServiceInfoRespDataFromJson(json);
 
 @override@JsonKey(name: 'showType') final  int? showType;
@@ -544,16 +557,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServiceInfoRespData&&(identical(other.showType, showType) || other.showType == showType)&&const DeepCollectionEquality().equals(other._appCustomerServiceInfoResps, _appCustomerServiceInfoResps)&&(identical(other.appCustomerServiceInfo, appCustomerServiceInfo) || other.appCustomerServiceInfo == appCustomerServiceInfo));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServiceInfoRespData&&(identical(other.showType, showType) || other.showType == showType)&&const DeepCollectionEquality().equals(other.appCustomerServiceInfoResps, _appCustomerServiceInfoResps)&&(identical(other.appCustomerServiceInfo, appCustomerServiceInfo) || other.appCustomerServiceInfo == appCustomerServiceInfo));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,showType,const DeepCollectionEquality().hash(_appCustomerServiceInfoResps),appCustomerServiceInfo);
+int get hashCode {
+    return Object.hash(runtimeType,showType,const DeepCollectionEquality().hash(_appCustomerServiceInfoResps),appCustomerServiceInfo);
+}
 
 @override
 String toString() {
-  return 'ServiceInfoRespData(showType: $showType, appCustomerServiceInfoResps: $appCustomerServiceInfoResps, appCustomerServiceInfo: $appCustomerServiceInfo)';
+    return 'ServiceInfoRespData(showType: $showType, appCustomerServiceInfoResps: $appCustomerServiceInfoResps, appCustomerServiceInfo: $appCustomerServiceInfo)';
 }
 
 
@@ -622,16 +637,21 @@ $ServiceInfoRespDataAppCustomerServiceInfoCopyWith<ServiceInfoRespDataAppCustome
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServiceInfoRespDataAppCustomerServiceInfo&&(identical(other.type, type) || other.type == type)&&(identical(other.account, account) || other.account == account)&&(identical(other.title, title) || other.title == title)&&(identical(other.desc, desc) || other.desc == desc)&&const DeepCollectionEquality().equals(other.accountList, accountList));
+  final _this = this as ServiceInfoRespDataAppCustomerServiceInfo;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServiceInfoRespDataAppCustomerServiceInfo&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.account, _this.account) || other.account == _this.account)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.desc, _this.desc) || other.desc == _this.desc)&&const DeepCollectionEquality().equals(other.accountList, _this.accountList));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,type,account,title,desc,const DeepCollectionEquality().hash(accountList));
+int get hashCode {
+  final _this = this as ServiceInfoRespDataAppCustomerServiceInfo;
+  return Object.hash(runtimeType,_this.type,_this.account,_this.title,_this.desc,const DeepCollectionEquality().hash(_this.accountList));
+}
 
 @override
 String toString() {
-  return 'ServiceInfoRespDataAppCustomerServiceInfo(type: $type, account: $account, title: $title, desc: $desc, accountList: $accountList)';
+  final _this = this as ServiceInfoRespDataAppCustomerServiceInfo;
+  return 'ServiceInfoRespDataAppCustomerServiceInfo(type: ${_this.type}, account: ${_this.account}, title: ${_this.title}, desc: ${_this.desc}, accountList: ${_this.accountList})';
 }
 
 
@@ -660,7 +680,7 @@ class _$ServiceInfoRespDataAppCustomerServiceInfoCopyWithImpl<$Res>
 /// Create a copy of ServiceInfoRespDataAppCustomerServiceInfo
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? type = freezed,Object? account = freezed,Object? title = freezed,Object? desc = freezed,Object? accountList = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(ServiceInfoRespDataAppCustomerServiceInfo(
 type: freezed == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as int?,account: freezed == account ? _self.account : account // ignore: cast_nullable_to_non_nullable
 as String?,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -807,7 +827,7 @@ return $default(_that.type,_that.account,_that.title,_that.desc,_that.accountLis
 @JsonSerializable()
 
 class _ServiceInfoRespDataAppCustomerServiceInfo implements ServiceInfoRespDataAppCustomerServiceInfo {
-  const _ServiceInfoRespDataAppCustomerServiceInfo({@JsonKey(name: 'type') this.type, @JsonKey(name: 'account') this.account, @JsonKey(name: 'title') this.title, @JsonKey(name: 'desc') this.desc, @JsonKey(name: 'accountList') final  List<ServiceInfoRespDataAppCustomerServiceInfo>? accountList}): _accountList = accountList;
+  const _ServiceInfoRespDataAppCustomerServiceInfo({@JsonKey(name: 'type') this.type, @JsonKey(name: 'account') this.account, @JsonKey(name: 'title') this.title, @JsonKey(name: 'desc') this.desc, @JsonKey(name: 'accountList')  List<ServiceInfoRespDataAppCustomerServiceInfo>? accountList}): _accountList = accountList;
   factory _ServiceInfoRespDataAppCustomerServiceInfo.fromJson(Map<String, dynamic> json) => _$ServiceInfoRespDataAppCustomerServiceInfoFromJson(json);
 
 @override@JsonKey(name: 'type') final  int? type;
@@ -837,16 +857,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServiceInfoRespDataAppCustomerServiceInfo&&(identical(other.type, type) || other.type == type)&&(identical(other.account, account) || other.account == account)&&(identical(other.title, title) || other.title == title)&&(identical(other.desc, desc) || other.desc == desc)&&const DeepCollectionEquality().equals(other._accountList, _accountList));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServiceInfoRespDataAppCustomerServiceInfo&&(identical(other.type, type) || other.type == type)&&(identical(other.account, account) || other.account == account)&&(identical(other.title, title) || other.title == title)&&(identical(other.desc, desc) || other.desc == desc)&&const DeepCollectionEquality().equals(other.accountList, _accountList));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,type,account,title,desc,const DeepCollectionEquality().hash(_accountList));
+int get hashCode {
+    return Object.hash(runtimeType,type,account,title,desc,const DeepCollectionEquality().hash(_accountList));
+}
 
 @override
 String toString() {
-  return 'ServiceInfoRespDataAppCustomerServiceInfo(type: $type, account: $account, title: $title, desc: $desc, accountList: $accountList)';
+    return 'ServiceInfoRespDataAppCustomerServiceInfo(type: $type, account: $account, title: $title, desc: $desc, accountList: $accountList)';
 }
 
 

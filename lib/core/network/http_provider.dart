@@ -11,26 +11,23 @@ import 'package:easy_moni/entities/base_result.dart';
 import 'package:easy_moni/services/auth_storage.dart';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
-import 'package:talker/talker.dart';
 
 /// 统一网络请求入口，负责请求配置、加密请求体、响应解析和登录态失效处理。
 class HttpProvider {
   final Dio _dio;
-  final Talker _talker;
   final EnvironmentConfig _config;
   final HeaderInterrepter _headerInterceptor;
   bool _isRedirectingToLogin = false;
 
   HttpProvider._({
     required this._dio,
-    required this._talker,
     required this._config,
     required this._headerInterceptor,
   });
 
   static late HttpProvider instance;
 
-  static void init({required Talker talker}) {
+  static void init() {
     final config = EnvironmentConfig.current;
     final dio = Dio(
       BaseOptions(
@@ -46,7 +43,6 @@ class HttpProvider {
 
     instance = HttpProvider._(
       dio: dio,
-      talker: talker,
       config: config,
       headerInterceptor: headerInterceptor,
     );
@@ -200,8 +196,6 @@ class HttpProvider {
           map[key.toString()] = sourceMap[key];
         }
       } catch (e) {
-        _talker.error('Map conversion error: $e');
-        _talker.error('Map conversion stack: ${StackTrace.current}');
         return HttpResult.error(
           HttpResultStatus.unKnown,
           'Map conversion error: $e',
@@ -228,7 +222,6 @@ class HttpProvider {
         }
         return HttpResult.success(fromJson(map), cancelToken: cancelToken);
       } catch (e, stack) {
-        _talker.error('Parse error: $e\n$stack');
         return HttpResult.error(
           HttpResultStatus.unKnown,
           'Parse error: $e',
@@ -236,10 +229,8 @@ class HttpProvider {
         );
       }
     } on DioException catch (e) {
-      _talker.error('DioException: $e');
       return _handleDioException(e, cancelToken);
     } catch (e, stack) {
-      _talker.error('Unexpected error: $e\n$stack');
       return HttpResult.error(
         HttpResultStatus.unKnown,
         e.toString(),
@@ -288,8 +279,6 @@ class HttpProvider {
           map[key.toString()] = sourceMap[key];
         }
       } catch (e) {
-        _talker.error('Map conversion error: $e');
-        _talker.error('Map conversion stack: ${StackTrace.current}');
         return HttpResult.error(
           HttpResultStatus.unKnown,
           'Map conversion error: $e',
@@ -310,7 +299,6 @@ class HttpProvider {
                 return HttpResult.success(nullValue, cancelToken: cancelToken);
               } catch (_) {
                 // T 不可空，返回错误
-                _talker.debug('POST data is null and T is not nullable');
                 return HttpResult.success(
                   fromJson(null),
                   cancelToken: cancelToken,
@@ -332,7 +320,6 @@ class HttpProvider {
         }
         return HttpResult.success(fromJson(map), cancelToken: cancelToken);
       } catch (e, stack) {
-        _talker.error('Parse error: $e\n$stack');
         return HttpResult.error(
           HttpResultStatus.unKnown,
           'Parse error: $e',
@@ -340,10 +327,8 @@ class HttpProvider {
         );
       }
     } on DioException catch (e) {
-      _talker.error('DioException: $e');
       return _handleDioException(e, cancelToken);
     } catch (e, stack) {
-      _talker.error('Unexpected error: $e\n$stack');
       return HttpResult.error(
         HttpResultStatus.unKnown,
         e.toString(),
@@ -438,7 +423,6 @@ class HttpProvider {
     } on DioException catch (e) {
       return _handleListDioException(e, cancelToken);
     } catch (e) {
-      _talker.error('Unexpected error: $e');
       return HttpListResult.error(
         HttpResultStatus.unKnown,
         e.toString(),

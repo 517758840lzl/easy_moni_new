@@ -19,10 +19,6 @@ dependencies:
   # Networking
   dio: 5.9.2
 
-  # Logging
-  talker: 5.1.17
-  talker_riverpod_logger: 5.1.17
-
   # UI Components
   pull_to_refresh: 2.0.0
   flutter_svg: 2.2.3

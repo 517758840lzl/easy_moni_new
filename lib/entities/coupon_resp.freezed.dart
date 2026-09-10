@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'coupon_resp.dart';
@@ -9,6 +9,7 @@ part of 'coupon_resp.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $CouponRespCopyWith<CouponResp> get copyWith => _$CouponRespCopyWithImpl<CouponR
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CouponResp&&(identical(other.code, code) || other.code == code)&&(identical(other.data, data) || other.data == data)&&(identical(other.msg, msg) || other.msg == msg));
+  final _this = this as CouponResp;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CouponResp&&(identical(other.code, _this.code) || other.code == _this.code)&&(identical(other.data, _this.data) || other.data == _this.data)&&(identical(other.msg, _this.msg) || other.msg == _this.msg));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,code,data,msg);
+int get hashCode {
+  final _this = this as CouponResp;
+  return Object.hash(runtimeType,_this.code,_this.data,_this.msg);
+}
 
 @override
 String toString() {
-  return 'CouponResp(code: $code, data: $data, msg: $msg)';
+  final _this = this as CouponResp;
+  return 'CouponResp(code: ${_this.code}, data: ${_this.data}, msg: ${_this.msg})';
 }
 
 
@@ -66,7 +72,7 @@ class _$CouponRespCopyWithImpl<$Res>
 /// Create a copy of CouponResp
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? code = freezed,Object? data = freezed,Object? msg = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(CouponResp(
 code: freezed == code ? _self.code : code // ignore: cast_nullable_to_non_nullable
 as int?,data: freezed == data ? _self.data : data // ignore: cast_nullable_to_non_nullable
 as CouponData?,msg: freezed == msg ? _self.msg : msg // ignore: cast_nullable_to_non_nullable
@@ -243,16 +249,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CouponResp&&(identical(other.code, code) || other.code == code)&&(identical(other.data, data) || other.data == data)&&(identical(other.msg, msg) || other.msg == msg));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CouponResp&&(identical(other.code, code) || other.code == code)&&(identical(other.data, data) || other.data == data)&&(identical(other.msg, msg) || other.msg == msg));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,code,data,msg);
+int get hashCode {
+    return Object.hash(runtimeType,code,data,msg);
+}
 
 @override
 String toString() {
-  return 'CouponResp(code: $code, data: $data, msg: $msg)';
+    return 'CouponResp(code: $code, data: $data, msg: $msg)';
 }
 
 
@@ -321,16 +329,21 @@ $CouponDataCopyWith<CouponData> get copyWith => _$CouponDataCopyWithImpl<CouponD
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CouponData&&const DeepCollectionEquality().equals(other.coupons, coupons)&&(identical(other.showCouponCard, showCouponCard) || other.showCouponCard == showCouponCard));
+  final _this = this as CouponData;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CouponData&&const DeepCollectionEquality().equals(other.coupons, _this.coupons)&&(identical(other.showCouponCard, _this.showCouponCard) || other.showCouponCard == _this.showCouponCard));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(coupons),showCouponCard);
+int get hashCode {
+  final _this = this as CouponData;
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.coupons),_this.showCouponCard);
+}
 
 @override
 String toString() {
-  return 'CouponData(coupons: $coupons, showCouponCard: $showCouponCard)';
+  final _this = this as CouponData;
+  return 'CouponData(coupons: ${_this.coupons}, showCouponCard: ${_this.showCouponCard})';
 }
 
 
@@ -359,7 +372,7 @@ class _$CouponDataCopyWithImpl<$Res>
 /// Create a copy of CouponData
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? coupons = freezed,Object? showCouponCard = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(CouponData(
 coupons: freezed == coupons ? _self.coupons : coupons // ignore: cast_nullable_to_non_nullable
 as List<CouponItem>?,showCouponCard: freezed == showCouponCard ? _self.showCouponCard : showCouponCard // ignore: cast_nullable_to_non_nullable
 as int?,
@@ -503,7 +516,7 @@ return $default(_that.coupons,_that.showCouponCard);case _:
 @JsonSerializable()
 
 class _CouponData implements CouponData {
-  const _CouponData({@JsonKey(name: 'coupons') final  List<CouponItem>? coupons, @JsonKey(name: 'showCouponCard') this.showCouponCard}): _coupons = coupons;
+  const _CouponData({@JsonKey(name: 'coupons')  List<CouponItem>? coupons, @JsonKey(name: 'showCouponCard') this.showCouponCard}): _coupons = coupons;
   factory _CouponData.fromJson(Map<String, dynamic> json) => _$CouponDataFromJson(json);
 
  final  List<CouponItem>? _coupons;
@@ -530,16 +543,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CouponData&&const DeepCollectionEquality().equals(other._coupons, _coupons)&&(identical(other.showCouponCard, showCouponCard) || other.showCouponCard == showCouponCard));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CouponData&&const DeepCollectionEquality().equals(other.coupons, _coupons)&&(identical(other.showCouponCard, showCouponCard) || other.showCouponCard == showCouponCard));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_coupons),showCouponCard);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_coupons),showCouponCard);
+}
 
 @override
 String toString() {
-  return 'CouponData(coupons: $coupons, showCouponCard: $showCouponCard)';
+    return 'CouponData(coupons: $coupons, showCouponCard: $showCouponCard)';
 }
 
 
@@ -595,16 +610,21 @@ $CouponItemCopyWith<CouponItem> get copyWith => _$CouponItemCopyWithImpl<CouponI
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CouponItem&&(identical(other.couponId, couponId) || other.couponId == couponId)&&(identical(other.description, description) || other.description == description)&&(identical(other.discountType, discountType) || other.discountType == discountType)&&(identical(other.discountValue, discountValue) || other.discountValue == discountValue)&&(identical(other.maxDiscountValue, maxDiscountValue) || other.maxDiscountValue == maxDiscountValue)&&(identical(other.minDiscountValue, minDiscountValue) || other.minDiscountValue == minDiscountValue)&&(identical(other.repaymentType, repaymentType) || other.repaymentType == repaymentType)&&(identical(other.status, status) || other.status == status)&&(identical(other.summary, summary) || other.summary == summary)&&(identical(other.title, title) || other.title == title)&&(identical(other.type, type) || other.type == type)&&(identical(other.validFrom, validFrom) || other.validFrom == validFrom)&&(identical(other.validTo, validTo) || other.validTo == validTo));
+  final _this = this as CouponItem;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CouponItem&&(identical(other.couponId, _this.couponId) || other.couponId == _this.couponId)&&(identical(other.description, _this.description) || other.description == _this.description)&&(identical(other.discountType, _this.discountType) || other.discountType == _this.discountType)&&(identical(other.discountValue, _this.discountValue) || other.discountValue == _this.discountValue)&&(identical(other.maxDiscountValue, _this.maxDiscountValue) || other.maxDiscountValue == _this.maxDiscountValue)&&(identical(other.minDiscountValue, _this.minDiscountValue) || other.minDiscountValue == _this.minDiscountValue)&&(identical(other.repaymentType, _this.repaymentType) || other.repaymentType == _this.repaymentType)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.summary, _this.summary) || other.summary == _this.summary)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.validFrom, _this.validFrom) || other.validFrom == _this.validFrom)&&(identical(other.validTo, _this.validTo) || other.validTo == _this.validTo));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,couponId,description,discountType,discountValue,maxDiscountValue,minDiscountValue,repaymentType,status,summary,title,type,validFrom,validTo);
+int get hashCode {
+  final _this = this as CouponItem;
+  return Object.hash(runtimeType,_this.couponId,_this.description,_this.discountType,_this.discountValue,_this.maxDiscountValue,_this.minDiscountValue,_this.repaymentType,_this.status,_this.summary,_this.title,_this.type,_this.validFrom,_this.validTo);
+}
 
 @override
 String toString() {
-  return 'CouponItem(couponId: $couponId, description: $description, discountType: $discountType, discountValue: $discountValue, maxDiscountValue: $maxDiscountValue, minDiscountValue: $minDiscountValue, repaymentType: $repaymentType, status: $status, summary: $summary, title: $title, type: $type, validFrom: $validFrom, validTo: $validTo)';
+  final _this = this as CouponItem;
+  return 'CouponItem(couponId: ${_this.couponId}, description: ${_this.description}, discountType: ${_this.discountType}, discountValue: ${_this.discountValue}, maxDiscountValue: ${_this.maxDiscountValue}, minDiscountValue: ${_this.minDiscountValue}, repaymentType: ${_this.repaymentType}, status: ${_this.status}, summary: ${_this.summary}, title: ${_this.title}, type: ${_this.type}, validFrom: ${_this.validFrom}, validTo: ${_this.validTo})';
 }
 
 
@@ -633,7 +653,7 @@ class _$CouponItemCopyWithImpl<$Res>
 /// Create a copy of CouponItem
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? couponId = freezed,Object? description = freezed,Object? discountType = freezed,Object? discountValue = freezed,Object? maxDiscountValue = freezed,Object? minDiscountValue = freezed,Object? repaymentType = freezed,Object? status = freezed,Object? summary = freezed,Object? title = freezed,Object? type = freezed,Object? validFrom = freezed,Object? validTo = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(CouponItem(
 couponId: freezed == couponId ? _self.couponId : couponId // ignore: cast_nullable_to_non_nullable
 as int?,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String?,discountType: freezed == discountType ? _self.discountType : discountType // ignore: cast_nullable_to_non_nullable
@@ -818,16 +838,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CouponItem&&(identical(other.couponId, couponId) || other.couponId == couponId)&&(identical(other.description, description) || other.description == description)&&(identical(other.discountType, discountType) || other.discountType == discountType)&&(identical(other.discountValue, discountValue) || other.discountValue == discountValue)&&(identical(other.maxDiscountValue, maxDiscountValue) || other.maxDiscountValue == maxDiscountValue)&&(identical(other.minDiscountValue, minDiscountValue) || other.minDiscountValue == minDiscountValue)&&(identical(other.repaymentType, repaymentType) || other.repaymentType == repaymentType)&&(identical(other.status, status) || other.status == status)&&(identical(other.summary, summary) || other.summary == summary)&&(identical(other.title, title) || other.title == title)&&(identical(other.type, type) || other.type == type)&&(identical(other.validFrom, validFrom) || other.validFrom == validFrom)&&(identical(other.validTo, validTo) || other.validTo == validTo));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CouponItem&&(identical(other.couponId, couponId) || other.couponId == couponId)&&(identical(other.description, description) || other.description == description)&&(identical(other.discountType, discountType) || other.discountType == discountType)&&(identical(other.discountValue, discountValue) || other.discountValue == discountValue)&&(identical(other.maxDiscountValue, maxDiscountValue) || other.maxDiscountValue == maxDiscountValue)&&(identical(other.minDiscountValue, minDiscountValue) || other.minDiscountValue == minDiscountValue)&&(identical(other.repaymentType, repaymentType) || other.repaymentType == repaymentType)&&(identical(other.status, status) || other.status == status)&&(identical(other.summary, summary) || other.summary == summary)&&(identical(other.title, title) || other.title == title)&&(identical(other.type, type) || other.type == type)&&(identical(other.validFrom, validFrom) || other.validFrom == validFrom)&&(identical(other.validTo, validTo) || other.validTo == validTo));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,couponId,description,discountType,discountValue,maxDiscountValue,minDiscountValue,repaymentType,status,summary,title,type,validFrom,validTo);
+int get hashCode {
+    return Object.hash(runtimeType,couponId,description,discountType,discountValue,maxDiscountValue,minDiscountValue,repaymentType,status,summary,title,type,validFrom,validTo);
+}
 
 @override
 String toString() {
-  return 'CouponItem(couponId: $couponId, description: $description, discountType: $discountType, discountValue: $discountValue, maxDiscountValue: $maxDiscountValue, minDiscountValue: $minDiscountValue, repaymentType: $repaymentType, status: $status, summary: $summary, title: $title, type: $type, validFrom: $validFrom, validTo: $validTo)';
+    return 'CouponItem(couponId: $couponId, description: $description, discountType: $discountType, discountValue: $discountValue, maxDiscountValue: $maxDiscountValue, minDiscountValue: $minDiscountValue, repaymentType: $repaymentType, status: $status, summary: $summary, title: $title, type: $type, validFrom: $validFrom, validTo: $validTo)';
 }
 
 

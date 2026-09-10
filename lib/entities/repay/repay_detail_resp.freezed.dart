@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'repay_detail_resp.dart';
@@ -9,6 +9,7 @@ part of 'repay_detail_resp.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $RepayDetailRespCopyWith<RepayDetailResp> get copyWith => _$RepayDetailRespCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RepayDetailResp&&(identical(other.code, code) || other.code == code)&&(identical(other.msg, msg) || other.msg == msg)&&(identical(other.data, data) || other.data == data));
+  final _this = this as RepayDetailResp;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RepayDetailResp&&(identical(other.code, _this.code) || other.code == _this.code)&&(identical(other.msg, _this.msg) || other.msg == _this.msg)&&(identical(other.data, _this.data) || other.data == _this.data));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,code,msg,data);
+int get hashCode {
+  final _this = this as RepayDetailResp;
+  return Object.hash(runtimeType,_this.code,_this.msg,_this.data);
+}
 
 @override
 String toString() {
-  return 'RepayDetailResp(code: $code, msg: $msg, data: $data)';
+  final _this = this as RepayDetailResp;
+  return 'RepayDetailResp(code: ${_this.code}, msg: ${_this.msg}, data: ${_this.data})';
 }
 
 
@@ -66,7 +72,7 @@ class _$RepayDetailRespCopyWithImpl<$Res>
 /// Create a copy of RepayDetailResp
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? code = freezed,Object? msg = freezed,Object? data = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(RepayDetailResp(
 code: freezed == code ? _self.code : code // ignore: cast_nullable_to_non_nullable
 as int?,msg: freezed == msg ? _self.msg : msg // ignore: cast_nullable_to_non_nullable
 as String?,data: freezed == data ? _self.data : data // ignore: cast_nullable_to_non_nullable
@@ -243,16 +249,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RepayDetailResp&&(identical(other.code, code) || other.code == code)&&(identical(other.msg, msg) || other.msg == msg)&&(identical(other.data, data) || other.data == data));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _RepayDetailResp&&(identical(other.code, code) || other.code == code)&&(identical(other.msg, msg) || other.msg == msg)&&(identical(other.data, data) || other.data == data));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,code,msg,data);
+int get hashCode {
+    return Object.hash(runtimeType,code,msg,data);
+}
 
 @override
 String toString() {
-  return 'RepayDetailResp(code: $code, msg: $msg, data: $data)';
+    return 'RepayDetailResp(code: $code, msg: $msg, data: $data)';
 }
 
 
@@ -321,16 +329,21 @@ $RepayDetailRespDataCopyWith<RepayDetailRespData> get copyWith => _$RepayDetailR
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RepayDetailRespData&&(identical(other.totalSureRepayAmounts, totalSureRepayAmounts) || other.totalSureRepayAmounts == totalSureRepayAmounts)&&(identical(other.sureRepayPeriods, sureRepayPeriods) || other.sureRepayPeriods == sureRepayPeriods)&&(identical(other.remainingDay, remainingDay) || other.remainingDay == remainingDay)&&(identical(other.extensionSwitch, extensionSwitch) || other.extensionSwitch == extensionSwitch)&&(identical(other.isExtensionSwitch, isExtensionSwitch) || other.isExtensionSwitch == isExtensionSwitch)&&const DeepCollectionEquality().equals(other.loanOrderDetails, loanOrderDetails)&&(identical(other.totalMinRepayAmounts, totalMinRepayAmounts) || other.totalMinRepayAmounts == totalMinRepayAmounts)&&(identical(other.waivedAmount, waivedAmount) || other.waivedAmount == waivedAmount));
+  final _this = this as RepayDetailRespData;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RepayDetailRespData&&(identical(other.totalSureRepayAmounts, _this.totalSureRepayAmounts) || other.totalSureRepayAmounts == _this.totalSureRepayAmounts)&&(identical(other.sureRepayPeriods, _this.sureRepayPeriods) || other.sureRepayPeriods == _this.sureRepayPeriods)&&(identical(other.remainingDay, _this.remainingDay) || other.remainingDay == _this.remainingDay)&&(identical(other.extensionSwitch, _this.extensionSwitch) || other.extensionSwitch == _this.extensionSwitch)&&(identical(other.isExtensionSwitch, _this.isExtensionSwitch) || other.isExtensionSwitch == _this.isExtensionSwitch)&&const DeepCollectionEquality().equals(other.loanOrderDetails, _this.loanOrderDetails)&&(identical(other.totalMinRepayAmounts, _this.totalMinRepayAmounts) || other.totalMinRepayAmounts == _this.totalMinRepayAmounts)&&(identical(other.waivedAmount, _this.waivedAmount) || other.waivedAmount == _this.waivedAmount));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,totalSureRepayAmounts,sureRepayPeriods,remainingDay,extensionSwitch,isExtensionSwitch,const DeepCollectionEquality().hash(loanOrderDetails),totalMinRepayAmounts,waivedAmount);
+int get hashCode {
+  final _this = this as RepayDetailRespData;
+  return Object.hash(runtimeType,_this.totalSureRepayAmounts,_this.sureRepayPeriods,_this.remainingDay,_this.extensionSwitch,_this.isExtensionSwitch,const DeepCollectionEquality().hash(_this.loanOrderDetails),_this.totalMinRepayAmounts,_this.waivedAmount);
+}
 
 @override
 String toString() {
-  return 'RepayDetailRespData(totalSureRepayAmounts: $totalSureRepayAmounts, sureRepayPeriods: $sureRepayPeriods, remainingDay: $remainingDay, extensionSwitch: $extensionSwitch, isExtensionSwitch: $isExtensionSwitch, loanOrderDetails: $loanOrderDetails, totalMinRepayAmounts: $totalMinRepayAmounts, waivedAmount: $waivedAmount)';
+  final _this = this as RepayDetailRespData;
+  return 'RepayDetailRespData(totalSureRepayAmounts: ${_this.totalSureRepayAmounts}, sureRepayPeriods: ${_this.sureRepayPeriods}, remainingDay: ${_this.remainingDay}, extensionSwitch: ${_this.extensionSwitch}, isExtensionSwitch: ${_this.isExtensionSwitch}, loanOrderDetails: ${_this.loanOrderDetails}, totalMinRepayAmounts: ${_this.totalMinRepayAmounts}, waivedAmount: ${_this.waivedAmount})';
 }
 
 
@@ -359,7 +372,7 @@ class _$RepayDetailRespDataCopyWithImpl<$Res>
 /// Create a copy of RepayDetailRespData
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? totalSureRepayAmounts = freezed,Object? sureRepayPeriods = freezed,Object? remainingDay = freezed,Object? extensionSwitch = freezed,Object? isExtensionSwitch = freezed,Object? loanOrderDetails = freezed,Object? totalMinRepayAmounts = freezed,Object? waivedAmount = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(RepayDetailRespData(
 totalSureRepayAmounts: freezed == totalSureRepayAmounts ? _self.totalSureRepayAmounts : totalSureRepayAmounts // ignore: cast_nullable_to_non_nullable
 as num?,sureRepayPeriods: freezed == sureRepayPeriods ? _self.sureRepayPeriods : sureRepayPeriods // ignore: cast_nullable_to_non_nullable
 as int?,remainingDay: freezed == remainingDay ? _self.remainingDay : remainingDay // ignore: cast_nullable_to_non_nullable
@@ -509,7 +522,7 @@ return $default(_that.totalSureRepayAmounts,_that.sureRepayPeriods,_that.remaini
 @JsonSerializable()
 
 class _RepayDetailRespData implements RepayDetailRespData {
-  const _RepayDetailRespData({@JsonKey(name: 'totalSureRepayAmounts') this.totalSureRepayAmounts, @JsonKey(name: 'sureRepayPeriods') this.sureRepayPeriods, @JsonKey(name: 'remainingDay') this.remainingDay, @JsonKey(name: 'extensionSwitch') this.extensionSwitch, @JsonKey(name: 'isExtensionSwitch') this.isExtensionSwitch, @JsonKey(name: 'loanOrderDetails') final  List<RepayDetailRespDataLoanOrderDetails>? loanOrderDetails, @JsonKey(name: 'totalMinRepayAmounts') this.totalMinRepayAmounts, @JsonKey(name: 'waivedAmount') this.waivedAmount}): _loanOrderDetails = loanOrderDetails;
+  const _RepayDetailRespData({@JsonKey(name: 'totalSureRepayAmounts') this.totalSureRepayAmounts, @JsonKey(name: 'sureRepayPeriods') this.sureRepayPeriods, @JsonKey(name: 'remainingDay') this.remainingDay, @JsonKey(name: 'extensionSwitch') this.extensionSwitch, @JsonKey(name: 'isExtensionSwitch') this.isExtensionSwitch, @JsonKey(name: 'loanOrderDetails')  List<RepayDetailRespDataLoanOrderDetails>? loanOrderDetails, @JsonKey(name: 'totalMinRepayAmounts') this.totalMinRepayAmounts, @JsonKey(name: 'waivedAmount') this.waivedAmount}): _loanOrderDetails = loanOrderDetails;
   factory _RepayDetailRespData.fromJson(Map<String, dynamic> json) => _$RepayDetailRespDataFromJson(json);
 
 @override@JsonKey(name: 'totalSureRepayAmounts') final  num? totalSureRepayAmounts;
@@ -542,16 +555,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RepayDetailRespData&&(identical(other.totalSureRepayAmounts, totalSureRepayAmounts) || other.totalSureRepayAmounts == totalSureRepayAmounts)&&(identical(other.sureRepayPeriods, sureRepayPeriods) || other.sureRepayPeriods == sureRepayPeriods)&&(identical(other.remainingDay, remainingDay) || other.remainingDay == remainingDay)&&(identical(other.extensionSwitch, extensionSwitch) || other.extensionSwitch == extensionSwitch)&&(identical(other.isExtensionSwitch, isExtensionSwitch) || other.isExtensionSwitch == isExtensionSwitch)&&const DeepCollectionEquality().equals(other._loanOrderDetails, _loanOrderDetails)&&(identical(other.totalMinRepayAmounts, totalMinRepayAmounts) || other.totalMinRepayAmounts == totalMinRepayAmounts)&&(identical(other.waivedAmount, waivedAmount) || other.waivedAmount == waivedAmount));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _RepayDetailRespData&&(identical(other.totalSureRepayAmounts, totalSureRepayAmounts) || other.totalSureRepayAmounts == totalSureRepayAmounts)&&(identical(other.sureRepayPeriods, sureRepayPeriods) || other.sureRepayPeriods == sureRepayPeriods)&&(identical(other.remainingDay, remainingDay) || other.remainingDay == remainingDay)&&(identical(other.extensionSwitch, extensionSwitch) || other.extensionSwitch == extensionSwitch)&&(identical(other.isExtensionSwitch, isExtensionSwitch) || other.isExtensionSwitch == isExtensionSwitch)&&const DeepCollectionEquality().equals(other.loanOrderDetails, _loanOrderDetails)&&(identical(other.totalMinRepayAmounts, totalMinRepayAmounts) || other.totalMinRepayAmounts == totalMinRepayAmounts)&&(identical(other.waivedAmount, waivedAmount) || other.waivedAmount == waivedAmount));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,totalSureRepayAmounts,sureRepayPeriods,remainingDay,extensionSwitch,isExtensionSwitch,const DeepCollectionEquality().hash(_loanOrderDetails),totalMinRepayAmounts,waivedAmount);
+int get hashCode {
+    return Object.hash(runtimeType,totalSureRepayAmounts,sureRepayPeriods,remainingDay,extensionSwitch,isExtensionSwitch,const DeepCollectionEquality().hash(_loanOrderDetails),totalMinRepayAmounts,waivedAmount);
+}
 
 @override
 String toString() {
-  return 'RepayDetailRespData(totalSureRepayAmounts: $totalSureRepayAmounts, sureRepayPeriods: $sureRepayPeriods, remainingDay: $remainingDay, extensionSwitch: $extensionSwitch, isExtensionSwitch: $isExtensionSwitch, loanOrderDetails: $loanOrderDetails, totalMinRepayAmounts: $totalMinRepayAmounts, waivedAmount: $waivedAmount)';
+    return 'RepayDetailRespData(totalSureRepayAmounts: $totalSureRepayAmounts, sureRepayPeriods: $sureRepayPeriods, remainingDay: $remainingDay, extensionSwitch: $extensionSwitch, isExtensionSwitch: $isExtensionSwitch, loanOrderDetails: $loanOrderDetails, totalMinRepayAmounts: $totalMinRepayAmounts, waivedAmount: $waivedAmount)';
 }
 
 
@@ -613,16 +628,21 @@ $RepayDetailRespDataLoanOrderDetailsCopyWith<RepayDetailRespDataLoanOrderDetails
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RepayDetailRespDataLoanOrderDetails&&(identical(other.appOrderId, appOrderId) || other.appOrderId == appOrderId)&&(identical(other.productCode, productCode) || other.productCode == productCode)&&(identical(other.productLogo, productLogo) || other.productLogo == productLogo)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.loanAmount, loanAmount) || other.loanAmount == loanAmount)&&(identical(other.installmentId, installmentId) || other.installmentId == installmentId)&&(identical(other.term, term) || other.term == term)&&(identical(other.daysPerTerm, daysPerTerm) || other.daysPerTerm == daysPerTerm)&&(identical(other.repayDate, repayDate) || other.repayDate == repayDate)&&(identical(other.remainingDay, remainingDay) || other.remainingDay == remainingDay)&&(identical(other.receiptAmount, receiptAmount) || other.receiptAmount == receiptAmount)&&(identical(other.serviceFee, serviceFee) || other.serviceFee == serviceFee)&&(identical(other.repaymentAmount, repaymentAmount) || other.repaymentAmount == repaymentAmount)&&(identical(other.waivedAmount, waivedAmount) || other.waivedAmount == waivedAmount)&&(identical(other.installmentNum, installmentNum) || other.installmentNum == installmentNum)&&(identical(other.bankCardNo, bankCardNo) || other.bankCardNo == bankCardNo)&&(identical(other.bankAccountId, bankAccountId) || other.bankAccountId == bankAccountId)&&(identical(other.bankAccountType, bankAccountType) || other.bankAccountType == bankAccountType)&&(identical(other.bankName, bankName) || other.bankName == bankName)&&(identical(other.orderStatus, orderStatus) || other.orderStatus == orderStatus)&&(identical(other.orderStatusDesc, orderStatusDesc) || other.orderStatusDesc == orderStatusDesc)&&(identical(other.updateTime, updateTime) || other.updateTime == updateTime)&&(identical(other.acqChannel, acqChannel) || other.acqChannel == acqChannel)&&(identical(other.closeTime, closeTime) || other.closeTime == closeTime)&&(identical(other.rejectTime, rejectTime) || other.rejectTime == rejectTime)&&(identical(other.interest, interest) || other.interest == interest)&&(identical(other.overdueInterest, overdueInterest) || other.overdueInterest == overdueInterest));
+  final _this = this as RepayDetailRespDataLoanOrderDetails;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RepayDetailRespDataLoanOrderDetails&&(identical(other.appOrderId, _this.appOrderId) || other.appOrderId == _this.appOrderId)&&(identical(other.productCode, _this.productCode) || other.productCode == _this.productCode)&&(identical(other.productLogo, _this.productLogo) || other.productLogo == _this.productLogo)&&(identical(other.productName, _this.productName) || other.productName == _this.productName)&&(identical(other.loanAmount, _this.loanAmount) || other.loanAmount == _this.loanAmount)&&(identical(other.installmentId, _this.installmentId) || other.installmentId == _this.installmentId)&&(identical(other.term, _this.term) || other.term == _this.term)&&(identical(other.daysPerTerm, _this.daysPerTerm) || other.daysPerTerm == _this.daysPerTerm)&&(identical(other.repayDate, _this.repayDate) || other.repayDate == _this.repayDate)&&(identical(other.remainingDay, _this.remainingDay) || other.remainingDay == _this.remainingDay)&&(identical(other.receiptAmount, _this.receiptAmount) || other.receiptAmount == _this.receiptAmount)&&(identical(other.serviceFee, _this.serviceFee) || other.serviceFee == _this.serviceFee)&&(identical(other.repaymentAmount, _this.repaymentAmount) || other.repaymentAmount == _this.repaymentAmount)&&(identical(other.waivedAmount, _this.waivedAmount) || other.waivedAmount == _this.waivedAmount)&&(identical(other.installmentNum, _this.installmentNum) || other.installmentNum == _this.installmentNum)&&(identical(other.bankCardNo, _this.bankCardNo) || other.bankCardNo == _this.bankCardNo)&&(identical(other.bankAccountId, _this.bankAccountId) || other.bankAccountId == _this.bankAccountId)&&(identical(other.bankAccountType, _this.bankAccountType) || other.bankAccountType == _this.bankAccountType)&&(identical(other.bankName, _this.bankName) || other.bankName == _this.bankName)&&(identical(other.orderStatus, _this.orderStatus) || other.orderStatus == _this.orderStatus)&&(identical(other.orderStatusDesc, _this.orderStatusDesc) || other.orderStatusDesc == _this.orderStatusDesc)&&(identical(other.updateTime, _this.updateTime) || other.updateTime == _this.updateTime)&&(identical(other.acqChannel, _this.acqChannel) || other.acqChannel == _this.acqChannel)&&(identical(other.closeTime, _this.closeTime) || other.closeTime == _this.closeTime)&&(identical(other.rejectTime, _this.rejectTime) || other.rejectTime == _this.rejectTime)&&(identical(other.interest, _this.interest) || other.interest == _this.interest)&&(identical(other.overdueInterest, _this.overdueInterest) || other.overdueInterest == _this.overdueInterest));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,appOrderId,productCode,productLogo,productName,loanAmount,installmentId,term,daysPerTerm,repayDate,remainingDay,receiptAmount,serviceFee,repaymentAmount,waivedAmount,installmentNum,bankCardNo,bankAccountId,bankAccountType,bankName,orderStatus,orderStatusDesc,updateTime,acqChannel,closeTime,rejectTime,interest,overdueInterest]);
+int get hashCode {
+  final _this = this as RepayDetailRespDataLoanOrderDetails;
+  return Object.hashAll([runtimeType,_this.appOrderId,_this.productCode,_this.productLogo,_this.productName,_this.loanAmount,_this.installmentId,_this.term,_this.daysPerTerm,_this.repayDate,_this.remainingDay,_this.receiptAmount,_this.serviceFee,_this.repaymentAmount,_this.waivedAmount,_this.installmentNum,_this.bankCardNo,_this.bankAccountId,_this.bankAccountType,_this.bankName,_this.orderStatus,_this.orderStatusDesc,_this.updateTime,_this.acqChannel,_this.closeTime,_this.rejectTime,_this.interest,_this.overdueInterest]);
+}
 
 @override
 String toString() {
-  return 'RepayDetailRespDataLoanOrderDetails(appOrderId: $appOrderId, productCode: $productCode, productLogo: $productLogo, productName: $productName, loanAmount: $loanAmount, installmentId: $installmentId, term: $term, daysPerTerm: $daysPerTerm, repayDate: $repayDate, remainingDay: $remainingDay, receiptAmount: $receiptAmount, serviceFee: $serviceFee, repaymentAmount: $repaymentAmount, waivedAmount: $waivedAmount, installmentNum: $installmentNum, bankCardNo: $bankCardNo, bankAccountId: $bankAccountId, bankAccountType: $bankAccountType, bankName: $bankName, orderStatus: $orderStatus, orderStatusDesc: $orderStatusDesc, updateTime: $updateTime, acqChannel: $acqChannel, closeTime: $closeTime, rejectTime: $rejectTime, interest: $interest, overdueInterest: $overdueInterest)';
+  final _this = this as RepayDetailRespDataLoanOrderDetails;
+  return 'RepayDetailRespDataLoanOrderDetails(appOrderId: ${_this.appOrderId}, productCode: ${_this.productCode}, productLogo: ${_this.productLogo}, productName: ${_this.productName}, loanAmount: ${_this.loanAmount}, installmentId: ${_this.installmentId}, term: ${_this.term}, daysPerTerm: ${_this.daysPerTerm}, repayDate: ${_this.repayDate}, remainingDay: ${_this.remainingDay}, receiptAmount: ${_this.receiptAmount}, serviceFee: ${_this.serviceFee}, repaymentAmount: ${_this.repaymentAmount}, waivedAmount: ${_this.waivedAmount}, installmentNum: ${_this.installmentNum}, bankCardNo: ${_this.bankCardNo}, bankAccountId: ${_this.bankAccountId}, bankAccountType: ${_this.bankAccountType}, bankName: ${_this.bankName}, orderStatus: ${_this.orderStatus}, orderStatusDesc: ${_this.orderStatusDesc}, updateTime: ${_this.updateTime}, acqChannel: ${_this.acqChannel}, closeTime: ${_this.closeTime}, rejectTime: ${_this.rejectTime}, interest: ${_this.interest}, overdueInterest: ${_this.overdueInterest})';
 }
 
 
@@ -651,7 +671,7 @@ class _$RepayDetailRespDataLoanOrderDetailsCopyWithImpl<$Res>
 /// Create a copy of RepayDetailRespDataLoanOrderDetails
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? appOrderId = freezed,Object? productCode = freezed,Object? productLogo = freezed,Object? productName = freezed,Object? loanAmount = freezed,Object? installmentId = freezed,Object? term = freezed,Object? daysPerTerm = freezed,Object? repayDate = freezed,Object? remainingDay = freezed,Object? receiptAmount = freezed,Object? serviceFee = freezed,Object? repaymentAmount = freezed,Object? waivedAmount = freezed,Object? installmentNum = freezed,Object? bankCardNo = freezed,Object? bankAccountId = freezed,Object? bankAccountType = freezed,Object? bankName = freezed,Object? orderStatus = freezed,Object? orderStatusDesc = freezed,Object? updateTime = freezed,Object? acqChannel = freezed,Object? closeTime = freezed,Object? rejectTime = freezed,Object? interest = freezed,Object? overdueInterest = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(RepayDetailRespDataLoanOrderDetails(
 appOrderId: freezed == appOrderId ? _self.appOrderId : appOrderId // ignore: cast_nullable_to_non_nullable
 as String?,productCode: freezed == productCode ? _self.productCode : productCode // ignore: cast_nullable_to_non_nullable
 as String?,productLogo: freezed == productLogo ? _self.productLogo : productLogo // ignore: cast_nullable_to_non_nullable
@@ -864,16 +884,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RepayDetailRespDataLoanOrderDetails&&(identical(other.appOrderId, appOrderId) || other.appOrderId == appOrderId)&&(identical(other.productCode, productCode) || other.productCode == productCode)&&(identical(other.productLogo, productLogo) || other.productLogo == productLogo)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.loanAmount, loanAmount) || other.loanAmount == loanAmount)&&(identical(other.installmentId, installmentId) || other.installmentId == installmentId)&&(identical(other.term, term) || other.term == term)&&(identical(other.daysPerTerm, daysPerTerm) || other.daysPerTerm == daysPerTerm)&&(identical(other.repayDate, repayDate) || other.repayDate == repayDate)&&(identical(other.remainingDay, remainingDay) || other.remainingDay == remainingDay)&&(identical(other.receiptAmount, receiptAmount) || other.receiptAmount == receiptAmount)&&(identical(other.serviceFee, serviceFee) || other.serviceFee == serviceFee)&&(identical(other.repaymentAmount, repaymentAmount) || other.repaymentAmount == repaymentAmount)&&(identical(other.waivedAmount, waivedAmount) || other.waivedAmount == waivedAmount)&&(identical(other.installmentNum, installmentNum) || other.installmentNum == installmentNum)&&(identical(other.bankCardNo, bankCardNo) || other.bankCardNo == bankCardNo)&&(identical(other.bankAccountId, bankAccountId) || other.bankAccountId == bankAccountId)&&(identical(other.bankAccountType, bankAccountType) || other.bankAccountType == bankAccountType)&&(identical(other.bankName, bankName) || other.bankName == bankName)&&(identical(other.orderStatus, orderStatus) || other.orderStatus == orderStatus)&&(identical(other.orderStatusDesc, orderStatusDesc) || other.orderStatusDesc == orderStatusDesc)&&(identical(other.updateTime, updateTime) || other.updateTime == updateTime)&&(identical(other.acqChannel, acqChannel) || other.acqChannel == acqChannel)&&(identical(other.closeTime, closeTime) || other.closeTime == closeTime)&&(identical(other.rejectTime, rejectTime) || other.rejectTime == rejectTime)&&(identical(other.interest, interest) || other.interest == interest)&&(identical(other.overdueInterest, overdueInterest) || other.overdueInterest == overdueInterest));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _RepayDetailRespDataLoanOrderDetails&&(identical(other.appOrderId, appOrderId) || other.appOrderId == appOrderId)&&(identical(other.productCode, productCode) || other.productCode == productCode)&&(identical(other.productLogo, productLogo) || other.productLogo == productLogo)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.loanAmount, loanAmount) || other.loanAmount == loanAmount)&&(identical(other.installmentId, installmentId) || other.installmentId == installmentId)&&(identical(other.term, term) || other.term == term)&&(identical(other.daysPerTerm, daysPerTerm) || other.daysPerTerm == daysPerTerm)&&(identical(other.repayDate, repayDate) || other.repayDate == repayDate)&&(identical(other.remainingDay, remainingDay) || other.remainingDay == remainingDay)&&(identical(other.receiptAmount, receiptAmount) || other.receiptAmount == receiptAmount)&&(identical(other.serviceFee, serviceFee) || other.serviceFee == serviceFee)&&(identical(other.repaymentAmount, repaymentAmount) || other.repaymentAmount == repaymentAmount)&&(identical(other.waivedAmount, waivedAmount) || other.waivedAmount == waivedAmount)&&(identical(other.installmentNum, installmentNum) || other.installmentNum == installmentNum)&&(identical(other.bankCardNo, bankCardNo) || other.bankCardNo == bankCardNo)&&(identical(other.bankAccountId, bankAccountId) || other.bankAccountId == bankAccountId)&&(identical(other.bankAccountType, bankAccountType) || other.bankAccountType == bankAccountType)&&(identical(other.bankName, bankName) || other.bankName == bankName)&&(identical(other.orderStatus, orderStatus) || other.orderStatus == orderStatus)&&(identical(other.orderStatusDesc, orderStatusDesc) || other.orderStatusDesc == orderStatusDesc)&&(identical(other.updateTime, updateTime) || other.updateTime == updateTime)&&(identical(other.acqChannel, acqChannel) || other.acqChannel == acqChannel)&&(identical(other.closeTime, closeTime) || other.closeTime == closeTime)&&(identical(other.rejectTime, rejectTime) || other.rejectTime == rejectTime)&&(identical(other.interest, interest) || other.interest == interest)&&(identical(other.overdueInterest, overdueInterest) || other.overdueInterest == overdueInterest));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,appOrderId,productCode,productLogo,productName,loanAmount,installmentId,term,daysPerTerm,repayDate,remainingDay,receiptAmount,serviceFee,repaymentAmount,waivedAmount,installmentNum,bankCardNo,bankAccountId,bankAccountType,bankName,orderStatus,orderStatusDesc,updateTime,acqChannel,closeTime,rejectTime,interest,overdueInterest]);
+int get hashCode {
+    return Object.hashAll([runtimeType,appOrderId,productCode,productLogo,productName,loanAmount,installmentId,term,daysPerTerm,repayDate,remainingDay,receiptAmount,serviceFee,repaymentAmount,waivedAmount,installmentNum,bankCardNo,bankAccountId,bankAccountType,bankName,orderStatus,orderStatusDesc,updateTime,acqChannel,closeTime,rejectTime,interest,overdueInterest]);
+}
 
 @override
 String toString() {
-  return 'RepayDetailRespDataLoanOrderDetails(appOrderId: $appOrderId, productCode: $productCode, productLogo: $productLogo, productName: $productName, loanAmount: $loanAmount, installmentId: $installmentId, term: $term, daysPerTerm: $daysPerTerm, repayDate: $repayDate, remainingDay: $remainingDay, receiptAmount: $receiptAmount, serviceFee: $serviceFee, repaymentAmount: $repaymentAmount, waivedAmount: $waivedAmount, installmentNum: $installmentNum, bankCardNo: $bankCardNo, bankAccountId: $bankAccountId, bankAccountType: $bankAccountType, bankName: $bankName, orderStatus: $orderStatus, orderStatusDesc: $orderStatusDesc, updateTime: $updateTime, acqChannel: $acqChannel, closeTime: $closeTime, rejectTime: $rejectTime, interest: $interest, overdueInterest: $overdueInterest)';
+    return 'RepayDetailRespDataLoanOrderDetails(appOrderId: $appOrderId, productCode: $productCode, productLogo: $productLogo, productName: $productName, loanAmount: $loanAmount, installmentId: $installmentId, term: $term, daysPerTerm: $daysPerTerm, repayDate: $repayDate, remainingDay: $remainingDay, receiptAmount: $receiptAmount, serviceFee: $serviceFee, repaymentAmount: $repaymentAmount, waivedAmount: $waivedAmount, installmentNum: $installmentNum, bankCardNo: $bankCardNo, bankAccountId: $bankAccountId, bankAccountType: $bankAccountType, bankName: $bankName, orderStatus: $orderStatus, orderStatusDesc: $orderStatusDesc, updateTime: $updateTime, acqChannel: $acqChannel, closeTime: $closeTime, rejectTime: $rejectTime, interest: $interest, overdueInterest: $overdueInterest)';
 }
 
 
