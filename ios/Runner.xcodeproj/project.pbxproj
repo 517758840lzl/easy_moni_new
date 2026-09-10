@@ -21,8 +21,10 @@
 		BD83D21C6341B7A59DA7C1FF /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DAC022E6F53C5051EF36430B /* Pods_Runner.framework */; };
 		C3E5F7A91EC3CC0700C636F6 /* LocationPermissionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3E5F7A81EC3CC0700C636F6 /* LocationPermissionHelper.swift */; };
 		D4E5F7A91EC3CC0700C636F7 /* GalleryPickerHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E5F7A81EC3CC0700C636F7 /* GalleryPickerHelper.swift */; };
-		E6F7A8B91EC3CC0700C636F9 /* DeviceInfoHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6F7A8B81EC3CC0700C636F9 /* DeviceInfoHelper.swift */; };
 		E5F6A7B81EC3CC0700C636F8 /* CustomerServiceLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5F6A7B71EC3CC0700C636F8 /* CustomerServiceLauncher.swift */; };
+		E6F7A8B91EC3CC0700C636F9 /* DeviceInfoHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6F7A8B81EC3CC0700C636F9 /* DeviceInfoHelper.swift */; };
+		F7A8B9C11EC3CC0700C636FA /* DeviceModelNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7A8B9C01EC3CC0700C636FA /* DeviceModelNames.swift */; };
+		F7A8B9C31EC3CC0700C636FA /* IosDeviceInfoReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7A8B9C21EC3CC0700C636FA /* IosDeviceInfoReader.swift */; };
 		F1A2B3C51EC3CC0700C636F9 /* GeneratedPluginRegistrant.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A2B3C41EC3CC0700C636F9 /* GeneratedPluginRegistrant.swift */; };
 /* End PBXBuildFile section */
 
@@ -75,9 +77,11 @@
 		C2BEE3D5303FCF68E0EDAFC9 /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
 		C3E5F7A81EC3CC0700C636F6 /* LocationPermissionHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationPermissionHelper.swift; sourceTree = "<group>"; };
 		D4E5F7A81EC3CC0700C636F7 /* GalleryPickerHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GalleryPickerHelper.swift; sourceTree = "<group>"; };
-		E6F7A8B81EC3CC0700C636F9 /* DeviceInfoHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceInfoHelper.swift; sourceTree = "<group>"; };
 		DAC022E6F53C5051EF36430B /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		E5F6A7B71EC3CC0700C636F8 /* CustomerServiceLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerServiceLauncher.swift; sourceTree = "<group>"; };
+		E6F7A8B81EC3CC0700C636F9 /* DeviceInfoHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceInfoHelper.swift; sourceTree = "<group>"; };
+		F7A8B9C01EC3CC0700C636FA /* DeviceModelNames.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceModelNames.swift; sourceTree = "<group>"; };
+		F7A8B9C21EC3CC0700C636FA /* IosDeviceInfoReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IosDeviceInfoReader.swift; sourceTree = "<group>"; };
 		F1A2B3C41EC3CC0700C636F9 /* GeneratedPluginRegistrant.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GeneratedPluginRegistrant.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -170,6 +174,8 @@
 				C3E5F7A81EC3CC0700C636F6 /* LocationPermissionHelper.swift */,
 				D4E5F7A81EC3CC0700C636F7 /* GalleryPickerHelper.swift */,
 				E6F7A8B81EC3CC0700C636F9 /* DeviceInfoHelper.swift */,
+				F7A8B9C01EC3CC0700C636FA /* DeviceModelNames.swift */,
+				F7A8B9C21EC3CC0700C636FA /* IosDeviceInfoReader.swift */,
 				E5F6A7B71EC3CC0700C636F8 /* CustomerServiceLauncher.swift */,
 				7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */,
 			);
@@ -219,6 +225,7 @@
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				E223C229EBDA6F26D9D48672 /* [CP] Copy Pods Resources */,
+				239A5657112607307C769BD6 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -297,6 +304,23 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		239A5657112607307C769BD6 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		3B06AD1E1E4923F5004D2608 /* Thin Binary */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -409,6 +433,8 @@
 				C3E5F7A91EC3CC0700C636F6 /* LocationPermissionHelper.swift in Sources */,
 				D4E5F7A91EC3CC0700C636F7 /* GalleryPickerHelper.swift in Sources */,
 				E6F7A8B91EC3CC0700C636F9 /* DeviceInfoHelper.swift in Sources */,
+				F7A8B9C11EC3CC0700C636FA /* DeviceModelNames.swift in Sources */,
+				F7A8B9C31EC3CC0700C636FA /* IosDeviceInfoReader.swift in Sources */,
 				E5F6A7B81EC3CC0700C636F8 /* CustomerServiceLauncher.swift in Sources */,
 				F1A2B3C51EC3CC0700C636F9 /* GeneratedPluginRegistrant.swift in Sources */,
 				7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */,
