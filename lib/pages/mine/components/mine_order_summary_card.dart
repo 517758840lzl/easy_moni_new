@@ -2,7 +2,6 @@ import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/utils/loan_order_status_visual.dart';
 import 'package:flutter/material.dart';
 
-/// 我的页订单卡片字段，调用方负责完成金额和日期格式化。
 class MineOrderSummaryCardColumnData {
   const MineOrderSummaryCardColumnData({
     required this.label,
@@ -13,7 +12,6 @@ class MineOrderSummaryCardColumnData {
   final String value;
 }
 
-/// 我的页订单概览卡片，按照设计稿展示产品、状态和三列订单摘要。
 class MineOrderSummaryCard extends StatelessWidget {
   const MineOrderSummaryCard({
     super.key,
@@ -224,7 +222,6 @@ class _MineOrderLogo extends StatelessWidget {
   }
 }
 
-/// 订单摘要信息区，按原始字段顺序纵向展示 key-value 行。
 class _MineOrderInfoColumns extends StatelessWidget {
   const _MineOrderInfoColumns({required this.columns});
 
@@ -244,7 +241,6 @@ class _MineOrderInfoColumns extends StatelessWidget {
   }
 }
 
-/// 单行订单摘要，左侧展示字段名，右侧展示字段值。
 class _MineOrderInfoColumn extends StatelessWidget {
   const _MineOrderInfoColumn({required this.data});
 

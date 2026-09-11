@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// 设置页，承载账号相关操作入口。
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
 
@@ -44,7 +43,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     await _executeDeleteAccount();
   }
 
-  /// 调用注销账号接口，成功后清理本地登录态并回到登录页。
   Future<void> _executeDeleteAccount() async {
     if (_isDeleting) return;
     setState(() {
@@ -113,7 +111,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 }
 
-/// 设置页顶部导航栏，比例对齐客服页头部。
 class _SettingsHeader extends StatelessWidget {
   const _SettingsHeader();
 
@@ -155,7 +152,6 @@ class _SettingsHeader extends StatelessWidget {
   }
 }
 
-/// 注销账号操作卡片，样式参考客服联系方式卡片。
 class _DeleteAccountCard extends StatelessWidget {
   const _DeleteAccountCard({required this.isLoading, required this.onTap});
 

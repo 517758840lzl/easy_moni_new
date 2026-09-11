@@ -8,7 +8,6 @@ final deleteAccountProvider = Provider<DeleteAccountApi>((ref) {
   return DeleteAccountApi();
 });
 
-/// 注销账号接口，负责调用后端删除当前登录用户账号。
 class DeleteAccountApi {
   Future<HttpResult<SignOutResp>> call() async {
     final result = await HttpProvider.instance.post<SignOutResp>(

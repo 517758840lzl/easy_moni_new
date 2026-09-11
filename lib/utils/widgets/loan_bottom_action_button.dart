@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// 页面底部固定主操作按钮，统一处理白色背景和底部安全区。
 class LoanBottomActionButton extends StatelessWidget {
   const LoanBottomActionButton({
     super.key,
@@ -33,7 +32,6 @@ class LoanBottomActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 主按钮主体可被弹窗、底栏等不同场景复用，外层容器保持可配置。
     Widget button = Padding(
       padding: padding,
       child: GestureDetector(

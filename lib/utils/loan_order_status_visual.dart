@@ -1,7 +1,6 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 
-/// 贷款订单状态的视觉配置，统一维护状态文案、角标颜色和底部提示。
 class LoanOrderStatusVisual {
   const LoanOrderStatusVisual({
     required this.label,
@@ -13,7 +12,6 @@ class LoanOrderStatusVisual {
   final List<Color> gradient;
   final String footerText;
 
-  /// 根据后端订单状态和剩余天数生成页面可复用的状态视觉信息。
   static LoanOrderStatusVisual forStatus(
     int? statusCode, {
     int? remainingDays,

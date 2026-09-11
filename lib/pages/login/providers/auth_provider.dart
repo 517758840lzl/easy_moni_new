@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_moni/core/constants/api_constants.dart';
 import 'package:easy_moni/core/network/http_provider.dart';
 import 'package:easy_moni/core/network/http_result.dart';
-import 'package:easy_moni/entities/check_upload_data_valid_resp.dart';
 import 'package:easy_moni/entities/login_resp.dart';
 import 'package:easy_moni/entities/startup_config_resp.dart';
 import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
@@ -16,16 +15,11 @@ final loginApiProvider = Provider<LoginApi>((ref) {
   return LoginApi();
 });
 
-final checkUploadDataValidProvider = Provider<CheckUploadDataValidApi>((ref) {
-  return CheckUploadDataValidApi();
-});
-
 final startupConfigProvider = Provider<StartupConfigApi>((ref) {
   return StartupConfigApi();
 });
 
 class SendVerifyCodeApi {
-  /// 发送验证码
   Future<HttpResult<dynamic>> call(String phone) async {
     final requestBody = {'phone': phone, 'type': 'phone'};
     final requestHeaders = HttpProvider.instance.config.commonHeaders();
@@ -92,18 +86,6 @@ Map<String, dynamic> _httpResultLogValue(HttpResult<dynamic> result) {
     'statusCode': result.statusCode,
     'message': result.message,
   };
-}
-
-class CheckUploadDataValidApi {
-  Future<HttpResult<CheckUploadDataValidResp>> call() async {
-    final result = await HttpProvider.instance.get<CheckUploadDataValidResp>(
-      ApiConstants.checkUploadDataValid,
-      fromJson: (json) {
-        return CheckUploadDataValidResp.fromJson(json);
-      },
-    );
-    return result;
-  }
 }
 
 class StartupConfigApi {

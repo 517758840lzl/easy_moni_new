@@ -18,7 +18,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 
-/// 人脸活体采集页，负责相机预览、动作识别和最终照片上传。
 class FaceVerifyPage extends ConsumerStatefulWidget {
   const FaceVerifyPage({super.key});
 
@@ -75,7 +74,6 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     super.dispose();
   }
 
-  /// 初始化后端活体配置和前置摄像头。
   Future<void> _initialize() async {
     try {
       await _faceDetectionService.init();
@@ -108,7 +106,6 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
       return FaceVerifyActionConfig.mockBackendSteps();
     }
 
-    // TODO: 新人脸配置接口接入后，替换旧 startup config 的 key 映射逻辑。
     final steps = legacyFaceSteps
         .map(_buildStepFromLegacyFaceStep)
         .whereType<FaceLivenessStep>()
@@ -117,7 +114,6 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     return steps.isNotEmpty ? steps : FaceVerifyActionConfig.mockBackendSteps();
   }
 
-  /// 将旧接口 faceStep.key 映射为当前前端已支持的人脸动作。
   FaceLivenessStep? _buildStepFromLegacyFaceStep(FaceStep step) {
     return FaceLivenessStep.fromAction(
       _legacyFaceActionFor(step.key),
@@ -125,7 +121,6 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     );
   }
 
-  /// 旧接口仅下发步骤 key，前端临时复用当前 mock 动作能力完成检测。
   String _legacyFaceActionFor(String? key) {
     final normalizedKey = key?.trim();
     if (normalizedKey == 'frontFaceStep') {
@@ -397,7 +392,6 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     );
   }
 
-  /// 检测需要往返动作的头部动作，例如点头和摇头。
   bool _matchesHeadMovement({
     required double angle,
     required int startDirection,
@@ -419,7 +413,6 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     return direction != startDirection && angle.abs() > oppositeThreshold;
   }
 
-  /// 根据嘴部关键点比例判断是否张嘴。
   bool _isMouthOpen(DetectedFace face) {
     final opening = face.normalizedLipOpening;
     if (opening == null) return false;
@@ -446,7 +439,6 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     _startCurrentActionTimeout();
   }
 
-  /// 为当前动作启动超时计时，动作切换或页面退出时会重置。
   void _startCurrentActionTimeout() {
     if (!mounted ||
         !_isCameraReady ||
@@ -475,7 +467,6 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     _actionTimeoutToken += 1;
   }
 
-  /// 退出人脸页前完整停止图像流并释放相机，避免下个相机页抢占未解绑的 CameraX 用例。
   Future<void> _releaseCameraController() async {
     _androidPollTimer?.cancel();
     _androidPollTimer = null;
@@ -507,7 +498,6 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     Navigator.of(context).pop();
   }
 
-  /// 当前动作长时间未通过时提示用户，并退回入口页重新开始检测。
   Future<void> _handleActionTimeout() async {
     if (!mounted || _hasActionTimedOut || _hasCapturedFinalImage) return;
 
@@ -524,7 +514,6 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
     await _popWithoutResult();
   }
 
-  // TODO 最后一步抓拍由后端下发action：face_front ，根据这个action拍照，整体用户无感。暂时由前端模拟，后续再接入接口
   Future<void> _captureFinalFacePhoto() async {
     if (_hasCapturedFinalImage || _isUploading) return;
     final controller = _cameraController;
@@ -721,7 +710,6 @@ class _FaceVerifyPageState extends ConsumerState<FaceVerifyPage> {
   }
 }
 
-/// 深绿色顶部导航，只保留返回键和居中标题。
 class _FaceVerifyHeader extends StatelessWidget {
   const _FaceVerifyHeader({required this.onBack});
 
@@ -765,7 +753,6 @@ class _FaceVerifyHeader extends StatelessWidget {
   }
 }
 
-/// 圆形摄像头区域，统一处理裁剪、背景和设计稿圆形描边素材。
 class _CircularCameraFrame extends StatelessWidget {
   const _CircularCameraFrame({required this.size, required this.child});
 

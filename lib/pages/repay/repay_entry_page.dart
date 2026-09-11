@@ -12,7 +12,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// 还款入口页，展示待还总额、待还账单列表和底部全部还款操作。
 class RepayEntryPage extends ConsumerStatefulWidget {
   const RepayEntryPage({super.key, this.refreshRequestId = ''});
 
@@ -93,13 +92,11 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
     });
   }
 
-  /// 下拉刷新复用还款入口待还账单 Provider，确保重新发起首页数据请求。
   Future<void> _refreshBills() async {
     try {
       final refreshFuture = ref.refresh(repayEntryBillsProvider.future);
       await refreshFuture;
     } catch (_) {
-      // 网络异常交给页面错误态展示，避免刷新 Future 抛错导致页面崩溃。
     }
   }
 
@@ -151,7 +148,6 @@ class _RepayEntryPageState extends ConsumerState<RepayEntryPage> {
           onRepayTap: (bill) => _openBillDetail(context, bill),
         ),
       ),
-      // 待还订单只有一个不展示全部按钮
       bottomNavigationBar: bills.length > 1
           ? LoanBottomActionButton(
               enabled: selectedBills.isNotEmpty,

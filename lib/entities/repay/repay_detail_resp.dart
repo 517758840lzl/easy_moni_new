@@ -3,7 +3,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'repay_detail_resp.freezed.dart';
 part 'repay_detail_resp.g.dart';
 
-/// RepayDetailResp 数据模型
 @freezed
 abstract class RepayDetailResp with _$RepayDetailResp {
   const factory RepayDetailResp({
@@ -16,7 +15,6 @@ abstract class RepayDetailResp with _$RepayDetailResp {
       _$RepayDetailRespFromJson(json);
 }
 
-/// RepayDetailRespData 数据模型
 @freezed
 abstract class RepayDetailRespData with _$RepayDetailRespData {
   const factory RepayDetailRespData({
@@ -34,7 +32,6 @@ abstract class RepayDetailRespData with _$RepayDetailRespData {
       _$RepayDetailRespDataFromJson(json);
 }
 
-/// RepayDetailRespDataLoanOrderDetails 数据模型
 @freezed
 abstract class RepayDetailRespDataLoanOrderDetails with _$RepayDetailRespDataLoanOrderDetails {
   const factory RepayDetailRespDataLoanOrderDetails({

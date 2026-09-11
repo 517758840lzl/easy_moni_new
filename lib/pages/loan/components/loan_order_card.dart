@@ -3,7 +3,6 @@ import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-/// 订单卡片展示行，调用方负责传入已经格式化好的文案。
 class LoanOrderCardRowData {
   const LoanOrderCardRowData({required this.label, required this.value});
 
@@ -11,7 +10,6 @@ class LoanOrderCardRowData {
   final String value;
 }
 
-/// 订单状态角标配置，用于按需展示顶部状态。
 class LoanOrderCardStatusBadgeData {
   const LoanOrderCardStatusBadgeData({
     required this.text,
@@ -22,7 +20,6 @@ class LoanOrderCardStatusBadgeData {
   final List<Color> gradient;
 }
 
-/// 订单卡片底部动作区配置，用于按需展示还款入口等模块。
 class LoanOrderCardFooterData {
   const LoanOrderCardFooterData({
     required this.text,
@@ -33,7 +30,6 @@ class LoanOrderCardFooterData {
   final bool showCouponIcon;
 }
 
-/// 轻量订单卡片，只负责渲染展示数据，不感知具体接口实体和业务模式。
 class LoanOrderCard extends StatelessWidget {
   const LoanOrderCard({
     super.key,
@@ -116,7 +112,6 @@ class LoanOrderCard extends StatelessWidget {
     );
   }
 
-  /// 根据展示行生成订单信息，统一维护行间距。
   static List<Widget> _buildInfoRows(List<LoanOrderCardRowData> rows) {
     final widgets = <Widget>[];
     for (var i = 0; i < rows.length; i++) {
@@ -333,7 +328,6 @@ class _OrderFooterAction extends StatelessWidget {
       return content;
     }
 
-    // footer 操作区独立响应点击，避免和整卡详情跳转职责混在一起。
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,

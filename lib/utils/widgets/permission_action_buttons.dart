@@ -1,7 +1,6 @@
 import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
-/// 权限授权场景的双操作按钮，统一拒绝/接受按钮的尺寸、间距和文字样式。
 class PermissionActionButtons extends StatelessWidget {
   const PermissionActionButtons({
     super.key,

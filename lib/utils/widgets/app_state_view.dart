@@ -1,7 +1,6 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 
-/// 页面空态、错误态和加载态的统一视觉容器。
 class AppStateView extends StatelessWidget {
   const AppStateView({
     super.key,
@@ -58,7 +57,6 @@ class AppStateView extends StatelessWidget {
   }
 }
 
-/// 统一空状态组件，用于列表、详情和信息页无数据场景。
 class AppEmptyStateView extends StatelessWidget {
   const AppEmptyStateView({
     super.key,
@@ -75,7 +73,6 @@ class AppEmptyStateView extends StatelessWidget {
   }
 }
 
-/// 统一错误状态组件，提供固定的重新加载操作入口。
 class AppErrorStateView extends StatelessWidget {
   const AppErrorStateView({
     super.key,
@@ -97,7 +94,6 @@ class AppErrorStateView extends StatelessWidget {
   }
 }
 
-/// 保持下拉刷新手势可用的滚动态容器。
 class AppScrollableStateView extends StatelessWidget {
   const AppScrollableStateView({super.key, required this.child});
 

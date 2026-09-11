@@ -22,7 +22,6 @@ abstract final class DeviceContext {
     return Platform.operatingSystemVersion;
   }
 
-  /// iOS 设备 ID：IDFV，不需要权限。
   static Future<String> resolveDeviceId() async {
     if (!Platform.isIOS) return '';
     try {

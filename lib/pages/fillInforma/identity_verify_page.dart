@@ -248,7 +248,6 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     }
   }
 
-  /// 身份证区域点击入口：授权通过后让用户选择拍照或相册上传。
   Future<void> _openUploadMethodSheet({required FormEntry entry}) async {
     bool? shouldPickFromGallery;
     await UploadMethodSheet.show(
@@ -286,7 +285,6 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     await _onImagesCaptured(capturedImages);
   }
 
-  /// 从系统相册读取用户选择的身份证图片，并按点击的证件面进入上传流程。
   Future<void> _pickFromGallery({required bool isFront}) async {
     Uint8List? imageData;
     try {
@@ -311,7 +309,6 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     );
   }
 
-  /// 按用户点击的证件面开始拍照，若另一面缺失则在同一相机页补拍另一面。
   Future<_CapturedIdCardImages> _captureIdCardImages({
     required bool startWithFront,
   }) async {
@@ -333,7 +330,6 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     );
   }
 
-  /// 打开横屏拍摄页，返回裁剪后的正反面图片数据。
   Future<IdCameraCaptureResult?> _captureIdCardImage({
     required bool isFront,
     bool captureOppositeSide = false,
@@ -350,7 +346,6 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     );
   }
 
-  /// 拍摄入口统一处理相机权限，避免进入横屏拍摄页后再触发权限弹窗。
   Future<bool> _ensureCameraPermission() async {
     final granted = await CameraPermissionSheet.ensure(context);
     if (!mounted) return false;
@@ -405,7 +400,6 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     await _recognizeBackImage(backImageData!, shouldUpdateLoading: false);
   }
 
-  /// 身份证反面同样调用 OCR 接口上传，后端通过 BACK 区分证件面，但不触发表单 OCR 加载态。
   Future<void> _recognizeBackImage(
     Uint8List imageData, {
     bool shouldUpdateLoading = true,
@@ -491,7 +485,6 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     _showSnackBar(result.message ?? AppStrings.identityVerifyOcrFailed);
   }
 
-  /// OCR 接口在不同证件面可能返回 url/backUrl，这里统一取可提交图片地址。
   String? _uploadedImageUrlFromOcrResult(OcrVerificationResp? data) {
     final imageUrl = data?.url;
     if (imageUrl != null && imageUrl.trim().isNotEmpty) {
@@ -570,7 +563,6 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     await _focusNextVisibleEntryAfter(entry);
   }
 
-  /// 选择类字段确认后按后端表单顺序推进，保证性别后优先进入生日选择器。
   Future<void> _focusNextVisibleEntryAfter(FormEntry entry) async {
     final nextEntry = _formController.nextVisibleEntryAfter(entry);
     if (nextEntry == null) {
@@ -600,13 +592,11 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     });
   }
 
-  /// 将选择类表单项纳入页面焦点链，并在打开弹窗前稳定收起系统键盘。
   Future<void> _focusPickerEntry(FormEntry entry) async {
     FocusScope.of(context).requestFocus(_formController.focusNodeFor(entry));
     await SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
   }
 
-  /// 彻底释放页面文本焦点并收起系统键盘，避免弹窗切换时与日期选择器重叠。
   Future<void> _clearFormTextFocus() async {
     FocusManager.instance.primaryFocus?.unfocus(
       disposition: UnfocusDisposition.scope,
@@ -678,7 +668,6 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
     return imageUrl != null && imageUrl.trim().isNotEmpty;
   }
 
-  /// 计算白色内容区起点，与资料采集流程的进度头部保持一致。
   double _contentTop(BuildContext context) {
     return MediaQuery.of(context).padding.top +
         _headerTitleBarHeight +
@@ -778,7 +767,6 @@ class _IdentityVerifyPageState extends ConsumerState<IdentityVerifyPage> {
   }
 }
 
-/// 本轮连续拍摄得到的身份证正反面图片。
 class _CapturedIdCardImages {
   const _CapturedIdCardImages({this.frontImageData, this.backImageData});
 

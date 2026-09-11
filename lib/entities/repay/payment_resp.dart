@@ -3,7 +3,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'payment_resp.freezed.dart';
 part 'payment_resp.g.dart';
 
-/// PaymentResp 数据模型
 @freezed
 abstract class PaymentResp with _$PaymentResp {
   const factory PaymentResp({
@@ -16,7 +15,6 @@ abstract class PaymentResp with _$PaymentResp {
       _$PaymentRespFromJson(json);
 }
 
-/// PaymentRespData 数据模型
 @freezed
 abstract class PaymentRespData with _$PaymentRespData {
   const factory PaymentRespData({

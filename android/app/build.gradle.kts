@@ -22,7 +22,6 @@ android {
     }
 
     defaultConfig {
-        // 测试的
         applicationId = "com.app.easymoni"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.

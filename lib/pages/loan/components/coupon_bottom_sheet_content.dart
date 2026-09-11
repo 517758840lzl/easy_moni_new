@@ -4,7 +4,6 @@ import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/pages/loan/providers/coupon_provider.dart';
 import 'package:flutter/material.dart';
 
-// 优惠券弹窗内容：仅负责列表和选中态展示，确认按钮由 CommonBottomSheet 统一承载。
 class CouponBottomSheetContent extends StatefulWidget {
   const CouponBottomSheetContent({
     super.key,
@@ -92,7 +91,6 @@ class _CouponBottomSheetContentState extends State<CouponBottomSheetContent> {
     );
   }
 
-  // 切换优惠券选中态：仅可用券允许选中，重复点击当前券则取消选择。
   void _toggleCouponSelection(int index) {
     if (!widget.coupons[index].isUsable) return;
 
@@ -105,7 +103,6 @@ class _CouponBottomSheetContentState extends State<CouponBottomSheetContent> {
     );
   }
 
-  // 弹窗重新打开时恢复页面外部保存的优惠券选择状态。
   void _syncInitialSelection() {
     if (_initializedSelection) return;
     _initializedSelection = true;
@@ -122,7 +119,6 @@ class _CouponBottomSheetContentState extends State<CouponBottomSheetContent> {
   }
 }
 
-// 单张优惠券卡片：使用切图承载票券底形，展示类型标签、金额、摘要和选中图标。
 class CouponTicketCard extends StatelessWidget {
   const CouponTicketCard({
     super.key,
@@ -164,7 +160,6 @@ class CouponTicketCard extends StatelessWidget {
                 // title
                 _CouponTitle(title: title),
                 const SizedBox(height: 8),
-                // 金额与类型标签同排展示，金额按内容宽度自然渲染。
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -187,7 +182,6 @@ class CouponTicketCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                // 描述随内容自适应换行，右侧保留选中态入口。
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -261,7 +255,6 @@ class CouponBadge extends StatelessWidget {
   }
 }
 
-// 标题文字装饰：根据单行文本实际宽度绘制底部圆角色块，避免装饰铺满整行。
 class _CouponTitleText extends StatelessWidget {
   const _CouponTitleText(this.title);
 
@@ -352,7 +345,6 @@ String _nonEmpty(String? value, {required String fallback}) {
   return text == null || text.isEmpty ? fallback : text;
 }
 
-// 优惠券类型文案：后端 type 为 PRE 时展示提额券，POST 时展示减免券。
 String _couponTypeText(String? type) {
   switch (type) {
     case CouponTypes.pre:

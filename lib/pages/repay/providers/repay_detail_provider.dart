@@ -27,7 +27,6 @@ final repayOrderDetailProvider = FutureProvider.autoDispose
       throw Exception(result.message ?? AppStrings.orderDetailLoadFailed);
     });
 
-/// 还款详情查询参数：订单号和已选优惠券共同决定详情金额。
 class RepayDetailQuery {
   const RepayDetailQuery({
     required this.appOrderIds,
@@ -51,7 +50,6 @@ class RepayDetailQuery {
   }
 }
 
-/// 将订单号列表转换成稳定的 provider family 查询参数。
 RepayDetailQuery buildRepayDetailQuery({
   required Iterable<String?> appOrderIds,
   Iterable<int?> couponIds = const <int?>[],
@@ -67,7 +65,6 @@ RepayDetailQuery buildRepayDetailQuery({
 }
 
 class RepayDetailApi {
-  /// 获取用户要还款的订单详情，appOrderIds 为待还款订单号列表。
   Future<HttpResult<RepayDetailRespData>> call({
     required List<String> appOrderIds,
     List<int> couponIds = const <int>[],

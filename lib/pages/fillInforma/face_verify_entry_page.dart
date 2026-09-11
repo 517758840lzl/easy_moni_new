@@ -20,7 +20,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// 人脸认证入口页，负责展示本人确认说明并引导进入活体识别。
 class FaceVerifyEntryPage extends ConsumerStatefulWidget {
   const FaceVerifyEntryPage({super.key});
 
@@ -47,7 +46,6 @@ class _FaceVerifyEntryPageState extends ConsumerState<FaceVerifyEntryPage> {
 
   String get _pageTitle => _stepInfo?.pageTitle.trim() ?? '';
 
-  /// 从当前步骤配置读取人脸图片提交字段 key，避免固定后端字段名。
   String get _faceBiometricImageKey =>
       _stepInfo?.entries.firstOrNull?.key.trim() ?? '';
   bool get _hasCapturedFace =>
@@ -65,7 +63,6 @@ class _FaceVerifyEntryPageState extends ConsumerState<FaceVerifyEntryPage> {
     super.dispose();
   }
 
-  /// 拉取当前人脸步骤配置和已确认的用户姓名。
   Future<void> _fetchPageData() async {
     try {
       final faceResult = await ref.read(acpElementInfoProvider).call(5);
@@ -79,7 +76,6 @@ class _FaceVerifyEntryPageState extends ConsumerState<FaceVerifyEntryPage> {
         _showSnackBar(faceResult.message!);
       }
 
-      // 从用户信息接口获取已确认的客户姓名
       final userInfoResult = await ref.read(userInfoProvider).call();
       if (!mounted) return;
 
@@ -187,7 +183,6 @@ class _FaceVerifyEntryPageState extends ConsumerState<FaceVerifyEntryPage> {
     }
   }
 
-  /// 计算白色内容区起点
   double _contentTop(BuildContext context) {
     return MediaQuery.of(context).padding.top +
         _headerTitleBarHeight +
@@ -336,7 +331,6 @@ class _FaceVerifyEntryPageState extends ConsumerState<FaceVerifyEntryPage> {
   }
 }
 
-/// 人脸检测页返回入口页时展示的临时等待层，避免回显结果前页面看起来无响应。
 class _FaceVerifyResultLoadingOverlay extends StatelessWidget {
   const _FaceVerifyResultLoadingOverlay();
 
@@ -368,7 +362,6 @@ class _FaceVerifyResultLoadingOverlay extends StatelessWidget {
   }
 }
 
-/// 照片回显后的顶部确认提示，提醒用户检查照片清晰度。
 class _FacePhotoConfirmTip extends StatelessWidget {
   const _FacePhotoConfirmTip();
 
@@ -393,7 +386,6 @@ class _FacePhotoConfirmTip extends StatelessWidget {
   }
 }
 
-/// 人脸扫描插画
 class _FaceScanIllustration extends StatelessWidget {
   const _FaceScanIllustration({this.faceImage});
 
@@ -430,7 +422,6 @@ class _FaceScanIllustration extends StatelessWidget {
   }
 }
 
-/// 照片回显态底部操作区，提供重新拍摄和确认完成两个动作。
 class _FacePhotoActionBar extends StatelessWidget {
   const _FacePhotoActionBar({
     required this.enabled,

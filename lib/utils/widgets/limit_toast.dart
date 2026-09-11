@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// 借款流程挽留弹窗，用于提示用户继续完成借款资料。
 class FundingLimitDialog extends StatefulWidget {
   final VoidCallback? onGiveUp;
 
@@ -19,12 +18,11 @@ class FundingLimitDialog extends StatefulWidget {
   static void show(BuildContext context, {VoidCallback? onGiveUp}) {
     showDialog(
       context: context,
-      barrierDismissible: false, // 点击外部不消失
+      barrierDismissible: false,
       builder: (context) => FundingLimitDialog(onGiveUp: onGiveUp),
     );
   }
 
-  /// 公共挽留弹窗：点击"放弃"时自动跳转 LoginPage 并清空导航栈
   static void showRetainDialog(BuildContext context) {
     show(
       context,
@@ -34,9 +32,7 @@ class FundingLimitDialog extends StatefulWidget {
     );
   }
 
-  /// 清理本地登录态后进入登录页，确保后续请求不再携带旧 token。
   static Future<void> _clearAuthAndNavigateToLogin(BuildContext context) async {
-    // 放弃资料流程时同步释放问卷状态，避免退出登录后旧请求继续重试。
     final container = ProviderScope.containerOf(context, listen: false);
     container.invalidate(questionnaireProvider);
 
@@ -81,7 +77,7 @@ class _FundingLimitDialogState extends State<FundingLimitDialog> {
               ),
             ),
             child: Column(
-              mainAxisSize: MainAxisSize.min, // 紧凑包裹内容
+              mainAxisSize: MainAxisSize.min,
               children: [
                 SizedBox(
                   height: 120,
@@ -140,7 +136,6 @@ class _FundingLimitDialogState extends State<FundingLimitDialog> {
   }
 }
 
-/// 资料填写流程返回拦截器，统一让系统返回键触发挽留弹窗。
 class FundingLimitPopScope extends StatelessWidget {
   final Widget child;
 

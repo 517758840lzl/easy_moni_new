@@ -3,7 +3,6 @@ import 'package:easy_moni/entities/home_resp.dart';
 import 'package:easy_moni/entities/order_list_resp.dart';
 import 'package:easy_moni/utils/extensions.dart';
 
-/// 首页传入订单详情页的展示快照，详情页不再额外请求接口。
 class LoanOrderDetailData {
   const LoanOrderDetailData({
     required this.appOrderId,
@@ -65,7 +64,6 @@ class LoanOrderDetailData {
     );
   }
 
-  /// 从历史订单完整数据生成详情页快照，避免页面层分散维护字段映射。
   factory LoanOrderDetailData.fromOrderListItem(OrderListItem order) {
     return LoanOrderDetailData(
       appOrderId: order.appOrderId?.trim() ?? '',
@@ -98,7 +96,6 @@ class LoanOrderDetailData {
     );
   }
 
-  /// 从路由恢复的 JSON 快照重建详情页展示数据。
   factory LoanOrderDetailData.fromJson(Map<String, dynamic> json) {
     return LoanOrderDetailData(
       appOrderId: json['appOrderId'] as String? ?? '',
@@ -188,13 +185,11 @@ class LoanOrderDetailData {
     };
   }
 
-  /// 优先展示后端到期日；为空时沿用首页订单卡的放款中兜底日期。
   static String? _resolveDueDate(HomeProductItem item) {
     final date = item.dueDate ?? item.repayDateStr;
     return date?.formatBackendDate();
   }
 
-  /// 还款详情请求依赖订单号，优先使用后端提供的字符串订单号避免大整数精度风险。
   static String _resolveAppOrderId(HomeProductItem item) {
     final appOrderIdStr = item.appOrderIdStr?.trim();
     if (appOrderIdStr != null && appOrderIdStr.isNotEmpty) {
@@ -218,7 +213,6 @@ class LoanOrderDetailData {
   }
 }
 
-/// 订单详情页状态视觉类别，使用固定实例替代 enum。
 class LoanOrderDetailStatusKind {
   const LoanOrderDetailStatusKind._(this.key);
 
@@ -235,7 +229,6 @@ class LoanOrderDetailStatusKind {
   );
 }
 
-/// 订单详情页状态展示配置，与首页订单卡状态规则保持一致。
 class LoanOrderDetailStatusVisual {
   const LoanOrderDetailStatusVisual({required this.title, required this.kind});
 

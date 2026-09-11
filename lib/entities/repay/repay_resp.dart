@@ -3,7 +3,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'repay_resp.freezed.dart';
 part 'repay_resp.g.dart';
 
-/// 还款订单信息模型
 @freezed
 abstract class RepayResp with _$RepayResp {
   const factory RepayResp({

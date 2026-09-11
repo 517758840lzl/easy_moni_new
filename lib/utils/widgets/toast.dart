@@ -258,7 +258,6 @@ ToastFuture showToast(
   textMaxLines ??= theme.textMaxLines;
   textOverflow ??= theme.textOverflow;
 
-  // Toast 文本明确关闭装饰线，避免 Overlay 中继承到 fallback 的黄色下划线。
   final TextStyle effectiveTextStyle = textStyle.copyWith(
     decoration: TextDecoration.none,
   );

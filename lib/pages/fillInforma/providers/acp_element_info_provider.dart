@@ -9,7 +9,6 @@ final acpElementInfoProvider = Provider<AcpElementInfoApi>((ref) {
 });
 
 class AcpElementInfoApi {
-  /// 查询KYC步骤数据
   Future<HttpResult<AcpElementInfoResp>> call(int step) async {
     return HttpProvider.instance.get<AcpElementInfoResp>(
       ApiConstants.queryAcpElementInfo,

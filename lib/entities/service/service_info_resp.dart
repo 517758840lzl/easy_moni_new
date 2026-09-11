@@ -3,7 +3,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'service_info_resp.freezed.dart';
 part 'service_info_resp.g.dart';
 
-/// ServiceInfoResp 数据模型
 @freezed
 abstract class ServiceInfoResp with _$ServiceInfoResp {
   const factory ServiceInfoResp({
@@ -16,7 +15,6 @@ abstract class ServiceInfoResp with _$ServiceInfoResp {
       _$ServiceInfoRespFromJson(json);
 }
 
-/// ServiceInfoRespData 数据模型
 @freezed
 abstract class ServiceInfoRespData with _$ServiceInfoRespData {
   const factory ServiceInfoRespData({
@@ -32,7 +30,6 @@ abstract class ServiceInfoRespData with _$ServiceInfoRespData {
       _$ServiceInfoRespDataFromJson(json);
 }
 
-/// ServiceInfoRespDataAppCustomerServiceInfo 数据模型
 @freezed
 abstract class ServiceInfoRespDataAppCustomerServiceInfo
     with _$ServiceInfoRespDataAppCustomerServiceInfo {

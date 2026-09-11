@@ -4,7 +4,6 @@ import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/entities/coupon_resp.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 
-// 优惠券入口卡片：负责展示入口状态，并把点击事件交给确认页处理业务请求。
 class CouponEntryCard extends StatelessWidget {
   const CouponEntryCard({
     super.key,

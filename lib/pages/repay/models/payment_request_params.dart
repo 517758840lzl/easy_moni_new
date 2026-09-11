@@ -1,4 +1,3 @@
-/// 付款接口订单分配明细，描述每笔账单本次承担的支付金额。
 class PaymentAllocation {
   const PaymentAllocation({
     required this.allocationAmount,
@@ -27,7 +26,6 @@ class PaymentAllocation {
   }
 }
 
-/// 付款接口请求参数，供普通还款和展期支付统一跳转到 H5 容器页。
 class PaymentRequestParams {
   const PaymentRequestParams({
     required this.allocations,
@@ -92,7 +90,6 @@ List<Object?> _jsonList(Object? value) {
   return value is List ? value.cast<Object?>() : const <Object?>[];
 }
 
-/// 付款订单类型
 class PaymentOrderTypes {
   const PaymentOrderTypes._();
 

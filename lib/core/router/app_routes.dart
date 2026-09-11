@@ -1,4 +1,3 @@
-/// 路由路径常量，集中维护页面跳转使用的 path，避免页面中散落字符串。
 class AppRoutePaths {
   static const String root = '/';
   static const String login = '/login';
@@ -30,7 +29,6 @@ class AppRoutePaths {
 
   static String detailWithId(String id) => '/detail/$id';
 
-  /// 构建首页容器路径，明确指定底部导航需要展示的 tab。
   static String homeWithTab(String tab, {bool refreshLoanHome = false}) {
     final requestId = DateTime.now().microsecondsSinceEpoch.toString();
     return _withQuery(home, {
@@ -40,19 +38,16 @@ class AppRoutePaths {
     });
   }
 
-  /// 构建单笔还款详情路径，使用 query 参数承载订单号以支持页面恢复。
   static String repayOrderDetailWithIds(Iterable<String?> appOrderIds) {
     return _withQuery(repayOrderDetail, {'appOrderIds': _join(appOrderIds)});
   }
 
-  /// 构建多笔还款详情路径，使用 query 参数承载订单号列表以支持页面恢复。
   static String repayMultiOrderDetailWithIds(Iterable<String?> appOrderIds) {
     return _withQuery(repayMultiOrderDetail, {
       'appOrderIds': _join(appOrderIds),
     });
   }
 
-  /// 构建展期申请路径，使用 query 参数承载展期接口和优惠券所需参数。
   static String repayExtensionWithParams({
     required String? appOrderId,
     required String? productCode,
@@ -81,7 +76,6 @@ class AppRoutePaths {
   }
 }
 
-/// 首页底部导航 tab 标识，避免跨页面跳转时依赖 HomeNavBar 的历史状态。
 class AppHomeTabs {
   static const String loan = 'loan';
   static const String repay = 'repay';
@@ -90,7 +84,6 @@ class AppHomeTabs {
   const AppHomeTabs._();
 }
 
-/// 路由名称常量，供 GoRouter 的 name 和后续 goNamed/pushNamed 统一复用。
 class AppRouteNames {
   static const String splash = 'splash';
   static const String login = 'login';

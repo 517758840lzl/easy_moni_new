@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-/// /api/common/startup/config 响应实体
 class StartupConfigResp {
   final AppListConfig? appListConfig;
   final int? compressionRatio;

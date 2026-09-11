@@ -4,7 +4,6 @@ import 'package:easy_moni/pages/loan/models/loan_order_detail_data.dart';
 import 'package:easy_moni/pages/repay/models/payment_request_params.dart';
 import 'package:easy_moni/pages/repay/models/repay_extension_request_data.dart';
 
-/// 路由 extra 编解码器，确保复杂入参在系统恢复和浏览器历史中不丢失。
 class AppRouteExtraCodec extends Codec<Object?, Object?> {
   const AppRouteExtraCodec();
 
@@ -32,7 +31,6 @@ class _AppRouteExtraEncoder extends Converter<Object?, Object?> {
       ],
       LoanOrderDetailData() => <Object?>['LoanOrderDetailData', input.toJson()],
       _ when _isJsonSafe(input) => input,
-      // ponytail: 未登记的历史 extra 不参与恢复；保持旧行为，无法序列化时丢弃。
       _ => null,
     };
   }

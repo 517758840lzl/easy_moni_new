@@ -36,7 +36,6 @@ class LocationService {
     }
   }
 
-  /// 打开系统 App 设置页，引导用户在权限设置中开启位置权限。
   static Future<void> openAppSettings() async {
     if (kIsWeb) return;
 
@@ -159,7 +158,6 @@ class DeviceInfoService {
 class ContactsService {
   static const MethodChannel _channel = MethodChannel('com.easy_moni/contacts');
 
-  /// 打开系统联系人选择器，仅返回用户主动选择的联系人，不申请通讯录读取权限。
   static Future<Map<String, String>?> pickContact() async {
     try {
       final Map<dynamic, dynamic>? result = await _channel.invokeMethod(
@@ -181,7 +179,6 @@ class CameraService {
   static const MethodChannel _channel = MethodChannel('com.easy_moni/camera');
   static DateTime? _lastPermissionGrantAt;
 
-  /// 检查相机权限；拍摄页只在已授权后进入，避免相机插件再次触发权限流程。
   static Future<bool> checkPermission() async {
     try {
       final bool result = await _channel.invokeMethod('checkCameraPermission');
@@ -193,7 +190,6 @@ class CameraService {
     }
   }
 
-  /// 请求相机权限，授权结果只用于记录，不阻塞后续业务流程。
   static Future<bool> requestPermission() async {
     try {
       final bool result = await _channel.invokeMethod(
@@ -250,7 +246,6 @@ class CameraService {
     }
   }
 
-  /// 从相册选择图片，返回图片二进制数据。
   static Future<Uint8List?> pickFromGallery() async {
     if (kIsWeb) {
       return pickImageBytesForWeb();
@@ -276,7 +271,6 @@ class CameraService {
   }
 }
 
-/// 外部链接服务，通过 iOS 原生打开 mailto、WhatsApp、浏览器等系统跳转。
 class ExternalLinkService {
   static const MethodChannel _channel = MethodChannel('com.easy_moni/external_link');
 
@@ -299,7 +293,6 @@ class ExternalLinkService {
   }
 }
 
-/// 系统拨号盘服务，只负责拉起拨号界面，不直接发起通话。
 class DialerService {
   static const MethodChannel _channel = MethodChannel('com.easy_moni/dialer');
 
@@ -319,7 +312,6 @@ class DialerService {
   }
 }
 
-/// 应用信息服务，统一从原生安装包信息读取版本名、版本号等基础信息。
 class AppInfoService {
   static const MethodChannel _channel = MethodChannel('com.easy_moni/app_info');
 
@@ -336,7 +328,6 @@ class AppInfoService {
     }
   }
 
-  /// 获取应用数字版本号，用于接口上报 appVersion。
   static Future<String> getVersionCode() async {
     if (kIsWeb) return '';
 
@@ -351,7 +342,6 @@ class AppInfoService {
   }
 }
 
-/// 应用任务服务，用于首页系统返回键退到后台而不是结束 Activity。
 class AppTaskService {
   static const MethodChannel _channel = MethodChannel('com.easy_moni/app_task');
 
@@ -371,7 +361,6 @@ class AppTaskService {
   }
 }
 
-/// 归因设备服务，提供登录埋点需要的真实 GAID、Install Referrer 和设备标识。
 class AttributionDeviceService {
   static const MethodChannel _channel = MethodChannel(
     'com.easy_moni/attribution',

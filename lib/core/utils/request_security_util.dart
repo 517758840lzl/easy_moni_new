@@ -5,7 +5,6 @@ import 'dart:typed_data';
 import 'package:easy_moni/core/config/request_security_config.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 
-/// 请求安全工具，集中处理请求体 AES 加密、解密和压缩。
 class RequestSecurityUtil {
   RequestSecurityUtil._();
 
@@ -21,7 +20,6 @@ class RequestSecurityUtil {
   static encrypt.Encrypter get _encrypter =>
       _encrypterForKey(RequestSecurityConfig.requestAesKey);
 
-  /// 将普通 JSON 数据加密为后端可接收的顶层请求体字符串。
   static String encryptRequestBody(
     Object? data, {
     String aesKey = RequestSecurityConfig.requestAesKey,
@@ -37,7 +35,6 @@ class RequestSecurityUtil {
     return result.cipherText;
   }
 
-  /// 判断数据是否为后端约定的加密传输包。
   static bool isEncryptedTransportBody(
     Map<dynamic, dynamic> data, {
     String bodyKey = RequestSecurityConfig.requestAesKey,
@@ -47,7 +44,6 @@ class RequestSecurityUtil {
     return data[bodyKey] is String && data[effectiveIvKey] is String;
   }
 
-  /// 解密整个响应体；后端正式响应为 String 密文，Map 加密包用于兼容本地测试。
   static dynamic decryptResponseBody(
     Object? data, {
     String aesKey = RequestSecurityConfig.requestAesKey,
@@ -85,7 +81,6 @@ class RequestSecurityUtil {
     return _tryDecodeJson(plainText, fallback: data);
   }
 
-  /// 将 JSON 数据序列化后使用 AES-CBC 加密。
   static RequestEncryptionResult encryptJson(
     Object? data, {
     required String aesKey,
@@ -104,7 +99,6 @@ class RequestSecurityUtil {
     return RequestEncryptionResult(cipherText: cipherText, ivBase64: iv.base64);
   }
 
-  /// 加密字符串内容，返回密文和 IV。
   static RequestEncryptionResult encryptText(
     String plainText, {
     required String aesKey,
@@ -122,7 +116,6 @@ class RequestSecurityUtil {
     return RequestEncryptionResult(cipherText: cipherText, ivBase64: iv.base64);
   }
 
-  /// 解密 JSON 密文，便于本地测试和排查加密链路。
   static dynamic decryptJson({
     required String cipherText,
     required String aesKey,
@@ -138,7 +131,6 @@ class RequestSecurityUtil {
     return jsonDecode(plainText);
   }
 
-  /// 解密字符串密文，便于验证 AES 参数是否与后端一致。
   static String decryptText({
     required String cipherText,
     required String aesKey,
@@ -153,7 +145,6 @@ class RequestSecurityUtil {
     );
   }
 
-  /// 按后端契约加密明文载荷，失败时返回原文，避免中断调用链。
   static String sealPayload(
     String plainText, {
     String aesKey = RequestSecurityConfig.requestAesKey,
@@ -174,7 +165,6 @@ class RequestSecurityUtil {
     }
   }
 
-  /// 按后端契约解密密文载荷，失败时返回原密文。
   static String openPayload(
     String? cipherText, {
     String aesKey = RequestSecurityConfig.requestAesKey,
@@ -194,7 +184,6 @@ class RequestSecurityUtil {
     }
   }
 
-  /// 将业务数据 JSON 序列化后执行 zlib 压缩。
   static Uint8List deflateBytes(dynamic payload) {
     try {
       final jsonText = jsonEncode(payload);
@@ -222,7 +211,6 @@ class RequestSecurityUtil {
     );
   }
 
-  /// 按后端约定从 AES key 中截取前 16 个 UTF-8 字节作为默认 IV。
   static encrypt.IV _nonceBlockForKey(String aesKey) {
     final bytes = _secretBytesForKey(aesKey);
     if (bytes.length < _aesBlockSize) {
@@ -278,7 +266,6 @@ class RequestSecurityUtil {
   }
 }
 
-/// AES 加密后的请求数据结果。
 class RequestEncryptionResult {
   const RequestEncryptionResult({
     required this.cipherText,
@@ -288,7 +275,6 @@ class RequestEncryptionResult {
   final String cipherText;
   final String ivBase64;
 
-  /// 转换为 Map 加密包，供事件字段加密和本地兼容测试使用。
   Map<String, dynamic> toRequestBody({
     String bodyKey = RequestSecurityConfig.requestAesKey,
     String? ivKey,

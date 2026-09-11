@@ -9,7 +9,6 @@ final provincesCitiesAreaProvider = Provider<ProvincesCitiesAreaApi>((ref) {
 });
 
 class ProvincesCitiesAreaApi {
-  /// 查询地区和城市接口
   Future<HttpResult<ProvincesCitiesAreaResp>> call() async {
     return HttpProvider.instance.get<ProvincesCitiesAreaResp>(
       ApiConstants.queryProvincesCitiesArea,

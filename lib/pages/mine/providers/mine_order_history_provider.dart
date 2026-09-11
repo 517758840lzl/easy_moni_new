@@ -5,7 +5,6 @@ import 'package:easy_moni/core/network/http_result.dart';
 import 'package:easy_moni/entities/order_list_resp.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// 历史订单 tab 配置，使用固定实例替代 enum，便于集中维护状态规则和展示文案。
 class MineOrderHistoryTab {
   const MineOrderHistoryTab({
     required this.key,
@@ -18,7 +17,6 @@ class MineOrderHistoryTab {
   final List<int> statusList;
 }
 
-/// 历史订单 tab 和接口状态映射。
 class MineOrderHistoryTabs {
   MineOrderHistoryTabs._();
 
@@ -54,7 +52,6 @@ class MineOrderHistoryTabs {
     );
   }
 
-  /// 将一次接口返回的全量订单按 tab 状态拆分，避免切换 tab 时重复请求后端。
   static Map<String, List<OrderListItem>> groupOrdersByTab(
     List<OrderListItem> orders,
   ) {
@@ -81,7 +78,6 @@ final mineOrderHistoryProvider = FutureProvider.autoDispose
     });
 
 class MineOrderHistoryApi {
-  /// 获取历史订单全量列表，statusList 传空数组，由前端按 tab 状态本地分组。
   Future<HttpResult<List<OrderListItem>>> call() async {
     final result = await HttpProvider.instance.post<List<dynamic>>(
       ApiConstants.userRepayment,

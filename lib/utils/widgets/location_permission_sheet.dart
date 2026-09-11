@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 class LocationPermissionSheet {
   LocationPermissionSheet._();
 
-  /// 先弹系统定位权限，用户拒绝后再弹自定义引导去设置。
   static Future<bool> ensure(BuildContext context) async {
     if (await LocationService.checkPermission()) {
       return true;

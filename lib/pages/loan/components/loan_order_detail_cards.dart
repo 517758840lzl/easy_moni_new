@@ -4,7 +4,6 @@ import 'package:easy_moni/pages/loan/models/loan_order_detail_data.dart';
 import 'package:easy_moni/utils/extensions.dart';
 import 'package:flutter/material.dart';
 
-/// 订单详情内容卡片组，统一维护字段、间距和信息卡视觉。
 class LoanOrderDetailCards extends StatelessWidget {
   const LoanOrderDetailCards({super.key, required this.data});
 
@@ -34,7 +33,6 @@ class LoanOrderDetailCards extends StatelessWidget {
     );
   }
 
-  /// 不同订单状态展示不同信息，值为空的行直接隐藏，避免详情页出现占位文案。
   static List<_DetailRowData> _resolveOrderRows(LoanOrderDetailData data) {
     final visual = LoanOrderDetailStatusVisual.resolve(data);
     if (visual.kind == LoanOrderDetailStatusKind.overdue) {
@@ -54,7 +52,6 @@ class LoanOrderDetailCards extends StatelessWidget {
         ),
         _DetailRowData.days(AppStrings.loanOrderLoanTermLabel, data.totalServiceDays),
         _DetailRowData.text(AppStrings.loanOrderDueDateLabel, data.dueDate),
-        // 逾期状态下后端 remainingDays 为负数，展示时按逾期天数取绝对值。
         _DetailRowData.days(
           AppStrings.loanOrderOverdueDaysLabel,
           data.remainingDays?.abs(),

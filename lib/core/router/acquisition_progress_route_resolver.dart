@@ -2,7 +2,6 @@ import 'package:easy_moni/core/router/app_routes.dart';
 import 'package:easy_moni/entities/acquisition_progress_resp.dart';
 import 'package:easy_moni/entities/submit_acp_info_resp.dart';
 
-/// 采集进度路由解析器，根据后端返回的最新 KYC 进度决定下一步页面。
 class AcquisitionProgressRouteResolver {
   const AcquisitionProgressRouteResolver._();
 
@@ -39,7 +38,6 @@ class AcquisitionProgressRouteResolver {
     return _routeForStep(nextStep);
   }
 
-  /// 从后端步骤列表中寻找当前已完成步骤之后的最小步骤，避免依赖数组顺序。
   static int? _nextStep(List<ProcessStep>? steps, int filledStep) {
     final pendingSteps = (steps ?? const [])
         .map((step) => step.step)

@@ -7,7 +7,6 @@ import android.provider.ContactsContract
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodChannel
 
-// 通讯录平台服务：负责打开联系人选择器并解析选中的联系人数据。
 internal class ContactPlatformService(private val activity: Activity) {
     companion object {
         const val PICK_CONTACT_REQUEST_CODE = 2002
@@ -61,7 +60,6 @@ internal class ContactPlatformService(private val activity: Activity) {
                 Intent.ACTION_PICK,
                 ContactsContract.CommonDataKinds.Phone.CONTENT_URI
             )
-            // 避免连续联系人选择请求覆盖上一笔 Flutter Result，导致前一个 Future 无法结束。
             pendingPickContactResult = result
             activity.startActivityForResult(intent, PICK_CONTACT_REQUEST_CODE)
         } catch (e: Exception) {

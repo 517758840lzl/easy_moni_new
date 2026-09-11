@@ -1,10 +1,7 @@
-/// 项目所有文案集中管理
-/// 修改语言只需修改此文件中的值即可
 class AppStrings {
   AppStrings._();
 
   // ==================== App ====================
-  // ==================== 通用组件文本 ====================
   static const String appTitle = 'Prime Cedi Loan';
   static const String splashTagline = 'YOUR CREDIT, MADE EASY';
   static const String continueStr = 'Continue';
@@ -12,7 +9,6 @@ class AppStrings {
   static const String cancel = 'Cancel';
   static const String confirm = 'Confirm';
   static const String goSettings = 'Go to Settings';
-  // ==================== KYC流程 ====================
   static const String privacyData = 'Privacy Policy';
   static const String wellcome = 'Welcome to Prime Cedi Loan';
   static const String wellcomedeailData =
@@ -36,7 +32,6 @@ class AppStrings {
   static const String loginAgreeSuffix = '.';
   static const String loginAgreeRequired =
       'Please read and agree to the Terms of Service and Privacy Policy to continue.';
-  // ================ 联系人流程 ========================
   static const String chooseContacts = 'Select a Parent/Spouse';
   static const String chooseFriends = 'Select a Friend/Colleague';
   static const String contactPlaceholder = 'Select from Contacts';
@@ -182,7 +177,6 @@ class AppStrings {
         : 'Please verify your identity as $name';
   }
 
-  // ==================== 我的 ====================
   static const String mineCurrentPending = 'Outstanding Amount';
   static const String mineGoToRepay = 'Repay Now';
   static const String mineOtherFeatures = 'More';
@@ -228,7 +222,6 @@ class AppStrings {
   static const String mineLogoutSuccess = 'Logged out successfully.';
   static const String mineLogoutFailed = 'Failed to log out. Please try again.';
 
-  // ==================== 首页 =======================
   static const String homeButtonText = 'Borrow Now';
   static const String homeLoanSectionTitle = 'My Loan';
   static const String homeLockedSectionTitle = 'More Products to Unlock';
@@ -247,7 +240,6 @@ class AppStrings {
   static const String reviewFeatureFlexibleDesc =
       'Borrow and repay anytime online.';
 
-  // ==================== 贷款详情 ====================
   static const String loanDetailTitle = 'Loan Details';
   static const String loanItemIdPrefix = 'Loan ID:';
   static const String createdRecently = 'Created recently';
@@ -264,7 +256,6 @@ class AppStrings {
   static const String loanTermLabel = 'Term';
   static const String loanProductLogoFallback = '?';
 
-  // ==================== 贷款订单状态 ====================
   static const String loanOrderStatusOverdue = 'Overdue';
   static const String loanOrderStatusReviewing = 'Under Review';
   static const String loanOrderStatusReviewFailed = 'Rejected';
@@ -306,7 +297,6 @@ class AppStrings {
   static const String loanOrderMomoAccountLabel = 'MoMo Account';
   static const String loanOrderWalletTypeLabel = 'Wallet Provider';
 
-  // ==================== 账单详情 ====================
   static const String orderDetailTitle = 'Loan Details';
   static const String orderDetailNoOrderData = 'No bill found';
   static const String orderDetailLoadFailed = 'Failed to load bill details';
@@ -329,7 +319,6 @@ class AppStrings {
   static const String orderDetailCurrencyCode = 'GHS ';
   static const String orderDetailZeroAmount = '0.00';
 
-  // ==================== 还款卡片 ====================
 
   static const String repayEntryHeaderTitle = 'Total Outstanding Amount';
   static const String repayDefaultTitle = 'Repayment';
@@ -387,13 +376,11 @@ class AppStrings {
   static String orderDetailRepayButtonText(num? amount) =>
       '$orderDetailRepayNow $orderDetailCurrencyCode ${amount?.toStringAsFixed(2) ?? orderDetailZeroAmount}';
 
-  // ==================== 借款申请 ====================
   static const String loanReviewTitle = 'Under Review';
   static const String loanReviewAppBarTitle = 'Loan Application';
   static const String loanReviewDesc =
       'Your loan application is under review. \nThe review is usually completed within a few minutes. \nWe\'ll notify you as soon as the result is available.';
 
-  // ===================== 优惠券 ========================
   static const String couponEmptyDesc =
       'No coupons available. Repay on time to unlock more rewards.';
   static const String couponString = 'Coupons';
@@ -402,7 +389,6 @@ class AppStrings {
   static const String couponTypePre = 'Credit Limit Coupon';
   static const String couponTypePost = 'Discount Coupon';
 
-  // ==================== 确认借款 ====================
   static const String loanConfirmTitle = 'Confirm Loan';
   static const String loanConfirmButtonText = 'Confirm Loan';
   static const String loanConfirmEmptyText = 'No loan available to confirm';
@@ -420,7 +406,6 @@ class AppStrings {
   static const String loanConfirmAgreeRequired =
       'Please read and agree to the Loan Contract first';
 
-  // ==================== 状态 =====================
   static const String errorMessage = 'Failed to load. Please try again.';
   static const String stateReloadAction = 'Reload';
 }

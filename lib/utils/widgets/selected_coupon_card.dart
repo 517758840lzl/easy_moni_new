@@ -3,7 +3,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:easy_moni/gen/assets.gen.dart';
 
-// 已选优惠券卡片：负责展示已选择的优惠券名称、金额和跳转入口。
 class SelectedCouponCard extends StatelessWidget {
   const SelectedCouponCard({
     super.key,
@@ -85,7 +84,6 @@ class SelectedCouponCard extends StatelessWidget {
   }
 }
 
-// 优惠券主要信息：上下两行排版与切图中间区域保持对齐。
 class _SelectedCouponText extends StatelessWidget {
   const _SelectedCouponText({
     required this.couponName,

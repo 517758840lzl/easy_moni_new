@@ -14,7 +14,6 @@ class ImageCompressTool {
   static const int _maxQuality = 100;
   static const int _minLongSide = 64;
 
-  /// 压缩上传图片，统一控制最大体积、最小目标体积、最大边长与 JPEG 质量，满足后端上传限制。
   static Future<Uint8List> compressForUpload(
     Uint8List bytes, {
     int maxBytes = _defaultMaxUploadBytes,
@@ -53,7 +52,6 @@ class ImageCompressTool {
     }
   }
 
-  /// 选择满足上传限制的最高可用压缩边界，尽量避免把图片压到 200KB 以下。
   static Uint8List? _compressWithUploadBounds(
     img.Image image, {
     required int maxBytes,
@@ -103,7 +101,6 @@ class ImageCompressTool {
     )?.bytes;
   }
 
-  /// 在不超过上传上限的前提下，提升质量以靠近 200KB 最小目标。
   static Uint8List _raiseQualityForMinimum(
     img.Image image, {
     required Uint8List currentBytes,
@@ -143,7 +140,6 @@ class ImageCompressTool {
     return bestBytes;
   }
 
-  /// 用二分查找找出指定质量下不超过上传上限的最大边长。
   static _CompressionResult? _findLargestLongSideWithinLimit(
     img.Image image, {
     required int minLongSide,
@@ -174,7 +170,6 @@ class ImageCompressTool {
     return bestResult;
   }
 
-  /// 边长已经降到最低仍超限时，继续查找可用的最高 JPEG 质量。
   static _CompressionResult? _findHighestQualityWithinLimit(
     img.Image image, {
     required int longSide,
@@ -205,7 +200,6 @@ class ImageCompressTool {
     return bestResult;
   }
 
-  /// 根据压缩边界统一执行缩放和 JPEG 编码。
   static Uint8List _encodeWithBounds(
     img.Image image,
     _CompressionBounds bounds,
@@ -216,7 +210,6 @@ class ImageCompressTool {
     );
   }
 
-  /// 仅在图片长边超过限制时缩放，避免无意义降低小图清晰度。
   static img.Image _resizeIfNeeded(
     img.Image image, {
     required int maxLongSide,
@@ -236,7 +229,6 @@ class ImageCompressTool {
     );
   }
 
-  /// 计算上传允许的最大长边，不放大小图。
   static int _limitedLongSide(img.Image image, {required int maxLongSide}) {
     return math.min(
       math.max(1, maxLongSide),
@@ -245,7 +237,6 @@ class ImageCompressTool {
   }
 }
 
-/// 在后台 isolate 执行图片解码、缩放和 JPEG 编码，避免阻塞页面渲染。
 _ImageCompressResult _compressForUploadInBackground(
   _ImageCompressRequest request,
 ) {
@@ -291,7 +282,6 @@ _ImageCompressResult _compressForUploadInBackground(
   return _ImageCompressResult(bytes: compressedBytes, wasCompressed: true);
 }
 
-/// 图片压缩请求参数，供后台 isolate 传递。
 class _ImageCompressRequest {
   const _ImageCompressRequest({
     required this.bytes,
@@ -308,7 +298,6 @@ class _ImageCompressRequest {
   final int quality;
 }
 
-/// 图片压缩执行结果，保留是否真实压缩便于主 isolate 记录日志。
 class _ImageCompressResult {
   const _ImageCompressResult({
     required this.bytes,
@@ -319,7 +308,6 @@ class _ImageCompressResult {
   final bool wasCompressed;
 }
 
-/// 图片压缩参数边界，集中描述本次编码使用的尺寸和质量。
 class _CompressionBounds {
   const _CompressionBounds({required this.longSide, required this.quality});
 
@@ -327,7 +315,6 @@ class _CompressionBounds {
   final int quality;
 }
 
-/// 图片压缩结果，保留实际字节和对应参数，便于后续继续优化质量。
 class _CompressionResult {
   const _CompressionResult({required this.bytes, required this.bounds});
 

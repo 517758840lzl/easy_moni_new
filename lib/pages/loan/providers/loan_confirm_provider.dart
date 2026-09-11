@@ -39,7 +39,6 @@ class LoanConfirmApi {
         'productInfoList': orders.map((item) {
           return {
             'appOrderId': item.appOrderId ?? 0,
-            // 优惠券只通过 couponIds 传递，借款金额保持确认页原始订单金额。
             'loanAmount': item.loanAmount ?? 0,
             'productCode': item.productCode ?? '',
           };

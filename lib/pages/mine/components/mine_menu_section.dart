@@ -2,7 +2,6 @@ import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:flutter/material.dart';
 
-/// 个人中心功能入口列表。
 class MineMenuSection extends StatelessWidget {
   const MineMenuSection({
     super.key,

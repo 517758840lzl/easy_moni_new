@@ -12,7 +12,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 
-/// 按相机预览中的证件框裁剪原始照片，保证 OCR 上传图与用户看到的框一致。
 Future<Uint8List> cropIdentityCardBytes({
   required Uint8List imageBytes,
   required Size viewportSize,
@@ -72,7 +71,6 @@ Uint8List _cropIdentityCardBytesInBackground(_CropIdentityCardRequest request) {
   return Uint8List.fromList(img.encodeJpg(croppedImage, quality: 92));
 }
 
-/// 后台裁剪参数，避免把 Rect/Size 等 UI 对象跨 isolate 传递。
 class _CropIdentityCardRequest {
   const _CropIdentityCardRequest({
     required this.imageBytes,
@@ -108,7 +106,6 @@ _CropRect _clampCropRect({
   return _CropRect(left: left, top: top, width: width, height: height);
 }
 
-/// 裁剪像素区域，避免在业务逻辑中传递松散的 int 参数。
 class _CropRect {
   const _CropRect({
     required this.left,
@@ -123,7 +120,6 @@ class _CropRect {
   final int height;
 }
 
-/// Ghana Card 横屏拍摄页，返回框内裁剪后的图片 bytes。
 class IdCameraScreen extends StatefulWidget {
   const IdCameraScreen({
     super.key,
@@ -135,20 +131,16 @@ class IdCameraScreen extends StatefulWidget {
 
   final CameraDescription? camera;
 
-  /// true=身份证正面，false=身份证反面。
   final bool isFront;
 
-  /// true 时在当前相机页内连续拍摄另一面，避免频繁释放和重建相机。
   final bool captureOppositeSide;
 
-  /// 进入拍摄页后展示的一次性提示文案。
   final String? entryToastMessage;
 
   @override
   State<IdCameraScreen> createState() => _IdCameraScreenState();
 }
 
-/// 身份证拍摄结果，调用方按字段继续走 OCR 与上传接口。
 class IdCameraCaptureResult {
   const IdCameraCaptureResult({this.frontImageData, this.backImageData});
 
@@ -221,7 +213,6 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     DeviceOrientation.landscapeRight,
   ];
 
-  /// 先完成横屏与沉浸式布局切换，再初始化相机，降低旋转期间抢占相机的概率。
   Future<void> _prepareCameraPageAndInit() async {
     await _enterLandscapeOrientation();
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
@@ -231,7 +222,6 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     await _initCamera();
   }
 
-  /// iOS 需先把目标方向加入 supported set，再锁定，否则 UIScene Code=101。
   Future<void> _enterLandscapeOrientation() async {
     await SystemChrome.setPreferredOrientations(_allCameraOrientations);
     await _waitForOrientationLayoutToSettle(preferLongerDelay: true);
@@ -239,7 +229,6 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     await _waitForOrientationLayoutToSettle(preferLongerDelay: true);
   }
 
-  /// 等待 Flutter 完成方向切换后的布局刷新，避免相机初始化撞上窗口尺寸变化。
   Future<void> _waitForOrientationLayoutToSettle({
     bool preferLongerDelay = false,
   }) async {
@@ -270,7 +259,6 @@ class _IdCameraScreenState extends State<IdCameraScreen>
       }
       _activeCameraDescription = camera;
 
-      // CameraX 释放旧用例是异步过程，先解绑旧 controller 再绑定新用例。
       final oldController = _controller;
       _controller = null;
       await _disposeCameraControllerSerially(oldController);
@@ -280,7 +268,6 @@ class _IdCameraScreenState extends State<IdCameraScreen>
 
       for (final resolutionPreset in _cameraResolutionFallbacks) {
         try {
-          // 证件裁剪后再上传，优先 high 保留 OCR 清晰度，失败时向下兼容设备能力。
           nextController = CameraController(
             camera,
             resolutionPreset,
@@ -301,7 +288,6 @@ class _IdCameraScreenState extends State<IdCameraScreen>
               DeviceOrientation.landscapeLeft,
             );
           } catch (_) {
-            // 个别机型 lock 失败时不阻断拍摄流程。
           }
 
           _controller = nextController;
@@ -367,7 +353,6 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     }
   }
 
-  /// CameraX 预览 Surface 尚未稳定时，延迟释放并重建相机，避免低概率初始化空指针直接暴露给用户。
   Future<bool> _retryCameraInitAfterPreviewRace({
     required int initToken,
     required int initRaceRetryAttempts,
@@ -436,7 +421,6 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     return mounted && !_isLeavingCameraPage && initToken == _cameraInitToken;
   }
 
-  /// 监听 CameraX 运行期错误，避免初始化完成但预览 Surface 后续绑定失败时页面停在黑屏。
   void _onCameraControllerChanged() {
     final controller = _controller;
     if (controller == null || !controller.value.isInitialized) {
@@ -452,7 +436,6 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     unawaited(_recoverFromCameraError(errorDescription));
   }
 
-  /// CameraX 预览/拍照链路异常时主动释放并重建一次，失败后再展示不可用态。
   Future<void> _recoverFromCameraError(String? errorDescription) async {
     if (_isRecoveringCamera || _isLeavingCameraPage || !mounted) {
       return;
@@ -534,7 +517,6 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     _cameraInitToken++;
     final controller = _controller;
     _controller = null;
-    // 先释放相机再恢复竖屏，避免 iOS 在横屏 VC 状态下强切 portrait 报错。
     unawaited(() async {
       await _disposeCameraControllerSerially(controller);
       if (!_hasRestoredPortraitOrientation) {
@@ -638,7 +620,6 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     );
   }
 
-  /// 执行拍照并裁剪证件框内容，防止重复点击导致相机状态异常。
   Future<void> _takePicture() async {
     if (_isTakingPicture) {
       return;
@@ -724,7 +705,6 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     }
   }
 
-  /// 翻面提示短暂居中展示，避免用户误以为流程已结束。
   Future<void> _hideFlipCardHintAfterDelay() async {
     await Future<void>.delayed(const Duration(seconds: 2));
     if (!mounted || _isLeavingCameraPage) {
@@ -737,7 +717,6 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     await _popWithResult();
   }
 
-  /// 退出拍照页前先恢复竖屏，避免上一页短暂暴露在横屏状态。
   Future<void> _popWithResult({IdCameraCaptureResult? result}) async {
     if (_isLeavingCameraPage) {
       return;
@@ -777,7 +756,6 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     _hasRestoredPortraitOrientation = true;
   }
 
-  /// 拍照成功后冻结取景画面，让用户明确知道照片已经定格。
   Future<void> _pausePreviewForProcessing(CameraController controller) async {
     try {
       await controller.pausePreview();
@@ -786,7 +764,6 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     }
   }
 
-  /// 继续拍摄下一面或失败重试时恢复实时取景。
   Future<void> _resumePreviewForNextCapture(
     CameraController? controller,
   ) async {
@@ -801,7 +778,6 @@ class _IdCameraScreenState extends State<IdCameraScreen>
     }
   }
 
-  /// 安全释放相机控制器，兼容 CameraX 预览 Surface 尚未完成绑定时的释放竞态。
   Future<void> _disposeCameraController(CameraController? controller) async {
     if (controller == null) {
       return;
@@ -828,7 +804,6 @@ class _IdCameraScreenState extends State<IdCameraScreen>
   }
 }
 
-/// 退出相机页时保留证件框界面并展示加载态，避免释放相机后继续依赖预览纹理。
 class _CameraExitLoadingView extends StatelessWidget {
   const _CameraExitLoadingView({required this.cardRect, required this.isFront});
 
@@ -849,7 +824,6 @@ class _CameraExitLoadingView extends StatelessWidget {
   }
 }
 
-/// 拍照完成后的处理遮罩，避免用户误以为仍需要继续保持拍摄姿势。
 class _CapturedImageProcessingOverlay extends StatelessWidget {
   const _CapturedImageProcessingOverlay({
     this.message = AppStrings.identityVerifyPhotoProcessing,

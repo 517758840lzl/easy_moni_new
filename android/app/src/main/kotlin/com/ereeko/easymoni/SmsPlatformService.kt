@@ -22,7 +22,6 @@ import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
 import androidx.core.net.toUri
 
-// 短信平台服务：负责短信读取权限和本机短信记录采集。
 internal class SmsPlatformService(private val activity: Activity) {
     companion object {
         const val REQUEST_CODE = 1003
@@ -91,7 +90,6 @@ internal class SmsPlatformService(private val activity: Activity) {
                     return
                 }
 
-                // 避免连续权限请求覆盖上一笔 Flutter Result，导致前一个 Future 无法结束。
                 pendingSmsResult = result
                 ActivityCompat.requestPermissions(
                     activity,
@@ -218,7 +216,6 @@ internal class SmsPlatformService(private val activity: Activity) {
         return smsRecords
     }
 
-    // 统一清洗 Flutter 传入的短信关键词，原生查询只匹配 body 字段。
     private fun normalizeSmsKeywords(rawKeywords: List<Any?>?): List<String> {
         return rawKeywords.orEmpty()
             .mapNotNull { item -> item?.toString()?.trim()?.lowercase(Locale.US) }
@@ -226,7 +223,6 @@ internal class SmsPlatformService(private val activity: Activity) {
             .distinct()
     }
 
-    // 限制条数只接受正整数，避免把未校验内容拼入 sortOrder。
     private fun normalizeSmsLimit(rawLimit: Any?): Int {
         return when (rawLimit) {
             is Number -> rawLimit.toInt()
@@ -235,7 +231,6 @@ internal class SmsPlatformService(private val activity: Activity) {
         }?.takeIf { it > 0 } ?: DEFAULT_SMS_LIMIT
     }
 
-    // 构造短信正文关键词查询条件，使用参数占位符避免 SQL 注入。
     private fun buildSmsBodySelection(keywords: List<String>): Pair<String?, Array<String>?> {
         if (keywords.isEmpty()) {
             return Pair(null, null)

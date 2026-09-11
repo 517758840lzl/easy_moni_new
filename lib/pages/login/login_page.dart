@@ -15,6 +15,7 @@ import 'package:easy_moni/pages/fillInforma/providers/acquisition_progress_provi
 import 'package:easy_moni/services/user_info_cache.dart';
 import 'package:easy_moni/services/permission_storage.dart';
 import 'package:easy_moni/services/upload_data/upload_data_sync_service.dart';
+import 'package:easy_moni/services/upload_data/upload_track_id_store.dart';
 import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
 import 'package:easy_moni/utils/af_tracker/track_events.dart';
 import 'package:easy_moni/utils/widgets/toast.dart';
@@ -88,7 +89,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     if (_hasPrecachedBackground) return;
 
     _hasPrecachedBackground = true;
-    // 提前解码登录背景图，减少首帧露出底色的时间。
     precacheImage(Assets.images.loginBg.provider(), context);
     precacheImage(Assets.images.loginLogo.provider(), context);
   }
@@ -106,7 +106,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     return phoneDigits.length == 10 && phoneDigits.startsWith('0');
   }
 
-  /// 判断登录必填输入是否完整，用于控制按钮是否可提交。
   bool _hasRequiredLoginInput() {
     return _normalizedPhone().isNotEmpty &&
         _codeController.text.trim().isNotEmpty;
@@ -117,7 +116,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     context.go(route);
   }
 
-  /// 登录失败时弹出后端提示，验证码错误（如 code=50000）会透传到 message。
   void _showLoginErrorToast(String? message) {
     final errorMessage = message?.trim();
     if (errorMessage == null || errorMessage.isEmpty) {
@@ -128,11 +126,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     showToast(errorMessage, context: context);
   }
 
-  /// 手机号输入变化监听
   void _onPhoneChanged() {
     String text = _phoneController.text;
 
-    // 手机号只保留数字；首位不是 0 时按加纳本地号码格式自动补 0。
     text = text.replaceAll(RegExp(r'[^0-9]'), '');
     if (text.isNotEmpty && !text.startsWith('0')) {
       text = '0$text';
@@ -142,14 +138,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       text = text.substring(0, 10);
     }
 
-    // 更新文本（避免光标跳动）
     if (_phoneController.text != text) {
       final selection = TextSelection.collapsed(offset: text.length);
       _phoneController.value = TextEditingValue(
         text: text,
         selection: selection,
       );
-      // 文本更新后会再次触发 listener，直接返回避免重复处理
       return;
     }
 
@@ -164,7 +158,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     }
   }
 
-  /// 手机号达到 10 位后自动发送验证码，并避免同一号码重复触发。
   void _sendCodeAfterPhoneCompleted(String phoneText) {
     if (_lastAutoCodePhone == phoneText ||
         _isSendingCode ||
@@ -176,25 +169,21 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     unawaited(_onGetCode());
   }
 
-  /// 验证码输入变化监听
   void _onCodeChanged() {
     String text = _codeController.text;
 
-    // 过滤非数字字符
     text = text.replaceAll(RegExp(r'[^0-9]'), '');
 
     if (text.length > _verifyCodeLength) {
       text = text.substring(0, _verifyCodeLength);
     }
 
-    // 更新文本
     if (_codeController.text != text) {
       final selection = TextSelection.collapsed(offset: text.length);
       _codeController.value = TextEditingValue(
         text: text,
         selection: selection,
       );
-      // 文本更新后会再次触发 listener，直接返回避免重复处理
       return;
     }
 
@@ -204,7 +193,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     }
   }
 
-  /// 验证码达到当前长度后自动提交登录，复用登录入口的校验与防重复提交逻辑。
   void _submitLoginAfterCodeCompleted() {
     if (_isLoggingIn) {
       return;
@@ -248,7 +236,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       showToast(AppStrings.loginPhoneInvalid);
       return;
     }
-    // 触发发送验证码后，立即引导用户输入验证码。
     _codeFocusNode.requestFocus();
     try {
       setState(() => _isSendingCode = true);
@@ -339,7 +326,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           await HttpProvider.instance.setToken(authenticatedLoginData.token);
           await UserInfoCache.clear();
 
-          // 登录后请求 startup/config 接口
           try {
             final configResult = await ref.read(startupConfigProvider).call();
             if (!mounted) return;
@@ -350,20 +336,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             if (!mounted) return;
           }
 
-          // 登录后请求 checkUploadDataValid 接口
-          try {
-            final checkDataResult = await ref
-                .read(checkUploadDataValidProvider)
-                .call();
-            if (!mounted) return;
-
-            if (checkDataResult.isSuccess) {
-              ref
-                  .read(uploadDataSyncServiceProvider)
-                  .handleCheckResult(checkDataResult.data);
-            } else {}
-          } catch (e) {
-            if (!mounted) return;
+          final trackId = authenticatedLoginData.userId;
+          if (trackId != null && trackId > 0) {
+            UploadTrackIdStore.save(trackId);
+            ref
+                .read(uploadDataSyncServiceProvider)
+                .uploadDeviceInfoInBackground(trackId);
           }
 
           final progressResult = await ref
@@ -420,7 +398,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       backgroundColor: _backgroundFallbackColor,
       body: Stack(
         children: [
-          // 背景色底部图片
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
@@ -451,7 +428,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 
-  /// iPhone 8 / SE 等小屏机使用更紧凑的顶部间距。
   bool _isCompactLoginScreen(BuildContext context) {
     return MediaQuery.sizeOf(context).height <= 667;
   }
@@ -467,7 +443,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     return (contentHeight * 0.13).clamp(54.0, 100.0);
   }
 
-  /// 构建顶部客服入口
   Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -490,7 +465,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 
-  /// 登录页主体
   Widget _buildLoginContent() {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -547,7 +521,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   Future<void> _startTrackingAfterPrivacyAgreed() async {
     await PermissionStorage.setPrivacyAgreed(true);
-    // 追踪授权整次进程只请求一次（系统本身也只会弹一次框）。
     await _requestTrackingAuthorizationIfNeeded();
     await TrackingBootstrap.ensureStarted();
   }
@@ -609,7 +582,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 
-  /// 手机号输入区域展示本地号码格式，完整输入后会自动触发验证码发送。
   Widget _buildPhoneInput() {
     return SizedBox(
       height: 48,
@@ -669,7 +641,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 
-  /// 验证码输入区域
   Widget _buildCodeInput() {
     final isCountingDown = _countdownSeconds > 0;
     final isSendButtonDisabled = _isSendingCode || isCountingDown;
@@ -718,7 +689,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   ),
                   if (isCountingDown) ...[
                     const SizedBox(width: 12),
-                    // 倒计时属于输入框状态
                     Text(
                       '${_countdownSeconds}s',
                       textAlign: TextAlign.right,
@@ -778,7 +748,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 
-  /// 登录按钮展示 loading 态，并在登录中阻止重复提交。
   Widget _buildLoginButton() {
     final isLoginButtonDisabled = _isLoggingIn || !_hasRequiredLoginInput();
 

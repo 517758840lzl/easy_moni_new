@@ -190,13 +190,11 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
     }
   }
 
-  /// 获取后端配置的页面标题，接口缺省时使用本地文案兜底。
   String get _pageTitle {
     final pageTitle = _stepInfo?.pageTitle.trim() ?? '';
     return pageTitle.isNotEmpty ? pageTitle : AppStrings.contactInfoTitle;
   }
 
-  /// 按信息采集流程 header 比例计算白色内容区起点。
   double _contentTop(BuildContext context) {
     return MediaQuery.of(context).padding.top +
         _headerTitleBarHeight +
@@ -260,7 +258,6 @@ class _ContactInfoPageState extends ConsumerState<ContactInfoPage> {
     );
   }
 
-  /// 根据后台表单配置生成联系人信息表单项。
   Widget _buildEntryItem({
     required FormEntry entry,
     required bool showDivider,

@@ -26,7 +26,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// 单笔订单还款详情页，承接待还账单列表进入后的订单确认与还款操作。
 class RepayOrderDetailPage extends ConsumerStatefulWidget {
   const RepayOrderDetailPage({super.key, required this.requestData});
 
@@ -142,7 +141,6 @@ class _RepayOrderDetailPageState extends ConsumerState<RepayOrderDetailPage> {
   Future<List<CouponItem>> _loadCoupons(
     List<RepayDetailRespDataLoanOrderDetails> orders,
   ) async {
-    // 点击入口后实时拉取优惠券列表，确保还款前看到的是当前订单可用券。
     return ref.read(
       couponListProvider(
         CouponRequestParams(
@@ -155,7 +153,6 @@ class _RepayOrderDetailPageState extends ConsumerState<RepayOrderDetailPage> {
     );
   }
 
-  // 确认优惠券选择后更新页面状态，并拉取优惠后的金额预览。
   void _updateSelectedCoupon(RepayDetailRespData detail, CouponItem? coupon) {
     _couponPreviewRequestId++;
     final couponId = coupon?.couponId;
@@ -201,7 +198,6 @@ class _RepayOrderDetailPageState extends ConsumerState<RepayOrderDetailPage> {
     }
   }
 
-  // 底部操作加锁，避免用户连续点击造成重复跳转和后续接口频繁调用。
   Future<void> _runBottomAction(FutureOr<void> Function() action) async {
     if (_isBottomActionLocked) return;
 
@@ -380,7 +376,6 @@ class _RepayDetailHeader extends StatelessWidget {
   }
 }
 
-// 白色内容区域
 class _RepayDetailContent extends StatelessWidget {
   const _RepayDetailContent({
     required this.detail,
@@ -454,7 +449,6 @@ class _RepayDetailContent extends StatelessWidget {
   }
 }
 
-// 还款详情订单字段：页面适配层负责决定展示哪些账单信息。
 List<LoanOrderCardRowData> _repayOrderRows(
   RepayDetailRespDataLoanOrderDetails order,
 ) {
@@ -525,7 +519,6 @@ String _couponAmountText(CouponItem coupon) {
       : summary;
 }
 
-// 还款优惠券金额预览：仅在新应还金额小于原应还金额时展示优惠态。
 bool _shouldShowCouponRepaymentAmount(UseCouponRespData? preview) {
   final previewAmount = preview?.newRepaymentAmount;
   final originalAmount = preview?.repaymentAmount;
@@ -534,7 +527,6 @@ bool _shouldShowCouponRepaymentAmount(UseCouponRespData? preview) {
       previewAmount < originalAmount;
 }
 
-// 优惠券接口参数：还款详情返回的订单 ID 为字符串，这里仅保留可转换的有效 ID。
 List<int> _couponAppOrderIds(List<RepayDetailRespDataLoanOrderDetails> orders) {
   return orders
       .map((item) => int.tryParse(item.appOrderId?.trim() ?? ''))
@@ -543,7 +535,6 @@ List<int> _couponAppOrderIds(List<RepayDetailRespDataLoanOrderDetails> orders) {
       .toList();
 }
 
-// 优惠券接口参数：按当前待还产品去重，后端会根据产品维度筛选可用券。
 List<String> _couponProductCodes(
   List<RepayDetailRespDataLoanOrderDetails> orders,
 ) {
@@ -640,7 +631,6 @@ class _RepayDetailActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 底部按钮需等待订单详情接口完成后才允许点击，避免加载中提前进入支付流程。
     final enabled = isActionReady && !isActionLocked;
 
     if (showExtensionButton) {

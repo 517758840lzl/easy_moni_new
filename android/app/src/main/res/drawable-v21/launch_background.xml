@@ -1,30 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Android 11 及以下启动页：尽量贴近 Flutter SplashPage 的视觉结构。 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/splash_background" />
 
-    <!-- 背景图铺满窗口，冷启动阶段先承接 Flutter 启动页背景。 -->
     <item>
         <bitmap
             android:gravity="fill"
             android:src="@drawable/splash_login_bg" />
     </item>
 
-    <!-- 中央 App 图标向上偏移，和 SplashPage 中的 Transform 位移保持接近。 -->
     <item android:bottom="68dp">
         <bitmap
             android:gravity="center"
             android:src="@drawable/splash_launch_icon" />
     </item>
 
-    <!-- 底部品牌贴图，位置对应 Flutter SplashPage 底部 Column 的第一张图。 -->
     <item android:bottom="74dp">
         <bitmap
             android:gravity="bottom|center_horizontal"
             android:src="@drawable/splash_launch_brand" />
     </item>
 
-    <!-- 底部文案贴图，和 Flutter SplashPage 中的 splashBottomText 保持一致。 -->
     <item android:bottom="44dp">
         <bitmap
             android:gravity="bottom|center_horizontal"

@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 
 extension StringExtension on String {
-  //首字母大写
   String get capitalize {
     if (isEmpty) return this;
     return '${this[0].toUpperCase()}${substring(1)}';
   }
 
-  /// 小数部分全为 0 时去掉小数部分，如 "57,950.00" -> "57,950"。
   String trimZeroDecimal() {
     final decimalIndex = lastIndexOf('.');
     if (decimalIndex == -1) return this;
@@ -20,7 +18,6 @@ extension StringExtension on String {
         : this;
   }
 
-  /// 将后端 yyyy-MM-dd 或 yyyy-MM-dd hh:mm:ss 日期格式转换为 dd/MM/yyyy。
   String formatBackendDate() {
     if (isEmpty) return this;
 
@@ -35,7 +32,6 @@ extension StringExtension on String {
     return '$day/$month/$year';
   }
 
-  /// 格式化日利率展示文案，统一补充利率单位。
   String formatDailyInterestLabel({String unit = ''}) {
     if (isEmpty || this == '-') return this;
     return '$this $unit';
@@ -43,7 +39,6 @@ extension StringExtension on String {
 }
 
 extension NullableIntExtension on int? {
-  /// 格式化借款期限展示文案，支持单一期限和区间期限。
   String formatLoanTermLabel({int? to, String unit = 'days'}) {
     final from = this;
     if (from == null && to == null) return '-';
@@ -61,7 +56,6 @@ extension DateTimeExtension on DateTime {
     return '$year-${_twoDigits(month)}-${_twoDigits(day)}';
   }
 
-  //输出完整的“年月日 时:分
   String get formatDateTime {
     return '$formatDate ${_twoDigits(hour)}:${_twoDigits(minute)}';
   }
@@ -70,7 +64,6 @@ extension DateTimeExtension on DateTime {
     return '${_twoDigits(hour)}:${_twoDigits(minute)}';
   }
 
-  /// 格式化 AppsFlyer 事件创建时间，格式为 dd/MM/yyyy HH:mm:ss。
   String get formatAfCreateTime {
     return '${_twoDigits(day)}/${_twoDigits(month)}/$year '
         '${_twoDigits(hour)}:${_twoDigits(minute)}:${_twoDigits(second)}';
@@ -105,10 +98,8 @@ extension NumExtension on num {
     return '${(this * 100).toStringAsFixed(decimals)}%';
   }
 
-  /// 合同 H5 等纯数字场景：两位小数后去掉无意义的 .00（570.0 → 570）。
   String toPlainAmountString() => toStringAsFixed(2).trimZeroDecimal();
 
-  /// 格式化金额，可控制是否展示金额单位，如 1000 -> "GHS 1,000"。
   String formatAmount({
     String currencySymbol = 'GHS',
     bool showCurrencySymbol = true,

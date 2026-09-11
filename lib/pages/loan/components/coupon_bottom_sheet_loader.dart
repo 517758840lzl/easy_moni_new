@@ -3,7 +3,6 @@ import 'package:easy_moni/entities/coupon_resp.dart';
 import 'package:easy_moni/pages/loan/components/coupon_bottom_sheet_content.dart';
 import 'package:flutter/material.dart';
 
-// 优惠券弹层加载容器：统一处理加载、错误和列表内容三种状态。
 class CouponBottomSheetLoader extends StatelessWidget {
   const CouponBottomSheetLoader({
     super.key,

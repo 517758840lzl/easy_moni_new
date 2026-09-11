@@ -33,13 +33,11 @@ class MainActivity : FlutterActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         val splashStartedAt = SystemClock.uptimeMillis()
-        // 启动页最短展示时间，避免 Flutter 首帧过快时品牌页一闪而过。
         splashScreen.setKeepOnScreenCondition {
             SystemClock.uptimeMillis() - splashStartedAt < MIN_SPLASH_DURATION_MS
         }
 
         try {
-            // 原生启动阶段先锁定竖屏，避免 Flutter 首帧前短暂横屏。
             requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         } catch (e: Exception) {
             Log.e(TAG, "Failed to set requested orientation", e)
@@ -47,7 +45,6 @@ class MainActivity : FlutterActivity() {
         super.onCreate(savedInstanceState)
 
         try {
-            // 风控设备信息需要上一次启动时间，用于计算距上次启动的小时数。
             val prefs = getSharedPreferences(DEVICE_INFO_PREFS, MODE_PRIVATE)
             previousLaunchAt = prefs.getLong(KEY_LAST_LAUNCH_AT, 0L)
             prefs.edit { putLong(KEY_LAST_LAUNCH_AT, System.currentTimeMillis()) }
@@ -128,7 +125,6 @@ class MainActivity : FlutterActivity() {
         super.cleanUpFlutterEngine(flutterEngine)
     }
 
-    // 统一释放原生通道、后台任务和 pending Result，避免旧 Activity 被异步任务持有。
     private fun shutdownNativeServices() {
         if (nativeServicesShutdown) return
         nativeServicesShutdown = true

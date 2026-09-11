@@ -167,7 +167,6 @@ class _MinePageState extends ConsumerState<MinePage> {
       0,
       (sum, order) => sum + (order.repayAmount ?? 0),
     );
-    // 任一待还订单已逾期时，卡片展示逾期标识。
     final isOverdue = pendingRepayOrders.any(
       (order) => (order.remainingDays ?? 0) < 0,
     );
@@ -202,7 +201,6 @@ class _MinePageState extends ConsumerState<MinePage> {
   }
 }
 
-/// 我的页面顶部用户资料区。
 class _MineHeader extends StatelessWidget {
   const _MineHeader({
     required this.userName,
@@ -280,7 +278,6 @@ class _MineHeader extends StatelessWidget {
   }
 }
 
-/// 我的页面白色内容区，暂只承载现有入口和静态展示。
 class _MineContent extends StatelessWidget {
   const _MineContent({
     required this.showPendingRepayCard,

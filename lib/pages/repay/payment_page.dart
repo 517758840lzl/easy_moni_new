@@ -10,7 +10,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-/// 付款 H5 容器页，负责生成支付链接并承载三方支付 WebView 交互。
 class PaymentPage extends ConsumerStatefulWidget {
   const PaymentPage({super.key, required this.requestParams});
 
@@ -75,7 +74,6 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
             children: [
               WebViewWidget(
                 controller: _controller,
-                // 支付 H5 页面需要接管滚动手势，避免 WebView 内容超出视口后无法滚动。
                 gestureRecognizers: {
                   Factory<OneSequenceGestureRecognizer>(
                     EagerGestureRecognizer.new,

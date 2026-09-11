@@ -5,7 +5,6 @@ import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/entities/repay/repay_resp.dart';
 import 'package:easy_moni/utils/extensions.dart';
 
-/// 还款账单卡片，负责展示单个产品的还款金额、到期日和逾期状态。
 class RepayBillCard extends StatelessWidget {
   const RepayBillCard({
     super.key,

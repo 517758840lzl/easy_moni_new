@@ -16,7 +16,6 @@ import 'package:easy_moni/pages/loan/models/loan_confirm_request_product.dart';
 import 'package:easy_moni/pages/loan/providers/coupon_provider.dart';
 import 'package:easy_moni/pages/loan/providers/loan_confirm_provider.dart';
 import 'package:easy_moni/pages/loan/widgets/loan_confirm_agreement.dart';
-import 'package:easy_moni/pages/login/providers/auth_provider.dart';
 import 'package:easy_moni/pages/mine/providers/user_info_provider.dart';
 import 'package:easy_moni/pages/repay/components/total_repay_amount_display.dart';
 import 'package:easy_moni/services/upload_data/upload_data_sync_service.dart';
@@ -32,7 +31,6 @@ import 'package:easy_moni/utils/widgets/selected_coupon_card.dart';
 class LoanConfirmPage extends ConsumerStatefulWidget {
   const LoanConfirmPage({super.key, required this.products});
 
-  // 上个页面选中的借款产品，进入确认页后用它们请求确认信息。
   final List<LoanConfirmRequestProduct> products;
 
   @override
@@ -40,7 +38,6 @@ class LoanConfirmPage extends ConsumerStatefulWidget {
 }
 
 class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
-  // 页面级状态：分别控制首次加载、提交按钮、错误提示和接口返回数据。
   bool _isLoading = true;
   bool _isSubmitting = false;
   bool _agreedToContract = false;
@@ -52,7 +49,6 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
   bool _isCouponAmountPreviewLoading = false;
   int _couponPreviewRequestId = 0;
 
-  // 业务数据统一从响应体中取，避免 build 里重复拆 nullable 链。
   LoanConfirmData? get _confirmData => _loanConfirmResp?.data;
 
   @override
@@ -62,7 +58,6 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
   }
 
   Future<void> _loadData() async {
-    // 没有产品时直接进入空数据态，避免发起没有意义的确认接口请求。
     if (widget.products.isEmpty) {
       setState(() {
         _isLoading = false;
@@ -78,7 +73,6 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
     });
 
     try {
-      // 根据选中的产品向服务端拉取确认页金额、还款日、收款账户等信息。
       final api = ref.read(loanConfirmProvider);
       final confirmResult = await api.fetchConfirmInfo(
         products: widget.products,
@@ -128,7 +122,7 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
     setState(() {});
 
     try {
-      final uploadDataReady = await _checkUploadDataValidBeforeSubmit();
+      final uploadDataReady = await _uploadDeviceInfoBeforeSubmit();
       if (!mounted || !uploadDataReady) return;
 
       final result = await ref
@@ -162,26 +156,22 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
     }
   }
 
-  // 提交借款申请前检查风控采集数据；如有无效数据，必须先补传成功。
-  Future<bool> _checkUploadDataValidBeforeSubmit() async {
+  Future<bool> _uploadDeviceInfoBeforeSubmit() async {
     try {
-      final checkDataResult = await ref
-          .read(checkUploadDataValidProvider)
-          .call();
-      if (checkDataResult.isSuccess) {
-        await ref
-            .read(uploadDataSyncServiceProvider)
-            .uploadInvalidDataBeforeSubmit(checkDataResult.data);
-        return true;
+      final uploadService = ref.read(uploadDataSyncServiceProvider);
+      final trackId = await uploadService.resolveTrackId();
+      if (trackId == null || trackId <= 0) {
+        if (mounted) {
+          context.showSnackBar(
+            AppStrings.loanConfirmUploadDataFailedText,
+            isError: true,
+          );
+        }
+        return false;
       }
 
-      if (mounted) {
-        context.showSnackBar(
-          checkDataResult.message ?? AppStrings.loanConfirmUploadDataFailedText,
-          isError: true,
-        );
-      }
-      return false;
+      await uploadService.uploadDeviceInfo(trackId);
+      return true;
     } catch (e) {
       if (mounted) {
         context.showSnackBar(
@@ -267,7 +257,6 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
   }
 
   Future<List<CouponItem>> _loadCoupons(List<LoanConfirmOrder> orders) async {
-    // 点击入口后在弹层内实时拉取优惠券列表，避免用户看到过期券信息。
     return ref.read(
       couponListProvider(
         CouponRequestParams(
@@ -280,7 +269,6 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
     );
   }
 
-  // 确认优惠券选择后，刷新贷前优惠券金额试算。
   void _updateSelectedCoupon({
     required LoanConfirmData data,
     required CouponItem? coupon,
@@ -348,7 +336,6 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
       body: SizedBox.expand(
         child: Stack(
           children: [
-            // 背景层：绿色渐变兜底，上方叠加设计稿背景图。
             Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(
@@ -365,7 +352,6 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
                 ),
               ),
             ),
-            // 顶部信息层：导航、标题、借款金额和三项汇总数据。
             Positioned(
               top: 0,
               left: 0,
@@ -494,7 +480,6 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
     required LoanConfirmData? data,
     required List<LoanConfirmOrder> orders,
   }) {
-    // 内容区根据加载结果切换订单列表、错误态和空态。
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -534,7 +519,6 @@ class _LoanConfirmPageState extends ConsumerState<LoanConfirmPage> {
   }
 }
 
-// 中间滚动区：固定白底 + MoMo / 优惠券 / 订单列表同步滚动。
 class _LoanConfirmScrollBody extends StatelessWidget {
   const _LoanConfirmScrollBody({
     required this.data,
@@ -624,7 +608,6 @@ class _LoanConfirmScrollBody extends StatelessWidget {
   }
 }
 
-// 确认页订单字段：只展示确认借款需要核对的信息，不展示状态和底部操作。
 List<LoanOrderCardRowData> _loanConfirmOrderRows(LoanConfirmOrder item) {
   final dueDate = _dateText(item.dueDate);
 
@@ -654,7 +637,6 @@ List<LoanOrderCardRowData> _loanConfirmOrderRows(LoanConfirmOrder item) {
   ];
 }
 
-// 页面头图区域：展示导航、客服入口、借款总额和三项关键确认信息。
 class _Hero extends StatelessWidget {
   const _Hero({
     required this.data,
@@ -795,7 +777,6 @@ class _Hero extends StatelessWidget {
   }
 }
 
-// 顶部三项摘要中的单个小卡片，如到账金额、应还金额、还款日期。
 class _SummaryTile extends StatelessWidget {
   const _SummaryTile({
     required this.icon,
@@ -865,7 +846,6 @@ const TextStyle _couponOriginalAmountStyle = TextStyle(
   decorationColor: Color(0xCCFFFFFF),
 );
 
-// MoMo 收款账户卡：展示实际放款到账的钱包/手机号信息。
 class _MomoAccountCard extends StatelessWidget {
   const _MomoAccountCard({required this.data});
 
@@ -958,7 +938,6 @@ class _MomoAccountCard extends StatelessWidget {
   }
 }
 
-// 收款账户卡左侧的 SIM/钱包图标。
 class _SimIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -970,7 +949,6 @@ class _SimIcon extends StatelessWidget {
   }
 }
 
-// 金额展示统一加 GHS 前缀，并按项目扩展方法格式化小数。
 String _amountText(num? value) {
   return value == null ? AppStrings.loanOrderEmptyValue : value.formatAmount();
 }
@@ -987,12 +965,10 @@ String _couponAmountText(CouponItem coupon) {
       : summary;
 }
 
-// 贷前优惠券金额试算：选券后顶部展示优惠后借款金额及原始金额。
 bool _shouldShowCouponLoanAmount(UseCouponRespData? preview) {
   return preview?.newLoanAmount != null && preview?.loanAmount != null;
 }
 
-// 实际到账金额：未选券取确认页数据，选券后取贷前优惠券试算结果。
 num? _previewActualToAccountMoney({
   required LoanConfirmData? data,
   required UseCouponRespData? preview,
@@ -1002,7 +978,6 @@ num? _previewActualToAccountMoney({
       : preview.actualToAccountMoney;
 }
 
-// 贷前优惠券试算后的应还总额：未选券时取订单应还总和，选券后按新借款金额加租金计算。
 num? _previewRepayTotal({
   required List<LoanConfirmOrder> orders,
   required UseCouponRespData? preview,
@@ -1029,7 +1004,6 @@ List<int> _selectedCouponIds(CouponItem? coupon) {
   return [couponId];
 }
 
-// 日期字段为空时展示空字符串，避免补充不真实的默认文案。
 String _dateText(String? value) {
   final text = value?.trim();
   return text == null || text.isEmpty
@@ -1076,20 +1050,17 @@ Map<String, String> _loanAgreementQueryParamsFromConfirm({
   return params;
 }
 
-// 字符串清理工具：处理接口返回 null、空串或全空格的情况。
 String _emptyWhenNull(String? value) {
   final text = value?.trim();
   return text == null || text.isEmpty ? AppStrings.loanOrderEmptyValue : text;
 }
 
-// 银行卡号脱敏：超过 8 位时仅展示前四位和后四位，保护用户账户信息。
 String _maskAccountNo(String value) {
   if (value.length <= 8) return value;
 
   return '${value.substring(0, 4)}****${value.substring(value.length - 4)}';
 }
 
-// 优惠券接口参数：只传有效订单 ID，避免把 0 或空值误认为真实订单。
 List<int> _couponAppOrderIds(List<LoanConfirmOrder> orders) {
   return orders
       .map((item) => item.appOrderId)
@@ -1098,7 +1069,6 @@ List<int> _couponAppOrderIds(List<LoanConfirmOrder> orders) {
       .toList();
 }
 
-// 优惠券接口参数：按当前确认页产品去重，匹配后端筛券维度。
 List<String> _couponProductCodes(List<LoanConfirmOrder> orders) {
   return orders
       .map((item) => item.productCode?.trim())

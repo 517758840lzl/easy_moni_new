@@ -28,7 +28,6 @@ final repayExtensionProvider = FutureProvider.autoDispose
       throw Exception(result.message ?? AppStrings.repayExtensionLoadFailed);
     });
 
-/// 展期详情查询参数：账单 ID 和已选优惠券共同决定重新试算后的展期金额。
 class RepayExtensionQuery {
   const RepayExtensionQuery({
     required this.installmentId,
@@ -52,7 +51,6 @@ class RepayExtensionQuery {
   }
 }
 
-/// 将页面状态转换成稳定的 provider family 查询参数。
 RepayExtensionQuery buildRepayExtensionQuery({
   required int? installmentId,
   Iterable<int?> couponIds = const <int?>[],
@@ -64,7 +62,6 @@ RepayExtensionQuery buildRepayExtensionQuery({
 }
 
 class RepayExtensionApi {
-  /// 获取展期详情，installmentId 为当前申请展期账单的ID。
   Future<HttpResult<RepayExtensionRespData>> call({
     required int installmentId,
     List<int> couponIds = const <int>[],

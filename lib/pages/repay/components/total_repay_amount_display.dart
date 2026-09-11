@@ -2,7 +2,6 @@ import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/utils/extensions.dart';
 import 'package:flutter/material.dart';
 
-/// 还款头部总金额展示组件，统一处理币种前缀、金额格式化和溢出展示。
 class TotalRepayAmountDisplay extends StatelessWidget {
   const TotalRepayAmountDisplay({
     super.key,

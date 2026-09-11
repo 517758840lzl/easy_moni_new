@@ -6,7 +6,6 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodChannel
 import androidx.core.net.toUri
 
-// 拨号盘平台服务：负责跳转系统拨号界面。
 internal class DialerPlatformService(private val activity: Activity) {
     private var channel: MethodChannel? = null
 

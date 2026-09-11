@@ -29,7 +29,6 @@ final paymentUrlProvider = FutureProvider.autoDispose
     });
 
 class PaymentApi {
-  /// 调用付款接口生成 H5 支付链接。
   Future<HttpResult<PaymentRespData>> call(PaymentRequestParams params) async {
     final result = await HttpProvider.instance.post<PaymentRespData>(
       ApiConstants.generatesUrl,

@@ -4,97 +4,70 @@ import 'package:flutter/services.dart';
 class AppColors {
   AppColors._();
 
-  /// 主色 - 渐变起始色
   static const Color primary = Color(0xFF667EEA);
 
-  /// 主色 - 深色
   static const Color primaryDark = Color(0xFF268470);
 
-  /// 主色 - 浅色
   static const Color primaryLight = Color(0xFFB794F4);
 
-  // ==================== 辅助色 ====================
 
-  /// 强调色
   static const Color accent = Color(0xFFF687B3);
 
-  /// 次要色
   static const Color secondary = Color(0xFF38B2AC);
 
-  // ==================== 状态色 ====================
 
-  /// 成功色
   static const Color success = Color(0xFF48BB78);
 
-  /// 警告色
   static const Color warning = Color(0xFFED8936);
 
-  /// 错误色
   static const Color error = Color(0xFFF56565);
 
-  /// 信息色
   static const Color info = Color(0xFF4299E1);
 
-  // ==================== 文本色 ====================
 
-  /// 主要文本色
   static const Color textPrimary = Color(0xFF1A202C);
 
-  /// 次要文本色
   static const Color textSecondary = Color(0xFF718096);
 
-  /// 提示文本色
   static const Color textHint = Color(0xFFA0AEC0);
 
-  /// 三级文本色
   static const Color textTertiary = Color(0xFFCBD5E0);
 
-  /// 页面背景色
   static const Color background = Color(0xFFF7FAFC);
 
-  /// 卡片/表面背景色
   static const Color surface = Color(0xFFFFFFFF);
 
-  /// 表面变体色
   static const Color surfaceVariant = Color(0xFFEDF2F7);
 
-  /// 分割线颜色
   static const Color divider = Color(0xFFE5E5E5);
 
-  /// 渐变起始色
   static const Color gradientStart = Color(0xFF667EEA);
 
-  /// 渐变结束色
   static const Color gradientEnd = Color(0xFF764BA2);
 
   static const Color white = Colors.white;
   static const Color black = Colors.black;
   static const Color transparent = Colors.transparent;
 
-  // ==================== 预定义渐变 ====================
 
-  /// 主色渐变
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [gradientStart, gradientEnd],
   );
 
-  /// 浅色渐变
   static const LinearGradient lightGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: [Color(0xFFFFFFFF), Color(0xFFF7FAFC)],
   );
 
-  /// 强调色渐变
   static const LinearGradient accentGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [Color(0xFFF687B3), Color(0xFFED64A6)],
   );
 
-  /// 成功色渐变
   static const LinearGradient successGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
@@ -102,59 +75,49 @@ class AppColors {
   );
 }
 
-/// 统一的间距值，便于维护和修改
 class AppSpacing {
   AppSpacing._();
 
-  static const double xs = 4; // 极小间距
-  static const double sm = 8; // 小间距
-  static const double md = 16; // 中等间距
-  static const double lg = 24; // 大间距
-  static const double xl = 32; // 特大间距
-  static const double xxl = 48; // 超大间距
+  static const double xs = 4;
+  static const double sm = 8;
+  static const double md = 16;
+  static const double lg = 24;
+  static const double xl = 32;
+  static const double xxl = 48;
 
-  /// 页面内边距
   static const EdgeInsets pagePadding = EdgeInsets.all(16);
 
-  /// 卡片内边距
   static const EdgeInsets cardPadding = EdgeInsets.all(16);
 
-  /// 列表项内边距
   static const EdgeInsets listItemPadding = EdgeInsets.symmetric(
     horizontal: 16,
     vertical: 12,
   );
 }
 
-/// 统一的圆角值
 class AppRadius {
   AppRadius._();
 
-  static const double sm = 8; // 小圆角
-  static const double md = 12; // 中等圆角
-  static const double lg = 16; // 大圆角
-  static const double xl = 24; // 特大圆角
-  static const double full = 999; // 全圆角
+  static const double sm = 8;
+  static const double md = 12;
+  static const double lg = 16;
+  static const double xl = 24;
+  static const double full = 999;
 
-  /// 卡片圆角
   static const BorderRadius cardRadius = BorderRadius.all(Radius.circular(lg));
 
-  /// 按钮圆角
   static const BorderRadius buttonRadius = BorderRadius.all(
     Radius.circular(md),
   );
 
-  /// 标签圆角
   static const BorderRadius chipRadius = BorderRadius.all(
     Radius.circular(full),
   );
 }
 
-/// 统一的阴影效果
 class AppShadows {
   AppShadows._();
 
-  /// 卡片阴影
   static List<BoxShadow> get cardShadow => [
     const BoxShadow(
       color: Color(0x1A000000),
@@ -163,7 +126,6 @@ class AppShadows {
     ),
   ];
 
-  /// 悬浮阴影
   static List<BoxShadow> get elevatedShadow => [
     BoxShadow(
       color: AppColors.primary.withValues(alpha: 0.3),
@@ -172,7 +134,6 @@ class AppShadows {
     ),
   ];
 
-  /// 柔和阴影
   static List<BoxShadow> get softShadow => [
     BoxShadow(
       color: Colors.black.withValues(alpha: 0.04),
@@ -182,11 +143,9 @@ class AppShadows {
   ];
 }
 
-/// Material 包含所有组件样式
 class AppTheme {
   AppTheme._();
 
-  /// 浅色主题
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
@@ -201,13 +160,11 @@ class AppTheme {
       ),
       scaffoldBackgroundColor: AppColors.background,
 
-      // ==================== AppBar 主题 ====================
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
         centerTitle: true,
-        // 状态栏样式
         systemOverlayStyle: SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.dark,
@@ -221,7 +178,6 @@ class AppTheme {
         iconTheme: IconThemeData(color: AppColors.textPrimary),
       ),
 
-      // ==================== 底部导航栏主题 ====================
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.surface,
         selectedItemColor: AppColors.primary,
@@ -238,7 +194,6 @@ class AppTheme {
         ),
       ),
 
-      // ==================== 导航栏主题 ====================
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.surface,
         indicatorColor: AppColors.primary.withValues(alpha: 0.15),
@@ -266,7 +221,6 @@ class AppTheme {
         }),
       ),
 
-      // ==================== 卡片主题 ====================
       cardTheme: const CardThemeData(
         color: AppColors.white,
         elevation: 0,
@@ -274,7 +228,6 @@ class AppTheme {
         margin: EdgeInsets.only(bottom: 12),
       ),
 
-      // ==================== 按钮主题 ====================
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
@@ -297,7 +250,6 @@ class AppTheme {
         ),
       ),
 
-      // ==================== FAB 主题 ====================
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.white,
@@ -305,7 +257,6 @@ class AppTheme {
         shape: CircleBorder(),
       ),
 
-      // ==================== 输入框主题 ====================
       inputDecorationTheme: const InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surfaceVariant,
@@ -334,7 +285,6 @@ class AppTheme {
         labelStyle: TextStyle(color: AppColors.textSecondary, fontSize: 16),
       ),
 
-      // ==================== 标签主题 ====================
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.surfaceVariant,
         selectedColor: AppColors.primary.withValues(alpha: 0.2),
@@ -347,7 +297,6 @@ class AppTheme {
         shape: const RoundedRectangleBorder(borderRadius: AppRadius.chipRadius),
       ),
 
-      // ==================== 其他主题 ====================
       dividerTheme: const DividerThemeData(
         color: AppColors.divider,
         thickness: 1,
@@ -403,7 +352,6 @@ class AppTheme {
         ),
       ),
 
-      // ==================== 文本主题 ====================
       textTheme: const TextTheme(
         displayLarge: TextStyle(
           fontSize: 57,
@@ -485,7 +433,6 @@ class AppTheme {
   }
 }
 
-/// 提供半透明背景和边框效果（毛玻璃容器组件）
 /// GlassContainer(
 ///   child: content,
 ///   opacity: 0.8,
@@ -543,7 +490,6 @@ class GlassContainer extends StatelessWidget {
   }
 }
 
-/// 提供渐变容器组件背景的便捷封装
 ///
 /// GradientContainer(
 ///   gradient: AppColors.primaryGradient,

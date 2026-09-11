@@ -93,7 +93,6 @@ class FormEntry {
   }
 }
 
-/// 表单项校验规则模型。
 class FormEntryRule {
   final int type;
   final String validator;

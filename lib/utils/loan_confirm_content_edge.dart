@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// 借款确认页内容区顶部弧线参数与白色背景绘制。
 class LoanConfirmContentShape {
   LoanConfirmContentShape._();
 
@@ -26,7 +25,6 @@ class LoanConfirmContentShape {
   }
 }
 
-/// 绘制带顶部弧线的白色背景，不使用 ClipPath，避免绿色底上产生暗边。
 class LoanConfirmWhiteBackground extends StatelessWidget {
   const LoanConfirmWhiteBackground({super.key, this.child});
 

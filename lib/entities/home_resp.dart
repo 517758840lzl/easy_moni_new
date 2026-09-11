@@ -232,7 +232,6 @@ class HomeProductItem {
     final from = loanLimitFrom;
     final to = loanLimitTo;
     if (from != null && to != null) {
-      // 数字格式化
       return '${from.formatAmount().trimZeroDecimal()} - ${to.formatAmount().trimZeroDecimal()}';
     }
     return availableAmount.formatAmount();

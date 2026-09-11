@@ -5,7 +5,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-/// 隐私政策 H5 容器页，承载外部隐私政策链接展示。
 class PrivacyPolicyPage extends StatefulWidget {
   const PrivacyPolicyPage({super.key});
 
@@ -60,7 +59,6 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
           children: [
             WebViewWidget(
               controller: _controller,
-              // 隐私政策 H5 内容需要优先接收滚动手势，避免长页面无法滚动。
               gestureRecognizers: {
                 Factory<OneSequenceGestureRecognizer>(
                   EagerGestureRecognizer.new,
@@ -82,7 +80,6 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
     _controller.loadRequest(Uri.parse(url));
   }
 
-  /// 兼容运营只配置域名的情况，保证 WebView 收到合法 URI。
   String _normalizeUrl(String rawUrl) {
     final url = rawUrl.trim();
     if (url.isEmpty) return '';

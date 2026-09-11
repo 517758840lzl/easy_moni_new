@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:easy_moni/core/constants/app_strings.dart';
 
-/// 借款产品卡片状态
 class LoanProductCardState {
   const LoanProductCardState._({
     required this.label,

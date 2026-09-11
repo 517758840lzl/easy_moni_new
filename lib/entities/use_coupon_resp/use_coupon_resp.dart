@@ -3,7 +3,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'use_coupon_resp.freezed.dart';
 part 'use_coupon_resp.g.dart';
 
-/// UseCouponResp 数据模型
 @freezed
 abstract class UseCouponResp with _$UseCouponResp {
   const factory UseCouponResp({
@@ -16,7 +15,6 @@ abstract class UseCouponResp with _$UseCouponResp {
       _$UseCouponRespFromJson(json);
 }
 
-/// UseCouponRespData 数据模型
 @freezed
 abstract class UseCouponRespData with _$UseCouponRespData {
   const factory UseCouponRespData({

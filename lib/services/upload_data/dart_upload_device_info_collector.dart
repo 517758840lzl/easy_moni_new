@@ -6,7 +6,6 @@ import 'package:easy_moni/core/device/device_context.dart';
 import 'package:easy_moni/core/network/http_provider.dart';
 import 'package:easy_moni/services/platform_service.dart';
 
-/// 对齐线上设备信息 JSON 结构，不额外申请 ATT / 日历 / 通讯录 / 相册权限。
 abstract final class DartUploadDeviceInfoCollector {
   DartUploadDeviceInfoCollector._();
 
@@ -198,7 +197,6 @@ abstract final class DartUploadDeviceInfoCollector {
     return {'networkType': networkType};
   }
 
-  /// 与 PrivacyInfo 中 CoarseLocation 声明一致；address 为 city + region + country 拼接。
   static const _coarseLocationKeys = {
     'time',
     'latitude',
@@ -244,7 +242,6 @@ abstract final class DartUploadDeviceInfoCollector {
     return match?.group(1) ?? raw;
   }
 
-  /// 约 1.1 km 精度，对齐 Coarse Location。
   static double _coarseCoord(double value) {
     return double.parse(value.toStringAsFixed(2));
   }

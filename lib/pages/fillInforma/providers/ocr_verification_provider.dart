@@ -31,7 +31,6 @@ class OcrVerificationApi {
       final dio = Dio();
       final uploadBytes = await ImageCompressTool.compressForUpload(bytes);
 
-      // OCR 图片上传前统一压缩，降低接口传输体积并保留失败兜底。
       final formData = FormData.fromMap({
         'multipartFile': MultipartFile.fromBytes(
           uploadBytes,
@@ -46,7 +45,6 @@ class OcrVerificationApi {
         options: Options(headers: config.commonHeaders(token: token)),
       );
 
-      // 解密
       final decryptedData = RequestSecurityUtil.decryptResponseBody(
         response.data,
       );
@@ -84,7 +82,6 @@ class OcrVerificationApi {
     }
   }
 
-  /// 将 OCR 解密后的响应统一整理为 Map，兼容后端直接返回业务对象的情况。
   Map<String, dynamic>? _normalizeResponseMap(dynamic data) {
     if (data is! Map) {
       return null;
@@ -99,7 +96,6 @@ class OcrVerificationApi {
   }
 }
 
-/// OCR 识别结果，字段结构与后端 data 响应保持一致。
 class OcrVerificationResp {
   final String? idCardNumber;
   final String? name;
@@ -109,7 +105,6 @@ class OcrVerificationResp {
   final String? url;
   final String? backUrl;
 
-  /// 本地上传图片数据，用于页面回显，避免直接渲染相册原图。
   final Uint8List? uploadBytes;
   final int? isSuccess;
   final int? gender;

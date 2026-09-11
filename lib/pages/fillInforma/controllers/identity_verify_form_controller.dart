@@ -3,7 +3,6 @@ import 'package:easy_moni/pages/fillInforma/providers/ocr_verification_provider.
 import 'package:easy_moni/pages/fillInforma/utils/form_entry_input_type_helper.dart';
 import 'package:flutter/material.dart';
 
-/// 证件图片侧别常量，避免使用 enum 并集中管理提交映射。
 class IdentityImageSide {
   IdentityImageSide._();
 
@@ -12,7 +11,6 @@ class IdentityImageSide {
   static const String unknown = '';
 }
 
-/// 身份认证表单字段编码，按后端配置与 OCR 响应字段建立稳定映射。
 class IdentityVerifyFieldCode {
   IdentityVerifyFieldCode._();
 
@@ -25,7 +23,6 @@ class IdentityVerifyFieldCode {
   static const String idCardBackImage = '40008';
 }
 
-/// 身份认证表单控制器，负责后端表单项、OCR 数据和提交参数之间的映射。
 class IdentityVerifyFormController {
   final Map<String, TextEditingController> _textControllers = {};
   final Map<String, FocusNode> _focusNodes = {};
@@ -36,24 +33,20 @@ class IdentityVerifyFormController {
 
   List<FormEntry> _entries = [];
 
-  /// 按后端 order 统一排序，页面渲染和提交参数都遵循后端配置顺序。
   List<FormEntry> get _sortedEntries {
     final sortedEntries = [..._entries];
     sortedEntries.sort((a, b) => a.order.compareTo(b.order));
     return sortedEntries;
   }
 
-  /// 后端下发的证件图片上传表单项。
   List<FormEntry> get idCardImageEntries => _sortedEntries
       .where(FormEntryInputTypeHelper.isIdCardImage)
       .toList(growable: false);
 
-  /// OCR 后需要核对和补填的普通表单项。
   List<FormEntry> get visibleEntries => _sortedEntries
       .where((entry) => !FormEntryInputTypeHelper.isSpecialProcessEntry(entry))
       .toList(growable: false);
 
-  /// 当前流程必填的证件图片侧别，用于驱动底部按钮可用状态。
   List<String> get requiredIdCardImageSides {
     final sides = <String>{};
     for (final entry in idCardImageEntries) {
@@ -69,7 +62,6 @@ class IdentityVerifyFormController {
     return sides.toList(growable: false);
   }
 
-  /// 校验身份证 OCR 回显表单中的必填项，确保底部按钮只在信息完整时可用。
   bool get areRequiredVisibleEntriesFilled {
     for (final entry in visibleEntries) {
       if (entry.must != 1) {
@@ -94,7 +86,6 @@ class IdentityVerifyFormController {
     }
   }
 
-  /// 初始化后端表单配置，并恢复已提交过的文本或选择项值。
   void applyEntries(List<FormEntry> entries) {
     _entries = entries;
     _selectedIndices.clear();
@@ -118,7 +109,6 @@ class IdentityVerifyFormController {
     }
   }
 
-  /// OCR 成功后回填可编辑字段，字段标题仍由后端配置决定。
   void applyOcrResult(OcrVerificationResp? data) {
     if (data == null) return;
 
@@ -141,7 +131,6 @@ class IdentityVerifyFormController {
     }
   }
 
-  /// 重新识别身份证正面前清空旧 OCR 结果，避免新结果缺字段时沿用上次数据。
   void clearOcrResult() {
     for (final entry in visibleEntries) {
       _displayValues[entry.key] = '';
@@ -159,12 +148,10 @@ class IdentityVerifyFormController {
     );
   }
 
-  /// 为所有可见表单项提供稳定 FocusNode，让文本、选择器、日期项共用同一焦点链。
   FocusNode focusNodeFor(FormEntry entry) {
     return _focusNodes[entry.key] ??= FocusNode(debugLabel: entry.key);
   }
 
-  /// 清理表单内所有文本焦点，避免选择器弹窗切换时恢复到底层输入框。
   void unfocusTextInputs() {
     for (final key in _textEntryKeys) {
       final focusNode = _focusNodes[key];
@@ -193,7 +180,6 @@ class IdentityVerifyFormController {
     return imageSideFor(entry) == IdentityImageSide.back;
   }
 
-  /// 识别证件图片字段的正反面，按后端下发字段编码建立稳定映射。
   String imageSideFor(FormEntry entry) {
     if (!FormEntryInputTypeHelper.isIdCardImage(entry)) {
       return IdentityImageSide.unknown;
@@ -210,7 +196,6 @@ class IdentityVerifyFormController {
   bool hasNextVisibleEntry(FormEntry entry) =>
       nextVisibleEntryAfter(entry) != null;
 
-  /// 按当前可见表单顺序寻找下一个表单项，保持文本与选择项的填写节奏一致。
   FormEntry? nextVisibleEntryAfter(FormEntry entry) {
     final currentIndex = visibleEntries.indexWhere(
       (visibleEntry) => visibleEntry.key == entry.key,
@@ -258,20 +243,17 @@ class IdentityVerifyFormController {
     _submitValues[entry.key] = option.key;
   }
 
-  /// 用户通过日期选择器更新生日，展示值与提交值分别维护，避免自由输入格式不一致。
   void updateBirthdayValue(FormEntry entry, DateTime date) {
     final submitValue = _formatBackendDate(date);
     _submitValues[entry.key] = submitValue;
     _displayValues[entry.key] = _formatDisplayDate(date);
   }
 
-  /// 根据已有提交值或 OCR 回显值推导日期选择器初始值。
   DateTime? dateValueFor(FormEntry entry) {
     return _parseBirthdayDate(_submitValues[entry.key]) ??
         _parseBirthdayDate(_displayValues[entry.key]);
   }
 
-  /// 按后端 key 组装提交参数，图片字段由页面传入上传后的 URL。
   List<Map<String, dynamic>> buildSubmitParams({
     required String? frontImageUrl,
     required String? backImageUrl,
@@ -408,7 +390,6 @@ class IdentityVerifyFormController {
     return null;
   }
 
-  /// 优先按后端字段编码映射 OCR 数据，避免多语言展示文案影响回填。
   String? _ocrSubmitValueForFieldCode(String code, OcrVerificationResp data) {
     switch (code) {
       case IdentityVerifyFieldCode.idCardNumber:
@@ -426,7 +407,6 @@ class IdentityVerifyFormController {
     }
   }
 
-  /// 将 OCR 生日统一转换为后端提交格式，展示层继续使用 DD-MM-YYYY。
   String? _backendBirthdaySubmitValue(String? value) {
     final birthday = _parseBirthdayDate(value);
     return birthday == null ? value : _formatBackendDate(birthday);

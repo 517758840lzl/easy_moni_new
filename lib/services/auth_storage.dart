@@ -4,7 +4,6 @@ class AuthStorage {
   static const String _keyToken = 'auth_token';
   static SharedPreferences? _prefs;
 
-  /// 复用 SharedPreferences 实例，减少启动和页面分流阶段的重复平台通道初始化。
   static Future<SharedPreferences> _instance() async {
     final cachedPrefs = _prefs;
     if (cachedPrefs != null) return cachedPrefs;

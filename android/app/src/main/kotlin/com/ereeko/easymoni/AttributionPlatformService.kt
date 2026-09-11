@@ -15,7 +15,6 @@ import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
-// 归因平台服务：负责广告 ID、安装来源和基础设备归因字段。
 internal class AttributionPlatformService(private val activity: Activity) {
     private val backgroundExecutor = Executors.newSingleThreadExecutor()
     private val isShutdown = AtomicBoolean(false)

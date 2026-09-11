@@ -1,8 +1,9 @@
 import 'dart:async';
 
-import 'package:easy_moni/entities/check_upload_data_valid_resp.dart';
 import 'package:easy_moni/pages/login/providers/upload_data_provider.dart';
+import 'package:easy_moni/services/upload_data/upload_track_id_store.dart';
 import 'package:easy_moni/services/upload_data/user_upload_data_collector.dart';
+import 'package:easy_moni/services/user_info_cache.dart';
 import 'package:easy_moni/utils/upload_data_compress_tool.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -20,83 +21,48 @@ class UploadDataSyncService {
   final UserUploadDataCollector collector;
 
   Future<void>? _activeUploadTask;
-  DateTime? _lastRunAt;
 
-  /// 分析有效性检查结果，并在需要时触发非阻塞上传任务。
-  void handleCheckResult(CheckUploadDataValidResp? resp) {
-    final request = _buildUploadRequest(resp);
-    if (request == null) return;
-
-    if (_activeUploadTask != null) {
-      return;
+  Future<int?> resolveTrackId() async {
+    final cachedTrackId = UploadTrackIdStore.value;
+    if (cachedTrackId != null && cachedTrackId > 0) {
+      return cachedTrackId;
     }
 
-    final now = DateTime.now();
-    final lastRunAt = _lastRunAt;
-    if (lastRunAt != null && now.difference(lastRunAt).inSeconds < 60) {
-      return;
+    final userInfo = await UserInfoCache.load();
+    final userId = userInfo?.userId;
+    if (userId != null && userId > 0) {
+      UploadTrackIdStore.save(userId);
+      return userId;
     }
+    return null;
+  }
 
+  void uploadDeviceInfoInBackground(int trackId) {
     unawaited(
-      _startUpload(request).catchError((Object error, StackTrace stackTrace) {
+      uploadDeviceInfo(trackId).catchError((Object error, StackTrace stackTrace) {
       }),
     );
   }
 
-  /// 借款提交前使用的阻塞式补传；无效数据上传完成后才允许继续业务流程。
-  Future<void> uploadInvalidDataBeforeSubmit(
-    CheckUploadDataValidResp? resp,
-  ) async {
-    if (resp == null) {
-      throw Exception('checkUploadDataValid no data');
-    }
-
-    final request = _buildUploadRequest(resp);
-    if (request == null) {
-      if (_hasBlockingInvalidData(resp)) {
-        throw Exception('invalid data');
-      }
-      return;
+  Future<void> uploadDeviceInfo(int trackId) async {
+    if (trackId <= 0) {
+      throw Exception('invalid trackId');
     }
 
     final activeTask = _activeUploadTask;
     if (activeTask != null) {
-      await activeTask;
-      return;
+      await activeTask.catchError((_) {});
     }
 
-    await _startUpload(request);
+    await _startUpload(trackId);
   }
 
-  _UploadDataSyncRequest? _buildUploadRequest(CheckUploadDataValidResp? resp) {
-    if (resp == null) return null;
-
-    final trackId = resp.appTrackId;
-    if (trackId == null || trackId <= 0) {
-      return null;
-    }
-
-    final needDeviceInfo = resp.isValidDeviceInfo == 0;
-    if (!needDeviceInfo) {
-      return null;
-    }
-
-    return _UploadDataSyncRequest(
-      trackId: trackId,
-      needDeviceInfo: needDeviceInfo,
-    );
-  }
-
-  bool _hasBlockingInvalidData(CheckUploadDataValidResp resp) {
-    return resp.isValidDeviceInfo == 0;
-  }
-
-  Future<void> _startUpload(_UploadDataSyncRequest request) {
+  Future<void> _startUpload(int trackId) {
     final activeTask = _activeUploadTask;
     if (activeTask != null) return activeTask;
 
     late final Future<void> task;
-    task = _run(request).whenComplete(() {
+    task = _run(trackId).whenComplete(() {
       if (identical(_activeUploadTask, task)) {
         _activeUploadTask = null;
       }
@@ -105,15 +71,10 @@ class UploadDataSyncService {
     return task;
   }
 
-  Future<void> _run(_UploadDataSyncRequest request) async {
-    _lastRunAt = DateTime.now();
-
-    final deviceInfoBytes = request.needDeviceInfo
-        ? await _collectAndCompressBase64(
-            collector.collectDeviceInfo,
-            debugLabel: 'deviceInfo',
-          )
-        : null;
+  Future<void> _run(int trackId) async {
+    final deviceInfoBytes = await _collectAndCompressBase64(
+      collector.collectDeviceInfo,
+    );
 
     if (!_hasPayload(deviceInfoBytes)) {
       return;
@@ -122,46 +83,26 @@ class UploadDataSyncService {
     final result = await ref
         .read(submitUserUploadDataProvider)
         .call(
-          trackId: request.trackId,
+          trackId: trackId,
           deviceInfoBytes: deviceInfoBytes,
         );
 
-    if (result.isSuccess) {
-    } else {
+    if (!result.isSuccess) {
       throw Exception(result.message ?? 'submitUserUploadData failed');
     }
   }
 
   Future<String?> _collectAndCompressBase64(
-    Future<dynamic> Function() collect, {
-    String? debugLabel,
-  }) async {
+    Future<dynamic> Function() collect,
+  ) async {
     final payload = await collect();
     if (payload == null) return null;
-
-    _logDeviceInfoPayload(payload);
 
     final encoded = UploadDataCompressTool.compressDeviceDataBase64(payload);
     return encoded.isEmpty ? null : encoded;
   }
 
-  void _logDeviceInfoPayload(dynamic payload) {
-    try {
-    } catch (_) {
-    }
-  }
-
   bool _hasPayload(String? value) {
     return value != null && value.isNotEmpty;
   }
-}
-
-class _UploadDataSyncRequest {
-  const _UploadDataSyncRequest({
-    required this.trackId,
-    required this.needDeviceInfo,
-  });
-
-  final int trackId;
-  final bool needDeviceInfo;
 }

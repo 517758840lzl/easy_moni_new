@@ -251,13 +251,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   );
 });
 
-/// 安全读取路由 extra，避免类型不匹配导致路由构建异常。
 T? _typedExtra<T>(GoRouterState state) {
   final extra = state.extra;
   return extra is T ? extra : null;
 }
 
-/// 从 query 中解析逗号分隔的列表参数。
 List<String> _queryList(GoRouterState state, String key) {
   final rawValue = state.uri.queryParameters[key];
   if (rawValue == null || rawValue.trim().isEmpty) {
@@ -271,7 +269,6 @@ List<String> _queryList(GoRouterState state, String key) {
       .toList();
 }
 
-/// 从 query 中解析正整数参数。
 int? _queryInt(GoRouterState state, String key) {
   final rawValue = state.uri.queryParameters[key];
   if (rawValue == null || rawValue.trim().isEmpty) return null;
@@ -280,7 +277,6 @@ int? _queryInt(GoRouterState state, String key) {
   return value;
 }
 
-/// 从展期 query 入口构造最小页面入参，支持页面恢复和外部链接直达。
 RepayExtensionRequestData? _repayExtensionRequestFromQuery(
   GoRouterState state,
 ) {
@@ -301,7 +297,6 @@ RepayExtensionRequestData? _repayExtensionRequestFromQuery(
   );
 }
 
-/// 还款流程缺少必要路由参数时的兜底页，避免用户看到纯白屏。
 class _MissingRepayRouteParamsPage extends StatelessWidget {
   const _MissingRepayRouteParamsPage();
 

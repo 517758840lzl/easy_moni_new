@@ -24,7 +24,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// 多订单还款详情页
 class RepayMultiOrderDetailPage extends ConsumerStatefulWidget {
   const RepayMultiOrderDetailPage({super.key, required this.requestData});
 
@@ -101,7 +100,6 @@ class _RepayMultiOrderDetailPageState
     );
   }
 
-  // 还款入口加锁，避免重复点击造成重复跳转和支付接口频繁调用。
   Future<void> _runRepayAction(FutureOr<void> Function() action) async {
     if (_isRepayActionLocked) return;
 
@@ -175,7 +173,6 @@ class _RepayMultiOrderDetailPageState
   Future<List<CouponItem>> _loadCoupons(
     List<RepayDetailRespDataLoanOrderDetails> orders,
   ) {
-    // 多订单还款按订单和产品维度筛选可用的贷后全额还款优惠券。
     return ref.read(
       couponListProvider(
         CouponRequestParams(
@@ -188,7 +185,6 @@ class _RepayMultiOrderDetailPageState
     );
   }
 
-  // 确认多订单优惠券后，刷新顶部优惠金额试算结果。
   void _updateSelectedCoupon({
     required RepayDetailRespData data,
     required CouponItem? coupon,
@@ -265,7 +261,6 @@ class _RepayMultiHeader extends StatelessWidget {
       orders.where((order) => _isOverdue(order)).toList(),
       (order) => order.overdueInterest,
     );
-    // 顶部主金额展示多订单确认还款总额
     final totalRepayAmount = detail?.totalSureRepayAmounts;
     final previewAmount = couponAmountPreview?.newRepaymentAmount;
     final originalAmount = couponAmountPreview?.repaymentAmount;
@@ -595,7 +590,6 @@ String _couponAmountText(CouponItem coupon) {
       : summary;
 }
 
-// 还款优惠券金额试算：仅当优惠后金额小于原始总还金额时展示双行金额。
 bool _shouldShowCouponRepaymentAmount(UseCouponRespData? preview) {
   final previewAmount = preview?.newRepaymentAmount;
   final originalAmount = preview?.repaymentAmount;
@@ -641,7 +635,6 @@ PaymentAllocation? _paymentAllocationFromOrder(
   }
 
   return PaymentAllocation(
-    // 多订单分账金额逐笔取订单明细的应还金额。
     allocationAmount: order.repaymentAmount ?? 0,
     appOrderId: appOrderId,
     installmentId: installmentId,
@@ -671,7 +664,6 @@ List<String> _paymentProductCodes(
       .toList();
 }
 
-// 优惠券接口参数
 List<int> _couponAppOrderIds(List<RepayDetailRespDataLoanOrderDetails> orders) {
   return orders
       .map((item) => int.tryParse(item.appOrderId?.trim() ?? ''))
@@ -680,7 +672,6 @@ List<int> _couponAppOrderIds(List<RepayDetailRespDataLoanOrderDetails> orders) {
       .toList();
 }
 
-// 优惠券接口参数：按多订单涉及的产品编码去重。
 List<String> _couponProductCodes(
   List<RepayDetailRespDataLoanOrderDetails> orders,
 ) {

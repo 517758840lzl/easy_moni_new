@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:easy_moni/entities/user_info_resp.dart';
+import 'package:easy_moni/services/upload_data/upload_track_id_store.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// `/primecl/core/profile/snapshot` 本地缓存；登出 / 登录成功时清除。
 class UserInfoCache {
   UserInfoCache._();
 
@@ -37,12 +37,12 @@ class UserInfoCache {
 
   static Future<void> clear() async {
     _memory = null;
+    UploadTrackIdStore.clear();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_key);
   }
 }
 
-/// debug 下区分 profile 缓存命中与真实网络请求（NetworkLog 只打 HTTP）。
 void logUserInfoCacheHit() {
   if (kReleaseMode) return;
   // ignore: avoid_print

@@ -53,7 +53,6 @@ class _QuestionnairePageState extends ConsumerState<QuestionnairePage> {
     }
   }
 
-  /// 展示问卷选择项通用底部弹窗，并在确认后同步表单状态。
   Future<bool> _showPicker({
     required FormEntry entry,
     required List<SelectOption> options,
@@ -231,7 +230,6 @@ class _QuestionnairePageState extends ConsumerState<QuestionnairePage> {
         child: Row(
           children: [
             GestureDetector(
-              // 返回时展示统一挽留弹窗，避免直接弹空 GoRouter 页面栈。
               onTap: () => FundingLimitDialog.showRetainDialog(context),
               behavior: HitTestBehavior.opaque,
               child: const SizedBox(
@@ -298,7 +296,6 @@ class _QuestionnairePageState extends ConsumerState<QuestionnairePage> {
     );
   }
 
-  /// 根据问卷表单配置复用个人信息表单项，统一选择项与输入项样式。
   Widget _buildEntryItem({
     required QuestionnaireState formState,
     required FormEntry entry,

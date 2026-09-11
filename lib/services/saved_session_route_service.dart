@@ -12,13 +12,11 @@ final savedSessionRouteServiceProvider = Provider<SavedSessionRouteService>((
   );
 });
 
-/// 本地登录态分流服务，统一处理 token 恢复和 KYC 进度路由解析。
 class SavedSessionRouteService {
   const SavedSessionRouteService({required this.acquisitionProgressApi});
 
   final AcquisitionProgressApi acquisitionProgressApi;
 
-  /// 恢复本地 token 并根据后端采集进度返回目标路由；返回 null 表示没有可复用登录态。
   Future<String?> resolveSavedSessionRoute() async {
     final savedToken = await AuthStorage.getToken();
     if (savedToken == null || savedToken.isEmpty) {

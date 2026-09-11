@@ -9,7 +9,6 @@ final acquisitionProgressProvider = Provider<AcquisitionProgressApi>((ref) {
 });
 
 class AcquisitionProgressApi {
-  /// 查询用户状态
   Future<HttpResult<AcquisitionProgressResp>> call() async {
     final result = await HttpProvider.instance.get<AcquisitionProgressResp>(
       ApiConstants.queryAcquisitionProgress,

@@ -33,7 +33,6 @@
             "toolArgs": [
                 "--dart-define=APP_ENV=production"
             ],
-            // 指定只在安卓模拟器上运行。
             "deviceId": "emulator-5554"
         },
         {

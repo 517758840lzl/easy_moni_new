@@ -11,7 +11,6 @@ import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/utils/af_tracker/track_events.dart';
 import 'package:easy_moni/utils/extensions.dart';
 
-/// AppsFlyer 埋点工具，负责 SDK 初始化、归因缓存和统一事件上报。
 class AppsFlyerTracker {
   AppsFlyerTracker._();
 
@@ -19,7 +18,6 @@ class AppsFlyerTracker {
   static Map<String, dynamic>? _runtimeAttribution;
   static Future<void>? _initFuture;
 
-  /// 初始化 AppsFlyer SDK，并异步缓存 AFID 与安装归因数据。
   static Future<void> initializeAppsFlyerTracker() {
     return _initFuture ??= _initializeAppsFlyerSdk();
   }
@@ -43,7 +41,6 @@ class AppsFlyerTracker {
         afDevKey: devKey,
         appId: Platform.isIOS ? appleAppId : '',
         showDebug: false,
-        // iOS：开启广告标识符（IDFA）采集；配合 ATT 弹窗。
         disableAdvertisingIdentifier: false,
         timeToWaitForATTUserAuthorization: Platform.isIOS ? 60 : null,
       );
@@ -83,7 +80,6 @@ class AppsFlyerTracker {
     return AppConstants.defaultAfid;
   }
 
-  /// 运行时归因数据，供登录参数使用真实 AFID、GAID、referrer 等设备参数。
   static Future<Map<String, dynamic>> getAppsFlyerLoginAttributionData() async {
     final attribution =
         _runtimeAttribution ?? await refreshAppsFlyerRuntimeAttribution();
@@ -137,7 +133,6 @@ class AppsFlyerTracker {
     }
   }
 
-  /// 首次打开事件，每台设备只上报一次。
   static Future<void> logAppsFlyerFirstOpenIfNeeded() async {
     if (!await AttributionStore.isFirstOpen()) return;
 
@@ -149,12 +144,10 @@ class AppsFlyerTracker {
     }
   }
 
-  /// 获取缓存的归因渠道。
   static Future<String> getAppsFlyerMediaSource() async {
     return AttributionStore.getMediaSource();
   }
 
-  /// 统一事件上报入口，body 与 msg 使用 AES 加密后再上送。
   static Future<bool> logAppsFlyerActionEvent(
     String eventName, {
     dynamic body,
@@ -203,7 +196,6 @@ class AppsFlyerTracker {
     });
   }
 
-  /// 按示例优先级解析安装归因渠道。
   static String parseAppsFlyerMediaSource(
     Map<String, dynamic>? conversionData,
   ) {

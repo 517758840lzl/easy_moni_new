@@ -18,7 +18,6 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugins.webviewflutter.WebViewFlutterAndroidExternalApi
 
-// WebView 平台保护：处理 Android 渲染进程退出，避免 H5 异常拖垮宿主 App。
 internal class WebViewPlatformService(private val flutterEngine: FlutterEngine) {
     private lateinit var channel: MethodChannel
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// 个人信息表单项，统一承载选择项与文本输入项的展示样式。
 class PersonalInfoFormItem extends StatelessWidget {
   const PersonalInfoFormItem({
     super.key,
@@ -201,7 +200,6 @@ class PersonalInfoFormItem extends StatelessWidget {
   }
 }
 
-/// 仅展示型表单项，复用统一标题样式，不展示 defaultText。
 class PersonalInfoDisplayFormItem extends StatelessWidget {
   const PersonalInfoDisplayFormItem({
     super.key,
@@ -236,7 +234,6 @@ class PersonalInfoDisplayFormItem extends StatelessWidget {
 
 const double _requiredMarkWidth = 16;
 
-/// 表单项标题，负责必填星号和标题文本的统一排版。
 class _FormItemTitle extends StatelessWidget {
   const _FormItemTitle({required this.title, required this.isRequired});
 

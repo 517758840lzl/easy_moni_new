@@ -8,7 +8,6 @@ import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-/// 首页订单点击后的纯展示详情页，数据全部由上一级页面传入。
 class LoanOrderDetailPage extends StatelessWidget {
   const LoanOrderDetailPage({super.key, required this.data});
 
@@ -146,7 +145,6 @@ class _OrderDetailHeader extends StatelessWidget {
   }
 }
 
-/// 订单状态图标，根据状态类别映射本地资源。
 class LoanOrderStatusIcon extends StatelessWidget {
   const LoanOrderStatusIcon({super.key, required this.kind});
 

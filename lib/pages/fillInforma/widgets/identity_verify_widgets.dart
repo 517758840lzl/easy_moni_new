@@ -8,7 +8,6 @@ import 'package:easy_moni/pages/fillInforma/utils/form_entry_input_type_helper.d
 import 'package:easy_moni/pages/fillInforma/widgets/personal_info_form_item.dart';
 import 'package:flutter/material.dart';
 
-/// 身份证 OCR 信息核对提示。
 class IdentityCheckNotice extends StatelessWidget {
   const IdentityCheckNotice({super.key});
 
@@ -52,7 +51,6 @@ class IdentityCheckNotice extends StatelessWidget {
   }
 }
 
-/// 身份证正反面贴图上传区域。
 class IdCardUploadItem extends StatelessWidget {
   const IdCardUploadItem({
     super.key,
@@ -170,7 +168,6 @@ class IdCardUploadItem extends StatelessWidget {
   }
 }
 
-/// 证件图片上传中的加载状态。
 class _IdCardImageProcessingOverlay extends StatelessWidget {
   const _IdCardImageProcessingOverlay();
 
@@ -186,7 +183,6 @@ class _IdCardImageProcessingOverlay extends StatelessWidget {
   }
 }
 
-/// 证件图片失败态提示，统一承接上传失败与远端图片加载失败。
 class _IdCardImageStatus extends StatelessWidget {
   const _IdCardImageStatus({
     required this.icon,
@@ -225,7 +221,6 @@ class _IdCardImageStatus extends StatelessWidget {
   }
 }
 
-/// OCR 回显表单项，按后端 selectList 决定文本输入或选择项。
 class IdentityFormEntryItem extends StatelessWidget {
   const IdentityFormEntryItem({
     super.key,
@@ -293,7 +288,6 @@ class IdentityFormEntryItem extends StatelessWidget {
   }
 }
 
-/// 身份证上传方式选择弹窗内容。
 class UploadMethodSheet extends StatelessWidget {
   const UploadMethodSheet({
     super.key,
@@ -437,7 +431,6 @@ class UploadMethodSheet extends StatelessWidget {
         })
         .toList(growable: false);
 
-    // 上传方式视觉顺序固定为左侧相册、右侧拍照，不受后端 selectList 顺序影响。
     methods.sort((a, b) {
       if (a.isGallery == b.isGallery) {
         return 0;
@@ -459,7 +452,6 @@ class UploadMethodSheet extends StatelessWidget {
   }
 }
 
-/// 身份证号码二次确认弹窗图标。
 class ConfirmIdNumberIcon extends StatelessWidget {
   const ConfirmIdNumberIcon({super.key});
 
@@ -481,7 +473,6 @@ class ConfirmIdNumberIcon extends StatelessWidget {
   }
 }
 
-/// 上传方式视图数据，后端 key 暂按 1=拍照、2=相册 映射到本地动作。
 class _UploadMethodData {
   const _UploadMethodData({required this.label, required this.isGallery});
 
@@ -489,7 +480,6 @@ class _UploadMethodData {
   final bool isGallery;
 }
 
-/// 上传方式选择项，按设计稿展示图标与右上角推荐标识。
 class _UploadMethodOption extends StatelessWidget {
   const _UploadMethodOption({
     required this.icon,

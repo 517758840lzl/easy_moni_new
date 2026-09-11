@@ -37,7 +37,6 @@ class LoginResp {
     }
   }
 
-  /// 转换为完整登录响应结构，供加密埋点和调试日志统一使用。
   Map<String, dynamic> toJson() {
     return {
       'token': token,

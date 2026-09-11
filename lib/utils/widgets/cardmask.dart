@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// 证件拍摄页布局参数，统一遮罩和裁剪坐标。
 class IdCardCameraLayout {
   const IdCardCameraLayout._();
 
@@ -18,7 +17,6 @@ class IdCardCameraLayout {
     final height = width / _cardAspectRatio;
 
     const edgePadding = 16.0;
-    // 顶部提示条占用高度，证件框在剩余区域垂直居中。
     const topBarReserve = 48.0;
 
     final left = ((size.width - width) / 2).clamp(
@@ -35,7 +33,6 @@ class IdCardCameraLayout {
   }
 }
 
-/// 身份证拍摄遮罩，露出证件框并绘制白色边框。
 class CardMaskPainter extends CustomPainter {
   const CardMaskPainter({required this.cardRect});
 
@@ -57,7 +54,6 @@ class CardMaskPainter extends CustomPainter {
 
     final cardPath = Path()..addRRect(cardRect);
 
-    // 使用差集实现遮罩镂空。
     final combinedPath = Path.combine(
       PathOperation.difference,
       backgroundPath,

@@ -76,11 +76,9 @@ class CouponStatus {
 }
 
 extension CouponItemUsability on CouponItem {
-  /// 优惠券可选性由后端 status 统一判定，只有 0 表示当前可使用。
   bool get isUsable => status == CouponStatus.usable;
 }
 
-/// 优惠券列表请求参数：按场景封装筛券维度，供多个页面复用同一 provider。
 class CouponRequestParams {
   const CouponRequestParams({
     required this.appOrderIds,
@@ -124,7 +122,6 @@ class CouponRequestParams {
   }
 }
 
-/// 优惠券试算请求参数：用于选择优惠券后预览优惠前后金额。
 class UseCouponRequestParams {
   const UseCouponRequestParams({
     required this.appOrderIds,
@@ -164,7 +161,6 @@ class UseCouponRequestParams {
 }
 
 class CouponApi {
-  /// 获取优惠券列表，页面只消费筛选后的 CouponItem 列表。
   Future<HttpResult<CouponResp>> fetchCoupons(CouponRequestParams params) {
     return HttpProvider.instance.post<CouponResp>(
       ApiConstants.customerCouponList,
@@ -173,7 +169,6 @@ class CouponApi {
     );
   }
 
-  /// 使用还款优惠券试算金额，返回优惠前后的订单金额数据。
   Future<HttpResult<UseCouponRespData>> useCouponPost(
     UseCouponRequestParams params,
   ) {
@@ -184,7 +179,6 @@ class CouponApi {
     );
   }
 
-  /// 使用贷前优惠券试算金额，确认借款页只用返回金额做展示。
   Future<HttpResult<UseCouponRespData>> useCouponPre(
     UseCouponRequestParams params,
   ) {

@@ -2,7 +2,6 @@ import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:flutter/material.dart';
 
-/// 首页产品列表底部的产品宣传区域。
 class LoanHomeSingleProductPromo extends StatelessWidget {
   const LoanHomeSingleProductPromo({super.key});
 

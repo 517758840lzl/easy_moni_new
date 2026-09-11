@@ -424,7 +424,6 @@ class _MineOrderHistoryList extends StatelessWidget {
   }
 }
 
-/// 历史订单卡片状态码，集中维护后便于和接口约定核对。
 class _MineOrderHistoryStatusCodes {
   const _MineOrderHistoryStatusCodes._();
 
@@ -446,7 +445,6 @@ class _MineOrderHistoryStatusCodes {
   }
 }
 
-/// 根据订单状态组装卡片摘要字段，状态 4 需要额外区分是否已逾期。
 List<MineOrderSummaryCardColumnData> _buildOrderInfoColumns(
   OrderListItem order,
 ) {
@@ -509,7 +507,6 @@ List<MineOrderSummaryCardColumnData> _buildDisbursementColumns(
       label: AppStrings.loanOrderReceiptAmountLabel,
       value: (order.receiptAmount ?? 0).formatAmount(),
     ),
-    // 借款日期使用 applicationTime
     MineOrderSummaryCardColumnData(
       label: AppStrings.mineOrderLoanDateLabel,
       value: _formatDate(order.applicationTime),

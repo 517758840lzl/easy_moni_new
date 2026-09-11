@@ -1,6 +1,5 @@
 import 'package:easy_moni/core/constants/app_strings.dart';
 
-/// 人脸动作常量，和后端下发的 action key 保持一致。
 class FaceAction {
   const FaceAction._();
 
@@ -21,7 +20,6 @@ class FaceAction {
   static bool isSupported(String action) => values.contains(action);
 }
 
-/// 每个动作对应的前端提示配置。
 class FaceActionPrompt {
   const FaceActionPrompt({required this.action, required this.description});
 
@@ -29,7 +27,6 @@ class FaceActionPrompt {
   final String description;
 }
 
-/// 单个活体动作步骤，包含识别动作、提示语和稳定帧要求。
 class FaceLivenessStep {
   const FaceLivenessStep({
     required this.action,
@@ -45,7 +42,6 @@ class FaceLivenessStep {
 
   String get description => prompt.description;
 
-  /// 将后端 action key 转换为前端可执行步骤。
   static FaceLivenessStep? fromAction(String action, {String? description}) {
     final normalizedAction = action.trim();
     if (!FaceAction.isSupported(normalizedAction)) return null;
@@ -64,11 +60,9 @@ class FaceLivenessStep {
   }
 }
 
-/// 人脸活体动作配置。当前模拟后端下发动作，后续接入接口时只替换这里的数据来源。
 class FaceVerifyActionConfig {
   const FaceVerifyActionConfig._();
 
-  // TODO: 接入后端动作接口后，替换当前模拟动作列表。后端每次应下发 2-3 个动作。
   static const List<String> mockBackendActionKeys = [
     FaceAction.openMouth,
     FaceAction.shakeHead,
@@ -83,7 +77,6 @@ class FaceVerifyActionConfig {
 
   static const double shakeHeadTurnThreshold = 10.0;
 
-  // TODO: 后续接入后端动作配置时，确认动作超时阈值是否由接口下发。
   static const Duration defaultActionTimeout = Duration(seconds: 15);
 
   static List<FaceLivenessStep> mockBackendSteps() {

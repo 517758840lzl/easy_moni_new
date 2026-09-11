@@ -3,7 +3,6 @@ import 'package:easy_moni/core/device/device_context.dart';
 import 'package:easy_moni/services/platform_service.dart';
 import 'package:easy_moni/utils/af_tracker/af_tracker.dart';
 
-/// 单个运行环境的网络、渠道、登录归因等参数配置。
 class EnvironmentConfig {
   const EnvironmentConfig({
     required this.name,
@@ -47,7 +46,6 @@ class EnvironmentConfig {
 
   static EnvironmentConfig get current => EnvironmentConfigs.current;
 
-  /// 构建每次请求都会携带的公共请求头，仅保留后端要求的业务头字段。
   Map<String, String> commonHeaders({String? token}) {
     return {
       'BridgeKey': acqChannel,
@@ -56,7 +54,6 @@ class EnvironmentConfig {
     };
   }
 
-  /// 构建登录接口需要的环境和渠道参数，优先使用运行时真实归因与设备值。
   Future<Map<String, dynamic>> loginParams({
     required String phone,
     required String authCode,
@@ -102,13 +99,11 @@ class EnvironmentConfig {
     };
   }
 
-  /// 将接口 path 拼接成完整 URL，供文件上传等直连场景使用。
   String resolveApiPath(String path) {
     return Uri.parse(baseUrl).resolve(path).toString();
   }
 }
 
-/// 项目环境配置入口，项目当前仅保留生产环境参数。
 class EnvironmentConfigs {
   EnvironmentConfigs._();
 

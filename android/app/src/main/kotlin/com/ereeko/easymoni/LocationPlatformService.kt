@@ -21,7 +21,6 @@ import io.flutter.plugin.common.MethodChannel
 import java.util.concurrent.atomic.AtomicBoolean
 import androidx.core.net.toUri
 
-// 位置平台服务：负责位置权限、系统定位开关和当前位置快照采集。
 internal class LocationPlatformService(private val activity: Activity) {
     companion object {
         const val REQUEST_CODE = 1001
@@ -95,7 +94,6 @@ internal class LocationPlatformService(private val activity: Activity) {
                     return
                 }
 
-                // 避免连续权限请求覆盖上一笔 Flutter Result，导致前一个 Future 无法结束。
                 pendingResult = result
                 ActivityCompat.requestPermissions(
                     activity,
@@ -141,7 +139,6 @@ internal class LocationPlatformService(private val activity: Activity) {
         }
     }
 
-    // 定位快照采集：优先请求一次当前位置，失败或超时后降级读取系统缓存位置。
     private fun Long.requestCurrentLocationSnapshot(
         onComplete: (DeviceLocationResult) -> Unit
     ) {
@@ -190,7 +187,6 @@ internal class LocationPlatformService(private val activity: Activity) {
             }
 
             try {
-                // 风控定位需要精确位置权限，优先通过高精度策略获取实时坐标。
                 timeoutRunnable = Runnable {
                     cancellationTokenSource.cancel()
                     requestLastKnown("Current location request timed out")
@@ -231,7 +227,6 @@ internal class LocationPlatformService(private val activity: Activity) {
         }
     }
 
-    // 缓存位置读取：实时定位不可用时作为兜底，返回的仍可能是旧位置。
     private fun requestLastKnownLocationSnapshot(
         fallbackMessage: String,
         onComplete: (DeviceLocationResult) -> Unit

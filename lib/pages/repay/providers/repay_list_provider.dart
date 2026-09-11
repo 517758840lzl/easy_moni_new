@@ -4,7 +4,6 @@ import 'package:easy_moni/core/network/http_result.dart';
 import 'package:easy_moni/entities/repay/repay_resp.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// 还款入口页订单状态定义，集中管理待还款列表请求参数。
 class RepayListOrderStatus {
   RepayListOrderStatus._();
 
@@ -31,7 +30,6 @@ final repayEntryBillsProvider = FutureProvider.autoDispose<List<RepayResp>>((
 });
 
 class RepayListApi {
-  /// 获取待还款列表，statusList 为订单状态列表，当前入口页固定请求 [4]。
   Future<HttpResult<List<RepayResp>>> call({
     required List<int> statusList,
   }) async {

@@ -3,7 +3,6 @@ import 'package:easy_moni/core/constants/app_strings.dart';
 import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:easy_moni/utils/widgets/linepaint.dart';
 
-/// 信息填写流程步骤，用于控制顶部进度状态。
 class InformationStep {
   const InformationStep._(this.value);
 
@@ -14,7 +13,6 @@ class InformationStep {
   static const InformationStep face = InformationStep._('face');
 }
 
-/// 构建信息填写页面的头部区域，包含返回按钮、标题和流程进度。
 Widget buildInformationHeader({
   required BuildContext context,
   required String title,
@@ -71,7 +69,6 @@ Widget buildInformationHeader({
   );
 }
 
-/// 构建信息填写流程进度条。
 Widget buildProgressIndicator({required InformationStep activeStep}) {
   final isPersonActive = activeStep == InformationStep.personal;
   final isIdActive = activeStep == InformationStep.identity;
@@ -125,7 +122,6 @@ Widget _buildStepItem({
     children: [
       SizedBox(width: 36, height: 36, child: icon),
       const SizedBox(height: 6),
-      // 步骤文案可能较长，限制在当前步骤宽度内换行，避免横向溢出。
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
         child: Text(

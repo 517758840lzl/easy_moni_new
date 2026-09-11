@@ -72,7 +72,6 @@ class _HomeNavBarState extends ConsumerState<HomeNavBar> {
   @override
   Widget build(BuildContext context) {
     final pages = List<Widget>.generate(3, (index) {
-      // 底部 Tab 首次访问时再挂载，避免进入首页时同时触发三个页面接口。
       if (!_visitedTabIndexes.contains(index)) {
         return const SizedBox.shrink();
       }
@@ -144,7 +143,6 @@ class _HomeNavBarState extends ConsumerState<HomeNavBar> {
     final activeColor = const Color(0xFF268470);
     final inactiveColor = const Color(0xFFACACAC);
 
-    //是否选中
     final currentImage = isSelected ? filledIcon : outlinedIcon;
 
     return GestureDetector(
@@ -176,7 +174,6 @@ class _HomeNavBarState extends ConsumerState<HomeNavBar> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 直接调用 .image() 方法渲染图片
             currentImage.image(
               width: 24,
               height: 24,
@@ -215,7 +212,6 @@ class _HomeNavBarState extends ConsumerState<HomeNavBar> {
   }
 }
 
-/// 将路由 tab 参数转换为底部导航索引，未知参数默认回到首页。
 int _tabIndex(String tab) {
   switch (tab) {
     case AppHomeTabs.repay:

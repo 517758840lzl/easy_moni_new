@@ -12,7 +12,6 @@ import 'package:easy_moni/services/auth_storage.dart';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
-/// 统一网络请求入口，负责请求配置、加密请求体、响应解析和登录态失效处理。
 class HttpProvider {
   final Dio _dio;
   final EnvironmentConfig _config;
@@ -68,7 +67,6 @@ class HttpProvider {
 
   EnvironmentConfig get config => _config;
 
-  /// 恢复本地登录态到请求头，避免启动或页面分流时重复写入本地存储。
   void restoreToken(String? token) {
     _headerInterceptor.setToken(token);
   }
@@ -169,7 +167,6 @@ class HttpProvider {
     bool includeToken = true,
   }) async {
     try {
-      // 使用 dynamic 而不是 T，避免 Dio 自动转换失败
       final response = await _dio.get<dynamic>(
         path,
         queryParameters: params,
@@ -250,7 +247,6 @@ class HttpProvider {
     try {
       final requestData = _encryptPostDataIfNeeded(data);
 
-      // 使用 dynamic 而不是 T，避免 Dio 自动转换失败
       final response = await _dio.post<dynamic>(
         path,
         data: requestData,
@@ -272,7 +268,6 @@ class HttpProvider {
       Map<String, dynamic>? map;
 
       try {
-        // 使用 Map.from 来确保正确转换
         final sourceMap = responseData as Map;
         map = {};
         for (final key in sourceMap.keys) {
@@ -290,15 +285,11 @@ class HttpProvider {
         if (map.containsKey('code')) {
           final result = BaseResult.fromJson(map, fromJson);
           if (result.isSuccess) {
-            // 处理 data 为 null 的情况
             if (result.data == null) {
-              // 如果 T 是可空的，返回 null
-              // 如果 T 是不可空的，尝试创建默认实例
               try {
                 final nullValue = null as T;
                 return HttpResult.success(nullValue, cancelToken: cancelToken);
               } catch (_) {
-                // T 不可空，返回错误
                 return HttpResult.success(
                   fromJson(null),
                   cancelToken: cancelToken,
@@ -337,7 +328,6 @@ class HttpProvider {
     }
   }
 
-  /// 按配置统一加密 POST 请求体，上传表单和空请求体保持原样。
   dynamic _encryptPostDataIfNeeded(dynamic data) {
     if (!_shouldEncryptPostData(data)) {
       return data;
@@ -346,7 +336,6 @@ class HttpProvider {
     return RequestSecurityUtil.encryptRequestBody(data);
   }
 
-  /// 解密后端返回的整体响应体，再交给统一解析流程处理。
   dynamic _decryptResponseDataIfNeeded(dynamic data) {
     return RequestSecurityUtil.decryptResponseBody(data);
   }

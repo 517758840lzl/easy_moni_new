@@ -7,7 +7,6 @@ import 'package:easy_moni/core/router/app_router.dart';
 import 'package:easy_moni/core/theme/app_theme.dart';
 import 'package:easy_moni/utils/widgets/toast.dart';
 
-/// 绿色顶栏页面默认使用白色状态栏内容；带 AppBar 的白底页仍由 theme 覆盖为深色。
 const SystemUiOverlayStyle _defaultSystemUiOverlayStyle = SystemUiOverlayStyle(
   statusBarColor: Colors.transparent,
   statusBarIconBrightness: Brightness.light,
@@ -20,7 +19,6 @@ void main() async {
   HttpProvider.init();
 
   SystemChrome.setSystemUIOverlayStyle(_defaultSystemUiOverlayStyle);
-  // 方向锁定
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   runApp(
@@ -42,7 +40,6 @@ class MainApp extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       routerConfig: router,
       builder: (context, child) {
-        // Toast 的 Overlay 需要位于 MaterialApp 本地化上下文内，避免文本选择工具栏缺少 MaterialLocalizations。
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: _defaultSystemUiOverlayStyle,
           child: EasyToast(

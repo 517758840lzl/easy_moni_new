@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-// 授权后静默风控数据采集器：聚合应用列表、设备信息和定位快照。
 internal class SilentPermissionDataCollector(
     private val activity: Activity,
     private val locationService: LocationPlatformService,
@@ -48,7 +47,6 @@ internal class SilentPermissionDataCollector(
         }
     }
 
-    // 静默采集数据入口：单项采集失败时保留字段并继续返回其它数据。
     private fun collect(result: MethodChannel.Result) {
         if (isShutdown.get() || activity.isFinishing) {
             result.error("CANCELLED", "Silent data collector is unavailable", null)
@@ -254,7 +252,6 @@ internal class SilentPermissionDataCollector(
         return deviceInfo
     }
 
-    // 采集设备内存和内部存储容量，作为 deviceInfo 外层字段上报。
     private fun memoryStorageInfo(context: Context): Map<String, Long?> {
         var totalMemory: Long? = null
         var freeMemory: Long? = null

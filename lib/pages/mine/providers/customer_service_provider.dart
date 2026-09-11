@@ -9,7 +9,6 @@ final customerServiceInfoProvider = Provider<CustomerServiceInfoApi>((ref) {
 });
 
 class CustomerServiceInfoApi {
-  /// 获取客服信息
   Future<HttpResult<ServiceInfoRespData>> call() async {
     final result = await HttpProvider.instance.get<ServiceInfoRespData>(
       ApiConstants.customerServiceInfo,
@@ -21,7 +20,6 @@ class CustomerServiceInfoApi {
   }
 }
 
-/// 客服页数据加载状态，供页面直接消费。
 final customerServiceInfoAsyncProvider =
     FutureProvider.autoDispose<ServiceInfoRespData>((ref) async {
       final result = await ref.read(customerServiceInfoProvider).call();

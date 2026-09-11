@@ -28,7 +28,6 @@ class LoanHomePage extends StatelessWidget {
   }
 }
 
-// 借款首页通用容器
 class LoanHomeScaffold extends ConsumerStatefulWidget {
   const LoanHomeScaffold({
     super.key,
@@ -64,7 +63,6 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
       return;
     }
 
-    // 还款完成回到首页时，页面状态可能被 IndexedStack 复用，需要按路由刷新信号重新拉取数据。
     _refreshHomeData();
   }
 
@@ -97,7 +95,6 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
     }
   }
 
-  // 首页下拉刷新：复用首屏接口请求，刷新过程中保留当前页面内容。
   Future<void> _refreshHomeData() {
     return _loadHomeData(showLoading: false);
   }
@@ -185,7 +182,6 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
           ],
         ),
       ),
-      // 底部固定按钮
       bottomNavigationBar: LoanBottomActionButton(
         text: AppStrings.homeButtonText,
         enabled: canApply,
@@ -199,11 +195,9 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
     return topInset + 154;
   }
 
-  // 跳转确认借款页面
   void _handleApply() {
     if (_isApplyButtonLocked) return;
 
-    // 防止同一轮点击重复触发跳转，进入确认页后首页按钮状态仍由产品选择决定。
     setState(() {
       _isApplyButtonLocked = true;
     });
@@ -282,7 +276,6 @@ class _LoanHomeScaffoldState extends ConsumerState<LoanHomeScaffold> {
     );
   }
 
-  // 首页分区：可借产品、订单卡片、不可借产品按区域展示，便于标题区分。
   List<Widget> _buildHomeSections() {
     final availableProductIndexes = <int>[];
     final orderIndexes = <int>[];
@@ -483,7 +476,6 @@ VoidCallback? _homeOrderFooterTap(BuildContext context, HomeProductItem item) {
       context.push(AppRoutePaths.repayOrderDetailWithIds([appOrderId]));
 }
 
-// 首页订单卡片字段：页面负责把接口数据转换成展示文案。
 List<LoanOrderCardRowData> _homeOrderRows(HomeProductItem item) {
   final dueDate = _resolveHomeDueDate(item);
 
@@ -494,7 +486,6 @@ List<LoanOrderCardRowData> _homeOrderRows(HomeProductItem item) {
     ),
   ];
 
-  // 首页订单摘要按订单状态展示不同的金额与还款字段。
   if (item.appOrderStatus == 4 &&
       item.remainingDays != null &&
       item.remainingDays! < 0) {
@@ -510,7 +501,6 @@ List<LoanOrderCardRowData> _homeOrderRows(HomeProductItem item) {
       ),
       LoanOrderCardRowData(
         label: AppStrings.loanOrderOverdueFeeLabel,
-        // 逾期费overdueInterest
         value: _amountText(item.overdueInterest),
       ),
     ];
@@ -551,7 +541,6 @@ String _resolveHomeAppOrderId(HomeProductItem item) {
   return item.appOrderId?.toString() ?? '';
 }
 
-// 放款中/待还款等后端不下发 dueDate，可以展示 repayDateStr。
 String _resolveHomeDueDate(HomeProductItem item) {
   final date = item.dueDate ?? item.repayDateStr;
   return date?.formatBackendDate() ?? AppStrings.loanOrderEmptyValue;
@@ -577,7 +566,6 @@ LoanOrderCardFooterData _homeOrderFooter(
     remainingDays: item.remainingDays,
   );
 
-  // 等待还款订单根据首页优惠券字段切换还款入口文案。
   if (item.appOrderStatus == 4 &&
       visual.label == AppStrings.loanOrderStatusWaitingRepayment) {
     return LoanOrderCardFooterData(

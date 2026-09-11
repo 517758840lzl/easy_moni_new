@@ -13,10 +13,6 @@ final submitAcpElementInfoProvider = Provider<SubmitAcpElementInfoApi>((ref) {
 });
 
 class SubmitAcpElementInfoApi {
-  /// 提交KYC步骤数据
-  /// [processId] 流程ID
-  /// [step] 步骤
-  /// [jsonParam] 按文档格式提交的字段列表
   Future<HttpResult<SubmitAcpInfoResp>> call({
     required int processId,
     required int step,

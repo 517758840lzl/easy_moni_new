@@ -4,7 +4,6 @@ import 'package:easy_moni/entities/acp_element_info_resp.dart';
 import 'package:easy_moni/pages/fillInforma/utils/form_entry_input_type_helper.dart';
 import 'package:flutter/material.dart';
 
-/// 联系人信息表单控制器，负责固定联系人字段的展示值和提交值映射。
 class ContactInfoFormController {
   static const Set<String> _visibleContactCodes = {
     '30051',
@@ -30,7 +29,6 @@ class ContactInfoFormController {
 
   List<FormEntry> _entries = [];
 
-  /// 页面仅展示两个联系人关系和两个联系人手机号字段。
   List<FormEntry> get entries {
     return _sortedEntries
         .where((entry) => _visibleContactCodes.contains(entry.code))
@@ -43,7 +41,6 @@ class ContactInfoFormController {
     return sortedEntries;
   }
 
-  /// 校验联系人页可见必填项是否已填写。
   bool get canSubmit {
     for (final entry in entries) {
       if (entry.must != 1) {
@@ -67,7 +64,6 @@ class ContactInfoFormController {
     }
   }
 
-  /// 应用后端联系人表单配置，并恢复已提交过的表单值。
   void applyEntries(List<FormEntry> entries) {
     _entries = entries;
     _selectedIndices.clear();
@@ -103,7 +99,6 @@ class ContactInfoFormController {
 
   int selectedIndexFor(FormEntry entry) => _selectedIndices[entry.key] ?? 0;
 
-  /// 更新输入框值，联系人手机号需转换为后端 JSON 字符串提交。
   void updateTextValue(FormEntry entry, String value) {
     if (_isContactPhoneEntry(entry)) {
       _updateContactInputValue(entry, value);
@@ -117,7 +112,6 @@ class ContactInfoFormController {
     _submitValues[entry.key] = submitValue;
   }
 
-  /// 更新联系人关系选择值。
   void updatePickerValue(FormEntry entry, int index) {
     final options = entry.selectList;
     if (options == null || options.isEmpty) {
@@ -131,7 +125,6 @@ class ContactInfoFormController {
     _submitValues[entry.key] = option.key;
   }
 
-  /// 更新通讯录选择值，并同步隐藏姓名字段和可见手机号字段。
   void updateContactValue({
     required FormEntry entry,
     required String name,
@@ -158,7 +151,6 @@ class ContactInfoFormController {
     _textControllers[phoneEntry.key]?.text = displayValue;
   }
 
-  /// 按后台 key 组装联系人信息提交参数。
   List<Map<String, dynamic>> buildSubmitParams() {
     return _sortedEntries
         .where((entry) => _submitContactCodes.contains(entry.code))
@@ -248,7 +240,6 @@ class ContactInfoFormController {
     return _normalizeContactPhone(_decodeContactPhone(_entryValue(phoneEntry)));
   }
 
-  /// 解析可输入联系人字段，保留展示姓名，仅规范化手机号提交给后端。
   void _updateContactInputValue(FormEntry entry, String value) {
     final contactInput = _parseContactInput(value);
     final displayName = contactInput.name.trim();

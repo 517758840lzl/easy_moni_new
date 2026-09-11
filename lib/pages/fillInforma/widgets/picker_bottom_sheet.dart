@@ -3,14 +3,12 @@ import 'package:easy_moni/utils/widgets/loan_bottom_action_button.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-/// 底部单列选择弹窗，负责选项展示、临时选择和确认回调。
 class PickerBottomSheetOption {
   const PickerBottomSheetOption({required this.label});
 
   final String label;
 }
 
-/// 表单选择项通用底部弹窗。
 class PickerBottomSheet extends StatefulWidget {
   const PickerBottomSheet({
     super.key,

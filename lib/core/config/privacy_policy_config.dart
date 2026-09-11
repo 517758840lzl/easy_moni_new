@@ -1,4 +1,3 @@
-/// 隐私政策相关配置。
 class PrivacyPolicyConfig {
   PrivacyPolicyConfig._();
 
@@ -17,8 +16,6 @@ class PrivacyPolicyConfig {
 
   static String get loanAgreementUrl => _loanAgreementUrl;
 
-  /// H5 合同 URL：用 [Uri.encodeComponent] 编码 query，空格为 %20（不用
-  /// encodeQueryComponent，它会把空格编成 +，H5 可能当字面量显示）。
   static String buildLoanAgreementUrl(Map<String, String> queryParameters) {
     final entries = queryParameters.entries
         .where((entry) => entry.value.trim().isNotEmpty)

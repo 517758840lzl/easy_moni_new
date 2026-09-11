@@ -21,7 +21,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// 展期申请页，负责展示展期费用、优惠券选择和展期后的还款信息。
 class RepayExtensionPage extends ConsumerStatefulWidget {
   const RepayExtensionPage({super.key, required this.requestData});
 
@@ -234,7 +233,6 @@ class _RepayExtensionHeader extends StatelessWidget {
                       ),
                       if (!isLoading && hasSelectedCoupon) ...[
                         const SizedBox(width: 6),
-                        // 展示优惠前金额
                         TotalRepayAmountDisplay(
                           amount: detail?.extensionFee ?? 0,
                           currencyStyle: const TextStyle(
@@ -273,7 +271,6 @@ class _RepayExtensionHeader extends StatelessWidget {
   }
 }
 
-// 展期金额加载态，避免接口返回前展示默认金额造成误导。
 class _RepayExtensionAmountLoading extends StatelessWidget {
   const _RepayExtensionAmountLoading();
 
@@ -345,7 +342,6 @@ class _RepayExtensionContent extends StatelessWidget {
   }
 }
 
-// 展期提示横幅
 class _RepayExtensionNotice extends StatelessWidget {
   const _RepayExtensionNotice();
 
@@ -379,7 +375,6 @@ class _RepayExtensionNotice extends StatelessWidget {
   }
 }
 
-/// 展期字段展示卡片，集中承载延期后的核心账单字段。
 class _RepayExtensionInfoCard extends StatelessWidget {
   const _RepayExtensionInfoCard({required this.detail});
 
@@ -496,7 +491,6 @@ List<String> _couponProductCodes(
       .toList();
 }
 
-// 构建请求参数
 PaymentRequestParams? _buildPaymentParams({
   required RepayExtensionRequestData requestData,
   required RepayExtensionRespData detail,

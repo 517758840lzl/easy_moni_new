@@ -16,7 +16,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-/// 客服展示方式，和后端 showType 保持一致。
 class CustomerServiceShowType {
   CustomerServiceShowType._();
 
@@ -24,7 +23,6 @@ class CustomerServiceShowType {
   static const int text = 1;
 }
 
-/// 客服联系方式类型，和后端 type 保持一致。
 class CustomerServiceContactType {
   CustomerServiceContactType._();
 
@@ -35,7 +33,6 @@ class CustomerServiceContactType {
   static const int intelligent = 11;
 }
 
-/// 客服页，负责根据后端 showType 切换 WebView 或纯文本联系方式。
 class CustomerServicePage extends ConsumerWidget {
   const CustomerServicePage({super.key});
 
@@ -188,7 +185,6 @@ class _AntiFraudCard extends StatelessWidget {
   }
 }
 
-/// 深色卡片右上角的绿色径向光效。
 class _AntiFraudGradient extends StatelessWidget {
   const _AntiFraudGradient();
 
@@ -442,7 +438,6 @@ class _CustomerServiceHeader extends StatelessWidget {
   }
 }
 
-/// 客服联系方式卡片
 class _CustomerServiceContactCard extends StatelessWidget {
   const _CustomerServiceContactCard(this.contact);
 
@@ -514,7 +509,6 @@ class _CustomerServiceContactCard extends StatelessWidget {
   }
 }
 
-/// 客服联系方式跳转服务，集中处理外部 App 和浏览器兜底规则。
 class _CustomerServiceContactLauncher {
   _CustomerServiceContactLauncher._();
 
@@ -528,7 +522,6 @@ class _CustomerServiceContactLauncher {
     }
   }
 
-  /// 使用 WhatsApp 官方短链跳转，由系统处理 App Link 或浏览器兜底。
   static Future<void> _openWhatsApp(String account) async {
     final whatsAppAccount = account.trim();
     if (whatsAppAccount.isEmpty) {
@@ -545,7 +538,6 @@ class _CustomerServiceContactLauncher {
     await ExternalLinkService.openUrl('https://wa.me/$digits');
   }
 
-  /// 通过 mailto 协议拉起系统邮箱应用。
   static Future<void> _openEmail(String account) async {
     final email = account.trim();
     if (email.isEmpty) {
@@ -556,7 +548,6 @@ class _CustomerServiceContactLauncher {
   }
 }
 
-/// 联系方式文字区域，优先展示后端标题，缺省时按类型展示官方渠道名称。
 class _CustomerServiceContactText extends StatelessWidget {
   const _CustomerServiceContactText({required this.contact});
 
@@ -628,7 +619,6 @@ class _CustomerServiceStatePage extends StatelessWidget {
   }
 }
 
-/// 纯文本展示下的一条客服联系方式。
 class _CustomerServiceContact {
   const _CustomerServiceContact({
     required this.type,
@@ -710,7 +700,6 @@ class _CustomerServiceContact {
   }
 }
 
-/// WebView 模式下从后端集合中提取首个可展示资源。
 class _CustomerServiceWebSource {
   const _CustomerServiceWebSource({required this.value, required this.isHtml});
 
@@ -726,7 +715,6 @@ class _CustomerServiceWebSource {
   }
 
   static _CustomerServiceWebSource? fromList(List<dynamic>? sourceList) {
-    // 兼容 String、url/link/h5Url/content/html 字段。
     for (final item in sourceList ?? const <dynamic>[]) {
       final rawValue = _extractWebValue(item);
       final source = fromValue(rawValue);

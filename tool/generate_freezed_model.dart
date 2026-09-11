@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-/// 根据 JSON 文件生成 freezed + json_serializable 源文件。
 void main(List<String> args) {
   final options = _GenerateOptions.parse(args);
   if (options == null) {
@@ -44,7 +43,6 @@ void main(List<String> args) {
   stdout.writeln('generated ${outputFile.path}');
 }
 
-/// 命令行参数配置。
 class _GenerateOptions {
   const _GenerateOptions({
     required this.inputPath,
@@ -109,7 +107,6 @@ class _GenerateOptions {
   }
 }
 
-/// freezed class 生成器，负责类型推断与嵌套模型拆分。
 class _FreezedModelGenerator {
   _FreezedModelGenerator({
     required this.rootClassName,
@@ -257,7 +254,6 @@ class _FreezedModelGenerator {
   }
 }
 
-/// class 结构描述。
 class _ModelClass {
   const _ModelClass({required this.name, required this.fields});
 
@@ -265,7 +261,6 @@ class _ModelClass {
   final List<_ModelField> fields;
 }
 
-/// 字段结构描述。
 class _ModelField {
   const _ModelField({
     required this.jsonKey,

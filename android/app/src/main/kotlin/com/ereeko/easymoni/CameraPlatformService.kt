@@ -22,7 +22,6 @@ import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
 import androidx.core.net.toUri
 
-// 相机相册平台服务：负责相机权限、相册选择和图片二进制读取。
 internal class CameraPlatformService(private val activity: Activity) {
     companion object {
         const val CAMERA_PERMISSION_REQUEST_CODE = 1004
@@ -93,7 +92,6 @@ internal class CameraPlatformService(private val activity: Activity) {
             val selectedImageUri = data.data
             if (selectedImageUri != null) {
                 val result = pendingCameraResult
-                // 相册大图读取放到后台线程，避免系统选择器关闭后阻塞 Flutter 首帧恢复。
                 try {
                     galleryTask = backgroundExecutor.submit {
                         try {
@@ -142,7 +140,6 @@ internal class CameraPlatformService(private val activity: Activity) {
                     return
                 }
 
-                // 避免连续权限请求覆盖上一笔 Flutter Result，导致前一个 Future 无法结束。
                 pendingCameraPermissionResult = result
                 ActivityCompat.requestPermissions(
                     activity,
@@ -181,7 +178,6 @@ internal class CameraPlatformService(private val activity: Activity) {
 
             val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
             intent.type = "image/*"
-            // 避免连续相册请求覆盖上一笔 Flutter Result，导致前一个 Future 无法结束。
             pendingCameraResult = result
             activity.startActivityForResult(intent, PICK_GALLERY_REQUEST_CODE)
         } catch (e: Exception) {
@@ -204,7 +200,6 @@ internal class CameraPlatformService(private val activity: Activity) {
                 BitmapFactory.decodeStream(it, null, options)
             } ?: return null
 
-            // 相册图片先在原生侧降采样并压缩，避免原图跨 MethodChannel 造成内存峰值。
             ByteArrayOutputStream().use { output ->
                 bitmap.compress(Bitmap.CompressFormat.JPEG, GALLERY_IMAGE_JPEG_QUALITY, output)
                 bitmap.recycle()

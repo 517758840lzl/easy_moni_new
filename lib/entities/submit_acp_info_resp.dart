@@ -1,4 +1,3 @@
-/// KYC 步骤提交结果，后端通过 nextStep 告知客户端下一步采集页面。
 class SubmitAcpInfoResp {
   final Object? userId;
   final int? nextStep;

@@ -3,7 +3,6 @@ import 'package:easy_moni/gen/assets.gen.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
-/// 相机预览以 cover 方式铺满页面，和裁剪坐标换算保持同一规则。
 class IdCameraPreviewCover extends StatelessWidget {
   const IdCameraPreviewCover(this.controller, {super.key});
 
@@ -37,7 +36,6 @@ class IdCameraPreviewCover extends StatelessWidget {
   }
 }
 
-/// 拍摄页覆盖 UI：顶部提示和快门按钮。
 class IdCameraUiLayer extends StatelessWidget {
   const IdCameraUiLayer({
     required this.isTakingPicture,
@@ -84,7 +82,6 @@ class IdCameraUiLayer extends StatelessWidget {
   }
 }
 
-/// 拍摄页返回按钮，复用设计切图并交给页面处理退出流程。
 class _CameraBackButton extends StatelessWidget {
   const _CameraBackButton({required this.onPressed});
 
