@@ -32,8 +32,6 @@ abstract final class DartUploadDeviceInfoCollector {
     final systemVersionRaw = ios['systemVersion']?.toString().trim() ?? '';
     final systemVersion =
         systemVersionRaw.isNotEmpty ? systemVersionRaw : _osVersionShort();
-    final isPhysicalDevice = ios['isPhysicalDevice'] == true;
-    final isSimulator = ios.isNotEmpty && !isPhysicalDevice ? 1 : 0;
     final nativeScreen = _mapFromDynamic(extras['screenMetrics']);
     final screen = _screenInfo(nativeScreen: nativeScreen);
     final locationInfo = await _buildLocationInfo(
@@ -48,7 +46,6 @@ abstract final class DartUploadDeviceInfoCollector {
       deviceId: deviceId,
       machine: machine,
       systemVersion: systemVersion,
-      isSimulator: isSimulator,
       timestamp: timestamp,
     );
     final networkInfo = _buildNetworkInfo(extras['networkInfo']);
@@ -69,7 +66,6 @@ abstract final class DartUploadDeviceInfoCollector {
           ? ios['model'].toString().trim()
           : 'iPhone',
       'device_id': deviceId,
-      'is_simulator': isSimulator,
       'latitude': _formatCoord(latitude),
       'longitude': _formatCoord(longitude),
       'os_version': systemVersion,
@@ -130,7 +126,6 @@ abstract final class DartUploadDeviceInfoCollector {
     }
 
     return {
-      'isPhysicalDevice': ios['isPhysicalDevice'] == true,
       'isiOSAppOnMac': ios['isiOSAppOnMac'] == true,
       'modelName': ios['modelName']?.toString() ?? '',
       'localizedModel': ios['localizedModel']?.toString() ?? '',
@@ -144,7 +139,6 @@ abstract final class DartUploadDeviceInfoCollector {
     required String deviceId,
     required String machine,
     required String systemVersion,
-    required int isSimulator,
     required int timestamp,
   }) {
     return {
@@ -152,7 +146,6 @@ abstract final class DartUploadDeviceInfoCollector {
       'brand': 'Apple',
       'currentSystemTime': timestamp,
       'deviceUuid': deviceId,
-      'isEmulator': isSimulator,
       'release': systemVersion,
     };
   }

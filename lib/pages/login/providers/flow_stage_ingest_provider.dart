@@ -4,11 +4,11 @@ import 'package:easy_moni/core/network/http_result.dart';
 import 'package:easy_moni/services/platform_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final submitUserUploadDataProvider = Provider<SubmitUserUploadDataApi>((ref) {
-  return SubmitUserUploadDataApi();
+final flowStageIngestProvider = Provider<FlowStageIngestApi>((ref) {
+  return FlowStageIngestApi();
 });
 
-class SubmitUserUploadDataApi {
+class FlowStageIngestApi {
   Future<HttpResult<dynamic>> call({
     required int trackId,
     String? deviceInfoBytes,
@@ -18,21 +18,13 @@ class SubmitUserUploadDataApi {
 
     final data = <String, dynamic>{
       'trackId': trackId,
-      'hasContactPermission': 0,
       'hasGpsPermission': hasGpsPermission,
-      'hasSmsPermission': 0,
-      'submitUserConnectBytes': '',
-      'submitUserConnectReq': const [],
-      'submitUserAppListBytes': '',
-      'submitUserAppListReq': const [],
       'submitUserDeviceInfoBytes': deviceInfoBytes ?? '',
       'submitUserDeviceInfoReq': const {},
-      'submitUserSmsBytes': '',
-      'submitUserSmsReq': const [],
     };
 
     return HttpProvider.instance.post<dynamic>(
-      ApiConstants.submitUserUploadData,
+      ApiConstants.flowStageIngest,
       data: data,
       fromJson: (json) => json,
     );

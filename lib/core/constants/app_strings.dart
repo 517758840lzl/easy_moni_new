@@ -203,10 +203,6 @@ class AppStrings {
       'Are you sure you want to delete your account?';
   static const String mineDeleteAccountSuccess = 'Account deleted';
   static const String mineDeleteAccountFailed = 'Delete failed, please retry';
-  static const String mineTestUploadData = 'Test upload data';
-  static const String mineTestUploadDataSuccess = 'Upload data success';
-  static const String mineTestUploadDataFailed = 'Upload data failed';
-  static const String mineTestUploadDataNoTrackId = 'No valid trackId';
   static const String mineOrderHistoryTitle = 'My Loan';
   static const String mineOrderHistoryAllTab = 'All';
   static const String mineOrderHistoryDisbursingTab = 'Processing';

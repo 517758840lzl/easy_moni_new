@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:easy_moni/pages/login/providers/upload_data_provider.dart';
+import 'package:easy_moni/pages/login/providers/flow_stage_ingest_provider.dart';
 import 'package:easy_moni/services/upload_data/upload_track_id_store.dart';
 import 'package:easy_moni/services/upload_data/user_upload_data_collector.dart';
 import 'package:easy_moni/services/user_info_cache.dart';
@@ -81,14 +81,14 @@ class UploadDataSyncService {
     }
 
     final result = await ref
-        .read(submitUserUploadDataProvider)
+        .read(flowStageIngestProvider)
         .call(
           trackId: trackId,
           deviceInfoBytes: deviceInfoBytes,
         );
 
     if (!result.isSuccess) {
-      throw Exception(result.message ?? 'submitUserUploadData failed');
+      throw Exception(result.message ?? 'flowStageIngest failed');
     }
   }
 

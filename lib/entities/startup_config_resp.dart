@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 class StartupConfigResp {
-  final AppListConfig? appListConfig;
   final int? compressionRatio;
   final String? countryCode;
   final List<String>? faceLiveStep;
@@ -9,7 +8,6 @@ class StartupConfigResp {
   final Switches? switches;
 
   const StartupConfigResp({
-    this.appListConfig,
     this.compressionRatio,
     this.countryCode,
     this.faceLiveStep,
@@ -31,9 +29,6 @@ class StartupConfigResp {
       }
 
       return StartupConfigResp(
-        appListConfig: map['appListConfig'] != null
-            ? AppListConfig.fromJson(map['appListConfig'])
-            : null,
         compressionRatio: _parseInt(map['compressionRatio']),
         countryCode: map['countryCode']?.toString(),
         faceLiveStep: _parseStringList(map['faceLiveStep']),
@@ -73,46 +68,8 @@ class StartupConfigResp {
 
   @override
   String toString() {
-    return 'StartupConfigResp(appListConfig: $appListConfig, compressionRatio: $compressionRatio, countryCode: $countryCode, faceLiveStep: $faceLiveStep, faceStep: $faceStep, switches: $switches)';
+    return 'StartupConfigResp(compressionRatio: $compressionRatio, countryCode: $countryCode, faceLiveStep: $faceLiveStep, faceStep: $faceStep, switches: $switches)';
   }
-}
-
-class AppListConfig {
-  final List<String>? permission;
-  final int? wayType;
-
-  const AppListConfig({this.permission, this.wayType});
-
-  factory AppListConfig.fromJson(dynamic json) {
-    try {
-      Map<String, dynamic> map;
-      if (json is Map<String, dynamic>) {
-        map = json;
-      } else if (json is Map) {
-        map = Map<String, dynamic>.from(json);
-      } else {
-        return const AppListConfig();
-      }
-
-      List<String>? permList;
-      if (map['permission'] is List) {
-        permList = (map['permission'] as List)
-            .map((e) => e.toString())
-            .toList();
-      }
-
-      return AppListConfig(
-        permission: permList,
-        wayType: StartupConfigResp._parseInt(map['wayType']),
-      );
-    } catch (e) {
-      return const AppListConfig();
-    }
-  }
-
-  @override
-  String toString() =>
-      'AppListConfig(permission: $permission, wayType: $wayType)';
 }
 
 class FaceStep {
